@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.influxdb</groupId>
+	<artifactId>influxdb-java</artifactId>
+	<packaging>jar</packaging>
+	<version>0.9-SNAPSHOT</version>
+	<name>influxdb java bindings</name>
+	<description>Java API to access the InfluxDB REST API</description>
+	<url>http://www.influxdb.org</url>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.6</source>
+						<target>1.6</target>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>6.8.8</version> 
+			<scope>test</scope>
+		</dependency>
+                <dependency>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava-gwt</artifactId>
+                        <version>16.0</version>
+                </dependency>
+                <dependency>
+                        <groupId>com.squareup.retrofit</groupId>
+                        <artifactId>retrofit</artifactId>
+                        <version>1.5.0</version>
+                </dependency>
+	</dependencies>
+</project>
