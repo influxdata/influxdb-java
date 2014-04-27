@@ -11,6 +11,8 @@ import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
 
+import com.google.common.base.Preconditions;
+
 import retrofit.RestAdapter;
 
 public class InfluxDBImpl implements InfluxDB {
@@ -69,6 +71,7 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void createDatabase(final String name, final int replicationFactor) {
+		Preconditions.checkArgument(replicationFactor >= 1, "Replicationfactor must be greater or equal to 1.");
 		Database db = new Database(name, replicationFactor);
 		String response = this.influxDBService.createDatabase(db, this.username, this.password);
 	}
@@ -152,7 +155,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public List<ContinuousQuery> getContinuousQueries(final String database) {
+	public List<ContinuousQuery> describeContinuousQueries(final String database) {
 		return this.influxDBService.getContinuousQueries(database, this.username, this.password);
 	}
 
@@ -180,7 +183,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void removeScheduledDelete(final String database, final int id) {
+	public void deleteScheduledDelete(final String database, final int id) {
 		// TODO implement
 		throw new IllegalArgumentException();
 	}

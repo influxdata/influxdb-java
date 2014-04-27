@@ -236,12 +236,12 @@ public class InfluxDBTest {
 		this.influxDB.createDatabase(dbName, 1);
 		this.influxDB.Query(dbName, "select * from clicks into events.global;", TimeUnit.MILLISECONDS);
 
-		List<ContinuousQuery> result = this.influxDB.getContinuousQueries(dbName);
+		List<ContinuousQuery> result = this.influxDB.describeContinuousQueries(dbName);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 
 		this.influxDB.deleteContinuousQuery(dbName, result.get(0).getId());
-		result = this.influxDB.getContinuousQueries(dbName);
+		result = this.influxDB.describeContinuousQueries(dbName);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 0);
 
