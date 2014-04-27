@@ -3,14 +3,13 @@ package org.influxdb;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDB.ContinuousQuery;
-import org.influxdb.InfluxDB.Database;
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.InfluxDB.Pong;
-import org.influxdb.InfluxDB.Serie;
-import org.influxdb.InfluxDB.User;
-
+import org.influxdb.dto.ContinuousQuery;
+import org.influxdb.dto.Database;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Serie;
+import org.influxdb.dto.User;
+import org.influxdb.InfluxDBFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -31,7 +30,7 @@ public class InfluxDBTest {
 
 	@BeforeClass
 	public void setUp() {
-		this.influxDB = InfluxDB.connect("http://172.17.0.2:8086", "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 		this.influxDB.setLogLevel(LogLevel.FULL);
 	}
 
