@@ -100,99 +100,91 @@ public class InfluxDB {
 		return this.influxDBService.query(database, query, this.username, this.password, toTimePrecision(precision));
 	}
 
-	public String createDatabase(final String name, final int replicationFactor) {
+	public void createDatabase(final String name, final int replicationFactor) {
 		Database db = new Database(name, replicationFactor);
 		String response = this.influxDBService.createDatabase(db, this.username, this.password);
-		if (null == response) {
-			return "ok";
-		}
-		return response;
 	}
 
-	public String deleteDatabase(final String name) {
+	public void deleteDatabase(final String name) {
 		String response = this.influxDBService.deleteDatabase(name, this.username, this.password);
-		if (null == response) {
-			return "ok";
-		}
-		return response;
 	}
 
 	public List<Database> describeDatabases() {
 		return this.influxDBService.describeDatabases(this.username, this.password);
 	}
 
-	public String createClusterAdmin(final String name, final String password) {
+	public void createClusterAdmin(final String name, final String password) {
 		User user = new User();
 		user.setName(name);
 		user.setPassword(password);
-		return this.influxDBService.createClusterAdmin(user, this.username, this.password);
+		this.influxDBService.createClusterAdmin(user, this.username, this.password);
 	}
 
-	public String deleteClusterAdmin(final String name) {
-		return this.influxDBService.deleteClusterAdmin(name, this.username, this.password);
+	public void deleteClusterAdmin(final String name) {
+		this.influxDBService.deleteClusterAdmin(name, this.username, this.password);
 	}
 
 	public List<User> describeClusterAdmins() {
 		return this.influxDBService.describeClusterAdmins(this.username, this.password);
 	}
 
-	public String updateClusterAdmin(final String name, final String password) {
+	public void updateClusterAdmin(final String name, final String password) {
 		User user = new User();
 		user.setPassword(password);
-		return this.influxDBService.updateClusterAdmin(user, name, this.username, this.password);
+		this.influxDBService.updateClusterAdmin(user, name, this.username, this.password);
 	}
 
-	public String createDatabaseUser(final String database, final String name, final String password,
+	public void createDatabaseUser(final String database, final String name, final String password,
 			final String... permissions) {
 		User user = new User();
 		user.setName(name);
 		user.setPassword(password);
 		user.setPermissions(permissions);
-		return this.influxDBService.createDatabaseUser(database, user, this.username, this.password);
+		this.influxDBService.createDatabaseUser(database, user, this.username, this.password);
 	}
 
-	public String deleteDatabaseUser(final String database, final String name) {
-		return this.influxDBService.deleteDatabaseUser(database, name, this.username, this.password);
+	public void deleteDatabaseUser(final String database, final String name) {
+		this.influxDBService.deleteDatabaseUser(database, name, this.username, this.password);
 	}
 
 	public List<User> describeDatabaseUsers(final String database) {
 		return this.influxDBService.describeDatabaseUsers(database, this.username, this.password);
 	}
 
-	public String updateDatabaseUser(final String database, final String name, final String password,
+	public void updateDatabaseUser(final String database, final String name, final String password,
 			final String... permissions) {
 		User user = new User();
 		user.setPassword(password);
 		user.setPermissions(permissions);
-		return this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);
+		this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);
 	}
 
-	public String alterDatabasePrivilege(final String database, final String name, final boolean isAdmin,
+	public void alterDatabasePrivilege(final String database, final String name, final boolean isAdmin,
 			final String... permissions) {
 		User user = new User();
 		user.setAdmin(isAdmin);
 		user.setPermissions(permissions);
-		return this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);
+		this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);
 	}
 
-	public String authenticateDatabaseUser(final String database, final String username, final String password) {
-		return this.influxDBService.authenticateDatabaseUser(database, username, password);
+	public void authenticateDatabaseUser(final String database, final String username, final String password) {
+		this.influxDBService.authenticateDatabaseUser(database, username, password);
 	}
 
 	public List<ContinuousQuery> getContinuousQueries(final String database) {
 		return this.influxDBService.getContinuousQueries(database, this.username, this.password);
 	}
 
-	public String deleteContinuousQuery(final String database, final int id) {
-		return this.influxDBService.deleteContinuousQuery(database, id, this.username, this.password);
+	public void deleteContinuousQuery(final String database, final int id) {
+		this.influxDBService.deleteContinuousQuery(database, id, this.username, this.password);
 	}
 
-	public String deletePoints(final String database, final String serieName) {
+	public void deletePoints(final String database, final String serieName) {
 		// TODO implement
 		throw new IllegalArgumentException();
 	}
 
-	public String createScheduledDelete(final String database, final ScheduledDelete delete) {
+	public void createScheduledDelete(final String database, final ScheduledDelete delete) {
 		// TODO implement
 		throw new IllegalArgumentException();
 	}
@@ -202,7 +194,7 @@ public class InfluxDB {
 		throw new IllegalArgumentException();
 	}
 
-	public String removeScheduledDelete(final String database, final int id) {
+	public void removeScheduledDelete(final String database, final int id) {
 		// TODO implement
 		throw new IllegalArgumentException();
 	}

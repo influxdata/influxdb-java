@@ -57,9 +57,7 @@ public class InfluxDBTest {
 	@Test
 	public void describeDatabasesTest() {
 		String dbName = "unittest-" + System.currentTimeMillis();
-		String response = this.influxDB.createDatabase(dbName, 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
+		this.influxDB.createDatabase(dbName, 1);
 		List<Database> result = this.influxDB.describeDatabases();
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 0);
@@ -69,30 +67,12 @@ public class InfluxDBTest {
 	}
 
 	@Test
-	public void createDatabasesTest() {
-		String dbName = "unittest-" + System.currentTimeMillis();
-		String response = this.influxDB.createDatabase(dbName, 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
-		this.influxDB.deleteDatabase(dbName);
-	}
-
-	@Test
 	public void deleteDatabasesTest() {
-		String response = this.influxDB.createDatabase("toDelete", 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
-		response = this.influxDB.deleteDatabase("toDelete");
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
-
+		this.influxDB.createDatabase("toDelete", 1);
+		this.influxDB.deleteDatabase("toDelete");
 		// Creation of the same database must succeed.
-		response = this.influxDB.createDatabase("toDelete", 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
-		response = this.influxDB.deleteDatabase("toDelete");
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
+		this.influxDB.createDatabase("toDelete", 1);
+		this.influxDB.deleteDatabase("toDelete");
 
 		List<Database> result = this.influxDB.describeDatabases();
 		for (Database database : result) {
@@ -103,9 +83,7 @@ public class InfluxDBTest {
 	@Test
 	public void writeTest() {
 		String dbName = "write-unittest-" + System.currentTimeMillis();
-		String response = this.influxDB.createDatabase(dbName, 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
+		this.influxDB.createDatabase(dbName, 1);
 
 		Serie serie = new Serie();
 		serie.setName("testSeries");
@@ -121,9 +99,7 @@ public class InfluxDBTest {
 	@Test()
 	public void writeManyTest() {
 		String dbName = "writemany-unittest-" + System.currentTimeMillis();
-		String response = this.influxDB.createDatabase(dbName, 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
+		this.influxDB.createDatabase(dbName, 1);
 		int outer = 20;
 		int inner = 50;
 		Stopwatch watch = new Stopwatch().start();
@@ -149,9 +125,7 @@ public class InfluxDBTest {
 	@Test
 	public void queryTest() {
 		String dbName = "query-unittest-" + System.currentTimeMillis();
-		String response = this.influxDB.createDatabase(dbName, 1);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(response, "ok");
+		this.influxDB.createDatabase(dbName, 1);
 
 		Serie serie = new Serie();
 		serie.setName("testSeries");
