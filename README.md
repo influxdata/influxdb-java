@@ -13,8 +13,7 @@ InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "r
 
 this.influxDB.createDatabase("aTimeSeries", 1);
 
-Serie serie = new Serie();
-serie.setName("testSeries");
+Serie serie = new Serie("testSeries");
 serie.setColumns(new String[] { "value1", "value2" });
 Object[] point = new Object[] { System.currentTimeMillis(), 5 };
 serie.setPoints(new Object[][] { point });
