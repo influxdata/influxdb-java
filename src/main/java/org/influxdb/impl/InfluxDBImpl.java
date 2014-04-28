@@ -191,17 +191,25 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void createScheduledDelete(final String database, final ScheduledDelete delete) {
-		this.influxDBService.createScheduledDelete(database, delete, this.username, this.password);
+		throw new IllegalArgumentException(
+				"This is not implemented in InfluxDB, please see: https://github.com/influxdb/influxdb/issues/98");
+		// this.influxDBService.createScheduledDelete(database, delete, this.username,
+		// this.password);
 	}
 
 	@Override
 	public List<ScheduledDelete> describeScheduledDeletes(final String database) {
-		return this.influxDBService.describeScheduledDeletes(database, this.username, this.password);
+		throw new IllegalArgumentException(
+				"This is not implemented in InfluxDB, please see: https://github.com/influxdb/influxdb/issues/98");
+		// return this.influxDBService.describeScheduledDeletes(database, this.username,
+		// this.password);
 	}
 
 	@Override
 	public void deleteScheduledDelete(final String database, final int id) {
-		this.influxDBService.deleteScheduledDelete(database, id, this.username, this.password);
+		throw new IllegalArgumentException(
+				"This is not implemented in InfluxDB, please see: https://github.com/influxdb/influxdb/issues/98");
+		// this.influxDBService.deleteScheduledDelete(database, id, this.username, this.password);
 	}
 
 	private static String toTimePrecision(final TimeUnit t) {
