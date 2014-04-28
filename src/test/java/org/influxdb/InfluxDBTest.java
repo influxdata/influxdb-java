@@ -7,6 +7,7 @@ import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
 import org.influxdb.dto.Pong;
+import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
 import org.influxdb.InfluxDBFactory;
@@ -243,6 +244,44 @@ public class InfluxDBTest {
 		this.influxDB.deleteContinuousQuery(dbName, result.get(0).getId());
 		result = this.influxDB.describeContinuousQueries(dbName);
 		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 0);
+
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * 
+	 * Test is disabled because this is not implemented in influxDB.
+	 * 
+	 */
+	@Test(enabled = false)
+	public void testCreateDeleteDescribeScheduledDeletes() {
+		String dbName = "scheduleddeletes-unittest-" + System.currentTimeMillis();
+		List<ScheduledDelete> deletes = this.influxDB.describeScheduledDeletes(dbName);
+		Assert.assertNull(deletes);
+		Assert.assertEquals(deletes.size(), 0);
+	}
+
+	@Test
+	public void testDeletePoints() {
+		String dbName = "deletepoints-unittest-" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName, 1);
+
+		Serie serie = new Serie();
+		serie.setName("testSeries");
+		serie.setColumns(new String[] { "value1", "value2" });
+		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
+		serie.setPoints(new Object[][] { point });
+		Serie[] series = new Serie[] { serie };
+		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+
+		List<Serie> result = this.influxDB.Query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
+		Assert.assertNotNull(series);
+		Assert.assertEquals(result.size(), 1);
+
+		this.influxDB.deletePoints(dbName, "testSeries");
+		result = this.influxDB.Query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
+		Assert.assertNotNull(series);
 		Assert.assertEquals(result.size(), 0);
 
 		this.influxDB.deleteDatabase(dbName);

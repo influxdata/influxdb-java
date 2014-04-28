@@ -12,6 +12,7 @@ import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 
 import retrofit.RestAdapter;
 
@@ -72,7 +73,10 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public Pong ping() {
-		return this.influxDBService.ping();
+		Stopwatch watch = Stopwatch.createStarted();
+		Pong pong = this.influxDBService.ping();
+		pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
+		return pong;
 	}
 
 	@Override
@@ -182,26 +186,22 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void deletePoints(final String database, final String serieName) {
-		// TODO implement
-		throw new IllegalArgumentException();
+		this.influxDBService.deletePoints(database, serieName, this.username, this.password);
 	}
 
 	@Override
 	public void createScheduledDelete(final String database, final ScheduledDelete delete) {
-		// TODO implement
-		throw new IllegalArgumentException();
+		this.influxDBService.createScheduledDelete(database, delete, this.username, this.password);
 	}
 
 	@Override
 	public List<ScheduledDelete> describeScheduledDeletes(final String database) {
-		// TODO implement
-		throw new IllegalArgumentException();
+		return this.influxDBService.describeScheduledDeletes(database, this.username, this.password);
 	}
 
 	@Override
 	public void deleteScheduledDelete(final String database, final int id) {
-		// TODO implement
-		throw new IllegalArgumentException();
+		this.influxDBService.deleteScheduledDelete(database, id, this.username, this.password);
 	}
 
 	private static String toTimePrecision(final TimeUnit t) {

@@ -255,6 +255,7 @@ public interface InfluxDB {
 	 *            the name of the database.
 	 * @param delete
 	 *            the query which describes what to delete.
+	 * 
 	 */
 	public void createScheduledDelete(final String database, final ScheduledDelete delete);
 

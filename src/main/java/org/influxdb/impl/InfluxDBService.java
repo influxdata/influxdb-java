@@ -5,6 +5,7 @@ import java.util.List;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
 import org.influxdb.dto.Pong;
+import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
 
@@ -78,4 +79,19 @@ interface InfluxDBService {
 	public String deleteContinuousQuery(@Path("database") String database, @Path("id") int id,
 			@Query("u") String username, @Query("p") String password);
 
+	@POST("/db/{database}/scheduled_deletes")
+	public String createScheduledDelete(@Path("database") final String database, @Body ScheduledDelete delete,
+			@Query("u") String username, @Query("p") String password);
+
+	@DELETE("/db/{database}/scheduled_deletes/{id}")
+	public String deleteScheduledDelete(@Path("database") final String database, @Path("id") int id,
+			@Query("u") String username, @Query("p") String password);
+
+	@GET("/db/{database}/scheduled_deletes")
+	public List<ScheduledDelete> describeScheduledDeletes(@Path("database") final String database,
+			@Query("u") String username, @Query("p") String password);
+
+	@DELETE("/db/{database}/series/{name}")
+	public String deletePoints(@Path("database") final String database, @Path("name") String name,
+			@Query("u") String username, @Query("p") String password);
 }
