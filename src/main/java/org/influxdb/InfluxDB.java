@@ -13,6 +13,12 @@ import org.influxdb.dto.User;
 /**
  * Interface with all available methods to access a InfluxDB database.
  * 
+ * A full list of currently available interfaces is implemented in:
+ * 
+ * <a
+ * href="https://github.com/influxdb/influxdb/blob/master/src/api/http/api.go">https://github.com/
+ * influxdb/influxdb/blob/master/src/api/http/api.go</a>
+ * 
  * @author stefan.majer [at] gmail.com
  * 
  */
