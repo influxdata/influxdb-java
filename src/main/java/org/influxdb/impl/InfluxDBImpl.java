@@ -15,12 +15,28 @@ import com.google.common.base.Preconditions;
 
 import retrofit.RestAdapter;
 
+/**
+ * Implementation of a InluxDB API.
+ * 
+ * @author stefan.majer [at] gmail.com
+ * 
+ */
 public class InfluxDBImpl implements InfluxDB {
 	private final String username;
 	private final String password;
 	private final RestAdapter restAdapter;
 	private final InfluxDBService influxDBService;
 
+	/**
+	 * Constructor which should only be used from the InfluxDBFactory.
+	 * 
+	 * @param url
+	 *            the url where the influxdb is accessible.
+	 * @param username
+	 *            the user to connect.
+	 * @param password
+	 *            the password for this user.
+	 */
 	public InfluxDBImpl(final String url, final String username, final String password) {
 		super();
 		this.username = username;
@@ -73,12 +89,12 @@ public class InfluxDBImpl implements InfluxDB {
 	public void createDatabase(final String name, final int replicationFactor) {
 		Preconditions.checkArgument(replicationFactor >= 1, "Replicationfactor must be greater or equal to 1.");
 		Database db = new Database(name, replicationFactor);
-		String response = this.influxDBService.createDatabase(db, this.username, this.password);
+		this.influxDBService.createDatabase(db, this.username, this.password);
 	}
 
 	@Override
 	public void deleteDatabase(final String name) {
-		String response = this.influxDBService.deleteDatabase(name, this.username, this.password);
+		this.influxDBService.deleteDatabase(name, this.username, this.password);
 	}
 
 	@Override
@@ -87,10 +103,10 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void createClusterAdmin(final String name, final String password) {
+	public void createClusterAdmin(final String name, final String adminPassword) {
 		User user = new User();
 		user.setName(name);
-		user.setPassword(password);
+		user.setPassword(adminPassword);
 		this.influxDBService.createClusterAdmin(user, this.username, this.password);
 	}
 
@@ -105,18 +121,18 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void updateClusterAdmin(final String name, final String password) {
+	public void updateClusterAdmin(final String name, final String adminPassword) {
 		User user = new User();
-		user.setPassword(password);
+		user.setPassword(adminPassword);
 		this.influxDBService.updateClusterAdmin(user, name, this.username, this.password);
 	}
 
 	@Override
-	public void createDatabaseUser(final String database, final String name, final String password,
+	public void createDatabaseUser(final String database, final String name, final String userPassword,
 			final String... permissions) {
 		User user = new User();
 		user.setName(name);
-		user.setPassword(password);
+		user.setPassword(userPassword);
 		user.setPermissions(permissions);
 		this.influxDBService.createDatabaseUser(database, user, this.username, this.password);
 	}
@@ -132,10 +148,10 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void updateDatabaseUser(final String database, final String name, final String password,
+	public void updateDatabaseUser(final String database, final String name, final String newPassword,
 			final String... permissions) {
 		User user = new User();
-		user.setPassword(password);
+		user.setPassword(newPassword);
 		user.setPermissions(permissions);
 		this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);
 	}
@@ -150,8 +166,8 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void authenticateDatabaseUser(final String database, final String username, final String password) {
-		this.influxDBService.authenticateDatabaseUser(database, username, password);
+	public void authenticateDatabaseUser(final String database, final String user, final String userPassword) {
+		this.influxDBService.authenticateDatabaseUser(database, user, userPassword);
 	}
 
 	@Override
