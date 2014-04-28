@@ -85,8 +85,7 @@ public class InfluxDBTest {
 		String dbName = "write-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
 
-		Serie serie = new Serie();
-		serie.setName("testSeries");
+		Serie serie = new Serie("testSeries");
 		serie.setColumns(new String[] { "value1", "value2" });
 		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
 		serie.setPoints(new Object[][] { point });
@@ -104,8 +103,7 @@ public class InfluxDBTest {
 		int inner = 50;
 		Stopwatch watch = new Stopwatch().start();
 		for (int i = 0; i < outer; i++) {
-			Serie serie = new Serie();
-			serie.setName("testSeries");
+			Serie serie = new Serie("testSeries");
 			serie.setColumns(new String[] { "value1", "value2" });
 			Object[][] points = new Object[inner][2];
 			for (int j = 0; j < inner; j++) {
@@ -127,8 +125,7 @@ public class InfluxDBTest {
 		String dbName = "query-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
 
-		Serie serie = new Serie();
-		serie.setName("testSeries");
+		Serie serie = new Serie("testSeries");
 		serie.setColumns(new String[] { "value1", "value2" });
 		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
 		serie.setPoints(new Object[][] { point });
@@ -267,8 +264,7 @@ public class InfluxDBTest {
 		String dbName = "deletepoints-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
 
-		Serie serie = new Serie();
-		serie.setName("testSeries");
+		Serie serie = new Serie("testSeries");
 		serie.setColumns(new String[] { "value1", "value2" });
 		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
 		serie.setPoints(new Object[][] { point });

@@ -1,16 +1,16 @@
 package org.influxdb.dto;
 
 public class Serie {
-	private String name;
+	private final String name;
 	private String[] columns;
 	private Object[][] points;
 
-	public String getName() {
-		return this.name;
+	public Serie(final String name) {
+		this.name = name;
 	}
 
-	public void setName(final String name) {
-		this.name = name;
+	public String getName() {
+		return this.name;
 	}
 
 	public String[] getColumns() {
