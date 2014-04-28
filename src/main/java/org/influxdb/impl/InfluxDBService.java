@@ -15,7 +15,7 @@ import retrofit.http.POST;
 import retrofit.http.Path;
 import retrofit.http.Query;
 
-public interface InfluxDBService {
+interface InfluxDBService {
 
 	@GET("/ping")
 	public Pong ping();
