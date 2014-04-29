@@ -108,8 +108,7 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void createClusterAdmin(final String name, final String adminPassword) {
-		User user = new User();
-		user.setName(name);
+		User user = new User(name);
 		user.setPassword(adminPassword);
 		this.influxDBService.createClusterAdmin(user, this.username, this.password);
 	}
@@ -126,7 +125,7 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void updateClusterAdmin(final String name, final String adminPassword) {
-		User user = new User();
+		User user = new User(name);
 		user.setPassword(adminPassword);
 		this.influxDBService.updateClusterAdmin(user, name, this.username, this.password);
 	}
@@ -134,8 +133,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void createDatabaseUser(final String database, final String name, final String userPassword,
 			final String... permissions) {
-		User user = new User();
-		user.setName(name);
+		User user = new User(name);
 		user.setPassword(userPassword);
 		user.setPermissions(permissions);
 		this.influxDBService.createDatabaseUser(database, user, this.username, this.password);
@@ -154,7 +152,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void updateDatabaseUser(final String database, final String name, final String newPassword,
 			final String... permissions) {
-		User user = new User();
+		User user = new User(name);
 		user.setPassword(newPassword);
 		user.setPermissions(permissions);
 		this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);
@@ -163,7 +161,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void alterDatabasePrivilege(final String database, final String name, final boolean isAdmin,
 			final String... permissions) {
-		User user = new User();
+		User user = new User(name);
 		user.setAdmin(isAdmin);
 		user.setPermissions(permissions);
 		this.influxDBService.updateDatabaseUser(database, user, name, this.username, this.password);

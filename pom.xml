@@ -5,7 +5,7 @@
 	<groupId>org.influxdb</groupId>
 	<artifactId>influxdb-java</artifactId>
 	<packaging>jar</packaging>
-	<version>0.9-SNAPSHOT</version>
+	<version>1.0</version>
 	<name>influxdb java bindings</name>
 	<description>Java API to access the InfluxDB REST API</description>
 	<url>http://www.influxdb.org</url>

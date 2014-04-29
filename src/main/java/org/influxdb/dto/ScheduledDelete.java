@@ -1,5 +1,11 @@
 package org.influxdb.dto;
 
+/**
+ * Representation of a InfluxDB scheduled_delete.
+ * 
+ * @author stefan.majer [at] gmail.com
+ * 
+ */
 public class ScheduledDelete {
 	private int id;
 	private String regex;
@@ -65,4 +71,23 @@ public class ScheduledDelete {
 	public void setRunAt(final String runAt) {
 		this.runAt = runAt;
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ScheduledDelete [id=");
+		builder.append(this.id);
+		builder.append(", regex=");
+		builder.append(this.regex);
+		builder.append(", olderThan=");
+		builder.append(this.olderThan);
+		builder.append(", runAt=");
+		builder.append(this.runAt);
+		builder.append("]");
+		return builder.toString();
+	}
+
 }

@@ -1,52 +1,101 @@
 package org.influxdb.dto;
 
-public  class User {
-	private String name;
+/**
+ * Representation of a InfluxDB database user.
+ * 
+ * @author stefan.majer [at] gmail.com
+ * 
+ */
+public class User {
+	private final String name;
 	private String password;
 	private boolean admin;
 	private String readFrom;
 	private String writeTo;
 
+	/**
+	 * @param name
+	 *            the name of the user.
+	 */
+	public User(final String name) {
+		super();
+		this.name = name;
+	}
+
+	/**
+	 * @return the name
+	 */
 	public String getName() {
 		return this.name;
 	}
 
-	public void setName(final String name) {
-		this.name = name;
-	}
-
+	/**
+	 * @return the password
+	 */
 	public String getPassword() {
 		return this.password;
 	}
 
+	/**
+	 * @param password
+	 *            the password to set
+	 */
 	public void setPassword(final String password) {
 		this.password = password;
 	}
 
+	/**
+	 * @return the admin
+	 */
 	public boolean isAdmin() {
 		return this.admin;
 	}
 
+	/**
+	 * @param admin
+	 *            the admin to set
+	 */
 	public void setAdmin(final boolean admin) {
 		this.admin = admin;
 	}
 
+	/**
+	 * @return the readFrom
+	 */
 	public String getReadFrom() {
 		return this.readFrom;
 	}
 
+	/**
+	 * @param readFrom
+	 *            the readFrom to set
+	 */
 	public void setReadFrom(final String readFrom) {
 		this.readFrom = readFrom;
 	}
 
+	/**
+	 * @return the writeTo
+	 */
 	public String getWriteTo() {
 		return this.writeTo;
 	}
 
+	/**
+	 * @param writeTo
+	 *            the writeTo to set
+	 */
 	public void setWriteTo(final String writeTo) {
 		this.writeTo = writeTo;
 	}
 
+	/**
+	 * Setter for readFrom and writeTo permissions for this user.
+	 * 
+	 * @param permissions
+	 *            a array of permissions, can be either skipped or exactly 2 readFrom and writeTo in
+	 *            this order.
+	 */
 	public void setPermissions(final String... permissions) {
 		if (null != permissions) {
 			switch (permissions.length) {
@@ -61,4 +110,25 @@ public  class User {
 			}
 		}
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("User [name=");
+		builder.append(this.name);
+		builder.append(", password=");
+		builder.append(this.password);
+		builder.append(", admin=");
+		builder.append(this.admin);
+		builder.append(", readFrom=");
+		builder.append(this.readFrom);
+		builder.append(", writeTo=");
+		builder.append(this.writeTo);
+		builder.append("]");
+		return builder.toString();
+	}
+
 }
