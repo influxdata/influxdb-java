@@ -10,13 +10,19 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
-import org.influxdb.InfluxDBFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Stopwatch;
+import com.kpelykh.docker.client.DockerClient;
+import com.kpelykh.docker.client.DockerException;
+import com.kpelykh.docker.client.model.ContainerConfig;
+import com.kpelykh.docker.client.model.ContainerCreateResponse;
+import com.kpelykh.docker.client.model.HostConfig;
+import com.kpelykh.docker.client.model.Ports;
+import com.kpelykh.docker.client.model.Ports.Port;
 
 /**
  * Test the InfluxDB API.
@@ -28,25 +34,59 @@ import com.google.common.base.Stopwatch;
 public class InfluxDBTest {
 
 	private InfluxDB influxDB;
+	private DockerClient dockerClient;
+	private ContainerCreateResponse container;
 
 	/**
 	 * Create a influxDB connection before all tests start.
+	 * 
+	 * @throws DockerException
+	 * @throws InterruptedException
 	 */
 	@BeforeClass
-	public void setUp() {
-		this.influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+	public void setUp() throws DockerException, InterruptedException {
+		this.dockerClient = new DockerClient("http://localhost:4243");
+		this.dockerClient.pull("majst01/influxdb-java");
+
+		ContainerConfig containerConfig = new ContainerConfig();
+		containerConfig.setImage("majst01/influxdb-java");
+		this.container = this.dockerClient.createContainer(containerConfig);
+		HostConfig hostconfig = new HostConfig();
+		hostconfig.setPortBindings(new Ports());
+		hostconfig.getPortBindings().addPort(new Port("tcp", "8086", "0.0.0.0", "8086"));
+		this.dockerClient.startContainer(this.container.getId(), hostconfig);
+
+		this.influxDB = InfluxDBFactory.connect("http://localhost:8086", "root", "root");
+		boolean influxDBstarted = false;
+		do {
+			Pong response;
+			try {
+				response = this.influxDB.ping();
+				if (response.getStatus().equalsIgnoreCase("ok")) {
+					influxDBstarted = true;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				// e.printStackTrace();
+			}
+			Thread.sleep(100L);
+		} while (!influxDBstarted);
 		this.influxDB.setLogLevel(LogLevel.FULL);
 	}
 
 	/**
 	 * Ensure all Databases created get dropped afterwards.
+	 * 
+	 * @throws DockerException
 	 */
 	@AfterClass
-	public void tearDown() {
+	public void tearDown() throws DockerException {
 		List<Database> result = this.influxDB.describeDatabases();
 		for (Database database : result) {
 			this.influxDB.deleteDatabase(database.getName());
 		}
+
+		this.dockerClient.kill(this.container.getId());
 	}
 
 	/**
