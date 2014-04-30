@@ -34,8 +34,11 @@ Maven will run tests during build process using a docker image with influxdb act
 This docker image is pulled during the first test run which will take some time. So the first test execution will fail because the image to pull is not there.
 You can check with:
 
+```
     $ docker images | grep majst01
-$ majst01/influxdb-java      latest              50256afac0c9        About an hour ago   298.7 MB
+majst01/influxdb-java      latest              50256afac0c9        About an hour ago   298.7 MB
+
+```
 
 Then you can build influxdb-java with all tests with:
 
