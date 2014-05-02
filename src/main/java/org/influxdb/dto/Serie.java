@@ -2,6 +2,8 @@ package org.influxdb.dto;
 
 import java.util.Arrays;
 
+import com.google.common.base.Objects;
+
 /**
  * Representation of a InfluxDB database serie.
  * 
@@ -63,15 +65,12 @@ public class Serie {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Serie [name=");
-		builder.append(this.name);
-		builder.append(", columns=");
-		builder.append(Arrays.toString(this.columns));
-		builder.append(", points=");
-		builder.append(Arrays.toString(this.points));
-		builder.append("]");
-		return builder.toString();
+		return Objects
+				.toStringHelper(this.getClass())
+				.add("name", this.name)
+				.add("c", Arrays.deepToString(this.columns))
+				.add("p", Arrays.deepToString(this.points))
+				.toString();
 	}
 
 }

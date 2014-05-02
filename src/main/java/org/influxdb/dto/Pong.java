@@ -1,5 +1,7 @@
 package org.influxdb.dto;
 
+import com.google.common.base.Objects;
+
 /**
  * Representation of the response for a influxdb ping.
  * 
@@ -45,13 +47,11 @@ public class Pong {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Pong [status=");
-		builder.append(this.status);
-		builder.append(", responseTime=");
-		builder.append(this.responseTime);
-		builder.append("]");
-		return builder.toString();
+		return Objects
+				.toStringHelper(this.getClass())
+				.add("status", this.status)
+				.add("responseTime", this.responseTime)
+				.toString();
 	}
 
 }

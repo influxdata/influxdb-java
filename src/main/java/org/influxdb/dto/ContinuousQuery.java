@@ -1,5 +1,7 @@
 package org.influxdb.dto;
 
+import com.google.common.base.Objects;
+
 /**
  * Representation of a InfluxDB continous_query.
  * 
@@ -38,6 +40,14 @@ public class ContinuousQuery {
 	 */
 	public void setQuery(final String query) {
 		this.query = query;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this.getClass()).add("id", this.id).add("query", this.query).toString();
 	}
 
 }

@@ -1,5 +1,7 @@
 package org.influxdb.dto;
 
+import com.google.common.base.Objects;
+
 /**
  * Representation of a InfluxDB scheduled_delete.
  * 
@@ -77,17 +79,13 @@ public class ScheduledDelete {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("ScheduledDelete [id=");
-		builder.append(this.id);
-		builder.append(", regex=");
-		builder.append(this.regex);
-		builder.append(", olderThan=");
-		builder.append(this.olderThan);
-		builder.append(", runAt=");
-		builder.append(this.runAt);
-		builder.append("]");
-		return builder.toString();
+		return Objects
+				.toStringHelper(this.getClass())
+				.add("id", this.id)
+				.add("regex", this.regex)
+				.add("olderThan", this.olderThan)
+				.add("runAt", this.runAt)
+				.toString();
 	}
 
 }

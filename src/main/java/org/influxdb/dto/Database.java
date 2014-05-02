@@ -1,5 +1,7 @@
 package org.influxdb.dto;
 
+import com.google.common.base.Objects;
+
 /**
  * Representation of a influxdb database.
  * 
@@ -41,13 +43,11 @@ public class Database {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Database [name=");
-		builder.append(this.name);
-		builder.append(", replicationFactor=");
-		builder.append(this.replicationFactor);
-		builder.append("]");
-		return builder.toString();
+		return Objects
+				.toStringHelper(this.getClass())
+				.add("name", this.name)
+				.add("replicationFactor", this.replicationFactor)
+				.toString();
 	}
 
 }
