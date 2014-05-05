@@ -66,8 +66,7 @@ public class InfluxDBTest {
 					influxDBstarted = true;
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				// e.printStackTrace();
+				// NOOP intentional
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
@@ -294,7 +293,6 @@ public class InfluxDBTest {
 	/**
 	 * Test that the password change of a database user works.
 	 */
-	// FIXME dont now why this accidently does not work anymore.
 	@Test(enabled = true)
 	public void testAuthenticateDatabaseUser() {
 		String dbName = "testAuthenticateDatabaseUser-" + System.currentTimeMillis();
