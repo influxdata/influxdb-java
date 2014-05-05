@@ -181,6 +181,64 @@ public class InfluxDBTest {
 	}
 
 	/**
+	 * Test for the new Serie.Builder.
+	 */
+	@Test
+	public void writeWithSerieBuilder() {
+		String dbName = "writeseriebuilder-unittest-" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName, 1);
+		int outer = 20;
+		Stopwatch watch = Stopwatch.createStarted();
+		for (int i = 0; i < outer; i++) {
+			Serie serie = new Serie.Builder("serieFromBuilder")
+					.columns("column1", "column2")
+					.values(System.currentTimeMillis(), 1)
+					.values(System.currentTimeMillis(), 2)
+					.values(System.currentTimeMillis(), 3)
+					.values(System.currentTimeMillis(), 4)
+					.values(System.currentTimeMillis(), 5)
+					.values(System.currentTimeMillis(), 6)
+					.values(System.currentTimeMillis(), 7)
+					.values(System.currentTimeMillis(), 8)
+					.values(System.currentTimeMillis(), 9)
+					.values(System.currentTimeMillis(), 10)
+					.build();
+			Serie[] series = new Serie[] { serie };
+			this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+		}
+		System.out.println("Inserted " + outer + " Datapoints in " + watch);
+		this.influxDB.deleteDatabase(dbName);
+
+		try {
+			new Serie.Builder("").columns("column1", "column2").values(System.currentTimeMillis(), 1).build();
+			Assert.fail("It is expected that creation of a Serie with a empty Name fails.");
+		} catch (Exception e) {
+			// Expected.
+		}
+
+		try {
+			new Serie.Builder("SerieWith wrong value count")
+					.columns("column1", "column2")
+					.values(System.currentTimeMillis(), 1, 2)
+					.build();
+			Assert.fail("It is expected that creation of a Serie more Values than columns fails");
+		} catch (Exception e) {
+			// Expected.
+		}
+
+		try {
+			new Serie.Builder("SerieWith wrong value count")
+					.columns("column1", "column2", "column3")
+					.values(System.currentTimeMillis(), 1)
+					.build();
+			Assert.fail("It is expected that creation of a Serie more Values than columns fails");
+		} catch (Exception e) {
+			// Expected.
+		}
+
+	}
+
+	/**
 	 * Test that querying works.
 	 */
 	@Test
