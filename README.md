@@ -51,6 +51,10 @@ If you don't have Docker running locally, you can skip tests with -DskipTests fl
 
 
 
-### TODO
+### Publishing
 
-Publish to maven-repo.
+This is a
+[link](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide)
+to the sonatype oss guide to publishing. I'll update this section once
+the [jira ticket](https://issues.sonatype.org/browse/OSSRH-9728) is
+closed and I'm able to upload artifacts to the sonatype repositories.
