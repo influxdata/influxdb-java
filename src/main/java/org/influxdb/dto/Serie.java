@@ -3,10 +3,10 @@ package org.influxdb.dto;
 import java.util.Arrays;
 import java.util.List;
 
-import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 /**
  * Representation of a InfluxDB database serie.
