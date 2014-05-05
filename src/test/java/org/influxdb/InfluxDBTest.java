@@ -295,7 +295,7 @@ public class InfluxDBTest {
 	 * Test that the password change of a database user works.
 	 */
 	// FIXME dont now why this accidently does not work anymore.
-	@Test(enabled = false)
+	@Test(enabled = true)
 	public void testAuthenticateDatabaseUser() {
 		String dbName = "testAuthenticateDatabaseUser-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
