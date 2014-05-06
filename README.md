@@ -27,7 +27,7 @@ this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
 
 ```
 
-For additional usage examples have a look ad [InfluxDBTest.java](https://github.com/majst01/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
+For additional usage examples have a look at [InfluxDBTest.java](https://github.com/majst01/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 
 ### Build Requirements
 
