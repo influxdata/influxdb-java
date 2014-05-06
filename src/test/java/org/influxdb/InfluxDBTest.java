@@ -47,7 +47,7 @@ public class InfluxDBTest {
 	@BeforeClass
 	public void setUp() throws DockerException, InterruptedException {
 		this.dockerClient = new DockerClient("http://localhost:4243");
-		this.dockerClient.pull("majst01/influxdb-java");
+		this.dockerClient.pull("influxdb/influxdb-java");
 
 		ContainerConfig containerConfig = new ContainerConfig();
 		containerConfig.setImage("majst01/influxdb-java");
