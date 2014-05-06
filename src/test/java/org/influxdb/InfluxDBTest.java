@@ -237,7 +237,7 @@ public class InfluxDBTest {
 
 		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
-		List<Serie> result = this.influxDB.Query(dbName, "select value2 from testSeries", TimeUnit.MILLISECONDS);
+		List<Serie> result = this.influxDB.query(dbName, "select value2 from testSeries", TimeUnit.MILLISECONDS);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 		// [{"name":"testSeries","columns":["time","sequence_number","value"],"points":[[1398412802823,160001,5]]}]
@@ -262,7 +262,7 @@ public class InfluxDBTest {
 
 		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
-		List<Serie> result = this.influxDB.Query(
+		List<Serie> result = this.influxDB.query(
 				dbName,
 				"select time, idle, steal, system, customername from testSeries",
 				TimeUnit.MILLISECONDS);
@@ -400,7 +400,7 @@ public class InfluxDBTest {
 	public void testContinuousQueries() {
 		String dbName = "continuousquery-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
-		this.influxDB.Query(dbName, "select * from clicks into events.global;", TimeUnit.MILLISECONDS);
+		this.influxDB.query(dbName, "select * from clicks into events.global;", TimeUnit.MILLISECONDS);
 
 		List<ContinuousQuery> result = this.influxDB.describeContinuousQueries(dbName);
 		Assert.assertNotNull(result);
@@ -439,12 +439,12 @@ public class InfluxDBTest {
 				.build();
 		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
-		List<Serie> result = this.influxDB.Query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
+		List<Serie> result = this.influxDB.query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 
 		this.influxDB.deletePoints(dbName, "testSeries");
-		result = this.influxDB.Query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
+		result = this.influxDB.query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 0);
 

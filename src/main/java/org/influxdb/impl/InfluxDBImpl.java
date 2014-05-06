@@ -85,7 +85,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public List<Serie> Query(final String database, final String query, final TimeUnit precision) {
+	public List<Serie> query(final String database, final String query, final TimeUnit precision) {
 		return this.influxDBService.query(database, query, this.username, this.password, toTimePrecision(precision));
 	}
 

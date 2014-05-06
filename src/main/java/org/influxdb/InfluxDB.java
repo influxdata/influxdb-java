@@ -81,7 +81,7 @@ public interface InfluxDB {
 	 *            the precision used for the values.
 	 * @return a List of Series which matched the query.
 	 */
-	public List<Serie> Query(final String database, final String query, final TimeUnit precision);
+	public List<Serie> query(final String database, final String query, final TimeUnit precision);
 
 	/**
 	 * Create a new Database.
