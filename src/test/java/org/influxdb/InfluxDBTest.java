@@ -70,7 +70,7 @@ public class InfluxDBTest {
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.FULL);
+		this.influxDB.setLogLevel(LogLevel.NONE);
 	}
 
 	/**
@@ -142,41 +142,13 @@ public class InfluxDBTest {
 		String dbName = "write-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
 
-		Serie serie = new Serie("testSeries");
-		serie.setColumns(new String[] { "value1", "value2" });
-		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
-		serie.setPoints(new Object[][] { point });
+		Serie serie = new Serie.Builder("testSeries")
+				.columns("value1", "value2")
+				.values(System.currentTimeMillis(), 5)
+				.build();
 		Serie[] series = new Serie[] { serie };
 		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
 
-		this.influxDB.deleteDatabase(dbName);
-	}
-
-	/**
-	 * Test that writing of a many Series works.
-	 */
-	@Test()
-	public void writeManyTest() {
-		String dbName = "writemany-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
-		int outer = 20;
-		int inner = 50;
-		Stopwatch watch = Stopwatch.createStarted();
-		for (int i = 0; i < outer; i++) {
-			Serie serie = new Serie("testSeries");
-			serie.setColumns(new String[] { "value1", "value2" });
-			Object[][] points = new Object[inner][2];
-			for (int j = 0; j < inner; j++) {
-				Object[] point = new Object[2];
-				point[0] = System.currentTimeMillis();
-				point[1] = 50f + (Math.random() * 10);
-				points[j] = point;
-			}
-			serie.setPoints(points);
-			Serie[] series = new Serie[] { serie };
-			this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
-		}
-		System.out.println("Inserted " + (outer * inner) + " Datapoints in " + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -221,7 +193,7 @@ public class InfluxDBTest {
 					.columns("column1", "column2")
 					.values(System.currentTimeMillis(), 1, 2)
 					.build();
-			Assert.fail("It is expected that creation of a Serie more Values than columns fails");
+			Assert.fail("It is expected that creation of a Serie with more values than columns fails");
 		} catch (Exception e) {
 			// Expected.
 		}
@@ -231,11 +203,21 @@ public class InfluxDBTest {
 					.columns("column1", "column2", "column3")
 					.values(System.currentTimeMillis(), 1)
 					.build();
-			Assert.fail("It is expected that creation of a Serie more Values than columns fails");
+			Assert.fail("It is expected that creation of a Serie with more columns than values fails");
 		} catch (Exception e) {
 			// Expected.
 		}
 
+		try {
+			new Serie.Builder("SerieWith wrong value count")
+					.columns("column1", "column2")
+					.values(System.currentTimeMillis(), 1)
+					.columns("column1", "column2")
+					.build();
+			Assert.fail("It is expected that creation of a Serie and calling columns more than once fails.");
+		} catch (Exception e) {
+			// Expected.
+		}
 	}
 
 	/**
@@ -246,10 +228,10 @@ public class InfluxDBTest {
 		String dbName = "query-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
 
-		Serie serie = new Serie("testSeries");
-		serie.setColumns(new String[] { "value1", "value2" });
-		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
-		serie.setPoints(new Object[][] { point });
+		Serie serie = new Serie.Builder("testSeries")
+				.columns("value1", "value2")
+				.values(System.currentTimeMillis(), 5)
+				.build();
 
 		Serie[] series = new Serie[] { serie };
 		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
@@ -258,7 +240,50 @@ public class InfluxDBTest {
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 		// [{"name":"testSeries","columns":["time","sequence_number","value"],"points":[[1398412802823,160001,5]]}]
-		Assert.assertEquals((Double) result.get(0).getPoints()[0][2], 5d, 0d);
+		Assert.assertEquals((Double) result.get(0).getRows().get(0).get("value2"), 5d, 0d);
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * Test that querying works.
+	 */
+	@Test
+	public void complexQueryTest() {
+		String dbName = "complexquery-unittest-" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName, 1);
+
+		Serie serie = new Serie.Builder("testSeries")
+				.columns("time", "idle", "steal", "system", "customername")
+				.values(System.currentTimeMillis(), 5d, 4d, 3d, "aCustomer")
+				.values(System.currentTimeMillis(), 15d, 14d, 13d, "aCustomer1")
+				.values(System.currentTimeMillis(), 25d, 24d, 23d, "aCustomer2")
+				.build();
+
+		Serie[] series = new Serie[] { serie };
+		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+
+		List<Serie> result = this.influxDB.Query(
+				dbName,
+				"select time, idle, steal, system, customername from testSeries",
+				TimeUnit.MILLISECONDS);
+		Assert.assertNotNull(result);
+		Assert.assertEquals(result.size(), 1);
+
+		Assert.assertNotNull(result.get(0).getRows());
+		Assert.assertTrue(result.get(0).getRows().size() == 3);
+
+		Assert.assertEquals((Double) result.get(0).getRows().get(2).get("idle"), 5d, 0d);
+		Assert.assertEquals((Double) result.get(0).getRows().get(2).get("system"), 3d, 0d);
+		Assert.assertEquals((String) result.get(0).getRows().get(2).get("customername"), "aCustomer");
+
+		Assert.assertEquals((Double) result.get(0).getRows().get(1).get("idle"), 15d, 0d);
+		Assert.assertEquals((Double) result.get(0).getRows().get(1).get("system"), 13d, 0d);
+		Assert.assertEquals((String) result.get(0).getRows().get(1).get("customername"), "aCustomer1");
+
+		Assert.assertEquals((Double) result.get(0).getRows().get(0).get("idle"), 25d, 0d);
+		Assert.assertEquals((Double) result.get(0).getRows().get(0).get("system"), 23d, 0d);
+		Assert.assertEquals((String) result.get(0).getRows().get(0).get("customername"), "aCustomer2");
+
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -408,10 +433,10 @@ public class InfluxDBTest {
 		String dbName = "deletepoints-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName, 1);
 
-		Serie serie = new Serie("testSeries");
-		serie.setColumns(new String[] { "value1", "value2" });
-		Object[] point = new Object[] { System.currentTimeMillis(), 5 };
-		serie.setPoints(new Object[][] { point });
+		Serie serie = new Serie.Builder("testSeries")
+				.columns("value1", "value2")
+				.values(System.currentTimeMillis(), 5)
+				.build();
 		Serie[] series = new Serie[] { serie };
 		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
 

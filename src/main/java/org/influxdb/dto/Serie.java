@@ -2,11 +2,13 @@ package org.influxdb.dto;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * Representation of a InfluxDB database serie.
@@ -35,7 +37,7 @@ public class Serie {
 	public static class Builder {
 		private final String name;
 		private final List<String> columns = Lists.newArrayList();
-		private final List<Object[]> valueRows = Lists.newArrayList();
+		private final List<List<Object>> valueRows = Lists.newArrayList();
 
 		/**
 		 * @param name
@@ -52,6 +54,7 @@ public class Serie {
 		 * @return this Builder instance.
 		 */
 		public Builder columns(final String... columnNames) {
+			Preconditions.checkArgument(this.columns.isEmpty(), "You can only call columns() once.");
 			this.columns.addAll(Arrays.asList(columnNames));
 			return this;
 		}
@@ -63,7 +66,7 @@ public class Serie {
 		 */
 		public Builder values(final Object... values) {
 			Preconditions.checkArgument(values.length == this.columns.size(), "Value count differs from column count.");
-			this.valueRows.add(values);
+			this.valueRows.add(Arrays.asList(values));
 			return this;
 		}
 
@@ -76,12 +79,13 @@ public class Serie {
 			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.name), "Serie name must not be null or empty.");
 			Serie serie = new Serie(this.name);
 			serie.columns = this.columns.toArray(new String[this.columns.size()]);
-			serie.points = new Object[this.valueRows.size()][this.columns.size()];
+			Object[][] points = new Object[this.valueRows.size()][this.columns.size()];
 			int row = 0;
-			for (Object[] values : this.valueRows) {
-				serie.points[row] = values;
+			for (List<Object> values : this.valueRows) {
+				points[row] = values.toArray();
 				row++;
 			}
+			serie.points = points;
 			return serie;
 		}
 	}
@@ -89,10 +93,8 @@ public class Serie {
 	/**
 	 * @param name
 	 *            the name of the serie.
-	 * @deprecated will be removed in Version 1.1 please use {@link Serie.Builder} instead.
 	 */
-	@Deprecated
-	public Serie(final String name) {
+	Serie(final String name) {
 		this.name = name;
 	}
 
@@ -111,26 +113,20 @@ public class Serie {
 	}
 
 	/**
-	 * @param columns
-	 *            the columns to set
+	 * @return the Points as a List of Maps with columnName to value.
 	 */
-	public void setColumns(final String[] columns) {
-		this.columns = columns;
-	}
-
-	/**
-	 * @return the points
-	 */
-	public Object[][] getPoints() {
-		return this.points;
-	}
-
-	/**
-	 * @param points
-	 *            the points to set
-	 */
-	public void setPoints(final Object[][] points) {
-		this.points = points;
+	public List<Map<String, Object>> getRows() {
+		List<Map<String, Object>> rows = Lists.newArrayList();
+		for (Object[] point : this.points) {
+			int column = 0;
+			Map<String, Object> row = Maps.newHashMap();
+			for (Object value : point) {
+				row.put(this.columns[column], value);
+				column++;
+			}
+			rows.add(row);
+		}
+		return rows;
 	}
 
 	/**
