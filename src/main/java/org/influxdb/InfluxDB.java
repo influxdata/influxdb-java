@@ -61,12 +61,12 @@ public interface InfluxDB {
 	 * 
 	 * @param database
 	 *            the name of the database to write to.
-	 * @param series
-	 *            a Array of {@link Serie}s to write.
 	 * @param precision
 	 *            the precision used for the values.
+	 * @param series
+	 *            a Array of {@link Serie}s to write.
 	 */
-	public void write(final String database, final Serie[] series, final TimeUnit precision);
+	public void write(final String database, final TimeUnit precision, final Serie... series);
 
 	/**
 	 * Execute a query agains a database.

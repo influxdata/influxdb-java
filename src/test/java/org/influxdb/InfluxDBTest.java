@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import com.kpelykh.docker.client.DockerClient;
 import com.kpelykh.docker.client.DockerException;
 import com.kpelykh.docker.client.model.ContainerConfig;
@@ -146,8 +147,7 @@ public class InfluxDBTest {
 				.columns("value1", "value2")
 				.values(System.currentTimeMillis(), 5)
 				.build();
-		Serie[] series = new Serie[] { serie };
-		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
 		this.influxDB.deleteDatabase(dbName);
 	}
@@ -161,6 +161,7 @@ public class InfluxDBTest {
 		this.influxDB.createDatabase(dbName, 1);
 		int outer = 20;
 		Stopwatch watch = Stopwatch.createStarted();
+		List<Serie> series = Lists.newArrayList();
 		for (int i = 0; i < outer; i++) {
 			Serie serie = new Serie.Builder("serieFromBuilder")
 					.columns("column1", "column2")
@@ -175,9 +176,10 @@ public class InfluxDBTest {
 					.values(System.currentTimeMillis(), 9)
 					.values(System.currentTimeMillis(), 10)
 					.build();
-			Serie[] series = new Serie[] { serie };
-			this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+			series.add(serie);
 		}
+		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, series.toArray(new Serie[0]));
+
 		System.out.println("Inserted " + outer + " Datapoints in " + watch);
 		this.influxDB.deleteDatabase(dbName);
 
@@ -233,8 +235,7 @@ public class InfluxDBTest {
 				.values(System.currentTimeMillis(), 5)
 				.build();
 
-		Serie[] series = new Serie[] { serie };
-		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
 		List<Serie> result = this.influxDB.Query(dbName, "select value2 from testSeries", TimeUnit.MILLISECONDS);
 		Assert.assertNotNull(result);
@@ -259,8 +260,7 @@ public class InfluxDBTest {
 				.values(System.currentTimeMillis(), 25d, 24d, 23d, "aCustomer2")
 				.build();
 
-		Serie[] series = new Serie[] { serie };
-		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
 		List<Serie> result = this.influxDB.Query(
 				dbName,
@@ -437,16 +437,15 @@ public class InfluxDBTest {
 				.columns("value1", "value2")
 				.values(System.currentTimeMillis(), 5)
 				.build();
-		Serie[] series = new Serie[] { serie };
-		this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
 		List<Serie> result = this.influxDB.Query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
-		Assert.assertNotNull(series);
+		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 
 		this.influxDB.deletePoints(dbName, "testSeries");
 		result = this.influxDB.Query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
-		Assert.assertNotNull(series);
+		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 0);
 
 		this.influxDB.deleteDatabase(dbName);

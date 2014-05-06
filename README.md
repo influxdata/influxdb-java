@@ -13,13 +13,17 @@ InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "r
 
 this.influxDB.createDatabase("aTimeSeries", 1);
 
-Serie serie = new Serie.Builder("serieName")
+Serie serie1 = new Serie.Builder("serie2Name")
 			.columns("column1", "column2")
 			.values(System.currentTimeMillis(), 1)
 			.values(System.currentTimeMillis(), 2)
 			.build();
-Serie[] series = new Serie[] { serie };
-this.influxDB.write(dbName, series, TimeUnit.MILLISECONDS);
+Serie serie2 = new Serie.Builder("serie2Name")
+			.columns("column1", "column2")
+			.values(System.currentTimeMillis(), 1)
+			.values(System.currentTimeMillis(), 2)
+			.build();
+this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
 
 ```
 

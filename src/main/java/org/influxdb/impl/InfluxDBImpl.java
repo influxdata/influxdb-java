@@ -80,7 +80,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void write(final String database, final Serie[] series, final TimeUnit precision) {
+	public void write(final String database, final TimeUnit precision, final Serie... series) {
 		this.influxDBService.write(database, series, this.username, this.password, toTimePrecision(precision));
 	}
 
