@@ -11,7 +11,7 @@ Typical usage looks like:
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 
-this.influxDB.createDatabase("aTimeSeries", 1);
+this.influxDB.createDatabase("aTimeSeries");
 
 Serie serie1 = new Serie.Builder("serie2Name")
 			.columns("column1", "column2")
