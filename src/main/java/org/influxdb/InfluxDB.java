@@ -57,6 +57,13 @@ public interface InfluxDB {
 	public Pong ping();
 
 	/**
+	 * Return the version of the connected influxDB Server.
+	 * 
+	 * @return the version String, otherwise unknown.
+	 */
+	public String version();
+
+	/**
 	 * Write a Series to the given database.
 	 * 
 	 * @param database

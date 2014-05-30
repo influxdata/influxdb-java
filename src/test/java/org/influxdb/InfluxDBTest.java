@@ -50,7 +50,7 @@ public class InfluxDBTest {
 		this.dockerClient.pull("influxdb/influxdb-java");
 
 		ContainerConfig containerConfig = new ContainerConfig();
-		containerConfig.setImage("majst01/influxdb-java");
+		containerConfig.setImage("influxdb/influxdb-java");
 		this.container = this.dockerClient.createContainer(containerConfig);
 		HostConfig hostconfig = new HostConfig();
 		hostconfig.setPortBindings(new Ports());
@@ -465,5 +465,15 @@ public class InfluxDBTest {
 		Assert.assertEquals(result.size(), 0);
 
 		this.influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * Test that version works.
+	 */
+	@Test
+	public void testVersion() {
+		String version = this.influxDB.version();
+		Assert.assertNotNull(version);
+		System.out.println("Version: " + version);
 	}
 }

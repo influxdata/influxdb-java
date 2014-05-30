@@ -9,6 +9,7 @@ import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
 
+import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
@@ -20,6 +21,9 @@ interface InfluxDBService {
 
 	@GET("/ping")
 	public Pong ping();
+
+	@GET("/interfaces")
+	public Response version();
 
 	@POST("/db")
 	public String createDatabase(@Body Database database, @Query("u") String username, @Query("p") String password);

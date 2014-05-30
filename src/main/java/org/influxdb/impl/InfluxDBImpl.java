@@ -14,6 +14,8 @@ import org.influxdb.dto.User;
 import com.google.common.base.Stopwatch;
 
 import retrofit.RestAdapter;
+import retrofit.client.Header;
+import retrofit.client.Response;
 
 /**
  * Implementation of a InluxDB API.
@@ -76,6 +78,19 @@ public class InfluxDBImpl implements InfluxDB {
 		Pong pong = this.influxDBService.ping();
 		pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
 		return pong;
+	}
+
+	@Override
+	public String version() {
+		Response response = this.influxDBService.version();
+		String version = "unknown";
+		List<Header> headers = response.getHeaders();
+		for (Header header : headers) {
+			if (null != header.getName() && header.getName().equalsIgnoreCase("X-Influxdb-Version")) {
+				version = header.getValue();
+			}
+		}
+		return version;
 	}
 
 	@Override
