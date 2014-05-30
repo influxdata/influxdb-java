@@ -27,6 +27,16 @@ this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
 
 ```
 
+### Maven
+```
+		<dependency>
+			<groupId>org.influxdb</groupId>
+			<artifactId>influxdb-java</artifactId>
+			<version>1.1</version>
+		</dependency>
+```
+
+
 For additional usage examples have a look at [InfluxDBTest.java](https://github.com/majst01/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 
 ### Build Requirements
