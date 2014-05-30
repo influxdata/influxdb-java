@@ -105,12 +105,12 @@ public class InfluxDBTest {
 	@Test
 	public void describeDatabasesTest() {
 		String dbName = "unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		List<Database> result = this.influxDB.describeDatabases();
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 0);
 		for (Database database : result) {
-			System.out.println(database.getName() + " " + database.getReplicationFactor());
+			System.out.println(database.getName());
 		}
 	}
 
@@ -121,14 +121,14 @@ public class InfluxDBTest {
 	public void deleteDatabaseTest() {
 		List<Database> result = this.influxDB.describeDatabases();
 		int databases = result.size();
-		this.influxDB.createDatabase("toDelete", 1);
+		this.influxDB.createDatabase("toDelete");
 		result = this.influxDB.describeDatabases();
 		Assert.assertEquals(result.size(), databases + 1);
 		this.influxDB.deleteDatabase("toDelete");
 		result = this.influxDB.describeDatabases();
 		Assert.assertEquals(result.size(), databases);
 		// Creation of the same database must succeed.
-		this.influxDB.createDatabase("toDelete", 1);
+		this.influxDB.createDatabase("toDelete");
 		this.influxDB.deleteDatabase("toDelete");
 
 		result = this.influxDB.describeDatabases();
@@ -141,7 +141,7 @@ public class InfluxDBTest {
 	@Test
 	public void writeTest() {
 		String dbName = "write-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 
 		Serie serie = new Serie.Builder("testSeries")
 				.columns("value1", "value2")
@@ -153,12 +153,28 @@ public class InfluxDBTest {
 	}
 
 	/**
+	 * Test how writing to a nonexisting Database behaves.
+	 */
+	// FIXME this test should be enabled.
+	@Test(enabled = false)
+	public void writeToNonExistingDatabaseTest() {
+		Serie serie = new Serie.Builder("testSeries")
+				.columns("value1", "value2")
+				.values(System.currentTimeMillis(), 5)
+				.build();
+		this.influxDB.write("NonExisting", TimeUnit.MILLISECONDS, serie);
+		List<Serie> series = this.influxDB.query("NonExisting", "select * from value1", TimeUnit.MILLISECONDS);
+		Assert.assertNotNull(series);
+		Assert.assertEquals(series.size(), 1);
+	}
+
+	/**
 	 * Test for the new Serie.Builder.
 	 */
 	@Test
 	public void writeWithSerieBuilder() {
 		String dbName = "writeseriebuilder-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		int outer = 20;
 		Stopwatch watch = Stopwatch.createStarted();
 		List<Serie> series = Lists.newArrayList();
@@ -228,7 +244,7 @@ public class InfluxDBTest {
 	@Test
 	public void queryTest() {
 		String dbName = "query-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 
 		Serie serie = new Serie.Builder("testSeries")
 				.columns("value1", "value2")
@@ -251,7 +267,7 @@ public class InfluxDBTest {
 	@Test
 	public void complexQueryTest() {
 		String dbName = "complexquery-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 
 		Serie serie = new Serie.Builder("testSeries")
 				.columns("time", "idle", "steal", "system", "customername")
@@ -320,7 +336,7 @@ public class InfluxDBTest {
 	@Test
 	public void testCreateDescribeDeleteDatabaseUser() {
 		String dbName = "createuser-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		List<User> users = this.influxDB.describeDatabaseUsers(dbName);
 		int userCount = users.size();
 		this.influxDB.createDatabaseUser(dbName, "aUser", "aPassword");
@@ -340,7 +356,7 @@ public class InfluxDBTest {
 	@Test
 	public void testUpdateAlterDatabaseUser() {
 		String dbName = "updateuser-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		this.influxDB.createDatabaseUser(dbName, "aUser", "aPassword");
 		this.influxDB.updateDatabaseUser(dbName, "aUser", "aNewPassword");
 		this.influxDB.alterDatabasePrivilege(dbName, "aUser", true);
@@ -353,7 +369,7 @@ public class InfluxDBTest {
 	@Test
 	public void testUpdateAlterDatabaseUserWithPermissions() {
 		String dbName = "updateuserpermission-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		this.influxDB.createDatabaseUser(dbName, "aUser", "aPassword", "^$", dbName);
 		this.influxDB.alterDatabasePrivilege(dbName, "aUser", true, "^$", dbName);
 
@@ -379,7 +395,7 @@ public class InfluxDBTest {
 	@Test(enabled = true)
 	public void testAuthenticateDatabaseUser() {
 		String dbName = "testAuthenticateDatabaseUser-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		this.influxDB.createDatabaseUser(dbName, "aTestUser", "aTestUserPassword");
 		this.influxDB.authenticateDatabaseUser(dbName, "aTestUser", "aTestUserPassword");
 		this.influxDB.updateDatabaseUser(dbName, "aTestUser", "aNewPassword");
@@ -399,7 +415,7 @@ public class InfluxDBTest {
 	@Test
 	public void testContinuousQueries() {
 		String dbName = "continuousquery-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 		this.influxDB.query(dbName, "select * from clicks into events.global;", TimeUnit.MILLISECONDS);
 
 		List<ContinuousQuery> result = this.influxDB.describeContinuousQueries(dbName);
@@ -431,7 +447,7 @@ public class InfluxDBTest {
 	@Test
 	public void testDeletePoints() {
 		String dbName = "deletepoints-unittest-" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName, 1);
+		this.influxDB.createDatabase(dbName);
 
 		Serie serie = new Serie.Builder("testSeries")
 				.columns("value1", "value2")

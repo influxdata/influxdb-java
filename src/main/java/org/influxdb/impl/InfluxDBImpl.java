@@ -11,7 +11,6 @@ import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.User;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 
 import retrofit.RestAdapter;
@@ -90,9 +89,8 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void createDatabase(final String name, final int replicationFactor) {
-		Preconditions.checkArgument(replicationFactor >= 1, "Replicationfactor must be greater or equal to 1.");
-		Database db = new Database(name, replicationFactor);
+	public void createDatabase(final String name) {
+		Database db = new Database(name);
 		this.influxDBService.createDatabase(db, this.username, this.password);
 	}
 

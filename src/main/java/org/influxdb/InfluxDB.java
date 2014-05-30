@@ -88,10 +88,8 @@ public interface InfluxDB {
 	 * 
 	 * @param name
 	 *            the name of the new database.
-	 * @param replicationFactor
-	 *            the replicationfactor to use, must be >= 1.
 	 */
-	public void createDatabase(final String name, final int replicationFactor);
+	public void createDatabase(final String name);
 
 	/**
 	 * Delete a database.

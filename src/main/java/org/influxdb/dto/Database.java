@@ -10,18 +10,14 @@ import com.google.common.base.Objects;
  */
 public class Database {
 	private final String name;
-	private final int replicationFactor;
 
 	/**
 	 * @param name
 	 *            the name of the database.
-	 * @param replicationFactor
-	 *            the replicationfactor for the metrics data stored in this database. Must be >= 1.
 	 */
-	public Database(final String name, final int replicationFactor) {
+	public Database(final String name) {
 		super();
 		this.name = name;
-		this.replicationFactor = replicationFactor;
 	}
 
 	/**
@@ -32,22 +28,11 @@ public class Database {
 	}
 
 	/**
-	 * @return the replicationFactor
-	 */
-	public int getReplicationFactor() {
-		return this.replicationFactor;
-	}
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public String toString() {
-		return Objects
-				.toStringHelper(this.getClass())
-				.add("name", this.name)
-				.add("replicationFactor", this.replicationFactor)
-				.toString();
+		return Objects.toStringHelper(this.getClass()).add("name", this.name).toString();
 	}
 
 }
