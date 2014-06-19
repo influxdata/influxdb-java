@@ -1,3 +1,10 @@
+## v1.2 [unreleased]
+
+#### Tasks
+
+- [Issue #6] (https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0 
+- [Issue #7] (https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0 
+
 ## v1.1 [2014-05-31]
 
 #### Features
