@@ -2,6 +2,7 @@
 
 #### Tasks
 
+- [Issue #8] (https://github.com/influxdb/influxdb-java/issues/8) Use com.github.docker-java which replaces com.kpelykh for Integration tests.
 - [Issue #6] (https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0 
 - [Issue #7] (https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0 
 
