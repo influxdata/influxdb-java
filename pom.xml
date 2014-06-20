@@ -73,7 +73,7 @@
 		</dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
-      <artifactId>guava-gwt</artifactId>
+      <artifactId>guava</artifactId>
       <version>17.0</version>
     </dependency>
     <dependency>
