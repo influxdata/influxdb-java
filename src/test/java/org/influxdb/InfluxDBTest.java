@@ -15,7 +15,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.kpelykh.docker.client.DockerClient;
 import com.kpelykh.docker.client.DockerException;
@@ -109,9 +108,14 @@ public class InfluxDBTest {
 		List<Database> result = this.influxDB.describeDatabases();
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 0);
+		boolean found = false;
 		for (Database database : result) {
-			System.out.println(database.getName());
+			if (database.getName().equals(dbName)) {
+				found = true;
+				break;
+			}
 		}
+		Assert.assertTrue(found, "It is expected that describeDataBases contents the newly create database.");
 	}
 
 	/**
@@ -176,7 +180,6 @@ public class InfluxDBTest {
 		String dbName = "writeseriebuilder-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		int outer = 20;
-		Stopwatch watch = Stopwatch.createStarted();
 		List<Serie> series = Lists.newArrayList();
 		for (int i = 0; i < outer; i++) {
 			Serie serie = new Serie.Builder("serieFromBuilder")
@@ -196,7 +199,6 @@ public class InfluxDBTest {
 		}
 		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, series.toArray(new Serie[0]));
 
-		System.out.println("Inserted " + outer + " Datapoints in " + watch);
 		this.influxDB.deleteDatabase(dbName);
 
 		try {
