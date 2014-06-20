@@ -232,8 +232,8 @@ public class InfluxDBImpl implements InfluxDB {
 		case MICROSECONDS:
 			return "u";
 		default:
-			throw new IllegalArgumentException("time precision should be SECONDS or MILLISECONDS or MICROSECONDS");
+			throw new IllegalArgumentException("time precision must be " + TimeUnit.SECONDS + ", "
+					+ TimeUnit.MILLISECONDS + " or " + TimeUnit.MICROSECONDS);
 		}
 	}
-
 }
