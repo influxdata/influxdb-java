@@ -71,6 +71,7 @@ public class InfluxDBTest {
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
 		this.influxDB.setLogLevel(LogLevel.NONE);
+		System.out.println("Connected to InfluxDB Version: " + this.influxDB.version());
 	}
 
 	/**
@@ -476,6 +477,5 @@ public class InfluxDBTest {
 	public void testVersion() {
 		String version = this.influxDB.version();
 		Assert.assertNotNull(version);
-		System.out.println("Version: " + version);
 	}
 }
