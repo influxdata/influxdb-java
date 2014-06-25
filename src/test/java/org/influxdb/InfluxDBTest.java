@@ -2,19 +2,25 @@ package org.influxdb;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
 import org.influxdb.dto.Pong;
-import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
+import org.influxdb.dto.Server;
+import org.influxdb.dto.Shard;
+import org.influxdb.dto.Shard.Member;
+import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.kpelykh.docker.client.DockerClient;
 import com.kpelykh.docker.client.DockerException;
@@ -45,6 +51,8 @@ public class InfluxDBTest {
 	 */
 	@BeforeClass
 	public void setUp() throws DockerException, InterruptedException {
+		// Disable logging for the DockerClient.
+		Logger.getLogger("com.sun.jersey").setLevel(Level.OFF);
 		this.dockerClient = new DockerClient("http://localhost:4243");
 		this.dockerClient.pull("majst01/influxdb-java");
 
@@ -71,7 +79,9 @@ public class InfluxDBTest {
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
 		this.influxDB.setLogLevel(LogLevel.NONE);
-		System.out.println("Connected to InfluxDB Version: " + this.influxDB.version());
+		System.out.println("##################################################################################");
+		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
+		System.out.println("##################################################################################");
 	}
 
 	/**
@@ -93,7 +103,7 @@ public class InfluxDBTest {
 	 * Test for a ping.
 	 */
 	@Test
-	public void pingTest() {
+	public void testPing() {
 		Pong result = this.influxDB.ping();
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.getStatus(), "ok");
@@ -103,7 +113,7 @@ public class InfluxDBTest {
 	 * Test that describe Databases works.
 	 */
 	@Test
-	public void describeDatabasesTest() {
+	public void testDescribeDatabases() {
 		String dbName = "unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		List<Database> result = this.influxDB.describeDatabases();
@@ -123,7 +133,7 @@ public class InfluxDBTest {
 	 * Test that deletion of a Database works.
 	 */
 	@Test
-	public void deleteDatabaseTest() {
+	public void testDeleteDatabase() {
 		List<Database> result = this.influxDB.describeDatabases();
 		int databases = result.size();
 		this.influxDB.createDatabase("toDelete");
@@ -144,7 +154,7 @@ public class InfluxDBTest {
 	 * Test that writing of a simple Serie works.
 	 */
 	@Test
-	public void writeTest() {
+	public void testWrite() {
 		String dbName = "write-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
@@ -162,7 +172,7 @@ public class InfluxDBTest {
 	 */
 	// FIXME this test should be enabled.
 	@Test(enabled = false)
-	public void writeToNonExistingDatabaseTest() {
+	public void testWriteToNonExistingDatabase() {
 		Serie serie = new Serie.Builder("testSeries")
 				.columns("value1", "value2")
 				.values(System.currentTimeMillis(), 5)
@@ -177,7 +187,7 @@ public class InfluxDBTest {
 	 * Test for the new Serie.Builder.
 	 */
 	@Test
-	public void writeWithSerieBuilder() {
+	public void testWriteWithSerieBuilder() {
 		String dbName = "writeseriebuilder-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		int outer = 20;
@@ -245,7 +255,7 @@ public class InfluxDBTest {
 	 * Test that querying works.
 	 */
 	@Test
-	public void queryTest() {
+	public void testQuery() {
 		String dbName = "query-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
@@ -268,7 +278,7 @@ public class InfluxDBTest {
 	 * Test that querying works.
 	 */
 	@Test
-	public void complexQueryTest() {
+	public void testComplexQuery() {
 		String dbName = "complexquery-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
@@ -434,17 +444,6 @@ public class InfluxDBTest {
 	}
 
 	/**
-	 * Test is disabled because this is not implemented in influxDB.
-	 */
-	@Test(enabled = false)
-	public void testCreateDeleteDescribeScheduledDeletes() {
-		String dbName = "scheduleddeletes-unittest-" + System.currentTimeMillis();
-		List<ScheduledDelete> deletes = this.influxDB.describeScheduledDeletes(dbName);
-		Assert.assertNull(deletes);
-		Assert.assertEquals(deletes.size(), 0);
-	}
-
-	/**
 	 * Test that deletion of points works.
 	 */
 	@Test
@@ -478,4 +477,103 @@ public class InfluxDBTest {
 		String version = this.influxDB.version();
 		Assert.assertNotNull(version);
 	}
+
+	/**
+	 * Test that compaction works.
+	 */
+	@Test
+	public void testForceRaftCompaction() {
+		this.influxDB.forceRaftCompaction();
+	}
+
+	/**
+	 * Test that list interfaces works.
+	 */
+	@Test
+	public void testInterfaces() {
+		List<String> interfaces = this.influxDB.interfaces();
+		Assert.assertNotNull(interfaces);
+		Assert.assertTrue(interfaces.size() > 0);
+		Assert.assertEquals(interfaces.get(0), "default");
+	}
+
+	/**
+	 * Test that sync works.
+	 */
+	@Test
+	public void testSync() {
+		Boolean executed = this.influxDB.sync();
+		Assert.assertTrue(executed);
+	}
+
+	/**
+	 * Test that list servers works.
+	 */
+	@Test
+	public void testListServers() {
+		List<Server> servers = this.influxDB.listServers();
+		Assert.assertNotNull(servers);
+		Assert.assertTrue(servers.size() > 0);
+		Assert.assertEquals(servers.get(0).getId(), 1);
+	}
+
+	/**
+	 * Test that remove servers works.
+	 */
+	@Test
+	public void testRemoveServers() {
+		this.influxDB.removeServers(2);
+	}
+
+	/**
+	 * Test that describe, create and drop of shards works.
+	 * 
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testDescribeCreateDropShard() throws InterruptedException {
+		Shards existingShards = this.influxDB.getShards();
+		Assert.assertNotNull(existingShards);
+		Assert.assertNotNull(existingShards.getLongTerm());
+		Assert.assertNotNull(existingShards.getShortTerm());
+		int existingLongTermShards = existingShards.getLongTerm().size();
+		int existingShortTermShards = existingShards.getShortTerm().size();
+
+		Shard shard = new Shard();
+		long now = System.currentTimeMillis() / 1000L;
+		shard.setStartTime(now);
+		shard.setEndTime(now + 10000L);
+		shard.setLongTerm(false);
+		Member shards = new Member();
+		shards.setServerIds(ImmutableList.of(1));
+		shard.setShards(ImmutableList.of(shards));
+		this.influxDB.createShard(shard);
+
+		Shard shard2 = new Shard();
+		shard.setStartTime(now);
+		shard.setEndTime(now + 10000L);
+		shard.setLongTerm(false);
+		Member shards2 = new Member();
+		shards2.setServerIds(ImmutableList.of(1));
+		shard2.setShards(ImmutableList.of(shards2));
+		this.influxDB.createShard(shard2);
+
+		Shards createdShards = this.influxDB.getShards();
+
+		Assert.assertNotNull(createdShards);
+		Assert.assertNotNull(createdShards.getLongTerm());
+		Assert.assertNotNull(createdShards.getShortTerm());
+		Assert.assertEquals(createdShards.getShortTerm().size(), existingShortTermShards + 2);
+		Assert.assertEquals(createdShards.getLongTerm().size(), existingLongTermShards);
+
+		shard.setId(2);
+		shard2.setId(3);
+		this.influxDB.dropShard(shard);
+		existingShards = this.influxDB.getShards();
+		Assert.assertEquals(existingShards.getShortTerm().size(), existingShortTermShards + 1);
+		this.influxDB.dropShard(shard2);
+		existingShards = this.influxDB.getShards();
+		Assert.assertEquals(existingShards.getShortTerm().size(), existingShortTermShards);
+	}
+
 }
