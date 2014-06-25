@@ -6,8 +6,10 @@ import java.util.concurrent.TimeUnit;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
 import org.influxdb.dto.Pong;
-import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
+import org.influxdb.dto.Server;
+import org.influxdb.dto.Shard;
+import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
 
 /**
@@ -260,33 +262,61 @@ public interface InfluxDB {
 	public void deletePoints(final String database, final String serieName);
 
 	/**
-	 * Create a new scheduled deletion.
-	 * 
-	 * @param database
-	 *            the name of the database.
-	 * @param delete
-	 *            the query which describes what to delete.
+	 * Force Database compaction.
 	 * 
 	 */
-	public void createScheduledDelete(final String database, final ScheduledDelete delete);
+	public void forceRaftCompaction();
 
 	/**
-	 * Describe all scheduled deletes.
+	 * List all interfaces influxDB is listening.
 	 * 
-	 * @param database
-	 *            the name of the database for which all scheduled deletes should be described.
-	 * @return a list of all scheduled deletes.
+	 * @return a List of interface names.
 	 */
-	public List<ScheduledDelete> describeScheduledDeletes(final String database);
+	public List<String> interfaces();
 
 	/**
-	 * Delete a scheduled deletion.
+	 * Sync the database to the filesystem.
 	 * 
-	 * @param database
-	 *            the name of the database for which this scheduled deletes should be deleted-.
+	 * @return true|false if successful.
+	 */
+	public Boolean sync();
+
+	/**
+	 * List all servers which are member of the cluster.
+	 * 
+	 * @return a List of all influxdb servers.
+	 */
+	public List<Server> listServers();
+
+	/**
+	 * Remove the given Server from the cluster.
+	 * 
 	 * @param id
-	 *            the id of the delete.
+	 *            the id of the server to remove.
 	 */
-	public void deleteScheduledDelete(final String database, final int id);
+	public void removeServers(final int id);
+
+	/**
+	 * Create a new Shard.
+	 * 
+	 * @param shard
+	 *            the new shard to create.
+	 */
+	public void createShard(final Shard shard);
+
+	/**
+	 * Describe all existing shards.
+	 * 
+	 * @return a Shards entity whith all existing shards.
+	 */
+	public Shards getShards();
+
+	/**
+	 * Drop the given shard.
+	 * 
+	 * @param shard
+	 *            the shard to delete.
+	 */
+	public void dropShard(final Shard shard);
 
 }

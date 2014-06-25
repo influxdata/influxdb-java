@@ -5,8 +5,11 @@ import java.util.List;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
 import org.influxdb.dto.Pong;
-import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
+import org.influxdb.dto.Server;
+import org.influxdb.dto.Shard;
+import org.influxdb.dto.Shard.Member;
+import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
 
 import retrofit.client.Response;
@@ -83,19 +86,34 @@ interface InfluxDBService {
 	public String deleteContinuousQuery(@Path("database") String database, @Path("id") int id,
 			@Query("u") String username, @Query("p") String password);
 
-	@POST("/db/{database}/scheduled_deletes")
-	public String createScheduledDelete(@Path("database") final String database, @Body ScheduledDelete delete,
-			@Query("u") String username, @Query("p") String password);
-
-	@DELETE("/db/{database}/scheduled_deletes/{id}")
-	public String deleteScheduledDelete(@Path("database") final String database, @Path("id") int id,
-			@Query("u") String username, @Query("p") String password);
-
-	@GET("/db/{database}/scheduled_deletes")
-	public List<ScheduledDelete> describeScheduledDeletes(@Path("database") final String database,
-			@Query("u") String username, @Query("p") String password);
-
 	@DELETE("/db/{database}/series/{name}")
 	public String deletePoints(@Path("database") final String database, @Path("name") String name,
 			@Query("u") String username, @Query("p") String password);
+
+	// TODO new methods start here.
+	@POST("/raft/force_compaction")
+	public String forceRaftCompaction(@Query("u") String username, @Query("p") String password);
+
+	@GET("/interfaces")
+	public List<String> interfaces(@Query("u") String username, @Query("p") String password);
+
+	@GET("/sync")
+	public Boolean sync(@Query("u") String username, @Query("p") String password);
+
+	@GET("/cluster/servers")
+	public List<Server> listServers(@Query("u") String username, @Query("p") String password);
+
+	@DELETE("/cluster/servers/{id}")
+	public String removeServers(@Path("id") int id, @Query("u") String username, @Query("p") String password);
+
+	@POST("/cluster/shards")
+	public String createShard(@Query("u") String username, @Query("p") String password, @Body Shard shard);
+
+	@GET("/cluster/shards")
+	public Shards getShards(@Query("u") String username, @Query("p") String password);
+
+	@org.influxdb.impl.DELETE("/cluster/shards/{id}")
+	public String dropShard(@Path("id") int id, @Query("u") String username, @Query("p") String password,
+			@Body Member servers);
+
 }

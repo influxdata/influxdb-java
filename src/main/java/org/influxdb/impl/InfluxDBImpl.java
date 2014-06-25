@@ -7,14 +7,18 @@ import org.influxdb.InfluxDB;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
 import org.influxdb.dto.Pong;
-import org.influxdb.dto.ScheduledDelete;
 import org.influxdb.dto.Serie;
+import org.influxdb.dto.Server;
+import org.influxdb.dto.Shard;
+import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
 
 import com.google.common.base.Stopwatch;
+import com.squareup.okhttp.OkHttpClient;
 
 import retrofit.RestAdapter;
 import retrofit.client.Header;
+import retrofit.client.OkClient;
 import retrofit.client.Response;
 
 /**
@@ -44,10 +48,13 @@ public class InfluxDBImpl implements InfluxDB {
 		this.username = username;
 		this.password = password;
 
+		OkHttpClient okHttpClient = new OkHttpClient();
 		this.restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
+				.setClient(new OkClient(okHttpClient))
 				.build();
+
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
 	}
 
@@ -200,27 +207,68 @@ public class InfluxDBImpl implements InfluxDB {
 		this.influxDBService.deletePoints(database, serieName, this.username, this.password);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void createScheduledDelete(final String database, final ScheduledDelete delete) {
-		throw new IllegalArgumentException(
-				"This is not implemented in InfluxDB, please see: https://github.com/influxdb/influxdb/issues/98");
-		// this.influxDBService.createScheduledDelete(database, delete, this.username,
-		// this.password);
+	public void forceRaftCompaction() {
+		this.influxDBService.forceRaftCompaction(this.username, this.password);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public List<ScheduledDelete> describeScheduledDeletes(final String database) {
-		throw new IllegalArgumentException(
-				"This is not implemented in InfluxDB, please see: https://github.com/influxdb/influxdb/issues/98");
-		// return this.influxDBService.describeScheduledDeletes(database, this.username,
-		// this.password);
+	public List<String> interfaces() {
+		return this.influxDBService.interfaces(this.username, this.password);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void deleteScheduledDelete(final String database, final int id) {
-		throw new IllegalArgumentException(
-				"This is not implemented in InfluxDB, please see: https://github.com/influxdb/influxdb/issues/98");
-		// this.influxDBService.deleteScheduledDelete(database, id, this.username, this.password);
+	public Boolean sync() {
+		return this.influxDBService.sync(this.username, this.password);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<Server> listServers() {
+		return this.influxDBService.listServers(this.username, this.password);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void removeServers(final int id) {
+		this.influxDBService.removeServers(id, this.username, this.password);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void createShard(final Shard shard) {
+		this.influxDBService.createShard(this.username, this.password, shard);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Shards getShards() {
+		return this.influxDBService.getShards(this.username, this.password);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void dropShard(final Shard shard) {
+		this.influxDBService.dropShard(shard.getId(), this.username, this.password, shard.getShards().get(0));
 	}
 
 	private static String toTimePrecision(final TimeUnit t) {
@@ -236,4 +284,5 @@ public class InfluxDBImpl implements InfluxDB {
 					+ TimeUnit.MILLISECONDS + " or " + TimeUnit.MICROSECONDS);
 		}
 	}
+
 }
