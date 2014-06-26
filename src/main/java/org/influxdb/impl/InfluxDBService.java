@@ -90,7 +90,6 @@ interface InfluxDBService {
 	public String deletePoints(@Path("database") final String database, @Path("name") String name,
 			@Query("u") String username, @Query("p") String password);
 
-	// TODO new methods start here.
 	@POST("/raft/force_compaction")
 	public String forceRaftCompaction(@Query("u") String username, @Query("p") String password);
 
