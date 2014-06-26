@@ -2,9 +2,12 @@
 
 #### Tasks
 
+- [Issue #2] (https://github.com/influxdb/influxdb-java/issues/2) Implement the last missing api calls ( interfaces, sync, forceCompaction, servers, shards)
 - [Issue #8] (https://github.com/influxdb/influxdb-java/issues/8) Use com.github.docker-java which replaces com.kpelykh for Integration tests.
 - [Issue #6] (https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0 
 - [Issue #7] (https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0 
+- use (http://square.github.io/okhttp/, okhttp) instead of java builtin httpconnection to get failover for the http endpoint.
+- fix dependency to guava.
 
 ## v1.1 [2014-05-31]
 
