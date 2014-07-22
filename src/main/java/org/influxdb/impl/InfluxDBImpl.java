@@ -276,7 +276,7 @@ public class InfluxDBImpl implements InfluxDB {
 		case SECONDS:
 			return "s";
 		case MILLISECONDS:
-			return "m";
+			return "ms";
 		case MICROSECONDS:
 			return "u";
 		default:
