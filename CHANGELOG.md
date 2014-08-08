@@ -1,4 +1,11 @@
-## v1.2 [unreleased]
+## v1.3 [unreleased]
+
+#### Features
+
+- Update retrofit from 1.6.0 -> 1.6.1
+- Use ms instead of m for millisecond timeprecision.
+
+## v1.2 [2014-06-28]
 
 #### Features
 
