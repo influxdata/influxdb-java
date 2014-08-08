@@ -79,7 +79,7 @@
 		<dependency>
 			<groupId>com.squareup.retrofit</groupId>
 			<artifactId>retrofit</artifactId>
-			<version>1.6.0</version>
+			<version>1.6.1</version>
 		</dependency>
 		<!-- If we use okhttp instead of java urlconnection we achieve server failover of the influxdb server address resolves to all influxdb server ips.-->
 		<dependency>
