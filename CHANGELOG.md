@@ -2,6 +2,7 @@
 
 #### Features
 
+- [Issue #14] update docker-java for tests to 0.10.0 
 - Update retrofit from 1.6.0 -> 1.6.1
 - Use ms instead of m for millisecond timeprecision.
 
