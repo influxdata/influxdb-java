@@ -8,11 +8,13 @@ import java.util.logging.Logger;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
+import org.influxdb.dto.DatabaseConfiguration;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.Server;
 import org.influxdb.dto.Shard;
 import org.influxdb.dto.Shard.Member;
+import org.influxdb.dto.ShardSpace;
 import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
 import org.testng.Assert;
@@ -79,7 +81,7 @@ public class InfluxDBTest {
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.NONE);
+		this.influxDB.setLogLevel(LogLevel.FULL);
 		System.out.println("##################################################################################");
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
@@ -90,11 +92,7 @@ public class InfluxDBTest {
 	 */
 	@AfterClass
 	public void tearDown() {
-		List<Database> result = this.influxDB.describeDatabases();
-		for (Database database : result) {
-			this.influxDB.deleteDatabase(database.getName());
-		}
-
+		System.out.println("Kill the Docker container");
 		this.dockerClient.killContainerCmd(this.container.getId()).exec();
 	}
 
@@ -443,11 +441,11 @@ public class InfluxDBTest {
 	}
 
 	/**
-	 * Test that deletion of points works.
+	 * Test that deletion of series works.
 	 */
 	@Test
-	public void testDeletePoints() {
-		String dbName = "deletepoints-unittest-" + System.currentTimeMillis();
+	public void testDeleteSeries() {
+		String dbName = "deleteseries-unittest-" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
 		Serie serie = new Serie.Builder("testSeries")
@@ -460,10 +458,13 @@ public class InfluxDBTest {
 		Assert.assertNotNull(result);
 		Assert.assertEquals(result.size(), 1);
 
-		this.influxDB.deletePoints(dbName, "testSeries");
-		result = this.influxDB.query(dbName, "select value1 from testSeries", TimeUnit.MILLISECONDS);
-		Assert.assertNotNull(result);
-		Assert.assertEquals(result.size(), 0);
+		result = this.influxDB.query(dbName, "list series", TimeUnit.MILLISECONDS);
+		Assert.assertTrue(result.get(0).getRows().get(0).containsKey("name"));
+		Assert.assertEquals(result.get(0).getRows().get(0).get("name"), "testSeries");
+
+		this.influxDB.deleteSeries(dbName, "testSeries");
+		result = this.influxDB.query(dbName, "list series", TimeUnit.MILLISECONDS);
+		Assert.assertEquals(result.get(0).getRows().size(), 0);
 
 		this.influxDB.deleteDatabase(dbName);
 	}
@@ -527,10 +528,12 @@ public class InfluxDBTest {
 	/**
 	 * Test that describe, create and drop of shards works.
 	 * 
-	 * @throws InterruptedException
+	 * @deprecated this functionality is gone with 0.8.0, remove this test and related
+	 *             implementations.
 	 */
-	@Test
-	public void testDescribeCreateDropShard() throws InterruptedException {
+	@Deprecated
+	@Test(enabled = false)
+	public void testDescribeCreateDropShard() {
 		Shards existingShards = this.influxDB.getShards();
 		Assert.assertNotNull(existingShards);
 		Assert.assertNotNull(existingShards.getLongTerm());
@@ -575,4 +578,44 @@ public class InfluxDBTest {
 		Assert.assertEquals(existingShards.getShortTerm().size(), existingShortTermShards);
 	}
 
+	/**
+	 * Test that describe, create and drop of shardspaces works.
+	 */
+	@Test
+	public void testDescribeCreateDropShardSpaces() {
+		String dbName = "describecreatedropshard-unittest-" + System.currentTimeMillis();
+		DatabaseConfiguration config = new DatabaseConfiguration(dbName);
+		ShardSpace shard = new ShardSpace("default", "inf", "7d", "/.*/", 1, 1);
+		config.addSpace(shard);
+		List<ShardSpace> existingShards = this.influxDB.getShardSpaces();
+		this.influxDB.createDatabase(config);
+		List<ShardSpace> existingShardsAfter = this.influxDB.getShardSpaces();
+		Assert.assertEquals(existingShardsAfter.size() - existingShards.size(), 1);
+		Assert.assertEquals(existingShardsAfter.get(0).getDatabase(), dbName);
+		Assert.assertEquals(existingShardsAfter.get(0).getName(), "default");
+		Assert.assertEquals(existingShardsAfter.get(0).getRetentionPolicy(), "inf");
+		Assert.assertEquals(existingShardsAfter.get(0).getShardDuration(), "7d");
+		Assert.assertEquals(existingShardsAfter.get(0).getReplicationFactor(), 1);
+		Assert.assertEquals(existingShardsAfter.get(0).getSplit(), 1);
+
+		this.influxDB.dropShardSpace(dbName, "default");
+		existingShardsAfter = this.influxDB.getShardSpaces();
+		Assert.assertEquals(existingShardsAfter.size() - existingShards.size(), 0);
+
+		ShardSpace fourDayShard = new ShardSpace("4day", "inf", "4d", "/.*/", 1, 1);
+		this.influxDB.createShardSpace(dbName, fourDayShard);
+
+		existingShardsAfter = this.influxDB.getShardSpaces();
+		Assert.assertEquals(existingShardsAfter.size() - existingShards.size(), 1);
+		Assert.assertEquals(existingShardsAfter.get(0).getDatabase(), dbName);
+		Assert.assertEquals(existingShardsAfter.get(0).getName(), "4day");
+		Assert.assertEquals(existingShardsAfter.get(0).getRetentionPolicy(), "inf");
+		Assert.assertEquals(existingShardsAfter.get(0).getShardDuration(), "4d");
+		Assert.assertEquals(existingShardsAfter.get(0).getReplicationFactor(), 1);
+		Assert.assertEquals(existingShardsAfter.get(0).getSplit(), 1);
+
+		this.influxDB.dropShardSpace(dbName, "4day");
+		existingShardsAfter = this.influxDB.getShardSpaces();
+		Assert.assertEquals(existingShardsAfter.size() - existingShards.size(), 0);
+	}
 }

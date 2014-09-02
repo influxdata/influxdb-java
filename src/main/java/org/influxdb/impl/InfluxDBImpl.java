@@ -6,20 +6,22 @@ import java.util.concurrent.TimeUnit;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
+import org.influxdb.dto.DatabaseConfiguration;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.Server;
 import org.influxdb.dto.Shard;
+import org.influxdb.dto.ShardSpace;
 import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
-
-import com.google.common.base.Stopwatch;
-import com.squareup.okhttp.OkHttpClient;
 
 import retrofit.RestAdapter;
 import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
+
+import com.google.common.base.Stopwatch;
+import com.squareup.okhttp.OkHttpClient;
 
 /**
  * Implementation of a InluxDB API.
@@ -106,6 +108,12 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
+	public void writeUdp(final int port, final TimeUnit precision, final Serie... series) {
+		// TODO Implementation needed.
+		throw new IllegalArgumentException("writeUdp is not implemented yet, sorry.");
+	}
+
+	@Override
 	public List<Serie> query(final String database, final String query, final TimeUnit precision) {
 		return this.influxDBService.query(database, query, this.username, this.password, toTimePrecision(precision));
 	}
@@ -114,6 +122,11 @@ public class InfluxDBImpl implements InfluxDB {
 	public void createDatabase(final String name) {
 		Database db = new Database(name);
 		this.influxDBService.createDatabase(db, this.username, this.password);
+	}
+
+	@Override
+	public void createDatabase(final DatabaseConfiguration config) {
+		this.influxDBService.createDatabase(config.getName(), config, this.username, this.password);
 	}
 
 	@Override
@@ -203,8 +216,8 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void deletePoints(final String database, final String serieName) {
-		this.influxDBService.deletePoints(database, serieName, this.username, this.password);
+	public void deleteSeries(final String database, final String serieName) {
+		this.influxDBService.deleteSeries(database, serieName, this.username, this.password);
 	}
 
 	/**
@@ -269,6 +282,30 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void dropShard(final Shard shard) {
 		this.influxDBService.dropShard(shard.getId(), this.username, this.password, shard.getShards().get(0));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<ShardSpace> getShardSpaces() {
+		return this.influxDBService.getShardSpaces(this.username, this.password);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void dropShardSpace(final String database, final String name) {
+		this.influxDBService.dropShardSpace(database, name, this.username, this.password);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void createShardSpace(final String database, final ShardSpace shardSpace) {
+		this.influxDBService.createShardSpace(database, this.username, this.password, shardSpace);
 	}
 
 	private static String toTimePrecision(final TimeUnit t) {

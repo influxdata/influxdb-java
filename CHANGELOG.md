@@ -2,6 +2,11 @@
 
 #### Features
 
+- Compatible with InfluxDB Version up to 0.8
+- API: add a InfluxDB#createDatabase(DatabaseConfiguration) to be able to create a new Database with ShardSpaces defined.
+- API: introduction of InfluxDB#createShardSpare, InfluxDB#getShardSpace and InfluxDB#dropShardSpace
+- API: deprecated InfluxDB#createShard, InfluxDB#getShards and InfluxDB#dropShard, this is replaced with shardSpaces in InfluxDB >= 0.8.0
+- API: renamed InfluxDB#deletePoints to InfluxDB#deleteSeries because this is what it actually does.
 - [Issue #14] update docker-java for tests to 0.10.0 
 - Update retrofit from 1.6.0 -> 1.6.1
 - Use ms instead of m for millisecond timeprecision.

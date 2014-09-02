@@ -5,10 +5,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.influxdb.dto.ContinuousQuery;
 import org.influxdb.dto.Database;
+import org.influxdb.dto.DatabaseConfiguration;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Serie;
 import org.influxdb.dto.Server;
 import org.influxdb.dto.Shard;
+import org.influxdb.dto.ShardSpace;
 import org.influxdb.dto.Shards;
 import org.influxdb.dto.User;
 
@@ -78,6 +80,19 @@ public interface InfluxDB {
 	public void write(final String database, final TimeUnit precision, final Serie... series);
 
 	/**
+	 * Write a Series to the given database.
+	 *
+	 * @param port
+	 *            the port where to reach the influxdb udp service. The database is configured per
+	 *            port in the influxdb configuration.
+	 * @param precision
+	 *            the precision used for the values.
+	 * @param series
+	 *            a Array of {@link Serie}s to write.
+	 */
+	public void writeUdp(final int port, final TimeUnit precision, final Serie... series);
+
+	/**
 	 * Execute a query agains a database.
 	 * 
 	 * @param database
@@ -99,6 +114,15 @@ public interface InfluxDB {
 	 *            the name of the new database.
 	 */
 	public void createDatabase(final String name);
+
+	/**
+	 * Create a new Database from a {@link DatabaseConfiguration}. This is the way to create a db
+	 * with shards specified.
+	 * 
+	 * @param config
+	 *            the configuration for the database to create..
+	 */
+	public void createDatabase(final DatabaseConfiguration config);
 
 	/**
 	 * Delete a database.
@@ -252,14 +276,14 @@ public interface InfluxDB {
 	public void deleteContinuousQuery(final String database, final int id);
 
 	/**
-	 * Delete all points of a serie.
+	 * Delete a serie.
 	 * 
 	 * @param database
-	 *            the database in which the given points should be deleted.
+	 *            the database in which the given serie should be deleted.
 	 * @param serieName
 	 *            the name of the serie.
 	 */
-	public void deletePoints(final String database, final String serieName);
+	public void deleteSeries(final String database, final String serieName);
 
 	/**
 	 * Force Database compaction.
@@ -301,14 +325,18 @@ public interface InfluxDB {
 	 * 
 	 * @param shard
 	 *            the new shard to create.
+	 * @deprecated this functionality is gone with 0.8.0, will be removed in the next version.
 	 */
+	@Deprecated
 	public void createShard(final Shard shard);
 
 	/**
 	 * Describe all existing shards.
 	 * 
-	 * @return a Shards entity whith all existing shards.
+	 * @return a List of all Shards.
+	 * @deprecated this functionality is gone with 0.8.0, will be removed in the next version.
 	 */
+	@Deprecated
 	public Shards getShards();
 
 	/**
@@ -316,7 +344,35 @@ public interface InfluxDB {
 	 * 
 	 * @param shard
 	 *            the shard to delete.
+	 * @deprecated this functionality is gone with 0.8.0, will be removed in the next version.
 	 */
+	@Deprecated
 	public void dropShard(final Shard shard);
 
+	/**
+	 * Describe all existing shardspaces.
+	 * 
+	 * @return a List of all ShardSpaces.
+	 */
+	public List<ShardSpace> getShardSpaces();
+
+	/**
+	 * Drop a existing ShardSpace from a Database.
+	 *
+	 * @param database
+	 *            the name of the database.
+	 * @param name
+	 *            the name of the ShardSpace to delete.
+	 */
+	public void dropShardSpace(final String database, final String name);
+
+	/**
+	 * Create a ShardSpace in a Database.
+	 *
+	 * @param database
+	 *            the name of the database.
+	 * @param shardSpace
+	 *            the shardSpace to create in this database
+	 */
+	public void createShardSpace(final String database, final ShardSpace shardSpace);
 }
