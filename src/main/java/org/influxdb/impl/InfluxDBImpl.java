@@ -1,5 +1,13 @@
 package org.influxdb.impl;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +29,7 @@ import retrofit.client.OkClient;
 import retrofit.client.Response;
 
 import com.google.common.base.Stopwatch;
+import com.google.gson.Gson;
 import com.squareup.okhttp.OkHttpClient;
 
 /**
@@ -34,6 +43,7 @@ public class InfluxDBImpl implements InfluxDB {
 	private final String password;
 	private final RestAdapter restAdapter;
 	private final InfluxDBService influxDBService;
+	private final InetAddress host;
 
 	/**
 	 * Constructor which should only be used from the InfluxDBFactory.
@@ -49,7 +59,14 @@ public class InfluxDBImpl implements InfluxDB {
 		super();
 		this.username = username;
 		this.password = password;
-
+		try {
+			String hostPart = new URI(url).getHost();
+			this.host = InetAddress.getByName(hostPart);
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException("The given URI is not valid " + e.getMessage());
+		} catch (UnknownHostException e) {
+			throw new IllegalArgumentException("The given URI is not valid " + e.getMessage());
+		}
 		OkHttpClient okHttpClient = new OkHttpClient();
 		this.restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
@@ -109,8 +126,20 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void writeUdp(final int port, final TimeUnit precision, final Serie... series) {
-		// TODO Implementation needed.
-		throw new IllegalArgumentException("writeUdp is not implemented yet, sorry.");
+		try {
+			DatagramChannel channel = DatagramChannel.open();
+
+			Gson gson = new Gson();
+			String data = gson.toJson(series);
+			ByteBuffer buf = ByteBuffer.wrap(data.getBytes());
+
+			channel.send(buf, new InetSocketAddress(this.host, port));
+
+			buf.clear();
+			channel.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	@Override

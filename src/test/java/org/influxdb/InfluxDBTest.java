@@ -1,5 +1,8 @@
 package org.influxdb;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -28,8 +31,10 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.core.DockerClientImpl;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.io.CharStreams;
 
 /**
  * Test the InfluxDB API.
@@ -48,9 +53,10 @@ public class InfluxDBTest {
 	 * Create a influxDB connection before all tests start.
 	 * 
 	 * @throws InterruptedException
+	 * @throws IOException
 	 */
 	@BeforeClass
-	public void setUp() throws InterruptedException {
+	public void setUp() throws InterruptedException, IOException {
 		// Disable logging for the DockerClient.
 		Logger.getLogger("com.sun.jersey").setLevel(Level.OFF);
 		this.dockerClient = new DockerClientImpl("http://localhost:4243");
@@ -65,6 +71,12 @@ public class InfluxDBTest {
 
 		InspectContainerResponse inspectContainerResponse = this.dockerClient.inspectContainerCmd(
 				this.container.getId()).exec();
+
+		InputStream containerLogsStream = this.dockerClient
+				.logContainerCmd(this.container.getId())
+				.withStdErr()
+				.withStdOut()
+				.exec();
 
 		String ip = inspectContainerResponse.getNetworkSettings().getIpAddress();
 		this.influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
@@ -82,7 +94,9 @@ public class InfluxDBTest {
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
 		this.influxDB.setLogLevel(LogLevel.FULL);
+		String logs = CharStreams.toString(new InputStreamReader(containerLogsStream, Charsets.UTF_8));
 		System.out.println("##################################################################################");
+		System.out.println("CContainer Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
@@ -161,6 +175,23 @@ public class InfluxDBTest {
 				.build();
 		this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie);
 
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * Test that writing via UDP works.
+	 */
+	@Test
+	public void testWriteUDP() {
+		String dbName = "write-udp-unittest-" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		Serie serie = new Serie.Builder("testSeries")
+				.columns("value1", "value2")
+				.values(System.currentTimeMillis(), 5)
+				.build();
+		this.influxDB.writeUdp(8088, TimeUnit.MILLISECONDS, serie);
+		// FIXME we need to check the existence of the data written.
 		this.influxDB.deleteDatabase(dbName);
 	}
 
