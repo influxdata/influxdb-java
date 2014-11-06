@@ -85,12 +85,10 @@ public interface InfluxDB {
 	 * @param port
 	 *            the port where to reach the influxdb udp service. The database is configured per
 	 *            port in the influxdb configuration.
-	 * @param precision
-	 *            the precision used for the values.
 	 * @param series
 	 *            a Array of {@link Serie}s to write.
 	 */
-	public void writeUdp(final int port, final TimeUnit precision, final Serie... series);
+	public void writeUdp(final int port, final Serie... series);
 
 	/**
 	 * Execute a query agains a database.

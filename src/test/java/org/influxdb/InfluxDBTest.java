@@ -190,7 +190,7 @@ public class InfluxDBTest {
 				.columns("value1", "value2")
 				.values(System.currentTimeMillis(), 5)
 				.build();
-		this.influxDB.writeUdp(8088, TimeUnit.MILLISECONDS, serie);
+		this.influxDB.writeUdp(8088, serie);
 		// FIXME we need to check the existence of the data written.
 		this.influxDB.deleteDatabase(dbName);
 	}

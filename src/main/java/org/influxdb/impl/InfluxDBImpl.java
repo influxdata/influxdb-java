@@ -28,6 +28,7 @@ import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import com.squareup.okhttp.OkHttpClient;
@@ -44,6 +45,7 @@ public class InfluxDBImpl implements InfluxDB {
 	private final RestAdapter restAdapter;
 	private final InfluxDBService influxDBService;
 	private final InetAddress host;
+	private final static int UDP_MAX_MESSAGE_SIZE = 2048;
 
 	/**
 	 * Constructor which should only be used from the InfluxDBFactory.
@@ -125,14 +127,17 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void writeUdp(final int port, final TimeUnit precision, final Serie... series) {
+	public void writeUdp(final int port, final Serie... series) {
 		try {
 			DatagramChannel channel = DatagramChannel.open();
 
 			Gson gson = new Gson();
 			String data = gson.toJson(series);
-			ByteBuffer buf = ByteBuffer.wrap(data.getBytes());
+			// see: https://github.com/influxdb/influxdb/blob/master/api/udp/api.go#L66
+			Preconditions.checkArgument(data.length() < UDP_MAX_MESSAGE_SIZE, "The given data size: " + data.length()
+					+ " is larger or equal to the allowed maximum:" + UDP_MAX_MESSAGE_SIZE);
 
+			ByteBuffer buf = ByteBuffer.wrap(data.getBytes());
 			channel.send(buf, new InetSocketAddress(this.host, port));
 
 			buf.clear();
