@@ -128,18 +128,17 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void writeUdp(final int port, final Serie... series) {
+		Gson gson = new Gson();
+		String data = gson.toJson(series);
+		// see: https://github.com/influxdb/influxdb/blob/master/api/udp/api.go#L66
+		Preconditions.checkArgument(data.length() < UDP_MAX_MESSAGE_SIZE, "The given data size: " + data.length()
+				+ " is larger or equal to the allowed maximum:" + UDP_MAX_MESSAGE_SIZE);
+
+		ByteBuffer buf = ByteBuffer.wrap(data.getBytes());
+
 		try {
 			DatagramChannel channel = DatagramChannel.open();
-
-			Gson gson = new Gson();
-			String data = gson.toJson(series);
-			// see: https://github.com/influxdb/influxdb/blob/master/api/udp/api.go#L66
-			Preconditions.checkArgument(data.length() < UDP_MAX_MESSAGE_SIZE, "The given data size: " + data.length()
-					+ " is larger or equal to the allowed maximum:" + UDP_MAX_MESSAGE_SIZE);
-
-			ByteBuffer buf = ByteBuffer.wrap(data.getBytes());
 			channel.send(buf, new InetSocketAddress(this.host, port));
-
 			buf.clear();
 			channel.close();
 		} catch (IOException e) {
