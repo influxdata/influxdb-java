@@ -32,7 +32,7 @@ this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
 		<dependency>
 			<groupId>org.influxdb</groupId>
 			<artifactId>influxdb-java</artifactId>
-			<version>1.3</version>
+			<version>1.5</version>
 		</dependency>
 ```
 
