@@ -1,8 +1,10 @@
 package org.influxdb.dto;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -130,6 +132,22 @@ public class Serie {
 	}
 
 	/**
+	 * Returns the {@link Iterator} containing all {@link Row}s with points.
+	 * <p>
+	 * Iterator is not thread-safe and throws
+	 * {@link UnsupportedOperationException} if the remove operation is called.
+	 * <p>
+	 * Iterator creates much less garbage than using {@link #getRows()}, since
+	 * it creates only one {@link Row} object per row which has memory footprint
+	 * same as one {@link Integer} object.
+	 * 
+	 * @return Returns the {@link Iterator} containing all point's {@link Row}s.
+	 */
+	public Iterator<Row> rows() {
+		return new RowIterator();
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -140,6 +158,129 @@ public class Serie {
 				.add("c", Arrays.deepToString(this.columns))
 				.add("p", Arrays.deepToString(this.points))
 				.toString();
+	}
+
+	/**
+	 * Row iterator implementation.
+	 * 
+	 * @author Ivan Senic
+	 * 
+	 */
+	private class RowIterator implements Iterator<Row> {
+
+		/**
+		 * Index of the next row to process.
+		 */
+		private int index = 0;
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public boolean hasNext() {
+			return index < points.length;
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Row next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException("No more rows to iterate.");
+			}
+			return new Row(index++);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 * <p>
+		 * Not supported.
+		 */
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException(
+					"Can not remove items from RowIterator.");
+		}
+
+	}
+
+	/**
+	 * Simple implementation of one Row of points in the serie.
+	 * 
+	 * @author Ivan Senic
+	 * 
+	 */
+	public class Row {
+
+		/**
+		 * Index of the row in the {@link Serie#points}.
+		 */
+		private final int row;
+
+		/**
+		 * Constructs a new row.
+		 * 
+		 * @param row
+		 *            Index of the row.
+		 */
+		private Row(int row) {
+			this.row = row;
+		}
+
+		/**
+		 * Returns point on the selected zero-based column index.
+		 * 
+		 * @param column
+		 *            Column index
+		 * @return Point value
+		 * @throws NoSuchElementException
+		 *             If the given column does not exist.
+		 */
+		public Object getColumn(int column) {
+			if (!hasColumn(column)) {
+				throw new NoSuchElementException("Column does not exist.");
+			}
+
+			return points[row][column];
+		}
+
+		/**
+		 * Returns point on the given column name.
+		 * 
+		 * @param columnName
+		 *            Name of the column as defined in {@link Serie#columns}.
+		 * @return Point value
+		 * @throws NoSuchElementException
+		 *             If the column with the given name does not exist.
+		 */
+		public Object getColumn(String columnName) {
+			int column = -1;
+			
+			if (null != columnName) {
+				for (int i = 0, s = columns.length; i < s; i++) {
+					if (columnName.equals(columns[i])) {
+						column = i;
+						break;
+					}
+				}
+			}
+			
+			return getColumn(column);
+		}
+
+		/**
+		 * If column with given zero-based column exist.
+		 * 
+		 * @param column
+		 *            Column index
+		 * @return <code>true</code> if the column exists, <code>false</code>
+		 *         otherwise.
+		 */
+		public boolean hasColumn(int column) {
+			return column > -1 && column < points[row].length;
+		}
+
 	}
 
 }
