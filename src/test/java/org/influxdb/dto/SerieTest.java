@@ -1,5 +1,8 @@
 package org.influxdb.dto;
 
+import java.util.Iterator;
+
+import org.influxdb.dto.Serie.Row;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -32,5 +35,21 @@ public class SerieTest {
 		Assert.assertEquals(serie.getRows().size(), 2);
 		Assert.assertEquals(serie.getRows().get(0).size(), 3);
 
+		// test iterator
+		Iterator<Row> iterator = serie.rows();
+
+		Assert.assertTrue(iterator.hasNext());
+		Row first = iterator.next();
+		Assert.assertEquals(first.getColumn(0), 1l);
+		Assert.assertEquals(first.getColumn(1), 96.3f);
+		Assert.assertEquals(first.getColumn(2), "no error");
+
+		Assert.assertTrue(iterator.hasNext());
+		Row second = iterator.next();
+		Assert.assertEquals(second.getColumn("time"), 2l);
+		Assert.assertEquals(second.getColumn("idle"), 69.5f);
+		Assert.assertEquals(second.getColumn("error"), "with error");
+
+		Assert.assertFalse(iterator.hasNext());
 	}
 }
