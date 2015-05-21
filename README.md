@@ -23,7 +23,7 @@ Serie serie2 = new Serie.Builder("serie2Name")
 			.values(System.currentTimeMillis(), 1)
 			.values(System.currentTimeMillis(), 2)
 			.build();
-this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
+this.influxDB.write("aTimeSeries", TimeUnit.MILLISECONDS, serie1, serie2);
 
 ```
 
