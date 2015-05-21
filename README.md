@@ -11,7 +11,7 @@ Typical usage looks like:
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 
-this.influxDB.createDatabase("aTimeSeries");
+influxDB.createDatabase("aTimeSeries");
 
 Serie serie1 = new Serie.Builder("serie2Name")
 			.columns("column1", "column2")
@@ -23,7 +23,7 @@ Serie serie2 = new Serie.Builder("serie2Name")
 			.values(System.currentTimeMillis(), 1)
 			.values(System.currentTimeMillis(), 2)
 			.build();
-this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
+influxDB.write("aTimeSeries", TimeUnit.MILLISECONDS, serie1, serie2);
 
 ```
 
