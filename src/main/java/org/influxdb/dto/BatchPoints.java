@@ -14,8 +14,17 @@
  */
 package org.influxdb.dto;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.influxdb.impl.InfluxDBImpl;
+
+import com.beust.jcommander.internal.Lists;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 
 /**
  * {Purpose of This Type}
@@ -38,6 +47,93 @@ public class BatchPoints {
 	// isoFormatter.setTimeZone(TimeZone.getTimeZone(UTC));
 	// isoFormatter.format(new Date())
 
+	BatchPoints() {
+
+	}
+
+	public static class Builder {
+		private final String database;
+		private String retentionPolicy;
+		private final Map<String, String> tags = Maps.newHashMap();
+		private Long time;
+		private String precision;
+		private final List<Point> points = Lists.newArrayList();
+
+		/**
+		 * @param database
+		 */
+		public Builder(final String database) {
+			super();
+			this.database = database;
+		}
+
+		public Builder retentionPolicy(final String policy) {
+			this.retentionPolicy = policy;
+			return this;
+		}
+
+		/**
+		 * Add a tag to this set of points.
+		 *
+		 * @param tagName
+		 *            the tag name
+		 * @param value
+		 *            the tag value
+		 * @return the Builder instance.
+		 */
+		public Builder tag(final String tagName, final String value) {
+			this.tags.put(tagName, value);
+			return this;
+		}
+
+		/**
+		 * Add a time to this set of points.
+		 *
+		 * @param precisionToSet
+		 * @param timeToSet
+		 * @return the Builder instance.
+		 */
+		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
+			this.precision = InfluxDBImpl.toTimePrecision(precisionToSet);
+			this.time = timeToSet;
+			return this;
+		}
+
+		/**
+		 * Add a Point to this set of points.
+		 *
+		 * @param pointToAdd
+		 * @return the Builder instance
+		 */
+		public Builder point(final Point pointToAdd) {
+			this.points.add(pointToAdd);
+			return this;
+		}
+
+		/**
+		 * Add a set of Points to this set of points.
+		 *
+		 * @param pointsToAdd
+		 * @return the Builder instance
+		 */
+		public Builder points(final Point... pointsToAdd) {
+			this.points.addAll(Arrays.asList(pointsToAdd));
+			return this;
+		}
+
+		public BatchPoints build() {
+			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database), "Database must not be null or empty.");
+			BatchPoints batchPoints = new BatchPoints();
+			batchPoints.setDatabase(this.database);
+			batchPoints.setPoints(this.points);
+			batchPoints.setPrecision(this.precision);
+			batchPoints.setRetentionPolicy(this.retentionPolicy);
+			batchPoints.setTags(this.tags);
+			batchPoints.setTime(this.time);
+			return batchPoints;
+		}
+	}
+
 	/**
 	 * @return the database
 	 */
@@ -49,7 +145,7 @@ public class BatchPoints {
 	 * @param database
 	 *            the database to set
 	 */
-	public void setDatabase(final String database) {
+	void setDatabase(final String database) {
 		this.database = database;
 	}
 
@@ -64,7 +160,7 @@ public class BatchPoints {
 	 * @param retentionPolicy
 	 *            the retentionPolicy to set
 	 */
-	public void setRetentionPolicy(final String retentionPolicy) {
+	void setRetentionPolicy(final String retentionPolicy) {
 		this.retentionPolicy = retentionPolicy;
 	}
 
@@ -79,8 +175,13 @@ public class BatchPoints {
 	 * @param points
 	 *            the points to set
 	 */
-	public void setPoints(final List<Point> points) {
+	void setPoints(final List<Point> points) {
 		this.points = points;
+	}
+
+	public BatchPoints point(final Point point) {
+		this.points.add(point);
+		return this;
 	}
 
 	/**
@@ -94,7 +195,7 @@ public class BatchPoints {
 	 * @param tags
 	 *            the tags to set
 	 */
-	public void setTags(final Map<String, String> tags) {
+	void setTags(final Map<String, String> tags) {
 		this.tags = tags;
 	}
 
@@ -109,7 +210,7 @@ public class BatchPoints {
 	 * @param time
 	 *            the time to set
 	 */
-	public void setTime(final Long time) {
+	void setTime(final Long time) {
 		this.time = time;
 	}
 
@@ -124,7 +225,7 @@ public class BatchPoints {
 	 * @param precision
 	 *            the precision to set
 	 */
-	public void setPrecision(final String precision) {
+	void setPrecision(final String precision) {
 		this.precision = precision;
 	}
 

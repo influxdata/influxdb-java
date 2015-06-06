@@ -2,7 +2,7 @@ package org.influxdb;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,9 +20,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 /**
  * Test the InfluxDB API.
@@ -170,30 +167,15 @@ public class InfluxDBTest {
 		String dbName = "mydb";
 		this.influxDB.createDatabase(dbName);
 
-		List<Point> points = Lists.newArrayList();
-		Point point = new Point();
-		point.setName("cpu");
-		Map<String, Object> fields = Maps.newHashMap();
-		fields.put("idle", 90L);
-		fields.put("cpu_user", 9);
-		fields.put("cpu_system", 1);
-		point.setFields((fields));
-		points.add(point);
-		point = new Point();
-		point.setName("disk");
-		fields = Maps.newHashMap();
-		fields.put("used", 80L);
-		fields.put("free", 12);
-		point.setFields((fields));
-		points.add(point);
-		BatchPoints batchPoints = new BatchPoints();
-		batchPoints.setDatabase(dbName);
-
-		batchPoints.setPoints(points);
-		batchPoints.setPrecision("ms");
-		batchPoints.setTime(System.currentTimeMillis());
-		batchPoints.setTags(ImmutableMap.of("blubber", "bla"));
-		batchPoints.setRetentionPolicy("default");
+		BatchPoints batchPoints = new BatchPoints.Builder(dbName)
+				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+				.tag("blubber", "bla")
+				.retentionPolicy("default")
+				.build();
+		Point point1 = new Point.Builder("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
+		Point point2 = new Point.Builder("disk").field("used", 80L).field("free", 1L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);
 		Query query = new Query("SELECT idle FROM cpu", dbName);
 		this.influxDB.query(query);

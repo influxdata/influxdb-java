@@ -101,12 +101,8 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final Point point) {
-		BatchPoints batchPoints = new BatchPoints();
-		batchPoints.setDatabase(database);
-		batchPoints.setRetentionPolicy(retentionPolicy);
-		List<Point> points = Lists.newArrayList();
-		points.add(point);
-		batchPoints.setPoints(points);
+		BatchPoints batchPoints = new BatchPoints.Builder(database).retentionPolicy(retentionPolicy).build();
+		batchPoints.point(point);
 		this.write(batchPoints);
 	}
 
