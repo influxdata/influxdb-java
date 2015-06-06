@@ -1,6 +1,6 @@
 package org.influxdb.dto;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * Representation of the response for a influxdb ping.
@@ -9,22 +9,22 @@ import com.google.common.base.Objects;
  * 
  */
 public class Pong {
-	private String status;
+	private String version;
 	private long responseTime;
 
 	/**
 	 * @return the status
 	 */
-	public String getStatus() {
-		return this.status;
+	public String getVersion() {
+		return this.version;
 	}
 
 	/**
-	 * @param status
+	 * @param version
 	 *            the status to set
 	 */
-	public void setStatus(final String status) {
-		this.status = status;
+	public void setVersion(final String version) {
+		this.version = version;
 	}
 
 	/**
@@ -47,9 +47,9 @@ public class Pong {
 	 */
 	@Override
 	public String toString() {
-		return Objects
+		return MoreObjects
 				.toStringHelper(this.getClass())
-				.add("status", this.status)
+				.add("version", this.version)
 				.add("responseTime", this.responseTime)
 				.toString();
 	}
