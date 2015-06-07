@@ -27,7 +27,8 @@ public enum InfluxDBFactory {
 	public static InfluxDB connect(final String url, final String username, final String password) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "The URL may not be null or empty.");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), "The username may not be null or empty.");
-		return new InfluxDBImpl(url, username, password);
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(password), "The password may not be null or empty.");
+		return new InfluxDBImpl(url.trim(), username.trim(), password.trim());
 	}
 
 }
