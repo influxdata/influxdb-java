@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.impl.TimeUtil;
@@ -16,8 +17,11 @@ import com.google.common.collect.Maps;
  * 
  */
 public class Point {
-	private String name;
+	private String measurement;
 	private Map<String, String> tags;
+	/**
+	 * The time stored in nanos. FIXME ensure this
+	 */
 	private Long time;
 	private String precision;
 	private Map<String, Object> fields;
@@ -32,17 +36,17 @@ public class Point {
 	 *
 	 */
 	public static class Builder {
-		private final String name;
+		private final String measurement;
 		private final Map<String, String> tags = Maps.newHashMap();
 		private Long time;
 		private String precision;
 		private final Map<String, Object> fields = Maps.newHashMap();
 
 		/**
-		 * @param name
+		 * @param measurement
 		 */
-		public Builder(final String name) {
-			this.name = name;
+		public Builder(final String measurement) {
+			this.measurement = measurement;
 		}
 
 		/**
@@ -81,6 +85,7 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
+			// FIXME convert to millis.
 			this.precision = TimeUtil.toTimePrecision(precisionToSet);
 			this.time = timeToSet;
 			return this;
@@ -92,10 +97,12 @@ public class Point {
 		 * @return the newly created Point.
 		 */
 		public Point build() {
-			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.name), "Point name must not be null or empty.");
+			Preconditions.checkArgument(
+					!Strings.isNullOrEmpty(this.measurement),
+					"Point name must not be null or empty.");
 			Point point = new Point();
 			point.setFields(this.fields);
-			point.setName(this.name);
+			point.setMeasurement(this.measurement);
 			point.setPrecision(this.precision);
 			point.setTags(this.tags);
 			point.setTime(this.time);
@@ -104,25 +111,11 @@ public class Point {
 	}
 
 	/**
-	 * @return the measurement
-	 */
-	public String getName() {
-		return this.name;
-	}
-
-	/**
 	 * @param measurement
 	 *            the measurement to set
 	 */
-	void setName(final String measurement) {
-		this.name = measurement;
-	}
-
-	/**
-	 * @return the time
-	 */
-	public Long getTime() {
-		return this.time;
+	void setMeasurement(final String measurement) {
+		this.measurement = measurement;
 	}
 
 	/**
@@ -134,13 +127,6 @@ public class Point {
 	}
 
 	/**
-	 * @return the tags
-	 */
-	public Map<String, String> getTags() {
-		return this.tags;
-	}
-
-	/**
 	 * @param tags
 	 *            the tags to set
 	 */
@@ -149,10 +135,10 @@ public class Point {
 	}
 
 	/**
-	 * @return the precision
+	 * @return the tags
 	 */
-	public String getPrecision() {
-		return this.precision;
+	Map<String, String> getTags() {
+		return this.tags;
 	}
 
 	/**
@@ -161,13 +147,6 @@ public class Point {
 	 */
 	void setPrecision(final String precision) {
 		this.precision = precision;
-	}
-
-	/**
-	 * @return the fields
-	 */
-	public Map<String, Object> getFields() {
-		return this.fields;
 	}
 
 	/**
@@ -185,7 +164,7 @@ public class Point {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Point [name=");
-		builder.append(this.name);
+		builder.append(this.measurement);
 		builder.append(", time=");
 		builder.append(this.time);
 		builder.append(", tags=");
@@ -196,6 +175,33 @@ public class Point {
 		builder.append(this.fields);
 		builder.append("]");
 		return builder.toString();
+	}
+
+	// measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
+
+	public String lineProtocol() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(this.measurement);
+		for (Entry<String, String> tag : this.tags.entrySet()) {
+			sb.append(",");
+			sb.append(tag.getKey()).append("=").append(tag.getValue());
+		}
+		sb.append(" ");
+		int fieldCount = this.fields.size();
+		int loops = 0;
+		for (Entry<String, Object> field : this.fields.entrySet()) {
+			loops++;
+			sb.append(field.getKey()).append("=").append(field.getValue());
+			if (loops < fieldCount) {
+				sb.append(",");
+			}
+		}
+		if (null == this.time) {
+			this.time = System.currentTimeMillis();
+		}
+		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, TimeUnit.MILLISECONDS));
+		return "cpu,host=serverA,region=us-west value=1.0 10000000000";
+		// return sb.toString();
 	}
 
 }

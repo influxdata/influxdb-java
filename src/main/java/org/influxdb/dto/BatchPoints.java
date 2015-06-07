@@ -24,6 +24,9 @@ public class BatchPoints {
 	private String database;
 	private String retentionPolicy;
 	private Map<String, String> tags;
+	/**
+	 * The time stored in nanos. FIXME ensure this
+	 */
 	private Long time;
 	private String precision;
 	private List<Point> points;
@@ -111,6 +114,9 @@ public class BatchPoints {
 			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database), "Database must not be null or empty.");
 			BatchPoints batchPoints = new BatchPoints();
 			batchPoints.setDatabase(this.database);
+			for (Point point : this.points) {
+				point.getTags().putAll(this.tags);
+			}
 			batchPoints.setPoints(this.points);
 			batchPoints.setPrecision(this.precision);
 			batchPoints.setRetentionPolicy(this.retentionPolicy);
@@ -166,6 +172,7 @@ public class BatchPoints {
 	}
 
 	public BatchPoints point(final Point point) {
+		point.getTags().putAll(this.tags);
 		this.points.add(point);
 		return this;
 	}
@@ -237,4 +244,13 @@ public class BatchPoints {
 		return builder.toString();
 	}
 
+	// measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
+
+	public String lineProtocol() {
+		StringBuilder sb = new StringBuilder();
+		for (Point point : this.points) {
+			sb.append(point.lineProtocol()).append("\n");
+		}
+		return sb.toString();
+	}
 }

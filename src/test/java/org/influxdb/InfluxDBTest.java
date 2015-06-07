@@ -124,7 +124,7 @@ public class InfluxDBTest {
 	public void testVersion() {
 		String version = this.influxDB.version();
 		Assert.assertNotNull(version);
-		Assert.assertTrue(version.startsWith("0.9"));
+		Assert.assertFalse(version.contains("unknown"));
 	}
 
 	/**
@@ -182,11 +182,11 @@ public class InfluxDBTest {
 	}
 
 	/**
-	 * Test that writing async of a simple Serie works.
+	 * Test that writing to the new lineprotocol.
 	 */
-	@Test(enabled = false)
-	public void testWriteAsync() {
-		String dbName = "writeasync_unittest_" + System.currentTimeMillis();
+	@Test(enabled = true)
+	public void testWritePoints() {
+		String dbName = "writepoints_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
 		BatchPoints batchPoints = new BatchPoints.Builder(dbName)
@@ -198,10 +198,9 @@ public class InfluxDBTest {
 		Point point2 = new Point.Builder("disk").field("used", 80L).field("free", 1L).build();
 		batchPoints.point(point1);
 		batchPoints.point(point2);
-		this.influxDB.writeAsync(batchPoints);
+		this.influxDB.writePoints(batchPoints);
 		Query query = new Query("SELECT idle FROM cpu", dbName);
 		this.influxDB.query(query);
 		this.influxDB.deleteDatabase(dbName);
 	}
-
 }

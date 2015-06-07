@@ -82,12 +82,13 @@ public interface InfluxDB {
 	public void write(final BatchPoints batchPoints);
 
 	/**
-	 * Write a set of Points to the database in a async fashion.
+	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
 	 * 
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
 	 * @param batchPoints
-	 *            The batchPoints to write.
 	 */
-	public void writeAsync(final BatchPoints batchPoints);
+	public void writePoints(final BatchPoints batchPoints);
 
 	/**
 	 * Execute a query agains a database.
