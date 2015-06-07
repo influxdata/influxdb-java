@@ -9,7 +9,10 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+
+import retrofit.Callback;
 import retrofit.RestAdapter;
+import retrofit.RetrofitError;
 import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
@@ -108,6 +111,23 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void write(final BatchPoints batchPoints) {
 		this.influxDBService.batchPoints(this.username, this.password, batchPoints);
+	}
+
+	@Override
+	public void writeAsync(final BatchPoints batchPoints) {
+		Callback<String> cb = new Callback<String>() {
+
+			@Override
+			public void success(final String t, final Response response) {
+				// NOTHING TO do
+			}
+
+			@Override
+			public void failure(final RetrofitError error) {
+				new InfluxDBErrorHandler().handleError(error);
+			}
+		};
+		this.influxDBService.batchPoints(this.username, this.password, batchPoints, cb);
 	}
 
 	/**

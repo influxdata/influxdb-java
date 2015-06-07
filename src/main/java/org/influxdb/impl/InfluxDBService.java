@@ -3,6 +3,7 @@ package org.influxdb.impl;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.dto.BatchPoints;
 
+import retrofit.Callback;
 import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.GET;
@@ -21,6 +22,10 @@ interface InfluxDBService {
 
 	@POST("/write")
 	public String batchPoints(@Query(U) String username, @Query(P) String password, @Body BatchPoints batchPoints);
+
+	@POST("/write")
+	public void batchPoints(@Query(U) String username, @Query(P) String password, @Body BatchPoints batchPoints,
+			Callback<String> cb);
 
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,

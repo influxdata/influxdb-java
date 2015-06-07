@@ -82,6 +82,14 @@ public interface InfluxDB {
 	public void write(final BatchPoints batchPoints);
 
 	/**
+	 * Write a set of Points to the database in a async fashion.
+	 * 
+	 * @param batchPoints
+	 *            The batchPoints to write.
+	 */
+	public void writeAsync(final BatchPoints batchPoints);
+
+	/**
 	 * Execute a query agains a database.
 	 * 
 	 * @param query
