@@ -1,17 +1,3 @@
-/**
- * This file is part of the source code and related artifacts
- * for Nimbus Application.
- *
- * Copyright © 2014 Finanz Informatik Technologie Service GmbH & Co. KG
- *
- * https://www.f-i-ts.de
- *
- * Repository path:    $HeadURL$
- * Last committed:     $Revision$
- * Last changed by:    $Author$
- * Last changed date:  $Date$
- * ID:            	   $Id$
- */
 package org.influxdb.dto;
 
 import java.util.List;

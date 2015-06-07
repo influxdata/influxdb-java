@@ -1,17 +1,3 @@
-/**
- * This file is part of the source code and related artifacts
- * for Nimbus Application.
- *
- * Copyright © 2014 Finanz Informatik Technologie Service GmbH & Co. KG
- *
- * https://www.f-i-ts.de
- *
- * Repository path:    $HeadURL$
- * Last committed:     $Revision$
- * Last changed by:    $Author$
- * Last changed date:  $Date$
- * ID:            	   $Id$
- */
 package org.influxdb.dto;
 
 import java.util.Arrays;
@@ -19,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.influxdb.impl.InfluxDBImpl;
+import org.influxdb.impl.TimeUtil;
 
-import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -94,7 +80,7 @@ public class BatchPoints {
 		 * @return the Builder instance.
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-			this.precision = InfluxDBImpl.toTimePrecision(precisionToSet);
+			this.precision = TimeUtil.toTimePrecision(precisionToSet);
 			this.time = timeToSet;
 			return this;
 		}
