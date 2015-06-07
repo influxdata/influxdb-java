@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>7</version>
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.influxdb</groupId>
@@ -15,39 +16,39 @@
 	<description>Java API to access the InfluxDB REST API</description>
 	<url>http://www.influxdb.org</url>
 
-        <prerequisites>
-                <maven>3.2.1</maven>
-        </prerequisites>
+	<prerequisites>
+		<maven>3.2.1</maven>
+	</prerequisites>
 
-  <licenses>
-    <license>
-      <name>The MIT License (MIT)</name>
-      <url>http://www.opensource.org/licenses/mit-license.php</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+	<licenses>
+		<license>
+			<name>The MIT License (MIT)</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-  <scm>
-    <connection>scm:git:git@github.com:influxdb/influxdb-java.git</connection>
-    <developerConnection>scm:git:git@github.com:influxdb/influxdb-java.git</developerConnection>
-    <url>git@github.com:influxdb/influxdb-java.git</url>
-  </scm>
+	<scm>
+		<connection>scm:git:git@github.com:influxdb/influxdb-java.git</connection>
+		<developerConnection>scm:git:git@github.com:influxdb/influxdb-java.git</developerConnection>
+		<url>git@github.com:influxdb/influxdb-java.git</url>
+	</scm>
 
-  <developers>
-    <developer>
-      <id>jvshahid</id>
-      <name>John Shahid</name>
-      <email>john@influxdb.com</email>
-    </developer>
-    <developer>
-      <id>majst01</id>
-      <name>Stefan Majer</name>
-      <email>stefan.majer@gmail.com</email>
-    </developer>
-  </developers>
+	<developers>
+		<developer>
+			<id>jvshahid</id>
+			<name>John Shahid</name>
+			<email>john@influxdb.com</email>
+		</developer>
+		<developer>
+			<id>majst01</id>
+			<name>Stefan Majer</name>
+			<email>stefan.majer@gmail.com</email>
+		</developer>
+	</developers>
 
 	<build>
 		<pluginManagement>
@@ -86,7 +87,8 @@
 			<artifactId>retrofit</artifactId>
 			<version>1.9.0</version>
 		</dependency>
-		<!-- If we use okhttp instead of java urlconnection we achieve server failover of the influxdb server address resolves to all influxdb server ips.-->
+		<!-- If we use okhttp instead of java urlconnection we achieve server failover 
+			of the influxdb server address resolves to all influxdb server ips. -->
 		<dependency>
 			<groupId>com.squareup.okhttp</groupId>
 			<artifactId>okhttp</artifactId>
