@@ -110,6 +110,11 @@ public class BatchPoints {
 			return this;
 		}
 
+		/**
+		 * Create a new BatchPoints instance.
+		 *
+		 * @return the created BatchPoints.
+		 */
 		public BatchPoints build() {
 			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database), "Database must not be null or empty.");
 			BatchPoints batchPoints = new BatchPoints();
@@ -171,6 +176,12 @@ public class BatchPoints {
 		this.points = points;
 	}
 
+	/**
+	 * Add a single Point to these batches.
+	 *
+	 * @param point
+	 * @return this Instance to be able to daisy chain calls.
+	 */
 	public BatchPoints point(final Point point) {
 		point.getTags().putAll(this.tags);
 		this.points.add(point);

@@ -9,6 +9,7 @@ import retrofit.http.GET;
 import retrofit.http.Headers;
 import retrofit.http.POST;
 import retrofit.http.Query;
+import retrofit.mime.TypedString;
 
 interface InfluxDBService {
 
@@ -39,7 +40,7 @@ interface InfluxDBService {
 	@POST("/write")
 	public Response writePoints(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
 			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
-			@Query(CONSISTENCY) String consistency, @Body String batchPoints);
+			@Query(CONSISTENCY) String consistency, @Body TypedString batchPoints);
 
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,

@@ -14,6 +14,7 @@ import retrofit.RestAdapter;
 import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
+import retrofit.mime.TypedString;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -114,6 +115,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void writePoints(final BatchPoints batchPoints) {
 		System.out.println(batchPoints.lineProtocol());
+		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
 		this.influxDBService.writePoints(
 				this.username,
 				this.password,
@@ -121,7 +123,7 @@ public class InfluxDBImpl implements InfluxDB {
 				batchPoints.getRetentionPolicy(),
 				batchPoints.getPrecision(),
 				"all",
-				batchPoints.lineProtocol());
+				lineProtocol);
 
 	}
 
