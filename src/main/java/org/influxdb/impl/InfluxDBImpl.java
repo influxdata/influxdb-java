@@ -122,7 +122,7 @@ public class InfluxDBImpl implements InfluxDB {
 				batchPoints.getDatabase(),
 				batchPoints.getRetentionPolicy(),
 				batchPoints.getPrecision(),
-				"all",
+				batchPoints.getConsistency().value(),
 				lineProtocol);
 
 	}

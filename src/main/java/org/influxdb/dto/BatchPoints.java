@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.impl.TimeUtil;
 
 import com.google.common.base.Preconditions;
@@ -30,6 +31,7 @@ public class BatchPoints {
 	private Long time;
 	private String precision;
 	private List<Point> points;
+	private ConsistencyLevel consistency;
 
 	// private static final String TIMESTAMP_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSS'Z'";
 	// final SimpleDateFormat isoFormatter = new SimpleDateFormat(TIMESTAMP_DATE_FORMAT, LOCALE);
@@ -40,6 +42,9 @@ public class BatchPoints {
 
 	}
 
+	/**
+	 * The Builder to create a new BatchPoints instance.
+	 */
 	public static class Builder {
 		private final String database;
 		private String retentionPolicy;
@@ -47,6 +52,7 @@ public class BatchPoints {
 		private Long time;
 		private String precision;
 		private final List<Point> points = Lists.newArrayList();
+		private ConsistencyLevel consistency;
 
 		/**
 		 * @param database
@@ -56,6 +62,12 @@ public class BatchPoints {
 			this.database = database;
 		}
 
+		/**
+		 * The retentionPolicy to use.
+		 *
+		 * @param policy
+		 * @return the Builder instance
+		 */
 		public Builder retentionPolicy(final String policy) {
 			this.retentionPolicy = policy;
 			return this;
@@ -111,6 +123,17 @@ public class BatchPoints {
 		}
 
 		/**
+		 * Set the ConsistencyLevel to use. If not given it defaults to {@link ConsistencyLevel#ONE}
+		 *
+		 * @param consistencyLevel
+		 * @return the Builder instance
+		 */
+		public Builder consistency(final ConsistencyLevel consistencyLevel) {
+			this.consistency = consistencyLevel;
+			return this;
+		}
+
+		/**
 		 * Create a new BatchPoints instance.
 		 *
 		 * @return the created BatchPoints.
@@ -127,6 +150,10 @@ public class BatchPoints {
 			batchPoints.setRetentionPolicy(this.retentionPolicy);
 			batchPoints.setTags(this.tags);
 			batchPoints.setTime(this.time);
+			if (null == this.consistency) {
+				this.consistency = ConsistencyLevel.ONE;
+			}
+			batchPoints.setConsistency(this.consistency);
 			return batchPoints;
 		}
 	}
@@ -231,6 +258,21 @@ public class BatchPoints {
 	 */
 	void setPrecision(final String precision) {
 		this.precision = precision;
+	}
+
+	/**
+	 * @return the consistency
+	 */
+	public ConsistencyLevel getConsistency() {
+		return this.consistency;
+	}
+
+	/**
+	 * @param consistency
+	 *            the consistency to set
+	 */
+	void setConsistency(final ConsistencyLevel consistency) {
+		this.consistency = consistency;
 	}
 
 	/**

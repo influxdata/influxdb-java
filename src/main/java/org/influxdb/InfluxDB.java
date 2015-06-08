@@ -39,6 +39,34 @@ public interface InfluxDB {
 	}
 
 	/**
+	 * ConsistencyLevel for write Operations.
+	 */
+	public enum ConsistencyLevel {
+		/** Write succeeds only if write reached all cluster members. */
+		ALL("all"),
+		/** Write succeeds if write reached any cluster members. */
+		ANY("any"),
+		/** Write succeeds if write reached at least one cluster members. */
+		ONE("one"),
+		/** Write succeeds only if write reached a quorum of cluster members. */
+		QUORUM("quorum");
+		private final String value;
+
+		private ConsistencyLevel(final String value) {
+			this.value = value;
+		}
+
+		/**
+		 * Get the String value of the ConsistencyLevel.
+		 *
+		 * @return the lowercase String.
+		 */
+		public String value() {
+			return this.value;
+		}
+	}
+
+	/**
 	 * Set the loglevel which is used for REST related actions.
 	 * 
 	 * @param logLevel
