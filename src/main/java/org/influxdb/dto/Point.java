@@ -200,8 +200,7 @@ public class Point {
 			this.time = System.currentTimeMillis();
 		}
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, TimeUnit.MILLISECONDS));
-		return "cpu,host=serverA,region=us-west value=1.0 10000000000";
-		// return sb.toString();
+		return sb.toString();
 	}
 
 }

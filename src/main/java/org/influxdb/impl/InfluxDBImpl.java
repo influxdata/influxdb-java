@@ -114,7 +114,6 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void writePoints(final BatchPoints batchPoints) {
-		System.out.println(batchPoints.lineProtocol());
 		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
 		this.influxDBService.writePoints(
 				this.username,
