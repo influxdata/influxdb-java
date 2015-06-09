@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -74,6 +75,24 @@ public interface InfluxDB {
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
 	public InfluxDB setLogLevel(final LogLevel logLevel);
+
+	/**
+	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
+	 * flushDurations is reached first, a batchwrite is issued.
+	 *
+	 * @param actions
+	 *            the number of actions to collect
+	 * @param flushDuration
+	 *            the time to wait at most.
+	 * @param flushDurationTimeUnit
+	 * @return the InfluxDB instance to be able to use it in a fluent manner.
+	 */
+	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+
+	/**
+	 * Disable Batching.
+	 */
+	public void disableBatch();
 
 	/**
 	 * Ping this influxDB-

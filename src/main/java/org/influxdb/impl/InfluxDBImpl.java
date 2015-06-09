@@ -2,6 +2,8 @@ package org.influxdb.impl;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -9,6 +11,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.impl.BatchProcessor.BatchEntry;
 
 import retrofit.RestAdapter;
 import retrofit.client.Header;
@@ -32,6 +35,11 @@ public class InfluxDBImpl implements InfluxDB {
 	private final String password;
 	private final RestAdapter restAdapter;
 	private final InfluxDBService influxDBService;
+	private BatchProcessor batchProcessor;
+	private final AtomicBoolean batchEnabled = new AtomicBoolean(false);
+	private final AtomicLong writeCount = new AtomicLong();
+	private final AtomicLong unBatchedCount = new AtomicLong();
+	private final AtomicLong batchedCount = new AtomicLong();
 
 	/**
 	 * Constructor which should only be used from the InfluxDBFactory.
@@ -53,7 +61,6 @@ public class InfluxDBImpl implements InfluxDB {
 				.setErrorHandler(new InfluxDBErrorHandler())
 				.setClient(new OkClient(okHttpClient))
 				.build();
-
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
 	}
 
@@ -76,6 +83,28 @@ public class InfluxDBImpl implements InfluxDB {
 			break;
 		}
 		return this;
+	}
+
+	@Override
+	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit) {
+		if (this.batchEnabled.get()) {
+			throw new IllegalArgumentException("BatchProcessing is already enabled.");
+		}
+		this.batchProcessor = BatchProcessor
+				.builder(this)
+				.actions(actions)
+				.interval(flushDuration, flushDurationTimeUnit)
+				.build();
+		this.batchEnabled.set(true);
+		return this;
+	}
+
+	@Override
+	public void disableBatch() {
+		this.batchEnabled.set(false);
+		this.batchProcessor.flush();
+		System.out.println("total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get()
+				+ " batchPoints:" + this.batchedCount);
 	}
 
 	@Override
@@ -102,18 +131,27 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final Point point) {
-		BatchPoints batchPoints = new BatchPoints.Builder(database).retentionPolicy(retentionPolicy).build();
-		batchPoints.point(point);
-		this.write(batchPoints);
+		if (this.batchEnabled.get()) {
+			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
+			this.batchProcessor.put(batchEntry);
+		} else {
+			BatchPoints batchPoints = new BatchPoints.Builder(database).retentionPolicy(retentionPolicy).build();
+			batchPoints.point(point);
+			this.write(batchPoints);
+			this.unBatchedCount.incrementAndGet();
+		}
+		this.writeCount.incrementAndGet();
 	}
 
 	@Override
 	public void write(final BatchPoints batchPoints) {
+		this.batchedCount.addAndGet(batchPoints.getPoints().size());
 		this.influxDBService.batchPoints(this.username, this.password, batchPoints);
 	}
 
 	@Override
 	public void writePoints(final BatchPoints batchPoints) {
+		this.batchedCount.addAndGet(batchPoints.getPoints().size());
 		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
 		this.influxDBService.writePoints(
 				this.username,
