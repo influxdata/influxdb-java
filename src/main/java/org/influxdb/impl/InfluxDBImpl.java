@@ -135,7 +135,7 @@ public class InfluxDBImpl implements InfluxDB {
 			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
 			this.batchProcessor.put(batchEntry);
 		} else {
-			BatchPoints batchPoints = new BatchPoints.Builder(database).retentionPolicy(retentionPolicy).build();
+			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
 			batchPoints.point(point);
 			this.write(batchPoints);
 			this.unBatchedCount.incrementAndGet();

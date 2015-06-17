@@ -38,6 +38,17 @@ public class BatchPoints {
 	}
 
 	/**
+	 * Create a new BatchPoints build to create a new BatchPoints in a fluent manner-
+	 *
+	 * @param database
+	 *            the name of the Database
+	 * @return the Builder to be able to add further Builder calls.
+	 */
+	public static Builder database(final String database) {
+		return new Builder(database);
+	}
+
+	/**
 	 * The Builder to create a new BatchPoints instance.
 	 */
 	public static class Builder {
@@ -52,7 +63,7 @@ public class BatchPoints {
 		/**
 		 * @param database
 		 */
-		public Builder(final String database) {
+		Builder(final String database) {
 			super();
 			this.database = database;
 		}

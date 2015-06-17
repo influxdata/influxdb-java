@@ -29,6 +29,18 @@ public class Point {
 	}
 
 	/**
+	 * Create a new Point Build build to create a new Point in a fluent manner-
+	 *
+	 * @param measurement
+	 *            the name of the measurement.
+	 * @return the Builder to be able to add further Builder calls.
+	 */
+
+	public static Builder measurement(final String measurement) {
+		return new Builder(measurement);
+	}
+
+	/**
 	 * Builder for a new Point.
 	 *
 	 * @author stefan.majer [at] gmail.com
@@ -44,7 +56,7 @@ public class Point {
 		/**
 		 * @param measurement
 		 */
-		public Builder(final String measurement) {
+		Builder(final String measurement) {
 			this.measurement = measurement;
 		}
 

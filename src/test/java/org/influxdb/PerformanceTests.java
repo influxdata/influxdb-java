@@ -30,7 +30,7 @@ public class PerformanceTests {
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int j = 0; j < SINGLE_POINT_COUNT; j++) {
-			Point point = new Point.Builder("cpu").field("idle", j).field("user", 2 * j).field("system", 3 * j).build();
+			Point point = Point.measurement("cpu").field("idle", j).field("user", 2 * j).field("system", 3 * j).build();
 			this.influxDB.write(dbName, "default", point);
 		}
 		this.influxDB.disableBatch();
@@ -46,13 +46,15 @@ public class PerformanceTests {
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < COUNT; i++) {
 
-			BatchPoints batchPoints = new BatchPoints.Builder(dbName)
+			BatchPoints batchPoints = BatchPoints
+					.database(dbName)
 					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
 					.tag("blubber", "bla")
 					.retentionPolicy("default")
 					.build();
 			for (int j = 0; j < POINT_COUNT; j++) {
-				Point point = new Point.Builder("cpu")
+				Point point = Point
+						.measurement("cpu")
 						.field("idle", j)
 						.field("user", 2 * j)
 						.field("system", 3 * j)
@@ -74,7 +76,7 @@ public class PerformanceTests {
 
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < 2000000; i++) {
-			Point point = new Point.Builder("s").field("v", 1).build();
+			Point point = Point.measurement("s").field("v", 1).build();
 			this.influxDB.write(dbName, "default", point);
 		}
 		System.out.println("5Mio points:" + watch);

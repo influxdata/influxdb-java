@@ -166,13 +166,14 @@ public class InfluxDBTest {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = new BatchPoints.Builder(dbName)
+		BatchPoints batchPoints = BatchPoints
+				.database(dbName)
 				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
 				.tag("async", "true")
 				.retentionPolicy("default")
 				.build();
-		Point point1 = new Point.Builder("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
-		Point point2 = new Point.Builder("disk").field("used", 80L).field("free", 1L).build();
+		Point point1 = Point.measurement("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
+		Point point2 = Point.measurement("disk").field("used", 80L).field("free", 1L).build();
 		batchPoints.point(point1);
 		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);

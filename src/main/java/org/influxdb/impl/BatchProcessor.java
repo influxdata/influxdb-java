@@ -152,9 +152,7 @@ public class BatchProcessor {
 			for (BatchEntry batchEntry : this.cache) {
 				String dbName = batchEntry.getDb();
 				if (!databaseToBatchPoints.containsKey(dbName)) {
-					BatchPoints batchPoints = new BatchPoints.Builder(dbName)
-							.retentionPolicy(batchEntry.getRp())
-							.build();
+					BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
 					databaseToBatchPoints.put(dbName, batchPoints);
 				}
 				Point point = batchEntry.getPoint();
