@@ -4,11 +4,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.influxdb.impl.TimeUtil;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -23,7 +22,7 @@ public class Point {
 	 * The time stored in nanos. FIXME ensure this
 	 */
 	private Long time;
-	private String precision;
+	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private Map<String, Object> fields;
 
 	Point() {
@@ -37,10 +36,10 @@ public class Point {
 	 */
 	public static class Builder {
 		private final String measurement;
-		private final Map<String, String> tags = Maps.newHashMap();
+		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
 		private Long time;
-		private String precision;
-		private final Map<String, Object> fields = Maps.newHashMap();
+		private TimeUnit precision = TimeUnit.NANOSECONDS;
+		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
 
 		/**
 		 * @param measurement
@@ -86,7 +85,7 @@ public class Point {
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
 			// FIXME convert to millis.
-			this.precision = TimeUtil.toTimePrecision(precisionToSet);
+			this.precision = precisionToSet;
 			this.time = timeToSet;
 			return this;
 		}
@@ -145,7 +144,7 @@ public class Point {
 	 * @param precision
 	 *            the precision to set
 	 */
-	void setPrecision(final String precision) {
+	void setPrecision(final TimeUnit precision) {
 		this.precision = precision;
 	}
 
@@ -179,6 +178,13 @@ public class Point {
 
 	// measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
 
+	/**
+	 * calculate the lineprotocol entry for a single Point.
+	 * 
+	 * Documentation is WIP : https://github.com/influxdb/influxdb/pull/2997
+	 *
+	 * @return the String without newLine.
+	 */
 	public String lineProtocol() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(this.measurement);
@@ -199,7 +205,9 @@ public class Point {
 		if (null == this.time) {
 			this.time = System.currentTimeMillis();
 		}
-		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, TimeUnit.MILLISECONDS));
+		if (this.time != null) {
+			sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
+		}
 		return sb.toString();
 	}
 

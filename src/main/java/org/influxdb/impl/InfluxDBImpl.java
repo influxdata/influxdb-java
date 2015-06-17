@@ -146,19 +146,13 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void write(final BatchPoints batchPoints) {
 		this.batchedCount.addAndGet(batchPoints.getPoints().size());
-		this.influxDBService.batchPoints(this.username, this.password, batchPoints);
-	}
-
-	@Override
-	public void writePoints(final BatchPoints batchPoints) {
-		this.batchedCount.addAndGet(batchPoints.getPoints().size());
 		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
 		this.influxDBService.writePoints(
 				this.username,
 				this.password,
 				batchPoints.getDatabase(),
 				batchPoints.getRetentionPolicy(),
-				batchPoints.getPrecision(),
+				TimeUtil.toTimePrecision(batchPoints.getPrecision()),
 				batchPoints.getConsistency().value(),
 				lineProtocol);
 

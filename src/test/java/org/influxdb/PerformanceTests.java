@@ -23,7 +23,7 @@ public class PerformanceTests {
 		this.influxDB.setLogLevel(LogLevel.NONE);
 	}
 
-	@Test(threadPoolSize = 10)
+	@Test(threadPoolSize = 10, enabled = false)
 	public void writeSinglePointPerformance() throws InterruptedException {
 		String dbName = "write_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -38,35 +38,8 @@ public class PerformanceTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
-	@Test(enabled = true)
+	@Test(enabled = false)
 	public void writePerformance() {
-		String dbName = "write_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-
-		Stopwatch watch = Stopwatch.createStarted();
-		for (int i = 0; i < COUNT; i++) {
-
-			BatchPoints batchPoints = new BatchPoints.Builder(dbName)
-					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-					.tag("blubber", "bla")
-					.retentionPolicy("default")
-					.build();
-			for (int j = 0; j < POINT_COUNT; j++) {
-				Point point = new Point.Builder("cpu")
-						.field("idle", j)
-						.field("user", 2 * j)
-						.field("system", 3 * j)
-						.build();
-				batchPoints.point(point);
-			}
-			this.influxDB.write(batchPoints);
-		}
-		System.out.println("Write for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + watch);
-		this.influxDB.deleteDatabase(dbName);
-	}
-
-	@Test(enabled = true)
-	public void writePointsPerformance() {
 		String dbName = "writepoints_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
@@ -87,9 +60,24 @@ public class PerformanceTests {
 				batchPoints.point(point);
 			}
 
-			this.influxDB.writePoints(batchPoints);
+			this.influxDB.write(batchPoints);
 		}
 		System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + watch);
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	@Test(enabled = true)
+	public void maxWritePointsPerformance() {
+		String dbName = "d";
+		this.influxDB.createDatabase(dbName);
+		this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
+
+		Stopwatch watch = Stopwatch.createStarted();
+		for (int i = 0; i < 2000000; i++) {
+			Point point = new Point.Builder("s").field("v", 1).build();
+			this.influxDB.write(dbName, "default", point);
+		}
+		System.out.println("5Mio points:" + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
 }

@@ -1,8 +1,6 @@
 package org.influxdb.impl;
 
 import org.influxdb.dto.QueryResult;
-import org.influxdb.dto.BatchPoints;
-
 import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.GET;
@@ -23,9 +21,6 @@ interface InfluxDBService {
 
 	@GET("/ping")
 	public Response ping();
-
-	@POST("/write")
-	public Response batchPoints(@Query(U) String username, @Query(P) String password, @Body BatchPoints batchPoints);
 
 	// db: required The database to write points
 	// rp: optional The retention policy to write points. If not specified, the default retention

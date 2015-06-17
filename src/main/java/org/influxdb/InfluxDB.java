@@ -121,21 +121,13 @@ public interface InfluxDB {
 	public void write(final String database, final String retentionPolicy, final Point point);
 
 	/**
-	 * Write a set of Points to the database.
-	 * 
-	 * @param batchPoints
-	 *            The batchPoints to write.
-	 */
-	public void write(final BatchPoints batchPoints);
-
-	/**
 	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
 	 * 
 	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
 	 *
 	 * @param batchPoints
 	 */
-	public void writePoints(final BatchPoints batchPoints);
+	public void write(final BatchPoints batchPoints);
 
 	/**
 	 * Execute a query agains a database.

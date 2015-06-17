@@ -163,7 +163,7 @@ public class BatchProcessor {
 			this.cache.clear();
 		}
 		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-			BatchProcessor.this.influxDB.writePoints(batchPoints);
+			BatchProcessor.this.influxDB.write(batchPoints);
 		}
 	}
 

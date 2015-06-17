@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
-import org.influxdb.impl.TimeUtil;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 
 /**
  * {Purpose of This Type}
@@ -29,17 +29,12 @@ public class BatchPoints {
 	 * The time stored in nanos. FIXME ensure this
 	 */
 	private Long time;
-	private String precision;
+	private TimeUnit precision;
 	private List<Point> points;
 	private ConsistencyLevel consistency;
 
-	// private static final String TIMESTAMP_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSS'Z'";
-	// final SimpleDateFormat isoFormatter = new SimpleDateFormat(TIMESTAMP_DATE_FORMAT, LOCALE);
-	// isoFormatter.setTimeZone(TimeZone.getTimeZone(UTC));
-	// isoFormatter.format(new Date())
-
 	BatchPoints() {
-
+		// Only visible in the Builder
 	}
 
 	/**
@@ -48,9 +43,9 @@ public class BatchPoints {
 	public static class Builder {
 		private final String database;
 		private String retentionPolicy;
-		private final Map<String, String> tags = Maps.newHashMap();
+		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
 		private Long time;
-		private String precision;
+		private TimeUnit precision;
 		private final List<Point> points = Lists.newArrayList();
 		private ConsistencyLevel consistency;
 
@@ -95,7 +90,7 @@ public class BatchPoints {
 		 * @return the Builder instance.
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-			this.precision = TimeUtil.toTimePrecision(precisionToSet);
+			this.precision = precisionToSet;
 			this.time = timeToSet;
 			return this;
 		}
@@ -248,7 +243,7 @@ public class BatchPoints {
 	/**
 	 * @return the precision
 	 */
-	public String getPrecision() {
+	public TimeUnit getPrecision() {
 		return this.precision;
 	}
 
@@ -256,7 +251,7 @@ public class BatchPoints {
 	 * @param precision
 	 *            the precision to set
 	 */
-	void setPrecision(final String precision) {
+	void setPrecision(final TimeUnit precision) {
 		this.precision = precision;
 	}
 
@@ -298,7 +293,11 @@ public class BatchPoints {
 	}
 
 	// measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
-
+	/**
+	 * calculate the lineprotocol for all Points.
+	 *
+	 * @return the String with newLines.
+	 */
 	public String lineProtocol() {
 		StringBuilder sb = new StringBuilder();
 		for (Point point : this.points) {
