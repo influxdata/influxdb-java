@@ -3,6 +3,8 @@ influxdb-java
 
 This is the Java Client library which is only compatible with InfluxDB 0.9 and higher. 
 
+To connect to InfluxDB 0.8.x you need to use influxdb-java version 1.6.
+
 This implementation is meant as a Java rewrite of the influxdb-go package.
 All low level REST Api calls are available.
 
