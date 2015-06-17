@@ -1,7 +1,7 @@
 influxdb-java
 =============
 
-A pure Java library to access the REST API of a InfluxDB database.
+This is the Java Client library which is only compatible with InfluxDB 0.9 and higher. 
 
 This implementation is meant as a Java rewrite of the influxdb-go package.
 All low level REST Api calls are available.
@@ -10,21 +10,24 @@ Typical usage looks like:
 
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+String dbName = "aTimeSeries";
+influxDB.createDatabase(dbName);
 
-this.influxDB.createDatabase("aTimeSeries");
-
-Serie serie1 = new Serie.Builder("serie2Name")
-			.columns("column1", "column2")
-			.values(System.currentTimeMillis(), 1)
-			.values(System.currentTimeMillis(), 2)
-			.build();
-Serie serie2 = new Serie.Builder("serie2Name")
-			.columns("column1", "column2")
-			.values(System.currentTimeMillis(), 1)
-			.values(System.currentTimeMillis(), 2)
-			.build();
-this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
-
+BatchPoints batchPoints = BatchPoints
+				.database(dbName)
+				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+				.tag("async", "true")
+				.retentionPolicy("default")
+				.consistency(ConsistencyLevel.ALL)
+				.build();
+Point point1 = Point.measurement("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
+Point point2 = Point.measurement("disk").field("used", 80L).field("free", 1L).build();
+batchPoints.point(point1);
+batchPoints.point(point2);
+influxDB.write(batchPoints);
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query);
+influxDB.deleteDatabase(dbName)
 ```
 
 ### Maven
@@ -32,7 +35,7 @@ this.influxDB.write(dbName, TimeUnit.MILLISECONDS, serie1, serie2);
 		<dependency>
 			<groupId>org.influxdb</groupId>
 			<artifactId>influxdb-java</artifactId>
-			<version>1.5</version>
+			<version>2.0</version>
 		</dependency>
 ```
 
@@ -41,7 +44,7 @@ For additional usage examples have a look at [InfluxDBTest.java](https://github.
 
 ### Build Requirements
 
-* Java 1.6+
+* Java 1.7+
 * Maven 3.0+
 * Docker daemon running
 
