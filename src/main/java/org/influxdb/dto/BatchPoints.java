@@ -29,7 +29,7 @@ public class BatchPoints {
 	 * The time stored in nanos. FIXME ensure this
 	 */
 	private Long time;
-	private TimeUnit precision;
+	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private List<Point> points;
 	private ConsistencyLevel consistency;
 
@@ -56,7 +56,7 @@ public class BatchPoints {
 		private String retentionPolicy;
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
 		private Long time;
-		private TimeUnit precision;
+		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final List<Point> points = Lists.newArrayList();
 		private ConsistencyLevel consistency;
 
@@ -101,8 +101,10 @@ public class BatchPoints {
 		 * @return the Builder instance.
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-			this.precision = precisionToSet;
 			this.time = timeToSet;
+			if (null != precisionToSet) {
+				this.precision = precisionToSet;
+			}
 			return this;
 		}
 
