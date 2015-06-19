@@ -32,6 +32,30 @@ influxDB.query(query);
 influxDB.deleteDatabase(dbName)
 ```
 
+
+If your application produces only single Points, you can enable the batching functionality of influxdb-java:
+
+```java
+InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+String dbName = "aTimeSeries";
+influxDB.createDatabase(dbName);
+
+// Flush every 2000 Points, at least every 100ms
+influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
+
+Point point1 = Point.measurement("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
+Point point2 = Point.measurement("disk").field("used", 80L).field("free", 1L).build();
+
+influxDB.write(point1);
+influxDB.write(point1);
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query);
+influxDB.deleteDatabase(dbName)
+```
+
+
+
+
 ### Maven
 ```
 		<dependency>
