@@ -202,7 +202,8 @@ public class Point {
 		sb.append(this.measurement);
 		for (Entry<String, String> tag : this.tags.entrySet()) {
 			sb.append(",");
-			sb.append(tag.getKey()).append("=").append(tag.getValue());
+			String value = tag.getValue().replace(" ", "\\ ");
+			sb.append(tag.getKey()).append("=").append(value);
 		}
 		sb.append(" ");
 		int fieldCount = this.fields.size();
@@ -222,5 +223,4 @@ public class Point {
 		}
 		return sb.toString();
 	}
-
 }

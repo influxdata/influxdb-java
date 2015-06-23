@@ -93,7 +93,7 @@ public class InfluxDBTest {
 		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
 		// Charsets.UTF_8));
 		System.out.println("##################################################################################");
-		// System.out.println("CContainer Logs: \n" + logs);
+		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
@@ -179,6 +179,24 @@ public class InfluxDBTest {
 		this.influxDB.write(batchPoints);
 		Query query = new Query("SELECT idle FROM cpu", dbName);
 		this.influxDB.query(query);
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	@Test(enabled = true)
+	public void testTicket38() {
+		String dbName = "ticket38_" + System.currentTimeMillis();
+		this.influxDB.setLogLevel(LogLevel.FULL);
+		this.influxDB.createDatabase(dbName);
+		Point point1 = Point
+				.measurement("metric")
+				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+				.field("value", 5)
+				.tag("host", "host A")
+				.tag("host", "host-B")
+				.tag("host", "host-\"C")
+				.tag("region", "region")
+				.build();
+		this.influxDB.write(dbName, "default", point1);
 		this.influxDB.deleteDatabase(dbName);
 	}
 }
