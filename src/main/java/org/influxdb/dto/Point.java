@@ -8,6 +8,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.escape.Escaper;
+import com.google.common.escape.Escapers;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -24,6 +26,9 @@ public class Point {
 	private Long time;
 	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private Map<String, Object> fields;
+
+	private static final Escaper FIELD_ESCAPER = Escapers.builder().addEscape('"', "\\\"").build();
+	private static final Escaper KEY_ESCAPER = Escapers.builder().addEscape(' ', "\\ ").addEscape(',', "\\,").build();
 
 	Point() {
 	}
@@ -108,9 +113,9 @@ public class Point {
 		 * @return the newly created Point.
 		 */
 		public Point build() {
-			Preconditions.checkArgument(
-					!Strings.isNullOrEmpty(this.measurement),
-					"Point name must not be null or empty.");
+			Preconditions
+					.checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
+			Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
@@ -188,29 +193,38 @@ public class Point {
 		return builder.toString();
 	}
 
-	// measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
-
 	/**
 	 * calculate the lineprotocol entry for a single Point.
 	 * 
 	 * Documentation is WIP : https://github.com/influxdb/influxdb/pull/2997
+	 * 
+	 * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md
 	 *
 	 * @return the String without newLine.
 	 */
 	public String lineProtocol() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(this.measurement);
+		sb.append(KEY_ESCAPER.escape(this.measurement));
+
 		for (Entry<String, String> tag : this.tags.entrySet()) {
 			sb.append(",");
-			String value = tag.getValue().replace(" ", "\\ ");
-			sb.append(tag.getKey()).append("=").append(value);
+			sb.append(KEY_ESCAPER.escape(tag.getKey())).append("=").append(KEY_ESCAPER.escape(tag.getValue()));
 		}
 		sb.append(" ");
 		int fieldCount = this.fields.size();
 		int loops = 0;
+
 		for (Entry<String, Object> field : this.fields.entrySet()) {
+			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			loops++;
-			sb.append(field.getKey()).append("=").append(field.getValue());
+			Object value = field.getValue();
+			if (value instanceof String) {
+				String stringValue = (String) value;
+				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
+			} else {
+				sb.append(value);
+			}
+
 			if (loops < fieldCount) {
 				sb.append(",");
 			}
