@@ -1,13 +1,13 @@
 package org.influxdb.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -24,7 +24,7 @@ import com.google.common.collect.Maps;
  *
  */
 public class BatchProcessor {
-	protected final List<BatchEntry> cache = Collections.synchronizedList(new ArrayList<BatchEntry>());
+	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
 	final int actions;
@@ -42,7 +42,7 @@ public class BatchProcessor {
 
 		/**
 		 * @param influxDB
-		 *            is mandadory.
+		 *            is mandatory.
 		 */
 		public Builder(final InfluxDB influxDB) {
 			this.influxDB = (InfluxDBImpl) influxDB;
@@ -61,12 +61,12 @@ public class BatchProcessor {
 		}
 
 		/**
-		 * The intervall at which at least should issued a write.
-		 * 
+		 * The interval at which at least should issued a write.
+		 *
 		 * @param interval
-		 *            the intervall
+		 *            the interval
 		 * @param unit
-		 *            the TimeUnit of the intervaall
+		 *            the TimeUnit of the interval
 		 *
 		 * @return this Builder to use it fluent
 		 */
@@ -144,28 +144,28 @@ public class BatchProcessor {
 	}
 
 	void write() {
-		if (this.cache.isEmpty()) {
+		if (this.queue.isEmpty()) {
 			return;
 		}
+
 		Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-		synchronized (this.cache) {
-			for (BatchEntry batchEntry : this.cache) {
-				String dbName = batchEntry.getDb();
-				if (!databaseToBatchPoints.containsKey(dbName)) {
-					BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
-					databaseToBatchPoints.put(dbName, batchPoints);
-				}
-				Point point = batchEntry.getPoint();
-				databaseToBatchPoints.get(dbName).point(point);
+		List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
+		this.queue.drainTo(batchEntries);
+
+		for (BatchEntry batchEntry : batchEntries) {
+			String dbName = batchEntry.getDb();
+			if (!databaseToBatchPoints.containsKey(dbName)) {
+				BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
+				databaseToBatchPoints.put(dbName, batchPoints);
 			}
-			this.cache.clear();
+			Point point = batchEntry.getPoint();
+			databaseToBatchPoints.get(dbName).point(point);
 		}
+
 		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
 			BatchProcessor.this.influxDB.write(batchPoints);
 		}
 	}
-
-	private final AtomicLong issuedBatches = new AtomicLong();
 
 	/**
 	 * Put a single BatchEntry to the cache for later processing.
@@ -174,16 +174,15 @@ public class BatchProcessor {
 	 *            the batchEntry to write to the cache.
 	 */
 	void put(final BatchEntry batchEntry) {
-		if (this.issuedBatches.incrementAndGet() >= this.actions) {
-			this.issuedBatches.set(0);
+		if (this.queue.size() >= this.actions) {
 			write();
 		}
-		this.cache.add(batchEntry);
+		this.queue.add(batchEntry);
 	}
 
 	/**
 	 * Flush the current open writes to influxdb and end stop the reaper thread. This should only be
-	 * called if no batchprocessing is needed anymore.
+	 * called if no batch processing is needed anymore.
 	 *
 	 */
 	void flush() {
