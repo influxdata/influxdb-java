@@ -46,8 +46,8 @@ influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 Point point1 = Point.measurement("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
 Point point2 = Point.measurement("disk").field("used", 80L).field("free", 1L).build();
 
-influxDB.write(point1);
-influxDB.write(point1);
+influxDB.write(dbName, "default", point1);
+influxDB.write(dbName, "default", point2);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.deleteDatabase(dbName)

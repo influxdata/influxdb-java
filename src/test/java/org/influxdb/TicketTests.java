@@ -127,4 +127,20 @@ public class TicketTests {
 		this.influxDB.write(batchPoints);
 		this.influxDB.deleteDatabase(dbName);
 	}
+
+	/**
+	 * Test for ticket #40
+	 *
+	 */
+	@Test(enabled = true)
+	public void testTicket40() {
+		String dbName = "ticket40_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
+		for (int i = 0; i < 1000; i++) {
+			Point point = Point.measurement("cpu").field("idle", 99).build();
+			this.influxDB.write(dbName, "default", point);
+		}
+		this.influxDB.deleteDatabase(dbName);
+	}
 }
