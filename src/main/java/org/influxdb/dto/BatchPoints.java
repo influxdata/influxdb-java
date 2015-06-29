@@ -152,6 +152,9 @@ public class BatchPoints {
 			batchPoints.setDatabase(this.database);
 			for (Point point : this.points) {
 				point.getTags().putAll(this.tags);
+				if (null != this.time) {
+					point.setTime(this.time);
+				}
 			}
 			batchPoints.setPoints(this.points);
 			batchPoints.setPrecision(this.precision);
