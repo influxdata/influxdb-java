@@ -34,7 +34,7 @@ public class BatchProcessor {
 	/**
 	 * The Builder to create a BatchProcessor instance.
 	 */
-	public static class Builder {
+	public static final class Builder {
 		private final InfluxDBImpl influxDB;
 		private int actions;
 		private TimeUnit flushIntervalUnit;
@@ -174,10 +174,10 @@ public class BatchProcessor {
 	 *            the batchEntry to write to the cache.
 	 */
 	void put(final BatchEntry batchEntry) {
+		this.queue.add(batchEntry);
 		if (this.queue.size() >= this.actions) {
 			write();
 		}
-		this.queue.add(batchEntry);
 	}
 
 	/**
