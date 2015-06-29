@@ -20,9 +20,6 @@ import com.google.common.escape.Escapers;
 public class Point {
 	private String measurement;
 	private Map<String, String> tags;
-	/**
-	 * The time stored in nanos. FIXME ensure this
-	 */
 	private Long time;
 	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private Map<String, Object> fields;
@@ -51,7 +48,7 @@ public class Point {
 	 * @author stefan.majer [at] gmail.com
 	 *
 	 */
-	public static class Builder {
+	public static final class Builder {
 		private final String measurement;
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
 		private Long time;
@@ -101,9 +98,10 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-			// FIXME convert to millis.
-			this.precision = precisionToSet;
 			this.time = timeToSet;
+			if (null != precisionToSet) {
+				this.precision = precisionToSet;
+			}
 			return this;
 		}
 
@@ -203,15 +201,27 @@ public class Point {
 	 * @return the String without newLine.
 	 */
 	public String lineProtocol() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(KEY_ESCAPER.escape(this.measurement));
+		sb.append(concatenatedTags());
+		sb.append(concatenateFields());
+		sb.append(formatedTime());
+		return sb.toString();
+	}
 
+	private StringBuilder concatenatedTags() {
+		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, String> tag : this.tags.entrySet()) {
 			sb.append(",");
 			sb.append(KEY_ESCAPER.escape(tag.getKey())).append("=").append(KEY_ESCAPER.escape(tag.getValue()));
 		}
 		sb.append(" ");
-		int fieldCount = this.fields.size();
+		return sb;
+	}
+
+	private StringBuilder concatenateFields() {
+		final StringBuilder sb = new StringBuilder();
+		final int fieldCount = this.fields.size();
 		int loops = 0;
 
 		for (Entry<String, Object> field : this.fields.entrySet()) {
@@ -229,12 +239,16 @@ public class Point {
 				sb.append(",");
 			}
 		}
-		if (null == this.time) {
-			this.time = System.currentTimeMillis();
-		}
-		if (this.time != null) {
-			sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-		}
-		return sb.toString();
+		return sb;
 	}
+
+	private StringBuilder formatedTime() {
+		final StringBuilder sb = new StringBuilder();
+		if (null == this.time) {
+			this.time = System.nanoTime();
+		}
+		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
+		return sb;
+	}
+
 }

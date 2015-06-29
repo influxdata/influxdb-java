@@ -51,7 +51,7 @@ public class BatchPoints {
 	/**
 	 * The Builder to create a new BatchPoints instance.
 	 */
-	public static class Builder {
+	public static final class Builder {
 		private final String database;
 		private String retentionPolicy;
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
