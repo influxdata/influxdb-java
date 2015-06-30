@@ -222,6 +222,10 @@ public class BatchPoints {
 	 */
 	public BatchPoints point(final Point point) {
 		point.getTags().putAll(this.tags);
+		if (null != this.time) {
+			point.setTime(this.time);
+		}
+		point.setPrecision(this.precision);
 		this.points.add(point);
 		return this;
 	}

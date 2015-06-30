@@ -167,5 +167,11 @@ public class TicketTests {
 		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
 		batchPoints = BatchPoints.database("db").point(point).build();
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000000\n");
+
+		point = Point.measurement("test").field("a", 1).build();
+		batchPoints = BatchPoints.database("db").time(1, TimeUnit.MILLISECONDS).build();
+		batchPoints = batchPoints.point(point);
+		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000000\n");
+
 	}
 }
