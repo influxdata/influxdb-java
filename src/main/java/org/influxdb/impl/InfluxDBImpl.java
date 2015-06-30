@@ -40,6 +40,7 @@ public class InfluxDBImpl implements InfluxDB {
 	private final AtomicLong writeCount = new AtomicLong();
 	private final AtomicLong unBatchedCount = new AtomicLong();
 	private final AtomicLong batchedCount = new AtomicLong();
+	private LogLevel logLevel = LogLevel.NONE;
 
 	/**
 	 * Constructor which should only be used from the InfluxDBFactory.
@@ -82,6 +83,7 @@ public class InfluxDBImpl implements InfluxDB {
 		default:
 			break;
 		}
+		this.logLevel = logLevel;
 		return this;
 	}
 
@@ -103,8 +105,11 @@ public class InfluxDBImpl implements InfluxDB {
 	public void disableBatch() {
 		this.batchEnabled.set(false);
 		this.batchProcessor.flush();
-		System.out.println("total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get()
-				+ " batchPoints:" + this.batchedCount);
+		if (this.logLevel != LogLevel.NONE) {
+			System.out.println(
+					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
+							+ this.batchedCount);
+		}
 	}
 
 	@Override
@@ -152,7 +157,7 @@ public class InfluxDBImpl implements InfluxDB {
 				this.password,
 				batchPoints.getDatabase(),
 				batchPoints.getRetentionPolicy(),
-				TimeUtil.toTimePrecision(batchPoints.getPrecision()),
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
 				batchPoints.getConsistency().value(),
 				lineProtocol);
 
@@ -163,13 +168,8 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public QueryResult query(final Query query) {
-		QueryResult response = this.influxDBService.query(
-				this.username,
-				this.password,
-				query.getDatabase(),
-				query.getCommand());
-		System.out.println(response);
-		// FIXME
+		QueryResult response = this.influxDBService
+				.query(this.username, this.password, query.getDatabase(), query.getCommand());
 		return response;
 	}
 
