@@ -117,7 +117,6 @@ public class TicketTests {
 		this.influxDB.createDatabase(dbName);
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
-				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
 				.tag("async", "true")
 				.retentionPolicy("default")
 				.consistency(InfluxDB.ConsistencyLevel.ALL)
@@ -168,8 +167,8 @@ public class TicketTests {
 		batchPoints = BatchPoints.database("db").point(point).build();
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000000\n");
 
-		point = Point.measurement("test").field("a", 1).build();
-		batchPoints = BatchPoints.database("db").time(1, TimeUnit.MILLISECONDS).build();
+		point = Point.measurement("test").field("a", 1).time(1, TimeUnit.MILLISECONDS).build();
+		batchPoints = BatchPoints.database("db").build();
 		batchPoints = batchPoints.point(point);
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000000\n");
 

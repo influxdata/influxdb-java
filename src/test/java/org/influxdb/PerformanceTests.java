@@ -48,7 +48,6 @@ public class PerformanceTests {
 
 			BatchPoints batchPoints = BatchPoints
 					.database(dbName)
-					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
 					.tag("blubber", "bla")
 					.retentionPolicy("default")
 					.build();

@@ -3,8 +3,6 @@ package org.influxdb.dto;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.influxdb.InfluxDB.ConsistencyLevel;
 
 import com.google.common.base.Preconditions;
@@ -25,11 +23,6 @@ public class BatchPoints {
 	private String database;
 	private String retentionPolicy;
 	private Map<String, String> tags;
-	/**
-	 * The time stored in nanos. FIXME ensure this
-	 */
-	private Long time;
-	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private List<Point> points;
 	private ConsistencyLevel consistency;
 
@@ -55,8 +48,6 @@ public class BatchPoints {
 		private final String database;
 		private String retentionPolicy;
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
-		private Long time;
-		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final List<Point> points = Lists.newArrayList();
 		private ConsistencyLevel consistency;
 
@@ -90,21 +81,6 @@ public class BatchPoints {
 		 */
 		public Builder tag(final String tagName, final String value) {
 			this.tags.put(tagName, value);
-			return this;
-		}
-
-		/**
-		 * Add a time to this set of points.
-		 *
-		 * @param precisionToSet
-		 * @param timeToSet
-		 * @return the Builder instance.
-		 */
-		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-			this.time = timeToSet;
-			if (null != precisionToSet) {
-				this.precision = precisionToSet;
-			}
 			return this;
 		}
 
@@ -152,15 +128,10 @@ public class BatchPoints {
 			batchPoints.setDatabase(this.database);
 			for (Point point : this.points) {
 				point.getTags().putAll(this.tags);
-				if (null != this.time) {
-					point.setTime(this.time);
-				}
 			}
 			batchPoints.setPoints(this.points);
-			batchPoints.setPrecision(this.precision);
 			batchPoints.setRetentionPolicy(this.retentionPolicy);
 			batchPoints.setTags(this.tags);
-			batchPoints.setTime(this.time);
 			if (null == this.consistency) {
 				this.consistency = ConsistencyLevel.ONE;
 			}
@@ -222,10 +193,6 @@ public class BatchPoints {
 	 */
 	public BatchPoints point(final Point point) {
 		point.getTags().putAll(this.tags);
-		if (null != this.time) {
-			point.setTime(this.time);
-		}
-		point.setPrecision(this.precision);
 		this.points.add(point);
 		return this;
 	}
@@ -243,36 +210,6 @@ public class BatchPoints {
 	 */
 	void setTags(final Map<String, String> tags) {
 		this.tags = tags;
-	}
-
-	/**
-	 * @return the time
-	 */
-	public Long getTime() {
-		return this.time;
-	}
-
-	/**
-	 * @param time
-	 *            the time to set
-	 */
-	void setTime(final Long time) {
-		this.time = time;
-	}
-
-	/**
-	 * @return the precision
-	 */
-	public TimeUnit getPrecision() {
-		return this.precision;
-	}
-
-	/**
-	 * @param precision
-	 *            the precision to set
-	 */
-	void setPrecision(final TimeUnit precision) {
-		this.precision = precision;
 	}
 
 	/**
@@ -302,10 +239,6 @@ public class BatchPoints {
 		builder.append(this.retentionPolicy);
 		builder.append(", tags=");
 		builder.append(this.tags);
-		builder.append(", time=");
-		builder.append(this.time);
-		builder.append(", precision=");
-		builder.append(this.precision);
 		builder.append(", points=");
 		builder.append(this.points);
 		builder.append("]");
