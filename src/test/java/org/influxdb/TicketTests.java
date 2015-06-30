@@ -1,5 +1,7 @@
 package org.influxdb;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -130,7 +132,6 @@ public class TicketTests {
 
 	/**
 	 * Test for ticket #40
-	 *
 	 */
 	@Test(enabled = true)
 	public void testTicket40() {
@@ -142,5 +143,29 @@ public class TicketTests {
 			this.influxDB.write(dbName, "default", point);
 		}
 		this.influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * Test for ticket #40
+	 */
+	@Test(enabled = true)
+	public void testTicket44() {
+		Point point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1 1000");
+
+		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1 1000000");
+
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
+		BatchPoints batchPoints = BatchPoints.database("db").point(point).build();
+		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1\n");
+
+		point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
+		batchPoints = BatchPoints.database("db").point(point).build();
+		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000\n");
+
+		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
+		batchPoints = BatchPoints.database("db").point(point).build();
+		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000000\n");
 	}
 }
