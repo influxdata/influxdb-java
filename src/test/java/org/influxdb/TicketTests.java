@@ -146,7 +146,7 @@ public class TicketTests {
 	}
 
 	/**
-	 * Test for ticket #40
+	 * Test for ticket #44
 	 */
 	@Test(enabled = true)
 	public void testTicket44() {
