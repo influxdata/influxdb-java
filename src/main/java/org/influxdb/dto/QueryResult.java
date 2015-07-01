@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * {Purpose of This Type}
@@ -109,6 +110,7 @@ public class QueryResult {
 
 	public static class Series {
 		private String name;
+		private Map<String, String> tags;
 		private List<String> columns;
 		private List<List<Object>> values;
 
@@ -125,6 +127,21 @@ public class QueryResult {
 		 */
 		public void setName(final String name) {
 			this.name = name;
+		}
+
+		/**
+		 * @return the tags
+		 */
+		public Map<String, String> getTags(){
+			return tags;
+		}
+
+		/**
+		 * @param tags
+		 *            the tags to set
+		 */
+		public void setTags(final Map<String, String> tags){
+			this.tags = tags;
 		}
 
 		/**
@@ -165,6 +182,8 @@ public class QueryResult {
 			StringBuilder builder = new StringBuilder();
 			builder.append("Series [name=");
 			builder.append(this.name);
+			builder.append(", tags=");
+			builder.append(this.tags);
 			builder.append(", columns=");
 			builder.append(this.columns);
 			builder.append(", values=");
