@@ -151,7 +151,7 @@ public class Point {
 	/**
 	 * @return the tags
 	 */
-	Map<String, String> getTags() {
+	public Map<String, String> getTags() {
 		return this.tags;
 	}
 
@@ -169,6 +169,34 @@ public class Point {
 	 */
 	void setFields(final Map<String, Object> fields) {
 		this.fields = fields;
+	}
+
+	/**
+	 * @return the meeasurement
+	 */
+	public String getMeasurement() {
+		return measurement;
+	}
+
+	/**
+	 * @return the time
+	 */
+	public Long getTime() {
+		return time;
+	}
+
+	/**
+	 * @return the precision
+	 */
+	public TimeUnit getPrecision() {
+		return precision;
+	}
+
+	/**
+	 * @return the fields
+	 */
+	public Map<String, Object> getFields() {
+		return fields;
 	}
 
 	/**
