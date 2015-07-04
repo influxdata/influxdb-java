@@ -200,8 +200,10 @@ public class InfluxDBImpl implements InfluxDB {
 		// Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
 		List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();
 		List<String> databases = Lists.newArrayList();
-		for (List<Object> database : databaseNames) {
-			databases.add(database.get(0).toString());
+		if(databaseNames != null) {
+			for (List<Object> database : databaseNames) {
+				databases.add(database.get(0).toString());
+			}
 		}
 		return databases;
 	}
