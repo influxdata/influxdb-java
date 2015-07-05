@@ -132,15 +132,15 @@ public class QueryResult {
 		/**
 		 * @return the tags
 		 */
-		public Map<String, String> getTags(){
-			return tags;
+		public Map<String, String> getTags() {
+			return this.tags;
 		}
 
 		/**
 		 * @param tags
 		 *            the tags to set
 		 */
-		public void setTags(final Map<String, String> tags){
+		public void setTags(final Map<String, String> tags) {
 			this.tags = tags;
 		}
 
