@@ -10,6 +10,7 @@ import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -166,13 +167,20 @@ public class InfluxDBTest {
 		this.influxDB.createDatabase(dbName);
 
 		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
-		Point point1 = Point.measurement("cpu").field("idle", 90L).field("user", 9L).field("system", 1L).build();
-		Point point2 = Point.measurement("disk").field("used", 80L).field("free", 1L).build();
+		Point point1 = Point
+				.measurement("cpu")
+				.tag("atag", "test")
+				.field("idle", 90L)
+				.field("user", 9L)
+				.field("system", 1L)
+				.build();
+		Point point2 = Point.measurement("disk").tag("atag", "test").field("used", 80L).field("free", 1L).build();
 		batchPoints.point(point1);
 		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);
-		Query query = new Query("SELECT idle FROM cpu", dbName);
-		this.influxDB.query(query);
+		Query query = new Query("SELECT * FROM cpu", dbName);
+		QueryResult result = this.influxDB.query(query);
+		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
 }
