@@ -1,5 +1,7 @@
 package org.influxdb.dto;
 
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -224,6 +226,9 @@ public class Point {
 		final int fieldCount = this.fields.size();
 		int loops = 0;
 
+		NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
+		numberFormat.setMaximumFractionDigits(340);
+		numberFormat.setGroupingUsed(false);
 		for (Entry<String, Object> field : this.fields.entrySet()) {
 			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			loops++;
@@ -231,6 +236,8 @@ public class Point {
 			if (value instanceof String) {
 				String stringValue = (String) value;
 				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
+			} else if (value instanceof Number) {
+				sb.append(numberFormat.format(value));
 			} else {
 				sb.append(value);
 			}

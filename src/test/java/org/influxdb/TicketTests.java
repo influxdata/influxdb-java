@@ -3,6 +3,8 @@ package org.influxdb;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -172,5 +174,38 @@ public class TicketTests {
 		batchPoints = batchPoints.point(point);
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1 1000000\n");
 
+	}
+
+	@Test
+	public void testTicket54() {
+		int intNumber = 100000000;
+		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", intNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000 1");
+
+		Integer integerNumber = 100000000;
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", integerNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000 1");
+
+		Long longNumber = 1000000000000000000L;
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", longNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1000000000000000000 1");
+
+		BigInteger bigIntegerNumber = BigInteger.valueOf(100000000);
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", bigIntegerNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000 1");
+
+		Double doubleNumber = Double.valueOf(100000000.0001);
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", doubleNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0001 1");
+
+		// FIXME this does not work it only prints the Integer part of the number ??
+		// Float floatNumber = Float.valueOf(10000.0001f);
+		// point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a",
+		// floatNumber).build();
+		// assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0001 1");
+
+		BigDecimal bigDecimalNumber = BigDecimal.valueOf(100000000.00000001);
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", bigDecimalNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.00000001 1");
 	}
 }
