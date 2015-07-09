@@ -48,5 +48,4 @@ public class PointTest {
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\\\"B\",b=\"D E \\\"F\" 1");
 
 	}
-
 }

@@ -79,6 +79,18 @@ public class Point {
 		}
 
 		/**
+		 * Add a Map of tags to add to this point.
+		 *
+		 * @param tagsToAdd
+		 *            the Map of tags to add
+		 * @return the Builder instance.
+		 */
+		public Builder tag(final Map<String, String> tagsToAdd) {
+			this.tags.putAll(tagsToAdd);
+			return this;
+		}
+
+		/**
 		 * Add a field to this point.
 		 *
 		 * @param field
@@ -89,6 +101,18 @@ public class Point {
 		 */
 		public Builder field(final String field, final Object value) {
 			this.fields.put(field, value);
+			return this;
+		}
+
+		/**
+		 * Add a Map of fields to this point.
+		 *
+		 * @param fieldsToAdd
+		 *            the fields to add
+		 * @return the Builder instance.
+		 */
+		public Builder fields(final Map<String, Object> fieldsToAdd) {
+			this.fields.putAll(fieldsToAdd);
 			return this;
 		}
 
