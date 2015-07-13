@@ -18,6 +18,7 @@ interface InfluxDBService {
 	public static final String RP = "rp";
 	public static final String PRECISION = "precision";
 	public static final String CONSISTENCY = "consistency";
+	public static final String EPOCH = "epoch";
 
 	@GET("/ping")
 	public Response ping();
@@ -36,6 +37,10 @@ interface InfluxDBService {
 	public Response writePoints(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
 			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
 			@Query(CONSISTENCY) String consistency, @Body TypedString batchPoints);
+
+	@GET("/query")
+	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+			@Query(EPOCH) String epoch, @Query(Q) String query);
 
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,

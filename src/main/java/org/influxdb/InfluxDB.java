@@ -139,6 +139,16 @@ public interface InfluxDB {
 	public QueryResult query(final Query query);
 
 	/**
+	 * Execute a query agains a database.
+	 * 
+	 * @param query
+	 *            the query to execute.
+	 * @param timeUnit the time unit of the results. 
+	 * @return a List of Series which matched the query.
+	 */
+	public QueryResult query(final Query query, TimeUnit timeUnit);
+
+	/**
 	 * Create a new Database.
 	 *
 	 * @param name

@@ -177,6 +177,16 @@ public class InfluxDBImpl implements InfluxDB {
 	 * {@inheritDoc}
 	 */
 	@Override
+	public QueryResult query(final Query query, final TimeUnit timeUnit) {
+		QueryResult response = this.influxDBService
+				.query(this.username, this.password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit) , query.getCommand());
+		return response;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void createDatabase(final String name) {
 		Preconditions.checkArgument(!name.contains("-"), "Databasename cant contain -");
 		this.influxDBService.query(this.username, this.password, "CREATE DATABASE " + name);
