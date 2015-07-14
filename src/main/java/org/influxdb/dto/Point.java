@@ -253,6 +253,8 @@ public class Point {
 		NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
 		numberFormat.setMaximumFractionDigits(340);
 		numberFormat.setGroupingUsed(false);
+		numberFormat.setMinimumFractionDigits(1);
+
 		for (Entry<String, Object> field : this.fields.entrySet()) {
 			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			loops++;
