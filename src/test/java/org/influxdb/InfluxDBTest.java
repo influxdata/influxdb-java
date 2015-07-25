@@ -171,7 +171,7 @@ public class InfluxDBTest {
 				.measurement("cpu")
 				.tag("atag", "test")
 				.field("idle", 90L)
-				.field("user", 9L)
+				.field("usertime", 9L)
 				.field("system", 1L)
 				.build();
 		Point point2 = Point.measurement("disk").tag("atag", "test").field("used", 80L).field("free", 1L).build();
