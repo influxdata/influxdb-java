@@ -55,7 +55,6 @@ public class BatchPoints {
 		 * @param database
 		 */
 		Builder(final String database) {
-			super();
 			this.database = database;
 		}
 
