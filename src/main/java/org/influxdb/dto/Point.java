@@ -124,10 +124,9 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
+		    Preconditions.checkNotNull(precisionToSet, "Precision must be not null!");
 			this.time = timeToSet;
-			if (null != precisionToSet) {
-				this.precision = precisionToSet;
-			}
+			this.precision = precisionToSet;
 			return this;
 		}
 
