@@ -143,9 +143,14 @@ public class Point {
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
-			point.setPrecision(this.precision);
+			if (this.time != 0) {
+			    point.setTime(this.time);
+			    point.setPrecision(this.precision);
+			} else {
+			    point.setTime(System.currentTimeMillis());
+			    point.setPrecision(TimeUnit.MILLISECONDS);
+			}
 			point.setTags(this.tags);
-			point.setTime(this.time);
 			return point;
 		}
 	}
