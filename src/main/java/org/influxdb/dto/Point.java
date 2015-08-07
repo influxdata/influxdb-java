@@ -142,7 +142,7 @@ public class Point {
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
-			if (this.time != 0) {
+			if (this.time != null) {
 			    point.setTime(this.time);
 			    point.setPrecision(this.precision);
 			} else {
