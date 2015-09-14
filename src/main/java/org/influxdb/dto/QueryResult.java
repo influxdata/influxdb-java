@@ -44,6 +44,15 @@ public class QueryResult {
 	}
 
 	/**
+	 * Checks if this QueryResult has an error message.
+	 *
+	 * @return <code>true</code> if there is an error message, <code>false</code> if not.
+	 */
+	public boolean hasError() {
+		return this.error != null;
+	}
+
+	/**
 	 * @return the error
 	 */
 	public String getError() {
@@ -75,6 +84,16 @@ public class QueryResult {
 		 */
 		public void setSeries(final List<Series> series) {
 			this.series = series;
+		}
+
+		/**
+		 * Checks if this Result has an error message.
+		 *
+		 * @return <code>true</code> if there is an error message,
+		 *         <code>false</code> if not.
+		 */
+		public boolean hasError() {
+			return this.error != null;
 		}
 
 		/**
