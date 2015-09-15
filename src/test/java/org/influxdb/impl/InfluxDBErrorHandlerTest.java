@@ -47,7 +47,7 @@ public class InfluxDBErrorHandlerTest {
         RetrofitError error = RetrofitError.httpError(url, response, null, null);
         Throwable throwable = new InfluxDBErrorHandler().handleError(error);
 
-        Assert.assertEquals(throwable.getMessage(), influxDbInternalError, "Wrong error message");
+        Assert.assertTrue(throwable.getMessage().contains(influxDbInternalError), "Wrong error message");
         Assert.assertTrue(closed.get(), "Stream is not closed");
     }
 }

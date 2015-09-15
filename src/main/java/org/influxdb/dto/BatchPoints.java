@@ -1,15 +1,15 @@
 package org.influxdb.dto;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import org.influxdb.InfluxDB.ConsistencyLevel;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import org.influxdb.InfluxDB.ConsistencyLevel;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * {Purpose of This Type}
@@ -37,7 +37,7 @@ public class BatchPoints {
 	 *            the name of the Database
 	 * @return the Builder to be able to add further Builder calls.
 	 */
-	public static Builder database(final String database) {
+	public static Builder database(String database) {
 		return new Builder(database);
 	}
 
@@ -54,7 +54,7 @@ public class BatchPoints {
 		/**
 		 * @param database
 		 */
-		Builder(final String database) {
+		Builder(String database) {
 			this.database = database;
 		}
 
@@ -64,8 +64,8 @@ public class BatchPoints {
 		 * @param policy
 		 * @return the Builder instance
 		 */
-		public Builder retentionPolicy(final String policy) {
-			this.retentionPolicy = policy;
+		public Builder retentionPolicy(String policy) {
+         retentionPolicy = policy;
 			return this;
 		}
 
@@ -78,8 +78,8 @@ public class BatchPoints {
 		 *            the tag value
 		 * @return the Builder instance.
 		 */
-		public Builder tag(final String tagName, final String value) {
-			this.tags.put(tagName, value);
+		public Builder tag(String tagName, String value) {
+         tags.put(tagName, value);
 			return this;
 		}
 
@@ -89,8 +89,8 @@ public class BatchPoints {
 		 * @param pointToAdd
 		 * @return the Builder instance
 		 */
-		public Builder point(final Point pointToAdd) {
-			this.points.add(pointToAdd);
+		public Builder point(Point pointToAdd) {
+         points.add(pointToAdd);
 			return this;
 		}
 
@@ -100,8 +100,8 @@ public class BatchPoints {
 		 * @param pointsToAdd
 		 * @return the Builder instance
 		 */
-		public Builder points(final Point... pointsToAdd) {
-			this.points.addAll(Arrays.asList(pointsToAdd));
+		public Builder points(Point... pointsToAdd) {
+         points.addAll(Arrays.asList(pointsToAdd));
 			return this;
 		}
 
@@ -111,8 +111,8 @@ public class BatchPoints {
 		 * @param consistencyLevel
 		 * @return the Builder instance
 		 */
-		public Builder consistency(final ConsistencyLevel consistencyLevel) {
-			this.consistency = consistencyLevel;
+		public Builder consistency(ConsistencyLevel consistencyLevel) {
+         consistency = consistencyLevel;
 			return this;
 		}
 
@@ -122,19 +122,19 @@ public class BatchPoints {
 		 * @return the created BatchPoints.
 		 */
 		public BatchPoints build() {
-			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database), "Database must not be null or empty.");
+			Preconditions.checkArgument(!Strings.isNullOrEmpty(database), "Database must not be null or empty.");
 			BatchPoints batchPoints = new BatchPoints();
-			batchPoints.setDatabase(this.database);
-			for (Point point : this.points) {
-				point.getTags().putAll(this.tags);
+			batchPoints.setDatabase(database);
+			for (Point point : points) {
+				point.getTags().putAll(tags);
 			}
-			batchPoints.setPoints(this.points);
-			batchPoints.setRetentionPolicy(this.retentionPolicy);
-			batchPoints.setTags(this.tags);
-			if (null == this.consistency) {
-				this.consistency = ConsistencyLevel.ONE;
+			batchPoints.setPoints(points);
+			batchPoints.setRetentionPolicy(retentionPolicy);
+			batchPoints.setTags(tags);
+			if (null == consistency) {
+            consistency = ConsistencyLevel.ONE;
 			}
-			batchPoints.setConsistency(this.consistency);
+			batchPoints.setConsistency(consistency);
 			return batchPoints;
 		}
 	}
@@ -143,14 +143,14 @@ public class BatchPoints {
 	 * @return the database
 	 */
 	public String getDatabase() {
-		return this.database;
+		return database;
 	}
 
 	/**
 	 * @param database
 	 *            the database to set
 	 */
-	void setDatabase(final String database) {
+	void setDatabase(String database) {
 		this.database = database;
 	}
 
@@ -158,14 +158,14 @@ public class BatchPoints {
 	 * @return the retentionPolicy
 	 */
 	public String getRetentionPolicy() {
-		return this.retentionPolicy;
+		return retentionPolicy;
 	}
 
 	/**
 	 * @param retentionPolicy
 	 *            the retentionPolicy to set
 	 */
-	void setRetentionPolicy(final String retentionPolicy) {
+	void setRetentionPolicy(String retentionPolicy) {
 		this.retentionPolicy = retentionPolicy;
 	}
 
@@ -173,14 +173,14 @@ public class BatchPoints {
 	 * @return the points
 	 */
 	public List<Point> getPoints() {
-		return this.points;
+		return points;
 	}
 
 	/**
 	 * @param points
 	 *            the points to set
 	 */
-	void setPoints(final List<Point> points) {
+	void setPoints(List<Point> points) {
 		this.points = points;
 	}
 
@@ -190,9 +190,9 @@ public class BatchPoints {
 	 * @param point
 	 * @return this Instance to be able to daisy chain calls.
 	 */
-	public BatchPoints point(final Point point) {
-		point.getTags().putAll(this.tags);
-		this.points.add(point);
+	public BatchPoints point(Point point) {
+		point.getTags().putAll(tags);
+      points.add(point);
 		return this;
 	}
 
@@ -200,14 +200,14 @@ public class BatchPoints {
 	 * @return the tags
 	 */
 	public Map<String, String> getTags() {
-		return this.tags;
+		return tags;
 	}
 
 	/**
 	 * @param tags
 	 *            the tags to set
 	 */
-	void setTags(final Map<String, String> tags) {
+	void setTags(Map<String, String> tags) {
 		this.tags = tags;
 	}
 
@@ -215,14 +215,14 @@ public class BatchPoints {
 	 * @return the consistency
 	 */
 	public ConsistencyLevel getConsistency() {
-		return this.consistency;
+		return consistency;
 	}
 
 	/**
 	 * @param consistency
 	 *            the consistency to set
 	 */
-	void setConsistency(final ConsistencyLevel consistency) {
+	void setConsistency(ConsistencyLevel consistency) {
 		this.consistency = consistency;
 	}
 
@@ -233,13 +233,13 @@ public class BatchPoints {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("BatchPoints [database=");
-		builder.append(this.database);
+		builder.append(database);
 		builder.append(", retentionPolicy=");
-		builder.append(this.retentionPolicy);
+		builder.append(retentionPolicy);
 		builder.append(", tags=");
-		builder.append(this.tags);
+		builder.append(tags);
 		builder.append(", points=");
-		builder.append(this.points);
+		builder.append(points);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -252,7 +252,7 @@ public class BatchPoints {
 	 */
 	public String lineProtocol() {
 		StringBuilder sb = new StringBuilder();
-		for (Point point : this.points) {
+		for (Point point : points) {
 			sb.append(point.lineProtocol()).append("\n");
 		}
 		return sb.toString();

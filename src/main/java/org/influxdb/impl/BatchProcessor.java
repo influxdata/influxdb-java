@@ -1,20 +1,17 @@
 package org.influxdb.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * A BatchProcessor can be attached to a InfluxDB Instance to collect single point writes and
@@ -24,10 +21,12 @@ import com.google.common.collect.Maps;
  *
  */
 public class BatchProcessor {
+   private static final Logger LOGGER = LoggerFactory.getLogger(BatchProcessor.class);
+
 	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	final InfluxDBImpl influxDB;
-	final int actions;
+   private final InfluxDBImpl influxDB;
+   private final int actions;
 	private final TimeUnit flushIntervalUnit;
 	private final int flushInterval;
 
@@ -44,7 +43,7 @@ public class BatchProcessor {
 		 * @param influxDB
 		 *            is mandatory.
 		 */
-		public Builder(final InfluxDB influxDB) {
+		public Builder(InfluxDB influxDB) {
 			this.influxDB = (InfluxDBImpl) influxDB;
 		}
 
@@ -55,8 +54,8 @@ public class BatchProcessor {
 		 *            number of Points written after which a write must happen.
 		 * @return this Builder to use it fluent
 		 */
-		public Builder actions(final int maxActions) {
-			this.actions = maxActions;
+		public Builder actions(int maxActions) {
+         actions = maxActions;
 			return this;
 		}
 
@@ -70,9 +69,9 @@ public class BatchProcessor {
 		 *
 		 * @return this Builder to use it fluent
 		 */
-		public Builder interval(final int interval, final TimeUnit unit) {
-			this.flushInterval = interval;
-			this.flushIntervalUnit = unit;
+		public Builder interval(int interval, TimeUnit unit) {
+         flushInterval = interval;
+         flushIntervalUnit = unit;
 			return this;
 		}
 
@@ -82,10 +81,11 @@ public class BatchProcessor {
 		 * @return the BatchProcessor instance.
 		 */
 		public BatchProcessor build() {
-			Preconditions.checkNotNull(this.actions, "actions may not be null");
-			Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
-			Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
-			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
+         LOGGER.debug("Actions {}, flushInterval [unit] {} [{}]", actions, flushInterval, flushIntervalUnit);
+			Preconditions.checkNotNull(actions, "actions may not be null");
+			Preconditions.checkNotNull(flushInterval, "flushInterval may not be null");
+			Preconditions.checkNotNull(flushIntervalUnit, "flushIntervalUnit may not be null");
+			return new BatchProcessor(influxDB, actions, flushIntervalUnit, flushInterval);
 		}
 	}
 
@@ -94,23 +94,22 @@ public class BatchProcessor {
 		private final String db;
 		private final String rp;
 
-		public BatchEntry(final Point point, final String db, final String rp) {
-			super();
+		public BatchEntry(Point point, String db, String rp) {
 			this.point = point;
 			this.db = db;
 			this.rp = rp;
 		}
 
 		public Point getPoint() {
-			return this.point;
+			return point;
 		}
 
 		public String getDb() {
-			return this.db;
+			return db;
 		}
 
 		public String getRp() {
-			return this.rp;
+			return rp;
 		}
 	}
 
@@ -121,20 +120,18 @@ public class BatchProcessor {
 	 *            the influxdb database handle.
 	 * @return the Builder to create the BatchProcessor.
 	 */
-	public static Builder builder(final InfluxDB influxDB) {
+	public static Builder builder(InfluxDB influxDB) {
 		return new Builder(influxDB);
 	}
 
-	BatchProcessor(final InfluxDBImpl influxDB, final int actions, final TimeUnit flushIntervalUnit,
-			final int flushInterval) {
-		super();
+	BatchProcessor(InfluxDBImpl influxDB, int actions, TimeUnit flushIntervalUnit, int flushInterval) {
 		this.influxDB = influxDB;
 		this.actions = actions;
 		this.flushIntervalUnit = flushIntervalUnit;
 		this.flushInterval = flushInterval;
 
 		// Flush at specified Rate
-		this.scheduler.scheduleAtFixedRate(new Runnable() {
+      scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
 				write();
@@ -144,13 +141,13 @@ public class BatchProcessor {
 	}
 
 	void write() {
-		if (this.queue.isEmpty()) {
+		if (queue.isEmpty()) {
 			return;
 		}
 
 		Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-		List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
-		this.queue.drainTo(batchEntries);
+		List<BatchEntry> batchEntries = new ArrayList<>(queue.size());
+      queue.drainTo(batchEntries);
 
 		for (BatchEntry batchEntry : batchEntries) {
 			String dbName = batchEntry.getDb();
@@ -163,7 +160,7 @@ public class BatchProcessor {
 		}
 
 		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-			BatchProcessor.this.influxDB.write(batchPoints);
+         influxDB.write(batchPoints);
 		}
 	}
 
@@ -173,9 +170,9 @@ public class BatchProcessor {
 	 * @param batchEntry
 	 *            the batchEntry to write to the cache.
 	 */
-	void put(final BatchEntry batchEntry) {
-		this.queue.add(batchEntry);
-		if (this.queue.size() >= this.actions) {
+	void put(BatchEntry batchEntry) {
+      queue.add(batchEntry);
+		if (queue.size() >= actions) {
 			write();
 		}
 	}
@@ -186,8 +183,8 @@ public class BatchProcessor {
 	 *
 	 */
 	void flush() {
-		this.write();
-		this.scheduler.shutdown();
+      write();
+      scheduler.shutdown();
 	}
 
 }

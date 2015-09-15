@@ -1,7 +1,6 @@
 package org.influxdb.dto;
 
 import org.testng.annotations.Test;
-import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -9,12 +8,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test for the Point DTO.
  *
  * @author stefan.majer [at] gmail.com
  *
  */
+@Test
 public class PointTest {
 
 	/**
@@ -23,7 +25,6 @@ public class PointTest {
 	 * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md
 	 *
 	 */
-	@Test
 	public void lineProtocol() {
 		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1");
@@ -56,7 +57,6 @@ public class PointTest {
 	/**
 	 * Test for ticket #44
 	 */
-	@Test(enabled = true)
 	public void testTicket44() {
 		Point point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000");
@@ -86,7 +86,6 @@ public class PointTest {
 	/**
 	 * Test for ticket #54
 	 */
-	@Test
 	public void testTicket54() {
 		Byte byteNumber = 100;
 		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", byteNumber).build();
@@ -116,11 +115,11 @@ public class PointTest {
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", bigIntegerNumber).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0 1");
 
-		Double doubleNumber = Double.valueOf(100000000.0001);
+		Double doubleNumber = 100000000.0001;
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", doubleNumber).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0001 1");
 
-		Float floatNumber = Float.valueOf(0.1f);
+		Float floatNumber = 0.1f;
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", floatNumber).build();
 		assertThat(point.lineProtocol()).asString().startsWith("test a=0.10");
 
