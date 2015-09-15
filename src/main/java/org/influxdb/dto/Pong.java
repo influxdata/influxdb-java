@@ -16,14 +16,14 @@ public class Pong {
 	 * @return the status
 	 */
 	public String getVersion() {
-		return this.version;
+		return version;
 	}
 
 	/**
 	 * @param version
 	 *            the status to set
 	 */
-	public void setVersion(final String version) {
+	public void setVersion(String version) {
 		this.version = version;
 	}
 
@@ -31,14 +31,14 @@ public class Pong {
 	 * @return the responseTime
 	 */
 	public long getResponseTime() {
-		return this.responseTime;
+		return responseTime;
 	}
 
 	/**
 	 * @param responseTime
 	 *            the responseTime to set
 	 */
-	public void setResponseTime(final long responseTime) {
+	public void setResponseTime(long responseTime) {
 		this.responseTime = responseTime;
 	}
 
@@ -48,9 +48,9 @@ public class Pong {
 	@Override
 	public String toString() {
 		return MoreObjects
-				.toStringHelper(this.getClass())
-				.add("version", this.version)
-				.add("responseTime", this.responseTime)
+				.toStringHelper(getClass())
+				.add("version", version)
+				.add("responseTime", responseTime)
 				.toString();
 	}
 

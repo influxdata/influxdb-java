@@ -17,7 +17,7 @@ public enum TimeUtil {
 	 * @param t
 	 * @return the String representation.
 	 */
-	public static String toTimePrecision(final TimeUnit t) {
+	public static String toTimePrecision(TimeUnit t) {
 		switch (t) {
 		case HOURS:
 			return "h";

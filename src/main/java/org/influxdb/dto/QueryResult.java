@@ -32,14 +32,14 @@ public class QueryResult {
 	 * @return the results
 	 */
 	public List<Result> getResults() {
-		return this.results;
+		return results;
 	}
 
 	/**
 	 * @param results
 	 *            the results to set
 	 */
-	public void setResults(final List<Result> results) {
+	public void setResults(List<Result> results) {
 		this.results = results;
 	}
 
@@ -49,21 +49,21 @@ public class QueryResult {
 	 * @return <code>true</code> if there is an error message, <code>false</code> if not.
 	 */
 	public boolean hasError() {
-		return this.error != null;
+		return error != null;
 	}
 
 	/**
 	 * @return the error
 	 */
 	public String getError() {
-		return this.error;
+		return error;
 	}
 
 	/**
 	 * @param error
 	 *            the error to set
 	 */
-	public void setError(final String error) {
+	public void setError(String error) {
 		this.error = error;
 	}
 
@@ -75,14 +75,14 @@ public class QueryResult {
 		 * @return the series
 		 */
 		public List<Series> getSeries() {
-			return this.series;
+			return series;
 		}
 
 		/**
 		 * @param series
 		 *            the series to set
 		 */
-		public void setSeries(final List<Series> series) {
+		public void setSeries(List<Series> series) {
 			this.series = series;
 		}
 
@@ -93,21 +93,21 @@ public class QueryResult {
 		 *         <code>false</code> if not.
 		 */
 		public boolean hasError() {
-			return this.error != null;
+			return error != null;
 		}
 
 		/**
 		 * @return the error
 		 */
 		public String getError() {
-			return this.error;
+			return error;
 		}
 
 		/**
 		 * @param error
 		 *            the error to set
 		 */
-		public void setError(final String error) {
+		public void setError(String error) {
 			this.error = error;
 		}
 
@@ -118,9 +118,9 @@ public class QueryResult {
 		public String toString() {
 			StringBuilder builder = new StringBuilder();
 			builder.append("Result [series=");
-			builder.append(this.series);
+			builder.append(series);
 			builder.append(", error=");
-			builder.append(this.error);
+			builder.append(error);
 			builder.append("]");
 			return builder.toString();
 		}
@@ -137,14 +137,14 @@ public class QueryResult {
 		 * @return the name
 		 */
 		public String getName() {
-			return this.name;
+			return name;
 		}
 
 		/**
 		 * @param name
 		 *            the name to set
 		 */
-		public void setName(final String name) {
+		public void setName(String name) {
 			this.name = name;
 		}
 
@@ -152,14 +152,14 @@ public class QueryResult {
 		 * @return the tags
 		 */
 		public Map<String, String> getTags() {
-			return this.tags;
+			return tags;
 		}
 
 		/**
 		 * @param tags
 		 *            the tags to set
 		 */
-		public void setTags(final Map<String, String> tags) {
+		public void setTags(Map<String, String> tags) {
 			this.tags = tags;
 		}
 
@@ -167,14 +167,14 @@ public class QueryResult {
 		 * @return the columns
 		 */
 		public List<String> getColumns() {
-			return this.columns;
+			return columns;
 		}
 
 		/**
 		 * @param columns
 		 *            the columns to set
 		 */
-		public void setColumns(final List<String> columns) {
+		public void setColumns(List<String> columns) {
 			this.columns = columns;
 		}
 
@@ -182,14 +182,14 @@ public class QueryResult {
 		 * @return the values
 		 */
 		public List<List<Object>> getValues() {
-			return this.values;
+			return values;
 		}
 
 		/**
 		 * @param values
 		 *            the values to set
 		 */
-		public void setValues(final List<List<Object>> values) {
+		public void setValues(List<List<Object>> values) {
 			this.values = values;
 		}
 
@@ -200,13 +200,13 @@ public class QueryResult {
 		public String toString() {
 			StringBuilder builder = new StringBuilder();
 			builder.append("Series [name=");
-			builder.append(this.name);
+			builder.append(name);
 			builder.append(", tags=");
-			builder.append(this.tags);
+			builder.append(tags);
 			builder.append(", columns=");
-			builder.append(this.columns);
+			builder.append(columns);
 			builder.append(", values=");
-			builder.append(this.values);
+			builder.append(values);
 			builder.append("]");
 			return builder.toString();
 		}
@@ -220,9 +220,9 @@ public class QueryResult {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("QueryResult [results=");
-		builder.append(this.results);
+		builder.append(results);
 		builder.append(", error=");
-		builder.append(this.error);
+		builder.append(error);
 		builder.append("]");
 		return builder.toString();
 	}

@@ -24,7 +24,7 @@ public enum InfluxDBFactory {
 	 *            instance.
 	 * @return a InfluxDB adapter suitable to access a InfluxDB.
 	 */
-	public static InfluxDB connect(final String url, final String username, final String password) {
+	public static InfluxDB connect(String url, String username, String password) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "The URL may not be null or empty.");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), "The username may not be null or empty.");
 		return new InfluxDBImpl(url, username, password);

@@ -1,13 +1,9 @@
 package org.influxdb;
 
+import org.influxdb.dto.*;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
 
 /**
  * Interface with all available methods to access a InfluxDB database.
@@ -24,7 +20,7 @@ import org.influxdb.dto.QueryResult;
 public interface InfluxDB {
 
 	/** Controls the level of logging of the REST layer. */
-	public enum LogLevel {
+   enum LogLevel {
 		/** No logging. */
 		NONE,
 		/** Log only the request method and URL and the response status code and execution time. */
@@ -36,13 +32,13 @@ public interface InfluxDB {
 		 * <p>
 		 * Note: This requires that the entire request and response body be buffered in memory!
 		 */
-		FULL;
-	}
+		FULL
+   }
 
 	/**
 	 * ConsistencyLevel for write Operations.
 	 */
-	public enum ConsistencyLevel {
+   enum ConsistencyLevel {
 		/** Write succeeds only if write reached all cluster members. */
 		ALL("all"),
 		/** Write succeeds if write reached any cluster members. */
@@ -53,7 +49,7 @@ public interface InfluxDB {
 		QUORUM("quorum");
 		private final String value;
 
-		private ConsistencyLevel(final String value) {
+		ConsistencyLevel(String value) {
 			this.value = value;
 		}
 
@@ -63,7 +59,7 @@ public interface InfluxDB {
 		 * @return the lowercase String.
 		 */
 		public String value() {
-			return this.value;
+			return value;
 		}
 	}
 
@@ -74,7 +70,7 @@ public interface InfluxDB {
 	 *            the loglevel to set.
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
-	public InfluxDB setLogLevel(final LogLevel logLevel);
+   InfluxDB setLogLevel(LogLevel logLevel);
 
 	/**
 	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
@@ -87,26 +83,26 @@ public interface InfluxDB {
 	 * @param flushDurationTimeUnit
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
-	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+   InfluxDB enableBatch(int actions, int flushDuration, TimeUnit flushDurationTimeUnit);
 
 	/**
 	 * Disable Batching.
 	 */
-	public void disableBatch();
+   void disableBatch();
 
 	/**
 	 * Ping this influxDB-
 	 * 
 	 * @return the response of the ping execution.
 	 */
-	public Pong ping();
+   Pong ping();
 
 	/**
 	 * Return the version of the connected influxDB Server.
 	 * 
 	 * @return the version String, otherwise unknown.
 	 */
-	public String version();
+   String version();
 
 	/**
 	 * Write a single Point to the database.
@@ -118,7 +114,7 @@ public interface InfluxDB {
 	 * @param point
 	 *            The point to write
 	 */
-	public void write(final String database, final String retentionPolicy, final Point point);
+   void write(String database, String retentionPolicy, Point point);
 
 	/**
 	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
@@ -127,7 +123,7 @@ public interface InfluxDB {
 	 *
 	 * @param batchPoints
 	 */
-	public void write(final BatchPoints batchPoints);
+   void write(BatchPoints batchPoints);
 
 	/**
 	 * Execute a query agains a database.
@@ -136,7 +132,7 @@ public interface InfluxDB {
 	 *            the query to execute.
 	 * @return a List of Series which matched the query.
 	 */
-	public QueryResult query(final Query query);
+   QueryResult query(Query query);
 
 	/**
 	 * Execute a query agains a database.
@@ -146,7 +142,7 @@ public interface InfluxDB {
 	 * @param timeUnit the time unit of the results. 
 	 * @return a List of Series which matched the query.
 	 */
-	public QueryResult query(final Query query, TimeUnit timeUnit);
+   QueryResult query(Query query, TimeUnit timeUnit);
 
 	/**
 	 * Create a new Database.
@@ -154,7 +150,7 @@ public interface InfluxDB {
 	 * @param name
 	 *            the name of the new database.
 	 */
-	public void createDatabase(final String name);
+   void createDatabase(String name);
 
 	/**
 	 * Delete a database.
@@ -162,13 +158,13 @@ public interface InfluxDB {
 	 * @param name
 	 *            the name of the database to delete.
 	 */
-	public void deleteDatabase(final String name);
+   void deleteDatabase(String name);
 
 	/**
 	 * Describe all available databases.
 	 *
 	 * @return a List of all Database names.
 	 */
-	public List<String> describeDatabases();
+   List<String> describeDatabases();
 
 }
