@@ -1,16 +1,19 @@
 package org.influxdb;
 
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Stopwatch;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Stopwatch;
+import java.util.concurrent.TimeUnit;
 
 public class PerformanceTests {
+   private static final Logger LOGGER = LoggerFactory.getLogger(PerformanceTests.class);
+
 	private InfluxDB influxDB;
 	private final static int COUNT = 1;
 	private final static int POINT_COUNT = 100000;
@@ -34,7 +37,7 @@ public class PerformanceTests {
 			this.influxDB.write(dbName, "default", point);
 		}
 		this.influxDB.disableBatch();
-		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of  Points took:" + watch);
+      LOGGER.info("Single Point Write for " + SINGLE_POINT_COUNT + " writes of  Points took:" + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -63,7 +66,7 @@ public class PerformanceTests {
 
 			this.influxDB.write(batchPoints);
 		}
-		System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + watch);
+      LOGGER.info("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -78,7 +81,7 @@ public class PerformanceTests {
 			Point point = Point.measurement("s").field("v", 1).build();
 			this.influxDB.write(dbName, "default", point);
 		}
-		System.out.println("5Mio points:" + watch);
+      LOGGER.info("5Mio points:" + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
 }

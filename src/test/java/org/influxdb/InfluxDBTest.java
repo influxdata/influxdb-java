@@ -1,25 +1,21 @@
 package org.influxdb;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientConfig;
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.*;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
+import java.io.IOException;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Test the InfluxDB API.
@@ -29,6 +25,7 @@ import com.github.dockerjava.core.DockerClientConfig;
  */
 @Test
 public class InfluxDBTest {
+   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(InfluxDBTest.class);
 
 	private InfluxDB influxDB;
 	private DockerClient dockerClient;
@@ -79,23 +76,23 @@ public class InfluxDBTest {
 			Pong response;
 			try {
 				response = this.influxDB.ping();
-				System.out.println(response);
+            LOGGER.info("Response {}", response);
 				if (!response.getVersion().equalsIgnoreCase("unknown")) {
 					influxDBstarted = true;
 				}
 			} catch (Exception e) {
 				// NOOP intentional
-				e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
 		this.influxDB.setLogLevel(LogLevel.FULL);
 		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
 		// Charsets.UTF_8));
-		System.out.println("##################################################################################");
-		// System.out.println("Container Logs: \n" + logs);
-		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
-		System.out.println("##################################################################################");
+      LOGGER.info("##################################################################################");
+		// LOGGER.info("Container Logs: \n" + logs);
+      LOGGER.info("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
+      LOGGER.info("##################################################################################");
 	}
 
 	/**
@@ -103,7 +100,7 @@ public class InfluxDBTest {
 	 */
 	@AfterClass
 	public void tearDown() {
-		System.out.println("Kill the Docker container");
+      LOGGER.info("Kill the Docker container");
 		// this.dockerClient.killContainerCmd(this.container.getId()).exec();
 	}
 
@@ -166,7 +163,7 @@ public class InfluxDBTest {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = BatchPoints.database(dbName).time(System.currentTimeMillis(), TimeUnit.MILLISECONDS).tag("async", "true").retentionPolicy("default").build();
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
 		Point point1 = Point
 				.measurement("cpu")
 				.tag("atag", "test")
