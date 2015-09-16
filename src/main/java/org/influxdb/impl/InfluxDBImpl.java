@@ -1,28 +1,24 @@
 package org.influxdb.impl;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
+import com.squareup.okhttp.OkHttpClient;
 import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.*;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import retrofit.RestAdapter;
 import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
 import retrofit.mime.TypedString;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of a InluxDB API.
@@ -31,6 +27,7 @@ import com.squareup.okhttp.OkHttpClient;
  * 
  */
 public class InfluxDBImpl implements InfluxDB {
+   private static final Logger LOGGER = LoggerFactory.getLogger(InfluxDBImpl.class);
 	private final String username;
 	private final String password;
 	private final RestAdapter restAdapter;
@@ -106,9 +103,7 @@ public class InfluxDBImpl implements InfluxDB {
 		this.batchEnabled.set(false);
 		this.batchProcessor.flush();
 		if (this.logLevel != LogLevel.NONE) {
-			System.out.println(
-					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
-							+ this.batchedCount);
+         LOGGER.info("total writes: {} unbatched: {} batchPoints: {}", writeCount.get(), unBatchedCount.get(), batchedCount);
 		}
 	}
 
