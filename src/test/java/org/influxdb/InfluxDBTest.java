@@ -166,7 +166,7 @@ public class InfluxDBTest {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = BatchPoints.database(dbName).time(System.currentTimeMillis(), TimeUnit.MILLISECONDS).tag("async", "true").retentionPolicy("default").build();
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
 		Point point1 = Point
 				.measurement("cpu")
 				.tag("atag", "test")
@@ -178,7 +178,7 @@ public class InfluxDBTest {
 		batchPoints.point(point1);
 		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);
-		Query query = new Query("SELECT * FROM cpu", dbName);
+		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
