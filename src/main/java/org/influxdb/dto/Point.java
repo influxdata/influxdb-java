@@ -27,7 +27,7 @@ public class Point {
 	private Map<String, Object> fields;
 
 	private static final Escaper FIELD_ESCAPER = Escapers.builder().addEscape('"', "\\\"").build();
-	private static final Escaper KEY_ESCAPER = Escapers.builder().addEscape(' ', "\\ ").addEscape(',', "\\,").build();
+	private static final Escaper KEY_ESCAPER = Escapers.builder().addEscape(' ', "\\ ").addEscape(',', "\\,").addEscape('=', "\\=").build();
 
 	Point() {
 	}
