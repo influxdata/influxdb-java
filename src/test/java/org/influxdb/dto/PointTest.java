@@ -128,5 +128,20 @@ public class PointTest {
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", bigDecimalNumber).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.00000001 1");
 	}
+	
+	@Test
+	public void testEscapingOfKeysAndValues() {
+		// Test escaping of spaces
+		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar baz").field( "a", 1 ).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\ baz a=1.0 1");
+ 
+		// Test escaping of commas
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar,baz").field( "a", 1 ).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\,baz a=1.0 1");
+
+		// Test escaping of equals sign
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar=baz").field( "a", 1 ).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\=baz a=1.0 1");
+	}
 
 }
