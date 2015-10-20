@@ -1,7 +1,6 @@
 package org.influxdb.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -26,11 +25,11 @@ public class QueryTest {
 		Query queryB0 = new Query(stringA0, stringB0);
 		Query queryC0 = new Query(stringB0, stringA0);
 
-		assertThat(queryA0).isEqualTo(queryA1);
-		assertThat(queryA0).isNotEqualTo(queryB0);
-		assertThat(queryB0).isNotEqualTo(queryC0);
+		Assert.assertEquals(queryA0, queryA1);
+		Assert.assertNotEquals(queryA0, queryB0);
+		Assert.assertNotEquals(queryB0, queryC0);
 
-		assertThat(queryA0.hashCode()).isEqualTo(queryA1.hashCode());
-		assertThat(queryA0.hashCode()).isNotEqualTo(queryB0.hashCode());
+		Assert.assertEquals(queryA0.hashCode(), queryA1.hashCode());
+		Assert.assertNotEquals(queryA0.hashCode(), queryB0.hashCode());
 	}
 }

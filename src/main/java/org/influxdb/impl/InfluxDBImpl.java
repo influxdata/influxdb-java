@@ -13,16 +13,16 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
 
-import retrofit.RestAdapter;
-import retrofit.client.Header;
-import retrofit.client.OkClient;
-import retrofit.client.Response;
-import retrofit.mime.TypedString;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
+
+import retrofit.RestAdapter;
+import retrofit.client.ApacheClient;
+import retrofit.client.Client;
+import retrofit.client.Header;
+import retrofit.client.Response;
+import retrofit.mime.TypedString;
 
 /**
  * Implementation of a InluxDB API.
@@ -56,11 +56,11 @@ public class InfluxDBImpl implements InfluxDB {
 		super();
 		this.username = username;
 		this.password = password;
-		OkHttpClient okHttpClient = new OkHttpClient();
+		Client client = new ApacheClient();
 		this.restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
-				.setClient(new OkClient(okHttpClient))
+				.setClient(client)
 				.build();
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
 	}
