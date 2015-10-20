@@ -12,7 +12,8 @@ import org.testng.annotations.Test;
 public class BatchProcessorTest {
 	private static class AnonInfluxDBImpl extends InfluxDBImpl {
 		private final boolean throwErrorOnWriteBatched;
-
+		private int writeCalled = 0;
+		
 		public AnonInfluxDBImpl(final boolean throwErrorOnWriteBatched) {
 			super("temp", "user", "pass");
 			this.throwErrorOnWriteBatched = throwErrorOnWriteBatched;
@@ -21,6 +22,7 @@ public class BatchProcessorTest {
 		@Override
 		protected void writeBatched(String database, String retentionPolicy, ConsistencyLevel consistencyLevel,
 				List<Point> points) {
+			writeCalled++;
 			if (throwErrorOnWriteBatched) {
 				throw new RuntimeException("Anon error");
 			}
@@ -41,8 +43,14 @@ public class BatchProcessorTest {
     			.field("field", "value").build();
 	}
 	
-	private static InfluxDBImpl ANON_INFLUXDB = new AnonInfluxDBImpl(false); 
-	private static InfluxDBImpl ERROR_THROWING_INFLUXDB = new AnonInfluxDBImpl(true); 
+	private static AnonInfluxDBImpl getAnonInfluxDB() {
+		return new AnonInfluxDBImpl(false);
+	}
+	
+	private static AnonInfluxDBImpl getErrorThrowingDB() {
+		return new AnonInfluxDBImpl(true);
+	}
+	
 	private final String ANON_DB = "db";
 	private final String ANON_RETENTION = "default";
 	private final ConsistencyLevel ANON_CONSISTENCY = ConsistencyLevel.ONE;
@@ -50,7 +58,7 @@ public class BatchProcessorTest {
 
 	@Test(expectedExceptions={IllegalStateException.class})
     public void addingThrowsExceptionWhenDepthExceededAndBehaviourIsThrowException() {
-    	BatchProcessor subject = BatchProcessor.builder(ANON_INFLUXDB)
+    	BatchProcessor subject = BatchProcessor.builder(getAnonInfluxDB())
     			.interval(1, TimeUnit.DAYS)
     			.capacity(1)
     			.behaviour(BufferFailBehaviour.THROW_EXCEPTION)
@@ -63,7 +71,7 @@ public class BatchProcessorTest {
     
 	@Test
 	public void addingEvictsOldestWhenDepthExceededAndBehaviourIsDropOldest() {
-		BatchProcessor subject = BatchProcessor.builder(ANON_INFLUXDB)
+		BatchProcessor subject = BatchProcessor.builder(getAnonInfluxDB())
 				.interval(1, TimeUnit.DAYS)
 				.capacity(1)
 				.behaviour(BufferFailBehaviour.DROP_OLDEST)
@@ -82,7 +90,7 @@ public class BatchProcessorTest {
     
 	@Test
     public void addingDoesNotInsertCurrentWhenDepthExceededAndBehaviourIsDropCurrent() {
-    	BatchProcessor subject = BatchProcessor.builder(ANON_INFLUXDB)
+    	BatchProcessor subject = BatchProcessor.builder(getAnonInfluxDB())
 			.interval(1, TimeUnit.DAYS)
 			.capacity(1)
 			.behaviour(BufferFailBehaviour.DROP_CURRENT)
@@ -101,7 +109,7 @@ public class BatchProcessorTest {
     
 	@Test(expectedExceptions = { IllegalArgumentException.class })
     public void cannotBeBuiltWithInfiniteDepthAndDropOldestBehaviour() {
-		BatchProcessor.builder(ANON_INFLUXDB)
+		BatchProcessor.builder(getAnonInfluxDB())
 			.interval(1, TimeUnit.DAYS)
 			.behaviour(BufferFailBehaviour.DROP_OLDEST)
 			.build();
@@ -110,7 +118,7 @@ public class BatchProcessorTest {
 	
 	@Test
     public void pointsRemovedFromQueueAfterSuccessfulWrite() {
-		BatchProcessor subject = BatchProcessor.builder(ANON_INFLUXDB)
+		BatchProcessor subject = BatchProcessor.builder(getAnonInfluxDB())
 			.interval(1, TimeUnit.DAYS)
 			.build();
 		
@@ -122,7 +130,7 @@ public class BatchProcessorTest {
 	
 	@Test
     public void keepOnFailedWriteProcessorRetainsPointsAfterExceptionThrown() {
-		BatchProcessor subject = BatchProcessor.builder(ERROR_THROWING_INFLUXDB)
+		BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
 			.interval(1, TimeUnit.DAYS)
 			.discardOnFailedWrite(false)
 			.build();
@@ -135,7 +143,7 @@ public class BatchProcessorTest {
 	
 	@Test
     public void discardOnFailedWriteProcessorDropsPointsAfterExceptionThrown() {
-		BatchProcessor subject = BatchProcessor.builder(ERROR_THROWING_INFLUXDB)
+		BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
 			.interval(1, TimeUnit.DAYS)
 			.discardOnFailedWrite(true)
 			.build();
@@ -145,9 +153,41 @@ public class BatchProcessorTest {
 		subject.write();
 		Assert.assertEquals(subject.queue.size(), 0);	
     }
+	
+	@Test
+    public void writeCalledAfterActionsReached() {
+		AnonInfluxDBImpl influxDb = getAnonInfluxDB();
+		BatchProcessor subject = BatchProcessor.builder(influxDb)
+			.interval(1, TimeUnit.DAYS)
+			.actions(2)
+			.build();
+		
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
+		Assert.assertEquals(subject.queue.size(), 1);
+		Assert.assertEquals(influxDb.writeCalled, 0);
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
+		Assert.assertEquals(subject.queue.size(), 0);
+		Assert.assertEquals(influxDb.writeCalled, 1);	
+    }
+	
+	@Test
+    public void writeNotCascadedAfterWriteFailure() {
+		AnonInfluxDBImpl influxDb = getErrorThrowingDB();
+		BatchProcessor subject = BatchProcessor.builder(influxDb)
+			.interval(1, TimeUnit.DAYS)
+			.actions(2)
+			.discardOnFailedWrite(false)
+			.build();
+		
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
+		Assert.assertEquals(subject.queue.size(), 1);
+		Assert.assertEquals(influxDb.writeCalled, 0);
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
+		Assert.assertEquals(subject.queue.size(), 2);
+		Assert.assertEquals(influxDb.writeCalled, 1);
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
+		Assert.assertEquals(subject.queue.size(), 3);
+		Assert.assertEquals(influxDb.writeCalled, 1);
+    }
 
-	public static void main(String[] args) {
-		(new BatchProcessorTest()).pointsRemovedFromQueueAfterSuccessfulWrite();
-		(new BatchProcessorTest()).discardOnFailedWriteProcessorDropsPointsAfterExceptionThrown();
-	}
 }

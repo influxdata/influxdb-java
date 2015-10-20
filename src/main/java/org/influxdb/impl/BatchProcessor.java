@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.influxdb.InfluxDB;
@@ -40,6 +41,7 @@ public class BatchProcessor {
 	private final int flushInterval;
 	private BufferFailBehaviour behaviour;
 	private boolean discardOnFailedWrite = true;
+	private AtomicBoolean writeLockout = new AtomicBoolean(false);
 
 	/**
 	 * The Builder to create a BatchProcessor instance.
@@ -140,6 +142,8 @@ public class BatchProcessor {
 			if (capacity != null) {
 				Preconditions.checkArgument(capacity > 0,
 						"Capacity should be > 0 or NULL");
+				Preconditions.checkArgument(capacity > actions,
+						"Capacity must be > than actions");
 			} else {
 				Preconditions.checkArgument(behaviour != BufferFailBehaviour.DROP_OLDEST,
 						"Behaviour cannot be DROP_OLDEST if capacity not set");
@@ -225,6 +229,7 @@ public class BatchProcessor {
 		scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
+				writeLockout.set(false);;
 				write();
 			}
 		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
@@ -264,6 +269,8 @@ public class BatchProcessor {
 			} catch (Exception e) {
 				if (discardOnFailedWrite) {
 					queue.removeAll(batchEntries);
+				} else {
+					writeLockout.set(true);;
 				}
 			}
 		}
@@ -319,7 +326,7 @@ public class BatchProcessor {
 			added = queue.offer(entry);
 		}
 
-		if (queue.size() >= actions) {
+		if ((!writeLockout.get()) && (queue.size() >= actions)) {
 			write();
 		}
 
