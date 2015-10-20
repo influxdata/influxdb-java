@@ -6,7 +6,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.testng.annotations.AfterClass;
@@ -48,14 +47,14 @@ public class TicketTests {
 				.withUsername("roott")
 				.withPassword("root")
 				.build();
-		this.dockerClient = DockerClientBuilder.getInstance(config).build();
+		dockerClient = DockerClientBuilder.getInstance(config).build();
 		String ip = "127.0.0.1";
-		this.influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
+		influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;
 			try {
-				response = this.influxDB.ping();
+				response = influxDB.ping();
 				System.out.println(response);
 				if (!response.getVersion().equalsIgnoreCase("unknown")) {
 					influxDBstarted = true;
@@ -66,12 +65,12 @@ public class TicketTests {
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.FULL);
+		influxDB.setLogLevel(LogLevel.FULL);
 		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
 		// Charsets.UTF_8));
 		System.out.println("##################################################################################");
 		// System.out.println("Container Logs: \n" + logs);
-		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
+		System.out.println("#  Connected to InfluxDB Version: " + influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
 
@@ -81,7 +80,7 @@ public class TicketTests {
 	@AfterClass
 	public void tearDown() {
 		System.out.println("Kill the Docker container");
-		// this.dockerClient.killContainerCmd(this.container.getId()).exec();
+		// dockerClient.killContainerCmd(container.getId()).exec();
 	}
 
 	/**
@@ -91,7 +90,7 @@ public class TicketTests {
 	@Test(enabled = true)
 	public void testTicket38() {
 		String dbName = "ticket38_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		influxDB.createDatabase(dbName);
 		Point point1 = Point
 				.measurement("metric")
 				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
@@ -101,8 +100,8 @@ public class TicketTests {
 				.tag("host", "host-\"C")
 				.tag("region", "region")
 				.build();
-		this.influxDB.write(dbName, "default", point1);
-		this.influxDB.deleteDatabase(dbName);
+		influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, point1);
+		influxDB.deleteDatabase(dbName);
 	}
 
 	/**
@@ -112,19 +111,20 @@ public class TicketTests {
 	@Test(enabled = true)
 	public void testTicket39() {
 		String dbName = "ticket39_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-		BatchPoints batchPoints = BatchPoints
-				.database(dbName)
-				.tag("async", "true")
-				.retentionPolicy("default")
-				.consistency(InfluxDB.ConsistencyLevel.ALL)
-				.build();
+		influxDB.createDatabase(dbName);
+//		BatchPoints batchPoints = BatchPoints
+//				.database(dbName)
+//				.tag("async", "true")
+//				.retentionPolicy("default")
+//				.consistency(InfluxDB.ConsistencyLevel.ALL)
+//				.build();
+		
+		
 		Point.Builder builder = Point.measurement("my_type");
 		builder.field("my_field", "string_value");
-		Point point = builder.build();
-		batchPoints.point(point);
-		this.influxDB.write(batchPoints);
-		this.influxDB.deleteDatabase(dbName);
+		
+		influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ALL, builder.build());
+		influxDB.deleteDatabase(dbName);
 	}
 
 	/**
@@ -133,13 +133,14 @@ public class TicketTests {
 	@Test(enabled = true)
 	public void testTicket40() {
 		String dbName = "ticket40_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
+		influxDB.createDatabase(dbName);
+		influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
+		
 		for (int i = 0; i < 1000; i++) {
 			Point point = Point.measurement("cpu").field("idle", 99).build();
-			this.influxDB.write(dbName, "default", point);
+			influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, point);
 		}
-		this.influxDB.deleteDatabase(dbName);
+		influxDB.deleteDatabase(dbName);
 	}
 
 }

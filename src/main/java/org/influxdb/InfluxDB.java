@@ -3,7 +3,6 @@ package org.influxdb;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
@@ -115,19 +114,25 @@ public interface InfluxDB {
 	 *            the database to write to.
 	 * @param retentionPolicy
 	 *            the retentionPolicy to use.
+	 * @param consistencyLevel 
 	 * @param point
 	 *            The point to write
 	 */
-	public void write(final String database, final String retentionPolicy, final Point point);
+	public void write(final String database, final String retentionPolicy, ConsistencyLevel consistencyLevel, final Point point);
 
 	/**
 	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
 	 * 
 	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
 	 *
-	 * @param batchPoints
+	 * @param database
+	 *            the database to write to.
+	 * @param retentionPolicy
+	 *            the retentionPolicy to use.
+	 * @param points
+	 *            The points to write
 	 */
-	public void write(final BatchPoints batchPoints);
+	public void write(final String database, final String retentionPolicy, ConsistencyLevel consistencyLevel, final List<Point> points);
 
 	/**
 	 * Execute a query agains a database.
