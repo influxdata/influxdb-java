@@ -28,6 +28,10 @@ import com.google.common.collect.Queues;
  *
  */
 public class BatchProcessor {
+	public static final int DEFAULT_ACTIONS = 10;
+	public static final int DEFAULT_FLUSH_INTERVAL = 100;
+	public static final TimeUnit DEFAULT_FLUSH_INTERVAL_TIME_UINT = TimeUnit.MILLISECONDS;
+	
 	protected final Queue<BatchEntry> queue;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
@@ -35,17 +39,19 @@ public class BatchProcessor {
 	private final TimeUnit flushIntervalUnit;
 	private final int flushInterval;
 	private BufferFailBehaviour behaviour;
+	private boolean discardOnFailedWrite = true;
 
 	/**
 	 * The Builder to create a BatchProcessor instance.
 	 */
 	public static final class Builder {
 		private final InfluxDBImpl influxDB;
-		private int actions;
-		private TimeUnit flushIntervalUnit;
-		private int flushInterval;
-		private int capacity = 0;
+		private int actions = DEFAULT_ACTIONS;
+		private TimeUnit flushIntervalUnit = DEFAULT_FLUSH_INTERVAL_TIME_UINT;
+		private int flushInterval = DEFAULT_FLUSH_INTERVAL;
+		private Integer capacity = null;
 		private BufferFailBehaviour behaviour = BufferFailBehaviour.THROW_EXCEPTION;
+		private boolean discardOnFailedWrite = true;
 
 		/**
 		 * @param influxDB
@@ -88,10 +94,12 @@ public class BatchProcessor {
 		 * The maximum queue capacity.
 		 * 
 		 * @param capacity
-		 *            the maximum number of points to hold
+		 *            the maximum number of points to hold Should be NULL, for
+		 *            no buffering OR > 0 for buffering (NB: a capacity of 1
+		 *            will not really buffer)
 		 * @return this {@code Builder}, to allow chaining
 		 */
-		public Builder capacity(final int capacity) {
+		public Builder capacity(final Integer capacity) {
 			this.capacity = capacity;
 			return this;
 		}
@@ -106,6 +114,18 @@ public class BatchProcessor {
 			this.behaviour = behaviour;
 			return this;
 		}
+		
+		/**
+		 * Controls whether the buffer will keep or discard buffered points on
+		 * network errors.
+		 * 
+		 * @param discardOnFailedWrite
+		 * @return
+		 */
+		public Builder discardOnFailedWrite(final boolean discardOnFailedWrite) {
+			this.discardOnFailedWrite = discardOnFailedWrite;
+			return this;
+		}
 
 		/**
 		 * Create the BatchProcessor.
@@ -113,17 +133,20 @@ public class BatchProcessor {
 		 * @return the BatchProcessor instance.
 		 */
 		public BatchProcessor build() {
-			Preconditions.checkNotNull(this.actions, "actions may not be null");
-			Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
-			Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
+			Preconditions.checkArgument(actions > 0, "actions must be > 0");
+			Preconditions.checkArgument(flushInterval > 0, "flushInterval must be > 0");
+			Preconditions.checkNotNull(flushIntervalUnit, "flushIntervalUnit may not be null");
 
-			if (capacity < 1) {
+			if (capacity != null) {
+				Preconditions.checkArgument(capacity > 0,
+						"Capacity should be > 0 or NULL");
+			} else {
 				Preconditions.checkArgument(behaviour != BufferFailBehaviour.DROP_OLDEST,
-						"Behaviour cannot be DROP_OLDEST if depth not set");
+						"Behaviour cannot be DROP_OLDEST if capacity not set");
 			}
 
-			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval,
-					this.capacity, this.behaviour);
+			return new BatchProcessor(influxDB, actions, flushIntervalUnit, flushInterval,
+					capacity, behaviour, discardOnFailedWrite);
 		}
 	}
 
@@ -174,15 +197,20 @@ public class BatchProcessor {
 	}
 
 	BatchProcessor(final InfluxDBImpl influxDB, final int actions, final TimeUnit flushIntervalUnit,
-			final int flushInterval, final int capacity, final BufferFailBehaviour behaviour) {
+			final int flushInterval, final Integer capacity, final BufferFailBehaviour behaviour, boolean discardOnFailedWrite) {
 		super();
 		this.influxDB = influxDB;
 		this.actions = actions;
 		this.flushIntervalUnit = flushIntervalUnit;
 		this.flushInterval = flushInterval;
 		this.behaviour = behaviour;
+		this.discardOnFailedWrite = discardOnFailedWrite;
 
-		if (capacity > 0) {
+		if (capacity != null) {
+			if (capacity == 0) {
+				throw new IllegalArgumentException("capacity cannot be 0");
+			}
+			
 			if (behaviour == BufferFailBehaviour.DROP_OLDEST) {
 				EvictingQueue<BatchEntry> evictingQueue = EvictingQueue.create(capacity);
 				queue = Queues.synchronizedQueue(evictingQueue);
@@ -228,12 +256,16 @@ public class BatchProcessor {
 					return input.point;
 				}
 			});
-			influxDB.writeBatched(common.database, common.retentionPolicy, common.consistencyLevel, points);
-			// If the points were written, remove them from the queue
-			// TODO: Potentially here we should implement policy about keeping points that failed 
-			// their 'write'. I.e. we could catch exceptions from writeBatched() and remove the points
-			// based on the failure
-			queue.removeAll(points);
+			
+			try {
+				influxDB.writeBatched(common.database, common.retentionPolicy, common.consistencyLevel, points);
+				// If the points were written, remove them from the queue
+				queue.removeAll(batchEntries);
+			} catch (Exception e) {
+				if (discardOnFailedWrite) {
+					queue.removeAll(batchEntries);
+				}
+			}
 		}
 	}
 
