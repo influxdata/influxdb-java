@@ -82,10 +82,10 @@ public class BatchProcessor {
 		 * @return the BatchProcessor instance.
 		 */
 		public BatchProcessor build() {
-			Preconditions.checkNotNull(this.actions, "actions may not be null");
-			Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
-			Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
-			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
+			Preconditions.checkNotNull(actions, "actions may not be null");
+			Preconditions.checkNotNull(flushInterval, "flushInterval may not be null");
+			Preconditions.checkNotNull(flushIntervalUnit, "flushIntervalUnit may not be null");
+			return new BatchProcessor(influxDB, actions, flushIntervalUnit, flushInterval);
 		}
 	}
 
@@ -134,7 +134,7 @@ public class BatchProcessor {
 		this.flushInterval = flushInterval;
 
 		// Flush at specified Rate
-		this.scheduler.scheduleAtFixedRate(new Runnable() {
+		scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
 				write();
@@ -144,13 +144,13 @@ public class BatchProcessor {
 	}
 
 	void write() {
-		if (this.queue.isEmpty()) {
+		if (queue.isEmpty()) {
 			return;
 		}
 
 		Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-		List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
-		this.queue.drainTo(batchEntries);
+		List<BatchEntry> batchEntries = new ArrayList<>(queue.size());
+		queue.drainTo(batchEntries);
 
 		for (BatchEntry batchEntry : batchEntries) {
 			String dbName = batchEntry.getDb();
@@ -163,7 +163,7 @@ public class BatchProcessor {
 		}
 
 		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-			BatchProcessor.this.influxDB.write(batchPoints);
+			influxDB.write(batchPoints);
 		}
 	}
 
@@ -174,8 +174,8 @@ public class BatchProcessor {
 	 *            the batchEntry to write to the cache.
 	 */
 	void put(final BatchEntry batchEntry) {
-		this.queue.add(batchEntry);
-		if (this.queue.size() >= this.actions) {
+		queue.add(batchEntry);
+		if (queue.size() >= actions) {
 			write();
 		}
 	}
@@ -186,8 +186,8 @@ public class BatchProcessor {
 	 *
 	 */
 	void flush() {
-		this.write();
-		this.scheduler.shutdown();
+		write();
+		scheduler.shutdown();
 	}
 
 }
