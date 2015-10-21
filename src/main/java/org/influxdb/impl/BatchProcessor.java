@@ -91,26 +91,26 @@ public class BatchProcessor {
 
 	static class BatchEntry {
 		private final Point point;
-		private final String db;
-		private final String rp;
+		private final String database;
+		private final String retentionPolicy;
 
-		public BatchEntry(final Point point, final String db, final String rp) {
+		public BatchEntry(final Point point, final String database, final String retentionPolicy) {
 			super();
 			this.point = point;
-			this.db = db;
-			this.rp = rp;
+			this.database = database;
+			this.retentionPolicy = retentionPolicy;
 		}
 
 		public Point getPoint() {
 			return this.point;
 		}
 
-		public String getDb() {
-			return this.db;
+		public String getDatabase() {
+			return this.database;
 		}
 
-		public String getRp() {
-			return this.rp;
+		public String getRetentionPolicy() {
+			return this.retentionPolicy;
 		}
 	}
 
@@ -153,9 +153,9 @@ public class BatchProcessor {
 		queue.drainTo(batchEntries);
 
 		for (BatchEntry batchEntry : batchEntries) {
-			String dbName = batchEntry.getDb();
+			String dbName = batchEntry.getDatabase();
 			if (!databaseToBatchPoints.containsKey(dbName)) {
-				BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
+				BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRetentionPolicy()).build();
 				databaseToBatchPoints.put(dbName, batchPoints);
 			}
 			Point point = batchEntry.getPoint();
