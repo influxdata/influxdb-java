@@ -107,9 +107,8 @@ public class InfluxDBImpl implements InfluxDB {
 		batchEnabled.set(false);
 		batchProcessor.flush();
 		if (logLevel != LogLevel.NONE) {
-			System.out.println(
-					"total writes:" + writeCount.get() + " unbatched:" + unBatchedCount.get() + "batchPoints:"
-							+ batchedCount);
+			System.out.println(String.format("Total writes:%d Unbatched:%d Batched:%d",
+					writeCount.get(), unBatchedCount.get(), batchedCount.get()));
 		}
 	}
 
@@ -141,27 +140,40 @@ public class InfluxDBImpl implements InfluxDB {
 			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
 			batchProcessor.put(batchEntry);
 		} else {
-			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
-			batchPoints.point(point);
-			write(batchPoints);
-			unBatchedCount.incrementAndGet();
+			writeUnbatched(database, retentionPolicy, ConsistencyLevel.ONE, point);
 		}
-		writeCount.incrementAndGet();
+	}
+	
+	@Override
+	public void write(final BatchPoints points) {
+		writeBatched(points);
+	}
+	
+	protected void writeBatched(final BatchPoints points) {
+		batchedCount.addAndGet(points.getPoints().size());
+		writeCount.addAndGet(points.getPoints().size());
+		writeLine(points.getDatabase(),
+				points.getRetentionPolicy(),
+				points.getConsistency(), 
+				points.lineProtocol());
 	}
 
-	@Override
-	public void write(final BatchPoints batchPoints) {
-		batchedCount.addAndGet(batchPoints.getPoints().size());
-		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
+	protected void writeUnbatched(String database, String retentionPolicy, ConsistencyLevel consistencyLevel, Point point) {
+		unBatchedCount.incrementAndGet();
+		writeCount.incrementAndGet();
+		writeLine(database, retentionPolicy, consistencyLevel, point.lineProtocol());
+	}
+	
+	private void writeLine(String database, String retentionPolicy, ConsistencyLevel consistency, String line) {
+		TypedString lineProtocol = new TypedString(line);
 		influxDBService.writePoints(
 				username,
 				password,
-				batchPoints.getDatabase(),
-				batchPoints.getRetentionPolicy(),
+				database,
+				retentionPolicy,
 				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
-				batchPoints.getConsistency().value(),
+				consistency.value(),
 				lineProtocol);
-
 	}
 
 	/**
