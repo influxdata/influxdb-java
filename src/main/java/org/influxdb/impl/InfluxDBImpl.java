@@ -11,7 +11,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
+import org.influxdb.impl.BatchProcessor.BufferFailBehaviour;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -88,17 +88,40 @@ public class InfluxDBImpl implements InfluxDB {
 		return this;
 	}
 
-	@Override
-	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit) {
+	public InfluxDB enableBatch(
+			final int capacity,
+			final int actions,
+			final int flushDuration,
+			final TimeUnit flushDurationTimeUnit,
+			BufferFailBehaviour behaviour,
+			boolean discardOnFailedWrite,
+			int maxBatchWriteSize) {
 		if (batchEnabled.get()) {
 			throw new IllegalArgumentException("BatchProcessing is already enabled.");
 		}
 		batchProcessor = BatchProcessor
 				.builder(this)
-				.actions(actions)
+				.capacityAndActions(capacity, actions)
 				.interval(flushDuration, flushDurationTimeUnit)
+				.behaviour(behaviour)
+				.discardOnFailedWrite(discardOnFailedWrite)
+				.maxBatchWriteSize(maxBatchWriteSize)
 				.build();
 		batchEnabled.set(true);
+		return this;
+	}
+	
+	@Override
+	public InfluxDB enableBatch(final int actions,
+			final int flushDuration,
+			final TimeUnit flushDurationTimeUnit) {
+		
+		enableBatch(0, 
+				actions, 
+				flushDuration, 
+				flushDurationTimeUnit,
+				BufferFailBehaviour.THROW_EXCEPTION,
+				true, actions);
 		return this;
 	}
 
@@ -142,8 +165,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final Point point) {
 		if (batchEnabled.get()) {
-			BatchEntry batchEntry = new BatchEntry(point, database, consistencyLevel, retentionPolicy);
-			batchProcessor.put(batchEntry);
+			batchProcessor.put(database, retentionPolicy, consistencyLevel, point);
 		} else {
 			writeUnbatched(database, retentionPolicy, ConsistencyLevel.ONE, point);
 		}

@@ -61,7 +61,7 @@ public class Point {
 		/**
 		 * @param measurement
 		 */
-		Builder(final String measurement) {
+		protected Builder(final String measurement) {
 			this.measurement = measurement;
 		}
 
@@ -162,6 +162,10 @@ public class Point {
 	void setMeasurement(final String measurement) {
 		this.measurement = measurement;
 	}
+	
+	public String getMeasurement() {
+		return measurement;
+	}
 
 	/**
 	 * @param time
@@ -239,7 +243,7 @@ public class Point {
 		sb.append(formatedTime());
 		return sb.toString();
 	}
-
+	
 	private StringBuilder concatenatedTags() {
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, String> tag : this.tags.entrySet()) {
