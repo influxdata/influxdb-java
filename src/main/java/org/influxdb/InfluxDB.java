@@ -66,6 +66,21 @@ public interface InfluxDB {
 			return this.value;
 		}
 	}
+	
+	/**
+	 * Behaviour options for when a put fails to add to the buffer. This is
+	 * particularly important when using capacity limited buffering.
+	 */
+	public enum BufferFailBehaviour {
+		/** Throw an exception if cannot add to buffer */
+		THROW_EXCEPTION,
+		/** Drop (do not add) the element attempting to be added */
+		DROP_CURRENT,
+		/** Drop the oldest element in the queue and add the current element */
+		DROP_OLDEST, 
+		/** Block the thread until the space becomes available (NB: Not tested) */
+		BLOCK_THREAD,
+	}
 
 	/**
 	 * Set the loglevel which is used for REST related actions.
@@ -75,7 +90,7 @@ public interface InfluxDB {
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
 	public InfluxDB setLogLevel(final LogLevel logLevel);
-
+	
 	/**
 	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
 	 * flushDurations is reached first, a batchwrite is issued.
@@ -89,6 +104,43 @@ public interface InfluxDB {
 	 */
 	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
 
+	/**
+	 * Enable Batching of single Point with a capacity limit. Batching provides
+	 * a significant performance improvement in write speed. If either actions
+	 * or flushDurations is reached first, a batchwrite is issued.
+	 * 
+	 * This allows greater control over the behaviour when the capacity of the
+	 * underlying buffer is limited.
+	 * 
+	 * @param capacity
+	 *            the maximum number of points to hold. Should be NULL, for no
+	 *            buffering OR > 0 for buffering (NB: a capacity of 1 will not
+	 *            really buffer)
+	 * @param actions
+	 *            the number of actions to collect before triggering a batched
+	 *            write
+	 * @param flushDuration
+	 *            the amount of time to wait, at most, before triggering a
+	 *            batched write
+	 * @param flushDurationTimeUnit
+	 *            the time unit for the flushDuration parameter
+	 * @param behaviour
+	 *            the desired behaviour when capacity constrains are met
+	 * @param discardOnFailedWrite
+	 *            if FALSE, the points from a failed batch write buffer will
+	 *            attempt to put them back onto the queue if TRUE, the points
+	 *            froma failed batch write will be discarded
+	 * @param maxBatchWriteSize
+	 *            the maximum number of points to include in one batch write
+	 *            attempt. NB: this is different from the actions parameter, as
+	 *            the buffer can hold more than the actions parameter
+	 * @return
+	 */
+	public InfluxDB enableBatch(final Integer capacity, final int actions,
+			final int flushDuration, final TimeUnit flushDurationTimeUnit,
+			BufferFailBehaviour behaviour, boolean discardOnFailedWrite,
+			int maxBatchWriteSize);
+	
 	/**
 	 * Disable Batching.
 	 */

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDB.BufferFailBehaviour;
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.dto.Point;
 
@@ -36,20 +37,15 @@ public class BatchProcessor {
 
 	protected final BlockingDeque<BatchEntry> queue;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	final InfluxDBImpl influxDB;
-	final int actions;
+	private final InfluxDBImpl influxDB;
+	private final int actions;
 	private final TimeUnit flushIntervalUnit;
 	private final int flushInterval;
-	private BufferFailBehaviour behaviour;
-	private boolean discardOnFailedWrite = true;
-	AtomicBoolean writeLockout = new AtomicBoolean(false);
-	private int maxBatchWriteSize;
-	
-	public enum BufferFailBehaviour {
-		THROW_EXCEPTION, DROP_CURRENT, DROP_OLDEST, BLOCK_THREAD,
-	}
+	private final BufferFailBehaviour behaviour;
+	private final boolean discardOnFailedWrite;
+	private final int maxBatchWriteSize;
 
-
+	private final AtomicBoolean writeLockout = new AtomicBoolean(false);
 
 	/**
 	 * The Builder to create a BatchProcessor instance.
@@ -297,7 +293,6 @@ public class BatchProcessor {
 				writeList.removeAll(batchEntries);
 			} catch (Exception e) {
 				// TODO: we should probably include some logging here
-				e.printStackTrace();
 			}
 		}
 

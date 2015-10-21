@@ -11,7 +11,6 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BufferFailBehaviour;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -89,7 +88,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	public InfluxDB enableBatch(
-			final int capacity,
+			final Integer capacity,
 			final int actions,
 			final int flushDuration,
 			final TimeUnit flushDurationTimeUnit,

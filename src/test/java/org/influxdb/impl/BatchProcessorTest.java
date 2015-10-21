@@ -3,9 +3,9 @@ package org.influxdb.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.InfluxDB.BufferFailBehaviour;
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.dto.Point;
-import org.influxdb.impl.BatchProcessor.BufferFailBehaviour;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
