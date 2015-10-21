@@ -9,6 +9,8 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 
+import com.google.common.base.Optional;
+
 /**
  * Interface with all available methods to access a InfluxDB database.
  * 
@@ -244,5 +246,21 @@ public interface InfluxDB {
 	 * @return a List of all Database names.
 	 */
 	public List<String> describeDatabases();
+
+	/**
+	 * Get the number of buffered points NB: If batching is not enabled this
+	 * will return 0
+	 * 
+	 * @return
+	 */
+	public int getBufferedCount();
+
+	/**
+	 * Retrieves, but does not remove, the first element of the buffer
+	 * 
+	 * @return an Optional<Point> containing the first element in the queue if
+	 *         it is present
+	 */
+	public Optional<Point> peekFirstBuffered();
 
 }

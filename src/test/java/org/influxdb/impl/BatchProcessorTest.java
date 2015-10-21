@@ -38,6 +38,30 @@ public class BatchProcessorTest {
 				Point point) {
 		}
 	}
+	
+	private static class QueueDepthRecordingDBImpl extends InfluxDBImpl {
+		private int queueDepth = 0;
+		private int writeCalled = 0;
+
+		public QueueDepthRecordingDBImpl() {
+			super("temp", "user", "pass");
+		}
+		
+		@Override
+		protected void writeBatched(String database, String retentionPolicy,
+				ConsistencyLevel consistencyLevel, List<Point> points) {
+			writeCalled++;
+			queueDepth = getBufferedCount();
+		}
+		
+		public int getQueueDepth() {
+			return queueDepth;
+		}
+
+		public BatchProcessor getBatchProcessor() {
+			return super.getBatchProcessor();
+		}
+	}
 
 	private static Point getAnonPoint() {
 		return getPoint("anon");
@@ -54,6 +78,10 @@ public class BatchProcessorTest {
 	
 	private static AnonInfluxDBImpl getErrorThrowingDB() {
 		return new AnonInfluxDBImpl(true);
+	}
+	
+	private static QueueDepthRecordingDBImpl getQueueDepthRecordingDBImpl() {
+		return new QueueDepthRecordingDBImpl();
 	}
 	
 	private final String ANON_DB = "db";
@@ -262,5 +290,24 @@ public class BatchProcessorTest {
 		Assert.assertEquals(influxDb.writeCalled, 1);
 		Assert.assertEquals(subject.queue.size(), 1);
 		Assert.assertEquals(subject.queue.peek().getPoint().getMeasurement(), "measure3");
+	}
+	
+	@Test 
+	public void testGetBufferedCountWorksInTheMiddleOfAWrite() {
+		QueueDepthRecordingDBImpl influxDb = getQueueDepthRecordingDBImpl();
+		influxDb.enableBatch(5, 5, 5, TimeUnit.SECONDS, BufferFailBehaviour.THROW_EXCEPTION, false, 5);
+		BatchProcessor subject = influxDb.getBatchProcessor();
+		
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure1"));
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure2"));
+		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure3"));		
+		Assert.assertEquals(subject.queue.size(), 3);
+		Assert.assertEquals(subject.getBufferedCount(), 3);
+
+		subject.write();
+		Assert.assertEquals(influxDb.writeCalled, 1);
+		Assert.assertEquals(influxDb.getQueueDepth(), 3);
+		Assert.assertEquals(subject.queue.size(), 0);
+		Assert.assertEquals(subject.getBufferedCount(), 0);
 	}
 }

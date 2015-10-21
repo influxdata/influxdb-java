@@ -18,6 +18,7 @@ import org.influxdb.dto.Point;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -46,6 +47,9 @@ public class BatchProcessor {
 	private final int maxBatchWriteSize;
 
 	private final AtomicBoolean writeLockout = new AtomicBoolean(false);
+
+	private final Object queueLock = new Object();
+	private final ArrayList<BatchEntry> writeList;
 
 	/**
 	 * The Builder to create a BatchProcessor instance.
@@ -234,6 +238,7 @@ public class BatchProcessor {
 		this.behaviour = behaviour;
 		this.discardOnFailedWrite = discardOnFailedWrite;
 		this.maxBatchWriteSize = maxBatchWriteSize;
+		this.writeList = Lists.newArrayListWithCapacity(maxBatchWriteSize);
 
 		if (capacity != null) {
 			if (capacity == 0) {
@@ -260,9 +265,12 @@ public class BatchProcessor {
 			return;
 		}
 
-		// Never write the whole queue, it could be very big, so just get a temporary list
-		List<BatchEntry> writeList = new ArrayList<BatchEntry>(maxBatchWriteSize);
-		queue.drainTo(writeList, maxBatchWriteSize);
+		synchronized (queueLock) {
+			writeList.clear(); // probably redundant
+			// Never write the whole queue, it could be very big, so just get a
+			// temporary list
+			queue.drainTo(writeList, maxBatchWriteSize);
+		}
 
 		// Map the writeList by the common (and hence batchable) fields
 		Map<BatchCommonFields, ArrayList<BatchEntry>> databaseToBatchPoints = Maps.newHashMap();
@@ -282,11 +290,11 @@ public class BatchProcessor {
 			List<BatchEntry> batchEntries = entry.getValue();
 
 			List<Point> points = Lists.transform(batchEntries, new Function<BatchEntry, Point>() {
-				@Override
-				public Point apply(BatchEntry input) {
-					return input.point;
-				}
-			});
+						@Override
+						public Point apply(BatchEntry input) {
+							return input.point;
+						}
+					});
 
 			try {
 				influxDB.writeBatched(common.database, common.retentionPolicy, common.consistencyLevel, points);
@@ -296,24 +304,34 @@ public class BatchProcessor {
 			}
 		}
 
-		
 		if (!writeList.isEmpty()) {
-			// Some points were not written, return them to the queue if necessary
-			if (!discardOnFailedWrite) {
-				// If we failed our write, add back the elements from this
-				// attempt in REVERSE order to maintain queue ordering
-				for (BatchEntry batchEntry : Lists.reverse(writeList)) {
-					if (!queue.offerFirst(batchEntry)) {
-						break;
-					}
-				}
+			// Some points were not written, return them to the queue if
+			// necessary
+			synchronized (queueLock) {
+				if (!discardOnFailedWrite) {
+					// If we failed our write, add back the elements from this
+					// attempt in REVERSE order to maintain queue ordering
+					for (BatchEntry batchEntry : Lists.reverse(writeList)) {
+						boolean insertedAtStart = queue.offerFirst(batchEntry);
+						if (!insertedAtStart) {
+							// We have inserted as much as we can, may as well
+							// stop.
 
-				// Enable the rate throttling
-				writeLockout.set(true);
+							// NB: There is possibly a need for an enhancement
+							// here based on the behaviour attribute, but for
+							// now I cannot think of a more reasonable action
+							// than the current behaviour
+							break;
+						}
+					}
+
+					// Enable the rate throttling
+					writeLockout.set(true);
+				}
+				writeList.clear();
 			}
 		}
 	}
-
 
 	/**
 	 * Put a single BatchEntry to the cache for later processing.
@@ -326,28 +344,31 @@ public class BatchProcessor {
 		BatchEntry entry = new BatchEntry(point, database, consistency, retentionPolicy);
 		boolean added = false;
 
-		switch(behaviour) {
-		case DROP_CURRENT:
-			added = queue.offer(entry);
-			break;
-		case DROP_OLDEST:
-			added = addAndDropIfNecessary(entry);
-			break;
-		case THROW_EXCEPTION:
-			added = queue.add(entry);
-			break;
-		case BLOCK_THREAD:
-			try {
-				queue.put(entry);
-				added = true;
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-			break;
-		default:
+		synchronized (queueLock) {
+
+			switch (behaviour) {
+			case DROP_CURRENT:
+				added = queue.offer(entry);
+				break;
+			case DROP_OLDEST:
+				added = addAndDropIfNecessary(entry);
+				break;
+			case THROW_EXCEPTION:
+				added = queue.add(entry);
+				break;
+			case BLOCK_THREAD:
+				try {
+					queue.put(entry);
+					added = true;
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+				break;
+			default:
 			throw new UnsupportedOperationException("Behaviour not yet supported");
+			}
 		}
-		
+
 		if (!writeLockout.get()) {
 			if (queue.size() >= actions) {
 				write();
@@ -356,7 +377,7 @@ public class BatchProcessor {
 
 		return added;
 	}
-	
+
 	public boolean addAndDropIfNecessary(BatchEntry entry) {
 		boolean added = queue.offer(entry);
 		if (!added) {
@@ -412,5 +433,33 @@ public class BatchProcessor {
 			return new BatchCommonFields(batchEntry.getDatabase(),
 					batchEntry.getRetentionPolicy(), batchEntry.getConsistencyLevel());
 		}
+	}
+
+	public int getBufferedCount() {
+		synchronized (queueLock) {
+			return writeList.size() + queue.size();
+		}
+	}
+
+	/**
+	 * Retrieves, but does not remove, the first element of the buffer
+	 * 
+	 * @return an Optional<Point> containing the first element in the queue
+	 */
+	public Optional<Point> peekFirstBuffered() {
+		BatchEntry batchEntry = null;
+		synchronized (queueLock) {
+			if (!writeList.isEmpty()) {
+				batchEntry = writeList.get(0);
+			} else {
+				batchEntry = queue.peekFirst();
+			}
+		}
+
+		if (batchEntry == null) {
+			return Optional.absent();
+		}
+
+		return Optional.of(batchEntry.point);
 	}
 }

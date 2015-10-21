@@ -174,6 +174,10 @@ public class Point {
 	void setTime(final Long time) {
 		this.time = time;
 	}
+	
+	public Long getTime() {
+		return time;
+	}
 
 	/**
 	 * @param tags
@@ -196,6 +200,10 @@ public class Point {
 	 */
 	void setPrecision(final TimeUnit precision) {
 		this.precision = precision;
+	}
+	
+	public TimeUnit getPrecision() {
+		return precision;
 	}
 
 	/**
