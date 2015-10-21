@@ -13,17 +13,17 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
+import com.squareup.okhttp.OkHttpClient;
+
 import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
 import retrofit.mime.TypedString;
-
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
 
 /**
  * Implementation of a InluxDB API.
@@ -136,8 +136,13 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final Point point) {
+		write(database, retentionPolicy, point);
+	}
+
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final Point point) {
 		if (batchEnabled.get()) {
-			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
+			BatchEntry batchEntry = new BatchEntry(point, database, consistencyLevel, retentionPolicy);
 			batchProcessor.put(batchEntry);
 		} else {
 			writeUnbatched(database, retentionPolicy, ConsistencyLevel.ONE, point);
@@ -145,17 +150,19 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 	
 	@Override
-	public void write(final BatchPoints points) {
-		writeBatched(points);
+	public void write(BatchPoints batchPoints) {
+		write(batchPoints.getDatabase(), batchPoints.getRetentionPolicy(), ConsistencyLevel.ONE, batchPoints.getPoints());
 	}
 	
-	protected void writeBatched(final BatchPoints points) {
-		batchedCount.addAndGet(points.getPoints().size());
-		writeCount.addAndGet(points.getPoints().size());
-		writeLine(points.getDatabase(),
-				points.getRetentionPolicy(),
-				points.getConsistency(), 
-				points.lineProtocol());
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points) {
+		writeBatched(database, retentionPolicy, consistencyLevel, points);
+	}
+	
+	protected void writeBatched(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points) {
+		batchedCount.addAndGet(points.size());
+		writeCount.addAndGet(points.size());
+		writeLine(database, retentionPolicy, consistencyLevel, Point.toLineProtocol(points));
 	}
 
 	protected void writeUnbatched(String database, String retentionPolicy, ConsistencyLevel consistencyLevel, Point point) {

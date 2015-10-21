@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -287,5 +288,14 @@ public class Point {
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		return sb;
 	}
+
+	public static String toLineProtocol(List<Point> points) {
+		StringBuilder sb = new StringBuilder();
+		for (Point point : points) {
+			sb.append(point.lineProtocol()).append("\n");
+		}
+		return sb.toString();
+	}
+
 
 }

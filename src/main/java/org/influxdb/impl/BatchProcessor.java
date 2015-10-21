@@ -3,6 +3,7 @@ package org.influxdb.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -10,9 +11,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.dto.Point;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -93,24 +95,30 @@ public class BatchProcessor {
 		private final Point point;
 		private final String database;
 		private final String retentionPolicy;
+		private final ConsistencyLevel consistencyLevel;
 
-		public BatchEntry(final Point point, final String database, final String retentionPolicy) {
+		public BatchEntry(final Point point, final String database, ConsistencyLevel consistencyLevel, final String retentionPolicy) {
 			super();
 			this.point = point;
 			this.database = database;
 			this.retentionPolicy = retentionPolicy;
+			this.consistencyLevel = consistencyLevel;
 		}
 
 		public Point getPoint() {
-			return this.point;
+			return point;
 		}
 
 		public String getDatabase() {
-			return this.database;
+			return database;
 		}
 
 		public String getRetentionPolicy() {
-			return this.retentionPolicy;
+			return retentionPolicy;
+		}
+		
+		public ConsistencyLevel getConsistencyLevel() {
+			return consistencyLevel;
 		}
 	}
 
@@ -148,22 +156,23 @@ public class BatchProcessor {
 			return;
 		}
 
-		Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
+		Map<BatchCommonFields, ArrayList<Point>> databaseToBatchPoints = Maps.newHashMap();
 		List<BatchEntry> batchEntries = new ArrayList<>(queue.size());
 		queue.drainTo(batchEntries);
 
 		for (BatchEntry batchEntry : batchEntries) {
-			String dbName = batchEntry.getDatabase();
-			if (!databaseToBatchPoints.containsKey(dbName)) {
-				BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRetentionPolicy()).build();
-				databaseToBatchPoints.put(dbName, batchPoints);
+			BatchCommonFields common = BatchCommonFields.fromEntry(batchEntry);
+			
+			if (!databaseToBatchPoints.containsKey(common)) {
+				databaseToBatchPoints.put(common, new ArrayList<Point>());
 			}
-			Point point = batchEntry.getPoint();
-			databaseToBatchPoints.get(dbName).point(point);
+			databaseToBatchPoints.get(common).add(batchEntry.getPoint());
 		}
 
-		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-			influxDB.write(batchPoints);
+		for (Entry<BatchCommonFields, ArrayList<Point>> entry : databaseToBatchPoints.entrySet()) {
+			BatchCommonFields common = entry.getKey();
+			List<Point> points = entry.getValue();
+			influxDB.write(common.database, common.retentionPolicy, common.consistencyLevel, points);
 		}
 	}
 
@@ -190,4 +199,43 @@ public class BatchProcessor {
 		scheduler.shutdown();
 	}
 
+	private static class BatchCommonFields {
+		private final String database;
+		private final String retentionPolicy;
+		private final ConsistencyLevel consistencyLevel;
+
+		public BatchCommonFields(final String database, final String retentionPolicy,
+				final ConsistencyLevel consistencyLevel) {
+			this.database = database;
+			this.retentionPolicy = retentionPolicy;
+			this.consistencyLevel = consistencyLevel;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hashCode(database, retentionPolicy, consistencyLevel);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			BatchCommonFields other = (BatchCommonFields) obj;
+
+			return (Objects.equal(database, other.database)
+					&& Objects.equal(retentionPolicy, other.retentionPolicy)
+					&& Objects.equal(consistencyLevel, other.consistencyLevel));
+		}
+		
+		public static BatchCommonFields fromEntry(BatchEntry batchEntry) {
+			return new BatchCommonFields(batchEntry.getDatabase(),
+					batchEntry.getRetentionPolicy(), batchEntry.getConsistencyLevel());
+		}
+
+
+	}
 }

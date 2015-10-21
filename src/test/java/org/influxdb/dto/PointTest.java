@@ -1,13 +1,15 @@
 package org.influxdb.dto;
 
-import org.testng.annotations.Test;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.assertj.core.util.Lists;
+import org.testng.annotations.Test;
 
 /**
  * Test for the Point DTO.
@@ -65,21 +67,16 @@ public class PointTest {
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000000");
 
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
-		BatchPoints batchPoints = BatchPoints.database("db").point(point).build();
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1\n");
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1\n");
 
 		point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
-		batchPoints = BatchPoints.database("db").point(point).build();
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000\n");
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1000\n");
 
 		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
-		batchPoints = BatchPoints.database("db").point(point).build();
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000000\n");
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1000000\n");
 
 		point = Point.measurement("test").field("a", 1).time(1, TimeUnit.MILLISECONDS).build();
-		batchPoints = BatchPoints.database("db").build();
-		batchPoints = batchPoints.point(point);
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000000\n");
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1000000\n");
 
 	}
 

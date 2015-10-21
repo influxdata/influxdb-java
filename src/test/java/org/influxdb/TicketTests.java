@@ -5,13 +5,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -101,7 +102,7 @@ public class TicketTests {
 				.tag("host", "host-\"C")
 				.tag("region", "region")
 				.build();
-		this.influxDB.write(dbName, "default", point1);
+		this.influxDB.write(dbName, "default", ConsistencyLevel.ONE, point1);
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -113,17 +114,12 @@ public class TicketTests {
 	public void testTicket39() {
 		String dbName = "ticket39_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
-		BatchPoints batchPoints = BatchPoints
-				.database(dbName)
+
+		Point point = Point.measurement("my_type")
+				.field("my_field", "string_value")
 				.tag("async", "true")
-				.retentionPolicy("default")
-				.consistency(InfluxDB.ConsistencyLevel.ALL)
 				.build();
-		Point.Builder builder = Point.measurement("my_type");
-		builder.field("my_field", "string_value");
-		Point point = builder.build();
-		batchPoints.point(point);
-		this.influxDB.write(batchPoints);
+		this.influxDB.write(dbName, "default", ConsistencyLevel.ALL, Lists.newArrayList(point));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -137,7 +133,7 @@ public class TicketTests {
 		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
 		for (int i = 0; i < 1000; i++) {
 			Point point = Point.measurement("cpu").field("idle", 99).build();
-			this.influxDB.write(dbName, "default", point);
+			this.influxDB.write(dbName, "default", ConsistencyLevel.ONE, point);
 		}
 		this.influxDB.deleteDatabase(dbName);
 	}

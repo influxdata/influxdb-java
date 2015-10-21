@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
@@ -20,6 +20,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.google.common.collect.Lists;
 
 /**
  * Test the InfluxDB API.
@@ -164,23 +165,26 @@ public class InfluxDBTest {
 	@Test(enabled = true)
 	public void testWrite() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
 		Point point1 = Point
 				.measurement("cpu")
 				.tag("atag", "test")
+				.tag("async", "true")
 				.field("idle", 90L)
 				.field("usertime", 9L)
 				.field("system", 1L)
 				.build();
-		Point point2 = Point.measurement("disk").tag("atag", "test").field("used", 80L).field("free", 1L).build();
-		batchPoints.point(point1);
-		batchPoints.point(point2);
-		this.influxDB.write(batchPoints);
+		Point point2 = Point.measurement("disk")
+				.tag("atag", "test")
+				.tag("async", "true")
+				.field("used", 80L).field("free", 1L).build();
+		
+		influxDB.write(dbName, "default", ConsistencyLevel.ONE, Lists.newArrayList(point1, point2));
+		
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-		this.influxDB.deleteDatabase(dbName);
+		influxDB.deleteDatabase(dbName);
 	}
 }

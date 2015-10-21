@@ -109,7 +109,7 @@ public interface InfluxDB {
 	public String version();
 
 	/**
-	 * Write a single Point to the database.
+	 * Write a single Point to the database with ConsistencyLevel.One.
 	 * 
 	 * @param database
 	 *            the database to write to.
@@ -118,16 +118,38 @@ public interface InfluxDB {
 	 * @param point
 	 *            The point to write
 	 */
+	@Deprecated
 	public void write(final String database, final String retentionPolicy, final Point point);
+	
+	/**
+	 * Write a single Point to the database.
+	 * 
+	 * @param database
+	 * @param retentionPolicy
+	 * @param consistencyLevel
+	 * @param point
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final Point point);
 
 	/**
 	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
 	 * 
 	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
-	 *
+	 * 
 	 * @param batchPoints
 	 */
+	@Deprecated
 	public void write(final BatchPoints batchPoints);
+	
+	/**
+	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
+	 * 
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 * 
+	 * @param batchPoints
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points);
+
 
 	/**
 	 * Execute a query agains a database.
