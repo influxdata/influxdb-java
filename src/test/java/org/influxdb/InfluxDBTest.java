@@ -111,7 +111,7 @@ public class InfluxDBTest {
 	/**
 	 * Test for a ping.
 	 */
-	@Test(enabled = true)
+	@Test(enabled = false)
 	public void testPing() {
 		Pong result = this.influxDB.ping();
 		Assert.assertNotNull(result);
@@ -121,7 +121,7 @@ public class InfluxDBTest {
 	/**
 	 * Test that version works.
 	 */
-	@Test(enabled = true)
+	@Test(enabled = false)
 	public void testVersion() {
 		String version = this.influxDB.version();
 		Assert.assertNotNull(version);
@@ -131,7 +131,7 @@ public class InfluxDBTest {
 	/**
 	 * Simple Test for a query.
 	 */
-	@Test(enabled = true)
+	@Test(enabled = false)
 	public void testQuery() {
 		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"));
 		this.influxDB.query(new Query("DROP DATABASE mydb2", "mydb"));
@@ -140,7 +140,7 @@ public class InfluxDBTest {
 	/**
 	 * Test that describe Databases works.
 	 */
-	@Test(enabled = true)
+	@Test(enabled = false)
 	public void testDescribeDatabases() {
 		String dbName = "unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -162,7 +162,7 @@ public class InfluxDBTest {
 	/**
 	 * Test that writing to the new lineprotocol.
 	 */
-	@Test(enabled = true)
+	@Test(enabled = false)
 	public void testWrite() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		influxDB.createDatabase(dbName);

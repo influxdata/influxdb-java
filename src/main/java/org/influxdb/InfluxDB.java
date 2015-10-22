@@ -100,11 +100,31 @@ public interface InfluxDB {
 	 * @param actions
 	 *            the number of actions to collect
 	 * @param flushDuration
-	 *            the time to wait at most.
+	 *            the minimun time to wait at most. NB: The 'maximum' time is set to 5 time this number.
 	 * @param flushDurationTimeUnit
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
+	@Deprecated
 	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+	
+	
+	/**
+	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
+	 * flushDurations is reached first, a batchwrite is issued.
+	 *
+	 * @param actions
+	 *            the number of actions to collect
+	 * @param flushIntervalMin
+	 *            the minimum time to wait before sending the batched writes.
+	 * @param flushIntervalMax
+	 *            The maximum time, when backing off for failure, between sending batched writes.
+	 * @param flushDurationTimeUnit
+	 * @return the InfluxDB instance to be able to use it in a fluent manner.
+	 */
+	public InfluxDB enableBatch(final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit);
 
 	/**
 	 * Enable Batching of single Point with a capacity limit. Batching provides
@@ -118,14 +138,16 @@ public interface InfluxDB {
 	 *            the maximum number of points to hold. Should be NULL, for no
 	 *            buffering OR > 0 for buffering (NB: a capacity of 1 will not
 	 *            really buffer)
-	 * @param actions
+	 * @param flushActions
 	 *            the number of actions to collect before triggering a batched
 	 *            write
-	 * @param flushDuration
-	 *            the amount of time to wait, at most, before triggering a
-	 *            batched write
-	 * @param flushDurationTimeUnit
-	 *            the time unit for the flushDuration parameter
+	 * @param flushIntervalMin
+	 *            the amount of time to wait before triggering a batched write
+	 * @param flushIntervalMax
+	 *            the maximum amount of time to wait before triggering a batched write, 
+	 *            when backing off due to failure
+	 * @param flushIntervalTimeUnit
+	 *            the time unit for the flushIntervalMin and flushIntervalMax parameters
 	 * @param behaviour
 	 *            the desired behaviour when capacity constrains are met
 	 * @param discardOnFailedWrite
@@ -134,13 +156,17 @@ public interface InfluxDB {
 	 *            froma failed batch write will be discarded
 	 * @param maxBatchWriteSize
 	 *            the maximum number of points to include in one batch write
-	 *            attempt. NB: this is different from the actions parameter, as
-	 *            the buffer can hold more than the actions parameter
+	 *            attempt. NB: this is different from the flushActions parameter, as
+	 *            the buffer can hold more than the flushActions parameter
 	 * @return
 	 */
-	public InfluxDB enableBatch(final Integer capacity, final int actions,
-			final int flushDuration, final TimeUnit flushDurationTimeUnit,
-			BufferFailBehaviour behaviour, boolean discardOnFailedWrite,
+	public InfluxDB enableBatch(final Integer capacity,
+			final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit,
+			BufferFailBehaviour behaviour,
+			boolean discardOnFailedWrite,
 			int maxBatchWriteSize);
 	
 	/**
