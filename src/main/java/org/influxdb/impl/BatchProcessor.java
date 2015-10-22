@@ -15,6 +15,8 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDB.BufferFailBehaviour;
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.dto.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -31,13 +33,14 @@ import com.google.common.collect.Maps;
  *
  */
 public class BatchProcessor {
+	private static final Logger logger = LoggerFactory.getLogger(BatchProcessor.class);
 	public static final int DEFAULT_ACTIONS = 10;
 	public static final int DEFAULT_FLUSH_INTERVAL = 100;
 	public static final TimeUnit DEFAULT_FLUSH_INTERVAL_TIME_UINT = TimeUnit.MILLISECONDS;
 	public static final int DEFAULT_MAX_BATCH_WRITE_SIZE = 50;
 
 	protected final BlockingDeque<BatchEntry> queue;
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private final InfluxDBImpl influxDB;
 	private final int actions;
 	private final TimeUnit flushIntervalUnit;
@@ -46,7 +49,8 @@ public class BatchProcessor {
 	private final boolean discardOnFailedWrite;
 	private final int maxBatchWriteSize;
 
-	private final AtomicBoolean writeLockout = new AtomicBoolean(false);
+	private final AtomicBoolean writeInProgressLock = new AtomicBoolean(false);
+	private final AtomicBoolean waitForFlushIntervalToWriteLock = new AtomicBoolean(false);
 
 	private final Object queueLock = new Object();
 	private final ArrayList<BatchEntry> writeList;
@@ -250,19 +254,75 @@ public class BatchProcessor {
 		}
 
 		// Flush at specified Rate
-		scheduler.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				writeLockout.set(false);
-				write();
+		scheduleNextFlush();
+	}
+	
+	private void scheduleNextFlush() {
+		logger.debug("scheduling next flush for {} {}", flushInterval, flushIntervalUnit);
+		scheduler.schedule(new FlushIntervalRunnable(), flushInterval, flushIntervalUnit);
+	}
+	
+	private class FlushIntervalRunnable implements Runnable {
+		public void run() {
+			logger.debug("Flush interval commenced");
+			WriteResult result = attemptWrite();
+			
+			switch (result){
+			case FAILED:
+				logger.debug("Flush interval - FAILED");
+				break;
+			case NOT_ATTEMPTED:
+				logger.debug("Flush interval - NOT ATTEMPTED");
+				break;
+			case SUCCESSFUL:
+				logger.debug("Flush interval - SUCCESS");
+				waitForFlushIntervalToWriteLock.set(false);
+				break;
+			default:
+				throw new RuntimeException("Unhandled WriteResult enum value:" + result);
 			}
-		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
+			
+			scheduleNextFlush();
+		}
+	}
+	
+	private class WriteRunnable implements Runnable{
+		@Override
+		public void run() {
+			attemptWrite();
+		}
+	}
+	
+	enum WriteResult {
+		NOT_ATTEMPTED,
+		SUCCESSFUL,
+		FAILED,
+	}
+	
+	WriteResult attemptWrite() {
+		if (writeInProgressLock.compareAndSet(false, true)) {
+			logger.debug("Attempting to write");
+			boolean success = write();
+			writeInProgressLock.set(false);
+			
+			return success ? WriteResult.SUCCESSFUL: WriteResult.FAILED;
+		}
 
+		logger.debug("Write already in progress, not attempting");
+		return WriteResult.NOT_ATTEMPTED;
+	}
+	
+	void writeNow() {
+		// If there is no write in progress, schedule an immediate write
+		if (!writeInProgressLock.get()) {
+			logger.debug("Write NOT already in progress, scheduling WriteRunnable");
+			scheduler.execute(new WriteRunnable());
+		}
 	}
 
-	void write() {
+	boolean write() {
 		if (queue.isEmpty()) {
-			return;
+			return true;
 		}
 
 		synchronized (queueLock) {
@@ -324,13 +384,14 @@ public class BatchProcessor {
 							break;
 						}
 					}
-
-					// Enable the rate throttling
-					writeLockout.set(true);
+					waitForFlushIntervalToWriteLock.set(true);
 				}
 				writeList.clear();
 			}
+			return false;
 		}
+		
+		return true;
 	}
 
 	/**
@@ -344,47 +405,49 @@ public class BatchProcessor {
 		BatchEntry entry = new BatchEntry(point, database, consistency, retentionPolicy);
 		boolean added = false;
 
-		synchronized (queueLock) {
-
-			switch (behaviour) {
-			case DROP_CURRENT:
-				added = queue.offer(entry);
-				break;
-			case DROP_OLDEST:
-				added = addAndDropIfNecessary(entry);
-				break;
-			case THROW_EXCEPTION:
-				added = queue.add(entry);
-				break;
-			case BLOCK_THREAD:
-				try {
-					queue.put(entry);
-					added = true;
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-				break;
-			default:
-			throw new UnsupportedOperationException("Behaviour not yet supported");
+		switch (behaviour) {
+		case DROP_CURRENT:
+			added = queue.offer(entry);
+			break;
+		case DROP_OLDEST:
+			added = addAndDropIfNecessary(entry);
+			break;
+		case THROW_EXCEPTION:
+			added = queue.add(entry);
+			break;
+		case BLOCK_THREAD:
+			try {
+				queue.put(entry);
+				added = true;
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
+			break;
+		default:
+		throw new UnsupportedOperationException("Behaviour not yet supported");
 		}
 
-		if (!writeLockout.get()) {
+		logger.debug("Queue size:{}", queue.size());
+
+		if (!waitForFlushIntervalToWriteLock.get()) {
 			if (queue.size() >= actions) {
-				write();
+				logger.debug("No flush lock - Queue size[{}] actions[{}]", queue.size(), actions);
+				writeNow();
 			}
 		}
 
 		return added;
 	}
 
-	public boolean addAndDropIfNecessary(BatchEntry entry) {
-		boolean added = queue.offer(entry);
-		if (!added) {
-			queue.poll(); // Remove the front of the queue
-			added = queue.add(entry);
+	private boolean addAndDropIfNecessary(BatchEntry entry) {
+		synchronized (queueLock) {
+			boolean added = queue.offer(entry);
+			if (!added) {
+				queue.poll(); // Remove the front of the queue
+				added = queue.add(entry);
+			}
+			return added;
 		}
-		return added;
 	}
 
 	/**
