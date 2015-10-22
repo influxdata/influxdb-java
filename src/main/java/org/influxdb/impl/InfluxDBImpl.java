@@ -163,7 +163,7 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final Point point) {
-		write(database, retentionPolicy, point);
+		write(database, retentionPolicy, ConsistencyLevel.ONE, point);
 	}
 
 	@Override
