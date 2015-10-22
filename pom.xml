@@ -106,10 +106,19 @@
 			<artifactId>okhttp</artifactId>
 			<version>2.4.0</version>
 		</dependency>
+<<<<<<< Updated upstream
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.12</version>
 	    </dependency>
+||||||| merged common ancestors
+=======
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.12</version>
+		</dependency>
+>>>>>>> Stashed changes
 	</dependencies>
 </project>

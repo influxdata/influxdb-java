@@ -63,6 +63,19 @@ public class BatchProcessorTest {
 		}
 	}
 
+	private static class NonScheduledWriteBatchProcessor extends BatchProcessor {
+
+		NonScheduledWriteBatchProcessor(InfluxDBImpl influxDB, int actions, TimeUnit flushIntervalUnit,
+				int flushInterval, Integer capacity, BufferFailBehaviour behaviour, boolean discardOnFailedWrite,
+				int maxBatchWriteSize) {
+			super(influxDB, actions, flushIntervalUnit, flushInterval, capacity, behaviour, discardOnFailedWrite,
+					maxBatchWriteSize);
+		}
+		@Override
+		void writeNow() {
+			attemptWrite();
+		}
+	}
 	private static Point getAnonPoint() {
 		return getPoint("anon");
 	}
@@ -132,14 +145,10 @@ public class BatchProcessorTest {
     
 	@Test
     public void addingDoesNotInsertCurrentWhenBehaviourIsDropCurrentAndKeepOnFailedWriteAndQueueAtCapacity() {
-    	BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
-			.interval(1, TimeUnit.DAYS)
-			.capacityAndActions(1, 1)
-			.behaviour(BufferFailBehaviour.DROP_CURRENT)
-			.discardOnFailedWrite(false)
-			.build();
+    	BatchProcessor subject = new NonScheduledWriteBatchProcessor(getErrorThrowingDB(), 1, TimeUnit.SECONDS, 1, 1, BufferFailBehaviour.DROP_CURRENT, false, 50);
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure1"));
+//		subject.attemptWrite();
     	Assert.assertEquals(subject.queue.peek().getPoint().getMeasurement(), "measure1");
     	
     	subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure2"));
@@ -203,11 +212,13 @@ public class BatchProcessorTest {
 	@Test
     public void writeCalledAfterActionsReached() {
 		AnonInfluxDBImpl influxDb = getAnonInfluxDB();
-		BatchProcessor subject = BatchProcessor.builder(influxDb)
-			.interval(1, TimeUnit.DAYS)
-			.actions(2)
-			.build();
-		
+//		BatchProcessor subject = BatchProcessor.builder(influxDb)
+//			.interval(1, TimeUnit.DAYS)
+//			.actions(2)
+//			.build();
+		BatchProcessor subject = new NonScheduledWriteBatchProcessor(influxDb, 2, TimeUnit.DAYS, 1, null, 
+				BufferFailBehaviour.THROW_EXCEPTION, false, 50);
+
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
 		Assert.assertEquals(subject.queue.size(), 1);
 		Assert.assertEquals(influxDb.writeCalled, 0);
@@ -219,11 +230,14 @@ public class BatchProcessorTest {
 	@Test
     public void writeNotCascadedAfterWriteFailure() {
 		AnonInfluxDBImpl influxDb = getErrorThrowingDB();
-		BatchProcessor subject = BatchProcessor.builder(influxDb)
-			.interval(1, TimeUnit.DAYS)
-			.capacityAndActions(3, 1)
-			.discardOnFailedWrite(false)
-			.build();
+//		BatchProcessor subject = BatchProcessor.builder(influxDb)
+//			.interval(1, TimeUnit.DAYS)
+//			.capacityAndActions(3, 1)
+//			.discardOnFailedWrite(false)
+//			.build();
+		BatchProcessor subject = new NonScheduledWriteBatchProcessor(influxDb, 1, TimeUnit.DAYS, 1, 3, 
+				BufferFailBehaviour.THROW_EXCEPTION, false, 50);
+
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
 		Assert.assertEquals(subject.queue.size(), 1);
@@ -239,11 +253,7 @@ public class BatchProcessorTest {
 	@Test
 	public void successfullyWrittenPointsAreNotReturnedToQueue() {
 		AnonInfluxDBImpl influxDb = getAnonInfluxDB();
-		BatchProcessor subject = BatchProcessor.builder(influxDb)
-			.interval(1, TimeUnit.DAYS)
-			.capacityAndActions(3, 3)
-			.discardOnFailedWrite(false)
-			.build();
+		BatchProcessor subject = new NonScheduledWriteBatchProcessor(influxDb, 3, TimeUnit.DAYS, 1, 3, BufferFailBehaviour.DROP_CURRENT, false, 50);
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure1"));
 		subject.put(AnonInfluxDBImpl.FAIL_DATABASE, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure3"));
@@ -256,11 +266,7 @@ public class BatchProcessorTest {
 	@Test
 	public void unsuccessfullyWrittenPointsAreReturnedToQueueInCorrectOrder() {
 		AnonInfluxDBImpl influxDb = getErrorThrowingDB();
-		BatchProcessor subject = BatchProcessor.builder(influxDb)
-			.interval(1, TimeUnit.DAYS)
-			.capacityAndActions(4, 4)
-			.discardOnFailedWrite(false)
-			.build();
+		BatchProcessor subject = new NonScheduledWriteBatchProcessor(influxDb, 4, TimeUnit.DAYS, 1, 4, BufferFailBehaviour.THROW_EXCEPTION, false, 50);
 		
 		subject.put("db1", ANON_RETENTION, ANON_CONSISTENCY, getPoint("inserted1"));
 		subject.put("db2", ANON_RETENTION, ANON_CONSISTENCY, getPoint("inserted2"));
@@ -276,12 +282,15 @@ public class BatchProcessorTest {
 	@Test
 	public void writeOnlyAttemptsUpToMaxBatchWrite() {
 		AnonInfluxDBImpl influxDb = getAnonInfluxDB();
-		BatchProcessor subject = BatchProcessor.builder(influxDb)
-			.interval(1, TimeUnit.DAYS)
-			.capacityAndActions(3, 3)
-			.maxBatchWriteSize(2)
-			.discardOnFailedWrite(false)
-			.build();
+//		BatchProcessor subject = BatchProcessor.builder(influxDb)
+//			.interval(1, TimeUnit.DAYS)
+//			.capacityAndActions(3, 3)
+//			.maxBatchWriteSize(2)
+//			.discardOnFailedWrite(false)
+//			.build();
+		BatchProcessor subject = new NonScheduledWriteBatchProcessor(influxDb, 3, TimeUnit.DAYS, 1, 3, 
+				BufferFailBehaviour.THROW_EXCEPTION, false, 2);
+
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure1"));
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure2"));
