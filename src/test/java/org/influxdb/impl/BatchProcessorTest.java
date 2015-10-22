@@ -68,7 +68,7 @@ public class BatchProcessorTest {
 		NonScheduledWriteBatchProcessor(InfluxDBImpl influxDB, int actions, TimeUnit flushIntervalUnit,
 				int flushInterval, Integer capacity, BufferFailBehaviour behaviour, boolean discardOnFailedWrite,
 				int maxBatchWriteSize) {
-			super(influxDB, actions, flushIntervalUnit, flushInterval, capacity, behaviour, discardOnFailedWrite,
+			super(influxDB, actions, flushIntervalUnit, flushInterval, 5*flushInterval, capacity, behaviour, discardOnFailedWrite,
 					maxBatchWriteSize);
 		}
 		@Override
@@ -111,7 +111,7 @@ public class BatchProcessorTest {
 	@Test(expectedExceptions={IllegalStateException.class})
     public void addingThrowsExceptionWhenBehaviourIsThrowExceptionAndQueueAtCapacity() {
     	BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
-    			.interval(1, TimeUnit.DAYS)
+    			.interval(1, 2, TimeUnit.DAYS)
     			.capacityAndActions(1, 1)
     			.discardOnFailedWrite(false)
     			.behaviour(BufferFailBehaviour.THROW_EXCEPTION)
@@ -126,7 +126,7 @@ public class BatchProcessorTest {
 	@Test
 	public void addingEvictsOldestWhenBehaviourIsDropOldestAndQueueAtCapacity() {
 		BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
-				.interval(1, TimeUnit.DAYS)
+				.interval(1, 2, TimeUnit.DAYS)
 				.capacityAndActions(1, 1)
 				.discardOnFailedWrite(false)
     			.behaviour(BufferFailBehaviour.DROP_OLDEST)
@@ -162,7 +162,7 @@ public class BatchProcessorTest {
 	@Test(expectedExceptions = { IllegalArgumentException.class })
     public void cannotBeBuiltWithDropOldestBehaviourAndWithoutCapacityLimit() {
 		BatchProcessor.builder(getAnonInfluxDB())
-			.interval(1, TimeUnit.DAYS)
+			.interval(1, 2, TimeUnit.DAYS)
 			.behaviour(BufferFailBehaviour.DROP_OLDEST)
 			.build();
 		
@@ -171,7 +171,7 @@ public class BatchProcessorTest {
 	@Test
     public void pointsAreRemovedFromQueueAfterSuccessfulWrite() {
 		BatchProcessor subject = BatchProcessor.builder(getAnonInfluxDB())
-			.interval(1, TimeUnit.DAYS)
+			.interval(1, 2, TimeUnit.DAYS)
 			.build();
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getAnonPoint());
@@ -183,7 +183,7 @@ public class BatchProcessorTest {
 	@Test
     public void keepOnFailedWriteProcessorRetainsPointsAfterExceptionThrown() {
 		BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
-			.interval(1, TimeUnit.DAYS)
+			.interval(1, 2, TimeUnit.DAYS)
 			.discardOnFailedWrite(false)
 			.build();
 		
@@ -199,7 +199,7 @@ public class BatchProcessorTest {
 	@Test
     public void discardOnFailedWriteProcessorDropsPointsAfterExceptionThrown() {
 		BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
-			.interval(1, TimeUnit.DAYS)
+			.interval(1, 2, TimeUnit.DAYS)
 			.discardOnFailedWrite(true)
 			.build();
 		
@@ -304,7 +304,14 @@ public class BatchProcessorTest {
 	@Test 
 	public void testGetBufferedCountWorksInTheMiddleOfAWrite() {
 		QueueDepthRecordingDBImpl influxDb = getQueueDepthRecordingDBImpl();
-		influxDb.enableBatch(5, 5, 5, TimeUnit.SECONDS, BufferFailBehaviour.THROW_EXCEPTION, false, 5);
+		int capacity = 5;
+		int flushActions = 5;
+		int flushIntervalMin = 5;
+		int flushIntervalMax = 2* flushIntervalMin;
+		boolean discardOnFailedWrite = false;
+		int maxBatchWriteSize = 5;
+		influxDb.enableBatch(capacity, flushActions, flushIntervalMin, flushIntervalMax,
+				TimeUnit.SECONDS, BufferFailBehaviour.THROW_EXCEPTION, discardOnFailedWrite, maxBatchWriteSize);
 		BatchProcessor subject = influxDb.getBatchProcessor();
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure1"));

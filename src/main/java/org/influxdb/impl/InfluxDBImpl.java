@@ -95,9 +95,10 @@ public class InfluxDBImpl implements InfluxDB {
 
 	public InfluxDB enableBatch(
 			final Integer capacity,
-			final int actions,
-			final int flushDuration,
-			final TimeUnit flushDurationTimeUnit,
+			final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit,
 			BufferFailBehaviour behaviour,
 			boolean discardOnFailedWrite,
 			int maxBatchWriteSize) {
@@ -106,8 +107,8 @@ public class InfluxDBImpl implements InfluxDB {
 		}
 		batchProcessor = BatchProcessor
 				.builder(this)
-				.capacityAndActions(capacity, actions)
-				.interval(flushDuration, flushDurationTimeUnit)
+				.capacityAndActions(capacity, flushActions)
+				.interval(flushIntervalMin, flushIntervalMax, flushIntervalTimeUnit)
 				.behaviour(behaviour)
 				.discardOnFailedWrite(discardOnFailedWrite)
 				.maxBatchWriteSize(maxBatchWriteSize)
@@ -115,18 +116,27 @@ public class InfluxDBImpl implements InfluxDB {
 		batchEnabled.set(true);
 		return this;
 	}
-	
+
 	@Override
 	public InfluxDB enableBatch(final int actions,
-			final int flushDuration,
-			final TimeUnit flushDurationTimeUnit) {
+			final int flushInterval,
+			final TimeUnit flushIntervalTimeUnit) {
+		return enableBatch(actions, flushInterval, 5 * flushInterval, flushIntervalTimeUnit);
+	}
+
+	@Override
+	public InfluxDB enableBatch(final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit) {
 		
 		enableBatch(0, 
-				actions, 
-				flushDuration, 
-				flushDurationTimeUnit,
+				flushActions, 
+				flushIntervalMin, 
+				flushIntervalMax,
+				flushIntervalTimeUnit,
 				BufferFailBehaviour.THROW_EXCEPTION,
-				true, actions);
+				true, flushActions);
 		return this;
 	}
 
