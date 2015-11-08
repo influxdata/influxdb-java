@@ -51,6 +51,18 @@ public class PointTest {
 				.build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\\\"B\",b=\"D E \\\"F\" 1");
 
+		//Integer type
+		point = Point.measurement("inttest").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", (Integer)1).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest a=1i 1");
+
+		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", (Integer)1).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=1i 1");
+
+		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", 1L).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=1i 1");
+
+		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", BigInteger.valueOf(100)).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=100i 1");
 	}
 
 	/**
