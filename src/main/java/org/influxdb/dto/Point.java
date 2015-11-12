@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
@@ -101,32 +102,55 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		@Deprecated
-		public Builder field(final String field, final Object value) {
-			this.fields.put(field, value);
+		public Builder field(final String field, Object value) {
+			if (value instanceof Number) {
+				if (value instanceof Byte) {
+					value = ((Byte) value).doubleValue();
+				}
+				if (value instanceof Short) {
+					value = ((Short) value).doubleValue();
+				}
+				if (value instanceof Integer) {
+					value = ((Integer) value).doubleValue();
+				}
+				if (value instanceof Long) {
+					value = ((Long) value).doubleValue();
+				}
+				if (value instanceof BigInteger) {
+					value = ((BigInteger) value).doubleValue();
+				}
+				
+			}
+			fields.put(field, value);
 			return this;
 		}
 		
-		public Builder field(final String field, final boolean value) {
-			this.fields.put(field, value);
+		public Builder addField(final String field, final boolean value) {
+			fields.put(field, value);
 			return this;
 		}
 		
-		public Builder field(final String field, final long value) {
-			this.fields.put(field, value);
+		public Builder addField(final String field, final long value) {
+			fields.put(field, value);
 			return this;
 		}
 		
-		public Builder field(final String field, final double value) {
-			this.fields.put(field, value);
+		public Builder addField(final String field, final double value) {
+			fields.put(field, value);
 			return this;
 		}
 		
-		public Builder field(final String field, final String value) {
+		public Builder addField(String field, Number value) {
+			fields.put(field, value);
+			return this;
+		}
+		
+		public Builder addField(final String field, final String value) {
 			if (value == null) {
 				throw new IllegalArgumentException("Field value cannot be null");
 			}
 			
-			this.fields.put(field, value);
+			fields.put(field, value);
 			return this;
 		}
 		
