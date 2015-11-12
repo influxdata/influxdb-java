@@ -100,7 +100,32 @@ public class Point {
 		 *            the value of this field
 		 * @return the Builder instance.
 		 */
+		@Deprecated
 		public Builder field(final String field, final Object value) {
+			this.fields.put(field, value);
+			return this;
+		}
+		
+		public Builder field(final String field, final boolean value) {
+			this.fields.put(field, value);
+			return this;
+		}
+		
+		public Builder field(final String field, final long value) {
+			this.fields.put(field, value);
+			return this;
+		}
+		
+		public Builder field(final String field, final double value) {
+			this.fields.put(field, value);
+			return this;
+		}
+		
+		public Builder field(final String field, final String value) {
+			if (value == null) {
+				throw new IllegalArgumentException("Field value cannot be null");
+			}
+			
 			this.fields.put(field, value);
 			return this;
 		}
