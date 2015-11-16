@@ -3,12 +3,14 @@ package org.influxdb.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Sets;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -137,7 +139,11 @@ public class BatchProcessor {
 		this.scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				write();
+				try {
+					write();
+				} catch(Exception ex) {
+					// TODO: Add logging so that this exception does not disappear
+				}
 			}
 		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
 
@@ -162,8 +168,23 @@ public class BatchProcessor {
 			databaseToBatchPoints.get(dbName).point(point);
 		}
 
-		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-			BatchProcessor.this.influxDB.write(batchPoints);
+		Set<String> successful = Sets.newHashSet();
+		try {
+			for (Map.Entry<String, BatchPoints> keyPair : databaseToBatchPoints.entrySet()) {
+				BatchProcessor.this.influxDB.write(keyPair.getValue());
+				successful.add(keyPair.getKey());
+			}
+		} catch (Exception ex) {
+			// An exception occurred, re-queue the batchEntries
+			// TODO: Logging of the exception
+			for (Map.Entry<String, BatchPoints> keyPair : databaseToBatchPoints.entrySet()) {
+				if (successful.contains(keyPair.getKey()))
+					continue;
+
+				// Do not use put() because that may cause the buffer to empty itself again
+				for(Point point : keyPair.getValue().getPoints())
+					this.queue.add(new BatchEntry(point, keyPair.getKey(), keyPair.getValue().getRetentionPolicy()));
+			}
 		}
 	}
 
