@@ -54,10 +54,24 @@ public class InfluxDBImpl implements InfluxDB {
 	 *            the password for this user.
 	 */
 	public InfluxDBImpl(final String url, final String username, final String password) {
+		this(url, username, password, 0, null);
+	}
+
+	public InfluxDBImpl(final String url, final String username, final String password, final long networkTimeout, final TimeUnit timeoutTimeUnit) {
 		super();
 		this.username = username;
 		this.password = password;
-		Client client = new OkClient(new OkHttpClient());
+
+		OkHttpClient okHttpClient = new OkHttpClient();
+
+		if (networkTimeout != 0) {
+			okHttpClient.setWriteTimeout(networkTimeout, timeoutTimeUnit);
+			okHttpClient.setReadTimeout(networkTimeout, timeoutTimeUnit);
+			okHttpClient.setConnectTimeout(networkTimeout, timeoutTimeUnit);
+		}
+
+		Client client = new OkClient(okHttpClient);
+
 		this.restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
