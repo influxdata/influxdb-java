@@ -11,7 +11,6 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
 
 import retrofit.RestAdapter;
 import retrofit.client.Client;
@@ -57,7 +56,7 @@ public class InfluxDBImpl implements InfluxDB {
 		this(url, username, password, 0, null);
 	}
 
-	public InfluxDBImpl(final String url, final String username, final String password, final long networkTimeout, final TimeUnit timeoutTimeUnit) {
+	public InfluxDBImpl(final String url, final String username, final String password, final long networkTimeout, final TimeUnit networkTimeoutTimeUnit) {
 		super();
 		this.username = username;
 		this.password = password;
@@ -65,9 +64,9 @@ public class InfluxDBImpl implements InfluxDB {
 		OkHttpClient okHttpClient = new OkHttpClient();
 
 		if (networkTimeout != 0) {
-			okHttpClient.setWriteTimeout(networkTimeout, timeoutTimeUnit);
-			okHttpClient.setReadTimeout(networkTimeout, timeoutTimeUnit);
-			okHttpClient.setConnectTimeout(networkTimeout, timeoutTimeUnit);
+			okHttpClient.setWriteTimeout(networkTimeout, networkTimeoutTimeUnit);
+			okHttpClient.setReadTimeout(networkTimeout, networkTimeoutTimeUnit);
+			okHttpClient.setConnectTimeout(networkTimeout, networkTimeoutTimeUnit);
 		}
 
 		Client client = new OkClient(okHttpClient);
@@ -78,6 +77,7 @@ public class InfluxDBImpl implements InfluxDB {
 				.setClient(client)
 				.build();
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
+
 	}
 
 	@Override
@@ -136,6 +136,7 @@ public class InfluxDBImpl implements InfluxDB {
 		for (Header header : headers) {
 			if (null != header.getName() && header.getName().equalsIgnoreCase("X-Influxdb-Version")) {
 				version = header.getValue();
+				break;
 			}
 		}
 		Pong pong = new Pong();
