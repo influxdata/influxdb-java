@@ -265,6 +265,13 @@ public class Point {
 		return sb.toString();
 	}
 
+	/**
+	 * Gets the time related to the Point
+	 *
+	 * @return The time related to the Point
+	 */
+	public Long getTime(){return time;}
+
 	private StringBuilder concatenatedTags() {
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, String> tag : this.tags.entrySet()) {
