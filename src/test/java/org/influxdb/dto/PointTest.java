@@ -1,13 +1,14 @@
 package org.influxdb.dto;
 
-import org.testng.annotations.Test;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.testng.annotations.Test;
 
 /**
  * Test for the Point DTO.
@@ -156,4 +157,20 @@ public class PointTest {
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\=baz a=1.0 1");
 	}
 
+	/**
+	 * Test for ticket issue #117.
+	 */
+	@Test
+	public void testTicket117() {
+		// Test omission of null values
+		Point.Builder pointBuilder = Point.measurement("nulltest").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar");
+
+		pointBuilder.field("field1", "value1");
+		pointBuilder.field("field2", null);
+		pointBuilder.field("field3", (Integer)1);
+
+		Point point = pointBuilder.build();
+
+		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
+	}
 }

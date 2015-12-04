@@ -286,22 +286,26 @@ public class Point {
 		numberFormat.setMinimumFractionDigits(1);
 
 		for (Entry<String, Object> field : this.fields.entrySet()) {
-			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			loops++;
 			Object value = field.getValue();
-			if (value instanceof String) {
-				String stringValue = (String) value;
-				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
-			} else if(useInteger && (value instanceof Integer || value instanceof BigInteger || value instanceof Long)) {
-				sb.append(value).append("i");
-			} else if (value instanceof Number) {
-				sb.append(numberFormat.format(value));
-			} else {
-				sb.append(value);
-			}
 
-			if (loops < fieldCount) {
-				sb.append(",");
+			// Avoiding invalid null type
+			if (value != null) {
+				sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
+				if (value instanceof String) {
+					String stringValue = (String) value;
+					sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
+				} else if(useInteger && (value instanceof Integer || value instanceof BigInteger || value instanceof Long)) {
+					sb.append(value).append("i");
+				} else if (value instanceof Number) {
+					sb.append(numberFormat.format(value));
+				} else {
+					sb.append(value);
+				}
+	
+				if (loops < fieldCount) {
+					sb.append(",");
+				}
 			}
 		}
 		return sb;
