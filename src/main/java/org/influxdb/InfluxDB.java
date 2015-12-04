@@ -1,6 +1,5 @@
 package org.influxdb;
 
-import java.net.URLConnection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
