@@ -1,13 +1,15 @@
 package org.influxdb.dto;
 
-import org.testng.annotations.Test;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.influxdb.exception.NullTagException;
+import org.testng.annotations.Test;
 
 /**
  * Test for the Point DTO.
@@ -68,7 +70,7 @@ public class PointTest {
 	/**
 	 * Test for ticket #44
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testTicket44() {
 		Point point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000");
@@ -157,10 +159,34 @@ public class PointTest {
 	}
 
 	/**
-	 * Test for issue #110.
+	 * Test for issue #117.
 	 */
 	@Test
-	public void testNullTag() {
-		
+	public void testIgnoreNullPointerValue() {
+		// Test omission of null values
+		Point.Builder pointBuilder = Point.measurement("nulltest").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar");
+
+		pointBuilder.field("field1", "value1");
+		pointBuilder.field("field2", null);
+		pointBuilder.field("field3", (Integer) 1);
+
+		Point point = pointBuilder.build();
+
+		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
+	}
+
+	/**
+	 * Test for issue #110: null tag value.
+	 * 
+	 * @see NullTagException
+	 */
+	@Test(expectedExceptions = NullTagException.class)
+	public void testNullTagValue() {
+		 // Test presence of null tag and launch of exception
+		Point.measurement("nulltagvalue").time(1, TimeUnit.NANOSECONDS)
+			.tag("foo", null)
+			.field("field1", "value1")
+			.build()
+			.lineProtocol();
 	}
 }
