@@ -195,7 +195,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void createDatabase(final String name) {
 		Preconditions.checkArgument(!name.contains("-"), "Databasename cant contain -");
-		this.influxDBService.query(this.username, this.password, "CREATE DATABASE IF NOT EXISTS " + name);
+		this.influxDBService.query(this.username, this.password, "CREATE DATABASE IF NOT EXISTS \"" + name + "\"");
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public void deleteDatabase(final String name) {
-		this.influxDBService.query(this.username, this.password, "DROP DATABASE " + name);
+		this.influxDBService.query(this.username, this.password, "DROP DATABASE \"" + name + "\"");
 	}
 
 	/**
