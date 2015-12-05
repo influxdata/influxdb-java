@@ -290,6 +290,7 @@ public class Point {
 		if (tag == null) {
 			throw new NullTagException("A null tag entry was encountered! Please revew your data.");
 		} else if ((tag.getKey() == null) || (tag.getValue() == null)) {
+			// key is validated for map implementation reasons
 			throw new NullTagException("The provided tag has an invalid key/value: " + tag.getKey() + "=" + tag.getValue());
 		}
 	}
