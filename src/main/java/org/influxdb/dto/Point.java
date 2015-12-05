@@ -286,9 +286,13 @@ public class Point {
 		numberFormat.setMinimumFractionDigits(1);
 
 		for (Entry<String, Object> field : this.fields.entrySet()) {
-			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			loops++;
 			Object value = field.getValue();
+			if (value == null) {
+				continue;
+			}
+
+			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			if (value instanceof String) {
 				String stringValue = (String) value;
 				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
@@ -304,6 +308,7 @@ public class Point {
 				sb.append(",");
 			}
 		}
+
 		return sb;
 	}
 
