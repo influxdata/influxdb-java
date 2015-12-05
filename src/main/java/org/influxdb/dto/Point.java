@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.exception.NullTagException;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -268,11 +270,28 @@ public class Point {
 	private StringBuilder concatenatedTags() {
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, String> tag : this.tags.entrySet()) {
+			validateTag(tag);
 			sb.append(",");
 			sb.append(KEY_ESCAPER.escape(tag.getKey())).append("=").append(KEY_ESCAPER.escape(tag.getValue()));
 		}
 		sb.append(" ");
 		return sb;
+	}
+
+	/**
+	 * Validates either the entry tag is null or if one of key/value is null.
+	 * 
+	 * @param tag
+	 *            the entry tag to be validated
+	 * @throws NullTagException
+	 *             if either the tag is null or if one of key/value is null
+	 */
+	private void validateTag(final Entry<String, String> tag) throws NullTagException {
+		if (tag == null) {
+			throw new NullTagException("A null tag entry was encountered! Please revew your data.");
+		} else if ((tag.getKey() == null) || (tag.getValue() == null)) {
+			throw new NullTagException("The provided tag has an invalid key/value: " + tag.getKey() + "=" + tag.getValue());
+		}
 	}
 
 	private StringBuilder concatenateFields() {

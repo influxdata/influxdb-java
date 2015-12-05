@@ -156,4 +156,11 @@ public class PointTest {
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\=baz a=1.0 1");
 	}
 
+	/**
+	 * Test for issue #110.
+	 */
+	@Test
+	public void testNullTag() {
+		
+	}
 }
