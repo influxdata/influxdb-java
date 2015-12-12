@@ -185,4 +185,11 @@ public class PointTest {
 		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
 	}
 	
+	@Test(expectedExceptions=IllegalArgumentException.class)
+	public void testNullValueThrowsExceptionViaAddField() {
+		// Test omission of null values
+		Point.Builder pointBuilder = Point.measurement("nulltest").time(1, TimeUnit.NANOSECONDS);
+
+		pointBuilder.addField("field", (String) null);
+	}
 }
