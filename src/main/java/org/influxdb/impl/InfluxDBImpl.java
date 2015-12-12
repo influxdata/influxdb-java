@@ -42,6 +42,7 @@ public class InfluxDBImpl implements InfluxDB {
 	private final AtomicLong unBatchedCount = new AtomicLong();
 	private final AtomicLong batchedCount = new AtomicLong();
 	private LogLevel logLevel = LogLevel.NONE;
+	private OkHttpClient okHttpClient;
 
 	/**
 	 * Constructor which should only be used from the InfluxDBFactory.
@@ -57,7 +58,11 @@ public class InfluxDBImpl implements InfluxDB {
 		super();
 		this.username = username;
 		this.password = password;
-		Client client = new OkClient(new OkHttpClient());
+		okHttpClient = new OkHttpClient();
+		okHttpClient.setConnectTimeout(CONNECT_TIMEOUT_SECONDS_DEFAULT, TimeUnit.SECONDS);
+		okHttpClient.setReadTimeout(READ_TIMEOUT_SECONDS_DEFAULT, TimeUnit.SECONDS);
+		okHttpClient.setWriteTimeout(WRITE_TIMEOUT_SECONDS_DEFAULT, TimeUnit.SECONDS);
+		Client client = new OkClient(okHttpClient);
 		this.restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
@@ -190,7 +195,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void createDatabase(final String name) {
 		Preconditions.checkArgument(!name.contains("-"), "Databasename cant contain -");
-		this.influxDBService.query(this.username, this.password, "CREATE DATABASE IF NOT EXISTS " + name);
+		this.influxDBService.query(this.username, this.password, "CREATE DATABASE IF NOT EXISTS \"" + name + "\"");
 	}
 
 	/**
@@ -198,7 +203,7 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public void deleteDatabase(final String name) {
-		this.influxDBService.query(this.username, this.password, "DROP DATABASE " + name);
+		this.influxDBService.query(this.username, this.password, "DROP DATABASE \"" + name + "\"");
 	}
 
 	/**
@@ -217,6 +222,30 @@ public class InfluxDBImpl implements InfluxDB {
 			}
 		}
 		return databases;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setConnectTimeout(long connectTimeout, TimeUnit timeUnit) {
+		okHttpClient.setConnectTimeout(connectTimeout, timeUnit);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setReadTimeout(long readTimeout, TimeUnit timeUnit) {
+		okHttpClient.setReadTimeout(readTimeout, timeUnit);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setWriteTimeout(long writeTimeout, TimeUnit timeUnit) {
+		okHttpClient.setWriteTimeout(writeTimeout, timeUnit);
 	}
 
 }

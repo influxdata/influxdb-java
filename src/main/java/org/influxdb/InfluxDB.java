@@ -1,5 +1,6 @@
 package org.influxdb;
 
+import java.net.URLConnection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -22,6 +23,9 @@ import org.influxdb.dto.QueryResult;
  * 
  */
 public interface InfluxDB {
+	int CONNECT_TIMEOUT_SECONDS_DEFAULT = 15;
+	int READ_TIMEOUT_SECONDS_DEFAULT = 20;
+	int WRITE_TIMEOUT_SECONDS_DEFAULT = 20;
 
 	/** Controls the level of logging of the REST layer. */
 	public enum LogLevel {
@@ -170,5 +174,42 @@ public interface InfluxDB {
 	 * @return a List of all Database names.
 	 */
 	public List<String> describeDatabases();
+
+	/**
+	 * Sets the default connect timeout for new connections. A value of 0 means no timeout. If not
+	 * set explicitly, a default timeout of CONNECT_TIMEOUT_SECONDS_DEFAULT seconds will be used.
+	 *
+	 * @param connectTimeout
+	 *            the connect timeout
+	 * @param timeUnit
+	 *            the time unit for the connect timeout
+	 *
+	 * @see java.net.URLConnection#setConnectTimeout(int)
+	 */
+	void setConnectTimeout(long connectTimeout, TimeUnit timeUnit);
+
+	/**
+	 * Sets the default read timeout for new connections. A value of 0 means no timeout. If not
+	 * set explicitly, a default timeout of READ_TIMEOUT_SECONDS_DEFAULT seconds will be used.
+	 *
+	 * @param readTimeout
+	 *            the read timeout
+	 * @param timeUnit
+	 *            the time unit for the read timeout
+	 *
+	 * @see java.net.URLConnection#setReadTimeout(int)
+	 */
+	void setReadTimeout(long readTimeout, TimeUnit timeUnit);
+
+	/**
+	 * Sets the default write timeout for new connections. A value of 0 means no timeout. If not
+	 * set explicitly, a default timeout of WRITE_TIMEOUT_SECONDS_DEFAULT seconds will be used.
+	 *
+	 * @param writeTimeout
+	 *            the write timeout
+	 * @param timeUnit
+	 *            the time unit for the write timeout
+	 */
+	void setWriteTimeout(long writeTimeout, TimeUnit timeUnit);
 
 }

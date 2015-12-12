@@ -183,4 +183,17 @@ public class InfluxDBTest {
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
+
+	/**
+	 * Test that creating database which name is composed of numbers only works
+	 */
+	@Test(enabled = true)
+	public void testCreateNumericNamedDatabase() {
+		String numericDbName = "123";
+
+		this.influxDB.createDatabase(numericDbName);
+		List<String> result = this.influxDB.describeDatabases();
+		Assert.assertTrue(result.contains(numericDbName));
+		this.influxDB.deleteDatabase(numericDbName);
+	}
 }
