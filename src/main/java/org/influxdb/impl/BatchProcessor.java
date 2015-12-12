@@ -8,7 +8,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -25,7 +28,7 @@ import com.google.common.collect.Maps;
  */
 public class BatchProcessor {
 	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private ScheduledExecutorService scheduler;
 	final InfluxDBImpl influxDB;
 	final int actions;
 	private final TimeUnit flushIntervalUnit;
@@ -39,6 +42,7 @@ public class BatchProcessor {
 		private int actions;
 		private TimeUnit flushIntervalUnit;
 		private int flushInterval;
+		private ThreadFactory threadFactory;
 
 		/**
 		 * @param influxDB
@@ -77,6 +81,19 @@ public class BatchProcessor {
 		}
 
 		/**
+		 * The interval at which at least should issued a write.
+		 *
+		 * @param threadFactory
+		 *            the scheduler use the thread factory to generate threads
+		 *
+		 * @return this Builder to use it fluent
+		 */
+		public Builder threadFactory(final ThreadFactory threadFactory) {
+			this.threadFactory = threadFactory;
+			return this;
+		}
+
+		/**
 		 * Create the BatchProcessor.
 		 *
 		 * @return the BatchProcessor instance.
@@ -85,7 +102,7 @@ public class BatchProcessor {
 			Preconditions.checkNotNull(this.actions, "actions may not be null");
 			Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
 			Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
-			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
+			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval, this.threadFactory);
 		}
 	}
 
@@ -126,12 +143,15 @@ public class BatchProcessor {
 	}
 
 	BatchProcessor(final InfluxDBImpl influxDB, final int actions, final TimeUnit flushIntervalUnit,
-			final int flushInterval) {
+			final int flushInterval, final ThreadFactory threadFactory) {
 		super();
 		this.influxDB = influxDB;
 		this.actions = actions;
 		this.flushIntervalUnit = flushIntervalUnit;
 		this.flushInterval = flushInterval;
+
+		ScheduledThreadPoolExecutor service= (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1, threadFactory);
+		this.scheduler = MoreExecutors.getExitingScheduledExecutorService(service);
 
 		// Flush at specified Rate
 		this.scheduler.scheduleAtFixedRate(new Runnable() {
@@ -140,7 +160,6 @@ public class BatchProcessor {
 				write();
 			}
 		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
-
 	}
 
 	void write() {
