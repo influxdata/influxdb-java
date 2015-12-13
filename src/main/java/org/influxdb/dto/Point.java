@@ -89,7 +89,9 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder tag(final String tagName, final String value) {
-			this.tags.put(tagName, value);
+			Preconditions.checkArgument(tagName != null);
+			Preconditions.checkArgument(value != null);
+			tags.put(tagName, value);
 			return this;
 		}
 
@@ -101,7 +103,9 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder tag(final Map<String, String> tagsToAdd) {
-			this.tags.putAll(tagsToAdd);
+			for (Entry<String, String> tag : tagsToAdd.entrySet()) {
+				tag(tag.getKey(), tag.getValue());
+			}
 			return this;
 		}
 
