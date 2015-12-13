@@ -4,11 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.testng.annotations.Test;
+
+import com.google.common.collect.Maps;
 
 /**
  * Test for the Point DTO.
@@ -173,4 +176,33 @@ public class PointTest {
 
 		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
 	}
+	
+	/**
+	 * Tests for issue #110
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingTagsWithNullNameThrowsAnError() {
+		Point.measurement("dontcare").tag(null, "DontCare");
+	}
+	
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingTagsWithNullValueThrowsAnError() {
+		Point.measurement("dontcare").tag("DontCare", null);
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingMapOfTagsWithNullNameThrowsAnError() {
+		Map<String, String> map = Maps.newHashMap();
+		map.put(null, "DontCare");
+		Point.measurement("dontcare").tag(map);
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingMapOfTagsWithNullValueThrowsAnError() {
+		Map<String, String> map = Maps.newHashMap();
+		map.put("DontCare", null);
+		Point.measurement("dontcare").tag(map);
+	}
+	
+	
 }
