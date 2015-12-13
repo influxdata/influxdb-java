@@ -13,17 +13,15 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
 
-import retrofit.RestAdapter;
-import retrofit.client.Client;
-import retrofit.client.Header;
-import retrofit.client.OkClient;
-import retrofit.client.Response;
-import retrofit.mime.TypedString;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
+
+import retrofit.RestAdapter;
+import retrofit.client.Client;
+import retrofit.client.Header;
+import retrofit.client.Response;
+import retrofit.mime.TypedString;
 
 /**
  * Implementation of a InluxDB API.
@@ -42,27 +40,12 @@ public class InfluxDBImpl implements InfluxDB {
 	private final AtomicLong unBatchedCount = new AtomicLong();
 	private final AtomicLong batchedCount = new AtomicLong();
 	private LogLevel logLevel = LogLevel.NONE;
-	private OkHttpClient okHttpClient;
-
-	/**
-	 * Constructor which should only be used from the InfluxDBFactory.
-	 * 
-	 * @param url
-	 *            the url where the influxdb is accessible.
-	 * @param username
-	 *            the user to connect.
-	 * @param password
-	 *            the password for this user.
-	 */
-	public InfluxDBImpl(final String url, final String username, final String password) {
+	
+	public InfluxDBImpl(final String url, final String username, final String password, 
+			final Client client) {
 		super();
 		this.username = username;
 		this.password = password;
-		okHttpClient = new OkHttpClient();
-		okHttpClient.setConnectTimeout(CONNECT_TIMEOUT_SECONDS_DEFAULT, TimeUnit.SECONDS);
-		okHttpClient.setReadTimeout(READ_TIMEOUT_SECONDS_DEFAULT, TimeUnit.SECONDS);
-		okHttpClient.setWriteTimeout(WRITE_TIMEOUT_SECONDS_DEFAULT, TimeUnit.SECONDS);
-		Client client = new OkClient(okHttpClient);
 		this.restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
@@ -70,6 +53,7 @@ public class InfluxDBImpl implements InfluxDB {
 				.build();
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
 	}
+	
 
 	@Override
 	public InfluxDB setLogLevel(final LogLevel logLevel) {
@@ -222,30 +206,6 @@ public class InfluxDBImpl implements InfluxDB {
 			}
 		}
 		return databases;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setConnectTimeout(long connectTimeout, TimeUnit timeUnit) {
-		okHttpClient.setConnectTimeout(connectTimeout, timeUnit);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setReadTimeout(long readTimeout, TimeUnit timeUnit) {
-		okHttpClient.setReadTimeout(readTimeout, timeUnit);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setWriteTimeout(long writeTimeout, TimeUnit timeUnit) {
-		okHttpClient.setWriteTimeout(writeTimeout, timeUnit);
 	}
 
 }
