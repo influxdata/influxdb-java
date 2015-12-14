@@ -130,6 +130,26 @@ public interface InfluxDB {
 	public void write(final BatchPoints batchPoints);
 
 	/**
+	 * Write a set of Points to the influxdb database with the string records.
+	 *
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
+	 * @param records
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records);
+
+	/**
+	 * Write a set of Points to the influxdb database with the list of string records.
+	 *
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
+	 * @param records
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records);
+
+	/**
+
+	/**
 	 * Execute a query agains a database.
 	 * 
 	 * @param query

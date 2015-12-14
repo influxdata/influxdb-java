@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.base.Joiner;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -151,6 +152,23 @@ public class InfluxDBImpl implements InfluxDB {
 				batchPoints.getConsistency().value(),
 				lineProtocol);
 
+	}
+
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records) {
+		this.influxDBService.writePoints(
+				this.username,
+				this.password,
+				database,
+				retentionPolicy,
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				consistency.value(),
+				new TypedString(records));
+	}
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records) {
+		final String joinedRecords = Joiner.on("\n").join(records);
+		write(database, retentionPolicy, consistency, joinedRecords);
 	}
 
 	/**
