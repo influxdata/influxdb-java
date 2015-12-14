@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -183,6 +184,63 @@ public class InfluxDBTest {
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
+
+    /**
+     * Test writing to the database using string protocol.
+     */
+    @Test(enabled = true)
+    public void testWriteStringData() {
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+
+        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test idle=90,usertime=9,system=1");
+        Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+        QueryResult result = this.influxDB.query(query);
+        Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+        this.influxDB.deleteDatabase(dbName);
+    }
+
+    /**
+     * Test writing multiple records to the database using string protocol.
+     */
+    @Test(enabled = true)
+    public void testWriteMultipleStringData() {
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+
+        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
+        Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+        QueryResult result = this.influxDB.query(query);
+
+        Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        this.influxDB.deleteDatabase(dbName);
+    }
+
+    /**
+     * Test writing multiple separate records to the database using string protocol.
+     */
+    @Test(enabled = true)
+    public void testWriteMultipleStringDataLines() {
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+
+        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
+                "cpu,atag=test1 idle=100,usertime=10,system=1",
+                "cpu,atag=test2 idle=200,usertime=20,system=2",
+                "cpu,atag=test3 idle=300,usertime=30,system=3"
+        ));
+        Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+        QueryResult result = this.influxDB.query(query);
+
+        Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        this.influxDB.deleteDatabase(dbName);
+    }
 
 	/**
 	 * Test that creating database which name is composed of numbers only works
