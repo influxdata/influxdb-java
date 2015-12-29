@@ -1,5 +1,6 @@
 package org.influxdb.dto;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -20,7 +21,9 @@ import com.google.common.escape.Escapers;
  * @author stefan.majer [at] gmail.com
  * 
  */
-public class Point {
+public class Point implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private String measurement;
 	private Map<String, String> tags;
 	private Long time;
@@ -229,6 +232,26 @@ public class Point {
 		this.useInteger = enable;
 	}
 
+	public String getMeasurement() {
+		return measurement;
+	}
+
+	public Long getTime() {
+		return time;
+	}
+
+	public TimeUnit getPrecision() {
+		return precision;
+	}
+
+	public Map<String, Object> getFields() {
+		return fields;
+	}
+
+	public boolean isUseInteger() {
+		return useInteger;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -324,5 +347,4 @@ public class Point {
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		return sb;
 	}
-
 }
