@@ -57,11 +57,8 @@ public class InfluxDBImpl implements InfluxDB {
 		this.username = username;
 		this.password = password;
 		OkHttpClient okHttpClient = new OkHttpClient();
-		this.restAdapter = new RestAdapter.Builder()
-				.setEndpoint(url)
-				.setErrorHandler(new InfluxDBErrorHandler())
-				.setClient(new OkClient(okHttpClient))
-				.build();
+		this.restAdapter = new RestAdapter.Builder().setEndpoint(url).setErrorHandler(new InfluxDBErrorHandler())
+				.setClient(new OkClient(okHttpClient)).build();
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
 	}
 
@@ -92,11 +89,8 @@ public class InfluxDBImpl implements InfluxDB {
 		if (this.batchEnabled.get()) {
 			throw new IllegalArgumentException("BatchProcessing is already enabled.");
 		}
-		this.batchProcessor = BatchProcessor
-				.builder(this)
-				.actions(actions)
-				.interval(flushDuration, flushDurationTimeUnit)
-				.build();
+		this.batchProcessor = BatchProcessor.builder(this).actions(actions)
+				.interval(flushDuration, flushDurationTimeUnit).build();
 		this.batchEnabled.set(true);
 		return this;
 	}
@@ -106,9 +100,8 @@ public class InfluxDBImpl implements InfluxDB {
 		this.batchEnabled.set(false);
 		this.batchProcessor.flush();
 		if (this.logLevel != LogLevel.NONE) {
-			System.out.println(
-					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
-							+ this.batchedCount);
+			System.out.println("total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get()
+					+ "batchPoints:" + this.batchedCount);
 		}
 	}
 
@@ -152,14 +145,9 @@ public class InfluxDBImpl implements InfluxDB {
 	public void write(final BatchPoints batchPoints) {
 		this.batchedCount.addAndGet(batchPoints.getPoints().size());
 		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
-		this.influxDBService.writePoints(
-				this.username,
-				this.password,
-				batchPoints.getDatabase(),
-				batchPoints.getRetentionPolicy(),
-				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
-				batchPoints.getConsistency().value(),
-				lineProtocol);
+		this.influxDBService.writePoints(this.username, this.password, batchPoints.getDatabase(), batchPoints
+				.getRetentionPolicy(), TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS), batchPoints.getConsistency()
+				.value(), lineProtocol);
 
 	}
 
@@ -168,8 +156,8 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public QueryResult query(final Query query) {
-		QueryResult response = this.influxDBService
-				.query(this.username, this.password, query.getDatabase(), query.getCommand());
+		QueryResult response = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+				query.getCommand());
 		return response;
 	}
 
@@ -197,11 +185,14 @@ public class InfluxDBImpl implements InfluxDB {
 	public List<String> describeDatabases() {
 		QueryResult result = this.influxDBService.query(this.username, this.password, "SHOW DATABASES");
 		// {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
-		// Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
+		// Series [name=databases, columns=[name], values=[[mydb],
+		// [unittest_1433605300968]]]
 		List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();
 		List<String> databases = Lists.newArrayList();
-		for (List<Object> database : databaseNames) {
-			databases.add(database.get(0).toString());
+		if (!databases.isEmpty()) {
+			for (List<Object> database : databaseNames) {
+				databases.add(database.get(0).toString());
+			}
 		}
 		return databases;
 	}
