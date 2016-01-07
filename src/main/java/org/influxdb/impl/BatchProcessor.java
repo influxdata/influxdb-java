@@ -8,6 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -24,6 +26,8 @@ import com.google.common.collect.Maps;
  *
  */
 public class BatchProcessor {
+
+	private static final Logger logger = Logger.getLogger(BatchProcessor.class.getName());
 	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
@@ -144,26 +148,31 @@ public class BatchProcessor {
 	}
 
 	void write() {
-		if (this.queue.isEmpty()) {
-			return;
-		}
-
-		Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-		List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
-		this.queue.drainTo(batchEntries);
-
-		for (BatchEntry batchEntry : batchEntries) {
-			String dbName = batchEntry.getDb();
-			if (!databaseToBatchPoints.containsKey(dbName)) {
-				BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
-				databaseToBatchPoints.put(dbName, batchPoints);
+		try {
+			if (this.queue.isEmpty()) {
+				return;
 			}
-			Point point = batchEntry.getPoint();
-			databaseToBatchPoints.get(dbName).point(point);
-		}
 
-		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-			BatchProcessor.this.influxDB.write(batchPoints);
+			Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
+			List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
+			this.queue.drainTo(batchEntries);
+
+			for (BatchEntry batchEntry : batchEntries) {
+				String dbName = batchEntry.getDb();
+				if (!databaseToBatchPoints.containsKey(dbName)) {
+					BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
+					databaseToBatchPoints.put(dbName, batchPoints);
+				}
+				Point point = batchEntry.getPoint();
+				databaseToBatchPoints.get(dbName).point(point);
+			}
+
+			for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
+				BatchProcessor.this.influxDB.write(batchPoints);
+			}
+		} catch (Throwable t) {
+			// any exception would stop the scheduler
+			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
 		}
 	}
 
