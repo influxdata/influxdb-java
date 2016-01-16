@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.base.Joiner;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -14,10 +13,12 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
+import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.client.Header;
@@ -226,4 +227,56 @@ public class InfluxDBImpl implements InfluxDB {
 		return databases;
 	}
 
+
+	@Override
+	public void write(final BatchPoints batchPoints, final Callback<Void> callback) {
+		this.batchedCount.addAndGet(batchPoints.getPoints().size());
+		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
+		this.influxDBService.writePoints(
+				this.username,
+				this.password,
+				batchPoints.getDatabase(),
+				batchPoints.getRetentionPolicy(),
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				batchPoints.getConsistency().value(),
+				lineProtocol,
+				callback);
+
+	}
+
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records, final Callback<Void> callback) {
+		this.influxDBService.writePoints(
+				this.username,
+				this.password,
+				database,
+				retentionPolicy,
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				consistency.value(),
+				new TypedString(records),
+				callback);
+	}
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records, final Callback<Void> callback) {
+		final String joinedRecords = Joiner.on("\n").join(records);
+		write(database, retentionPolicy, consistency, joinedRecords, callback);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void query(final Query query, final Callback<QueryResult> callback) {
+		this.influxDBService
+				.query(this.username, this.password, query.getDatabase(), query.getCommand(), callback);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void query(final Query query, final TimeUnit timeUnit, final Callback<QueryResult> callback) {
+		this.influxDBService
+				.query(this.username, this.password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit), query.getCommand(), callback);
+	}
 }

@@ -9,6 +9,8 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 
+import retrofit.Callback;
+
 /**
  * Interface with all available methods to access a InfluxDB database.
  * 
@@ -191,4 +193,73 @@ public interface InfluxDB {
 	 */
 	public List<String> describeDatabases();
 
+	/**
+	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
+	 * 
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
+	 * @param batchPoints
+	 * @param callback
+	 *            the callback to be called once the request finishes.
+	 */
+	public void write(final BatchPoints batchPoints, final Callback<Void> callback);
+
+	/**
+	 * Write a set of Points to the influxdb database with the string records.
+	 *
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
+	 * @param database
+	 *            the database to write to.
+	 * @param retentionPolicy
+	 *            the retentionPolicy to use.
+	 * @param consistency
+	 *            the consistency level to use.
+	 * @param records
+	 * @param callback
+	 *            the callback to be called once the request finishes.
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records, final Callback<Void> callback);
+
+	/**
+	 * Write a set of Points to the influxdb database with the list of string records.
+	 *
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
+	 * @param database
+	 *            the database to write to.
+	 * @param retentionPolicy
+	 *            the retentionPolicy to use.
+	 * @param consistency
+	 *            the consistency level to use.
+	 * @param records
+	 * @param callback
+	 *            the callback to be called once the request finishes.
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records, final Callback<Void> callback);
+
+	/**
+
+	/**
+	 * Execute a query agains a database.
+	 * 
+	 * @param query
+	 *            the query to execute.
+	 * @param callback
+	 *            the callback to be called once the request finishes.
+	 */
+	public void query(final Query query, final Callback<QueryResult> callback);
+
+	/**
+	 * Execute a query agains a database.
+	 * 
+	 * @param query
+	 *            the query to execute.
+	 * @param timeUnit the time unit of the results. 
+	 * @param callback
+	 *            the callback to be called once the request finishes.
+	 */
+	public void query(final Query query, TimeUnit timeUnit, final Callback<QueryResult> callback);
+	
+	
 }

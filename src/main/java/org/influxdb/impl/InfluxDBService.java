@@ -1,6 +1,8 @@
 package org.influxdb.impl;
 
 import org.influxdb.dto.QueryResult;
+
+import retrofit.Callback;
 import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.GET;
@@ -37,16 +39,32 @@ interface InfluxDBService {
 	public Response writePoints(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
 			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
 			@Query(CONSISTENCY) String consistency, @Body TypedString batchPoints);
+	
+	@POST("/write")
+	public void writePoints(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
+			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
+			@Query(CONSISTENCY) String consistency, @Body TypedString batchPoints, Callback<Void> callback);
 
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(EPOCH) String epoch, @Query(Q) String query);
+	
+	@GET("/query")
+	public void query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+			@Query(EPOCH) String epoch, @Query(Q) String query, Callback<QueryResult> callback);
 
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(Q) String query);
+	
+	@GET("/query")
+	public void query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+			@Query(Q) String query, Callback<QueryResult> callback);
 
 	@GET("/query")
 	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(Q) String query);
+	
+	@GET("/query")
+	public void query(@Query(U) String username, @Query(P) String password, @Query(Q) String query, Callback<QueryResult> callback);
 
 }
