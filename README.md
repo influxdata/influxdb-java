@@ -96,22 +96,12 @@ batchPoints.point(point1);
 batchPoints.point(point2);
 
 
-influxDB.write(batchPoints, new Callback<Void>() {
-			
-	public void success(Void writeResult, Response response) {
-		Query query = new Query("SELECT idle FROM cpu", dbName);
-		influxDB.query(query, new Callback<QueryResult>() {
-			
-			public void success(QueryResult queryResult, Response response) {
-				System.out.println(queryResult);
-				influxDB.deleteDatabase(dbName);
-			}
-			
-			public void failure(RetrofitError error) { /* do something ... */ }
-		});
-	}
-	
-	public void failure(RetrofitError error) { /* do something ... */ }
+influxDB.write(batchPoints, wRes -> {
+	Query query = new Query("SELECT idle FROM cpu", dbName);
+	influxDB.query(query, qRes -> {
+		System.out.println(qRes.getResult());
+		influxDB.deleteDatabase(dbName);
+	});
 });
 ```
 

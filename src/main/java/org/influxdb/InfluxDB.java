@@ -3,13 +3,13 @@ package org.influxdb;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.CustomCallback;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-
-import retrofit.Callback;
 
 /**
  * Interface with all available methods to access a InfluxDB database.
@@ -109,7 +109,7 @@ public interface InfluxDB {
 	 * @return the version String, otherwise unknown.
 	 */
 	public String version();
-
+	
 	/**
 	 * Write a single Point to the database.
 	 * 
@@ -121,6 +121,20 @@ public interface InfluxDB {
 	 *            The point to write
 	 */
 	public void write(final String database, final String retentionPolicy, final Point point);
+
+	/**
+	 * Write a single Point to the database.
+	 * 
+	 * @param database
+	 *            the database to write to.
+	 * @param retentionPolicy
+	 *            the retentionPolicy to use.
+	 * @param consistency
+	 *            the consistency level to use.
+	 * @param point
+	 *            The point to write
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final Point point);
 
 	/**
 	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
@@ -202,7 +216,7 @@ public interface InfluxDB {
 	 * @param callback
 	 *            the callback to be called once the request finishes.
 	 */
-	public void write(final BatchPoints batchPoints, final Callback<Void> callback);
+	public void write(final BatchPoints batchPoints, final CustomCallback<Void> callback);
 
 	/**
 	 * Write a set of Points to the influxdb database with the string records.
@@ -219,7 +233,7 @@ public interface InfluxDB {
 	 * @param callback
 	 *            the callback to be called once the request finishes.
 	 */
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records, final Callback<Void> callback);
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records, final CustomCallback<Void> callback);
 
 	/**
 	 * Write a set of Points to the influxdb database with the list of string records.
@@ -236,7 +250,7 @@ public interface InfluxDB {
 	 * @param callback
 	 *            the callback to be called once the request finishes.
 	 */
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records, final Callback<Void> callback);
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records, final CustomCallback<Void> callback);
 
 	/**
 
@@ -248,7 +262,7 @@ public interface InfluxDB {
 	 * @param callback
 	 *            the callback to be called once the request finishes.
 	 */
-	public void query(final Query query, final Callback<QueryResult> callback);
+	public void query(final Query query, final CustomCallback<QueryResult> callback);
 
 	/**
 	 * Execute a query agains a database.
@@ -259,7 +273,21 @@ public interface InfluxDB {
 	 * @param callback
 	 *            the callback to be called once the request finishes.
 	 */
-	public void query(final Query query, TimeUnit timeUnit, final Callback<QueryResult> callback);
-	
-	
+	public void query(final Query query, TimeUnit timeUnit, final CustomCallback<QueryResult> callback);
+
+	/**
+	 * Write a single Point to the database.
+	 * 
+	 * @param database
+	 *            the database to write to.
+	 * @param retentionPolicy
+	 *            the retentionPolicy to use.
+	 * @param consistency
+	 *            the consistency level to use.
+	 * @param point
+	 *            The point to write
+	 * @param callback
+	 *            the callback to be called once the request finishes.
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final Point point, final CustomCallback<Void> callback);
 }
