@@ -4,12 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.assertj.core.util.Lists;
 import org.testng.annotations.Test;
+
+import com.google.common.collect.Maps;
 
 /**
  * Test for the Point DTO.
@@ -53,6 +56,18 @@ public class PointTest {
 				.build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\\\"B\",b=\"D E \\\"F\" 1");
 
+		//Integer type
+		point = Point.measurement("inttest").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", (Integer)1).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest a=1i 1");
+
+		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", (Integer)1).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=1i 1");
+
+		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", 1L).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=1i 1");
+
+		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", BigInteger.valueOf(100)).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=100i 1");
 	}
 
 	/**
@@ -141,4 +156,49 @@ public class PointTest {
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\=baz a=1.0 1");
 	}
 
+	/**
+	 * Test for issue #117.
+	 */
+	@Test
+	public void testIgnoreNullPointerValue() {
+		// Test omission of null values
+		Point.Builder pointBuilder = Point.measurement("nulltest").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar");
+
+		pointBuilder.field("field1", "value1");
+		pointBuilder.field("field2", null);
+		pointBuilder.field("field3", (Integer) 1);
+
+		Point point = pointBuilder.build();
+
+		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
+	}
+	
+	/**
+	 * Tests for issue #110
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingTagsWithNullNameThrowsAnError() {
+		Point.measurement("dontcare").tag(null, "DontCare");
+	}
+	
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingTagsWithNullValueThrowsAnError() {
+		Point.measurement("dontcare").tag("DontCare", null);
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingMapOfTagsWithNullNameThrowsAnError() {
+		Map<String, String> map = Maps.newHashMap();
+		map.put(null, "DontCare");
+		Point.measurement("dontcare").tag(map);
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void testAddingMapOfTagsWithNullValueThrowsAnError() {
+		Map<String, String> map = Maps.newHashMap();
+		map.put("DontCare", null);
+		Point.measurement("dontcare").tag(map);
+	}
+	
+	
 }

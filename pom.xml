@@ -11,7 +11,7 @@
 	<groupId>org.influxdb</groupId>
 	<artifactId>influxdb-java</artifactId>
 	<packaging>jar</packaging>
-	<version>2.0-SNAPSHOT</version>
+	<version>2.1-SNAPSHOT</version>
 	<name>influxdb java bindings</name>
 	<description>Java API to access the InfluxDB REST API</description>
 	<url>http://www.influxdb.org</url>
@@ -38,11 +38,6 @@
 	</scm>
 
 	<developers>
-		<developer>
-			<id>jvshahid</id>
-			<name>John Shahid</name>
-			<email>john@influxdb.com</email>
-		</developer>
 		<developer>
 			<id>majst01</id>
 			<name>Stefan Majer</name>
@@ -87,6 +82,18 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-all</artifactId>
 			<version>1.10.19</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.tomakehurst</groupId>
+			<artifactId>wiremock</artifactId>
+			<version>1.58</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.5</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

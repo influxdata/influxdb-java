@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDB.BufferFailBehaviour;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
@@ -43,22 +42,12 @@ public class InfluxDBImpl implements InfluxDB {
 	private final AtomicLong unBatchedCount = new AtomicLong();
 	private final AtomicLong batchedCount = new AtomicLong();
 	private LogLevel logLevel = LogLevel.NONE;
-
-	/**
-	 * Constructor which should only be used from the InfluxDBFactory.
-	 * 
-	 * @param url
-	 *            the url where the influxdb is accessible.
-	 * @param username
-	 *            the user to connect.
-	 * @param password
-	 *            the password for this user.
-	 */
-	public InfluxDBImpl(final String url, final String username, final String password) {
+	
+	public InfluxDBImpl(final String url, final String username, final String password, 
+			final Client client) {
 		super();
 		this.username = username;
 		this.password = password;
-		Client client = new OkClient(new OkHttpClient());
 		restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
@@ -70,6 +59,7 @@ public class InfluxDBImpl implements InfluxDB {
 	protected BatchProcessor getBatchProcessor() {
 		return batchProcessor;
 	}
+	
 
 	@Override
 	public InfluxDB setLogLevel(final LogLevel logLevel) {
@@ -220,6 +210,18 @@ public class InfluxDBImpl implements InfluxDB {
 				lineProtocol);
 	}
 
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records) {
+		this.influxDBService.writePoints(
+				this.username,
+				this.password,
+				database,
+				retentionPolicy,
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				consistency.value(),
+				new TypedString(records));
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -246,7 +248,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void createDatabase(final String name) {
 		Preconditions.checkArgument(!name.contains("-"), "Databasename cant contain -");
-		influxDBService.query(username, password, "CREATE DATABASE " + name);
+		this.influxDBService.query(this.username, this.password, "CREATE DATABASE IF NOT EXISTS \"" + name + "\"");
 	}
 
 	/**
@@ -254,7 +256,7 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public void deleteDatabase(final String name) {
-		influxDBService.query(username, password, "DROP DATABASE " + name);
+		this.influxDBService.query(this.username, this.password, "DROP DATABASE \"" + name + "\"");
 	}
 
 	/**

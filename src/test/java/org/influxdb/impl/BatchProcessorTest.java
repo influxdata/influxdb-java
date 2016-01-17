@@ -9,6 +9,10 @@ import org.influxdb.dto.Point;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.squareup.okhttp.OkHttpClient;
+
+import retrofit.client.OkClient;
+
 public class BatchProcessorTest {
 	private static class AnonInfluxDBImpl extends InfluxDBImpl {
 		private static final String FAIL_DATABASE = "fail_db"; 
@@ -16,7 +20,7 @@ public class BatchProcessorTest {
 		private int writeCalled = 0;
 		
 		public AnonInfluxDBImpl(final boolean throwErrorOnWriteBatched) {
-			super("temp", "user", "pass");
+			super("temp", "user", "pass", new OkClient(new OkHttpClient()));
 			this.throwErrorOnWriteBatched = throwErrorOnWriteBatched;
 		}
 		
@@ -44,7 +48,7 @@ public class BatchProcessorTest {
 		private int writeCalled = 0;
 
 		public QueueDepthRecordingDBImpl() {
-			super("temp", "user", "pass");
+			super("temp", "user", "pass", new OkClient(new OkHttpClient()));
 		}
 		
 		@Override

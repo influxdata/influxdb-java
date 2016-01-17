@@ -1,5 +1,6 @@
 package org.influxdb.dto;
 
+import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +27,8 @@ public class Point {
 	private Long time;
 	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private Map<String, Object> fields;
+
+	private boolean useInteger = false;
 
 	private static final Escaper FIELD_ESCAPER = Escapers.builder().addEscape('"', "\\\"").build();
 	private static final Escaper KEY_ESCAPER = Escapers.builder().addEscape(' ', "\\ ").addEscape(',', "\\,").addEscape('=', "\\=").build();
@@ -57,13 +60,25 @@ public class Point {
 		private Long time;
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
-
+		private boolean useInteger = false;
 		/**
 		 * @param measurement
 		 */
 		protected Builder(final String measurement) {
 			this.measurement = measurement;
 		}
+
+		/**
+		 * Use Integer type instead of float cast
+		 * @param enable
+		 * 			the value
+		 * @return the Builder instance
+		 */
+		public Builder useInteger(final boolean enable) {
+			useInteger = enable;
+			return this;
+		}
+
 
 		/**
 		 * Add a tag to this point.
@@ -75,7 +90,9 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder tag(final String tagName, final String value) {
-			this.tags.put(tagName, value);
+			Preconditions.checkArgument(tagName != null);
+			Preconditions.checkArgument(value != null);
+			tags.put(tagName, value);
 			return this;
 		}
 
@@ -87,7 +104,9 @@ public class Point {
 		 * @return the Builder instance.
 		 */
 		public Builder tag(final Map<String, String> tagsToAdd) {
-			this.tags.putAll(tagsToAdd);
+			for (Entry<String, String> tag : tagsToAdd.entrySet()) {
+				tag(tag.getKey(), tag.getValue());
+			}
 			return this;
 		}
 
@@ -141,6 +160,7 @@ public class Point {
 					.checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
 			Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
 			Point point = new Point();
+			point.setUseInteger(this.useInteger);
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
 			if (this.time != null) {
@@ -215,6 +235,14 @@ public class Point {
 	}
 
 	/**
+	 * @param enable
+	 *            enable integer type
+	 */
+	void setUseInteger(final boolean enable) {
+		this.useInteger = enable;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -230,6 +258,8 @@ public class Point {
 		builder.append(this.precision);
 		builder.append(", fields=");
 		builder.append(this.fields);
+		builder.append(", useInteger=");
+		builder.append(this.useInteger);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -273,12 +303,18 @@ public class Point {
 		numberFormat.setMinimumFractionDigits(1);
 
 		for (Entry<String, Object> field : this.fields.entrySet()) {
-			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			loops++;
 			Object value = field.getValue();
+			if (value == null) {
+				continue;
+			}
+
+			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			if (value instanceof String) {
 				String stringValue = (String) value;
 				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
+			} else if(useInteger && (value instanceof Integer || value instanceof BigInteger || value instanceof Long)) {
+				sb.append(value).append("i");
 			} else if (value instanceof Number) {
 				sb.append(numberFormat.format(value));
 			} else {
@@ -289,6 +325,7 @@ public class Point {
 				sb.append(",");
 			}
 		}
+
 		return sb;
 	}
 

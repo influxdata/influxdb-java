@@ -50,7 +50,7 @@ public class TicketTests {
 				.withPassword("root")
 				.build();
 		this.dockerClient = DockerClientBuilder.getInstance(config).build();
-		String ip = "127.0.0.1";
+		String ip = "192.168.59.103";
 		this.influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
 		boolean influxDBstarted = false;
 		do {

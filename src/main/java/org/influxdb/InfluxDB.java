@@ -24,7 +24,7 @@ import com.google.common.base.Optional;
  * 
  */
 public interface InfluxDB {
-
+	
 	/** Controls the level of logging of the REST layer. */
 	public enum LogLevel {
 		/** No logging. */
@@ -230,6 +230,15 @@ public interface InfluxDB {
 	 */
 	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points);
 
+
+	/**
+	 * Write a set of Points to the influxdb database with the string records.
+	 *
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 *
+	 * @param records
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records);
 
 	/**
 	 * Execute a query agains a database.
