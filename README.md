@@ -1,7 +1,7 @@
 influxdb-java
 =============
 
-This is the Java Client library which is only compatible with InfluxDB 0.9 and higher. 
+This is the Java Client library which is only compatible with InfluxDB 0.9 and higher. Maintained by [@majst01](https://github.com/majst01).
 
 To connect to InfluxDB 0.8.x you need to use influxdb-java version 1.6.
 
