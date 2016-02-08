@@ -1,5 +1,6 @@
 package org.influxdb.dto;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,9 @@ import com.google.common.collect.Ordering;
  * @author stefan
  *
  */
-public class BatchPoints {
+public class BatchPoints implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private String database;
 	private String retentionPolicy;
 	private Map<String, String> tags;
