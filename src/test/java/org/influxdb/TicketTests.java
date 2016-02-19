@@ -95,7 +95,7 @@ public class TicketTests {
 		Point point1 = Point
 				.measurement("metric")
 				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-				.field("value", 5)
+				.addField("value", 5.0)
 				.tag("host", "host A")
 				.tag("host", "host-B")
 				.tag("host", "host-\"C")
@@ -120,7 +120,7 @@ public class TicketTests {
 				.consistency(InfluxDB.ConsistencyLevel.ALL)
 				.build();
 		Point.Builder builder = Point.measurement("my_type");
-		builder.field("my_field", "string_value");
+		builder.addField("my_field", "string_value");
 		Point point = builder.build();
 		batchPoints.point(point);
 		this.influxDB.write(batchPoints);
@@ -136,7 +136,7 @@ public class TicketTests {
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
 		for (int i = 0; i < 1000; i++) {
-			Point point = Point.measurement("cpu").field("idle", 99).build();
+			Point point = Point.measurement("cpu").addField("idle", 99.0).build();
 			this.influxDB.write(dbName, "default", point);
 		}
 		this.influxDB.deleteDatabase(dbName);

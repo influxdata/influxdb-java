@@ -29,43 +29,43 @@ public class PointTest {
 	 */
 	@Test
 	public void lineProtocol() {
-		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
+		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1");
 
-		point = Point.measurement("test,1").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
+		point = Point.measurement("test,1").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test\\,1 a=1.0 1");
 
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", "A").build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", "A").build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\" 1");
 
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", "A\"B").build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", "A\"B").build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\\\"B\" 1");
 
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", "A\"B\"C").build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", "A\"B\"C").build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\\\"B\\\"C\" 1");
 
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", "A B C").build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", "A B C").build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A B C\" 1");
 
 		point = Point
 				.measurement("test")
 				.time(1, TimeUnit.NANOSECONDS)
-				.field("a", "A\"B")
-				.field("b", "D E \"F")
+				.addField("a", "A\"B")
+				.addField("b", "D E \"F")
 				.build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=\"A\\\"B\",b=\"D E \\\"F\" 1");
 
 		//Integer type
-		point = Point.measurement("inttest").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", (Integer)1).build();
+		point = Point.measurement("inttest").time(1, TimeUnit.NANOSECONDS).addField("a", (Integer)1).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("inttest a=1i 1");
 
-		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", (Integer)1).build();
+		point = Point.measurement("inttest,1").time(1, TimeUnit.NANOSECONDS).addField("a", (Integer)1).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=1i 1");
 
-		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", 1L).build();
+		point = Point.measurement("inttest,1").time(1, TimeUnit.NANOSECONDS).addField("a", 1L).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=1i 1");
 
-		point = Point.measurement("inttest,1").useInteger(true).time(1, TimeUnit.NANOSECONDS).field("a", BigInteger.valueOf(100)).build();
+		point = Point.measurement("inttest,1").time(1, TimeUnit.NANOSECONDS).addField("a", BigInteger.valueOf(100)).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("inttest\\,1 a=100i 1");
 	}
 
@@ -74,25 +74,25 @@ public class PointTest {
 	 */
 	@Test(enabled = true)
 	public void testTicket44() {
-		Point point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
+		Point point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000");
 
-		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
+		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000000");
 
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
 		BatchPoints batchPoints = BatchPoints.database("db").point(point).build();
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1\n");
 
-		point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
+		point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).addField("a", 1.0).build();
 		batchPoints = BatchPoints.database("db").point(point).build();
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000\n");
 
-		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
+		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).addField("a", 1.0).build();
 		batchPoints = BatchPoints.database("db").point(point).build();
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000000\n");
 
-		point = Point.measurement("test").field("a", 1).time(1, TimeUnit.MILLISECONDS).build();
+		point = Point.measurement("test").addField("a", 1.0).time(1, TimeUnit.MILLISECONDS).build();
 		batchPoints = BatchPoints.database("db").build();
 		batchPoints = batchPoints.point(point);
 		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000000\n");
@@ -105,61 +105,72 @@ public class PointTest {
 	@Test
 	public void testTicket54() {
 		Byte byteNumber = 100;
-		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", byteNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100.0 1");
+		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", byteNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100i 1");
 
 		int intNumber = 100000000;
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", intNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0 1");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", intNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000i 1");
 
 		Integer integerNumber = 100000000;
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", integerNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0 1");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", integerNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000i 1");
 
 		AtomicInteger atomicIntegerNumber = new AtomicInteger(100000000);
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", atomicIntegerNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0 1");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", atomicIntegerNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000i 1");
 
 		Long longNumber = 1000000000000000000L;
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", longNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1000000000000000000.0 1");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", longNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1000000000000000000i 1");
 
 		AtomicLong atomicLongNumber = new AtomicLong(1000000000000000000L);
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", atomicLongNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1000000000000000000.0 1");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", atomicLongNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1000000000000000000i 1");
 
 		BigInteger bigIntegerNumber = BigInteger.valueOf(100000000);
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", bigIntegerNumber).build();
-		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0 1");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", bigIntegerNumber).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000i 1");
 
 		Double doubleNumber = Double.valueOf(100000000.0001);
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", doubleNumber).build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", doubleNumber).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.0001 1");
 
 		Float floatNumber = Float.valueOf(0.1f);
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", floatNumber).build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", floatNumber).build();
 		assertThat(point.lineProtocol()).asString().startsWith("test a=0.10");
 
 		BigDecimal bigDecimalNumber = BigDecimal.valueOf(100000000.00000001);
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", bigDecimalNumber).build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", bigDecimalNumber).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.00000001 1");
 	}
 	
 	@Test
 	public void testEscapingOfKeysAndValues() {
 		// Test escaping of spaces
-		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar baz").field( "a", 1 ).build();
+		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar baz").addField( "a", 1.0 ).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\ baz a=1.0 1");
  
 		// Test escaping of commas
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar,baz").field( "a", 1 ).build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar,baz").addField( "a", 1.0 ).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\,baz a=1.0 1");
 
 		// Test escaping of equals sign
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar=baz").field( "a", 1 ).build();
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar=baz").addField( "a", 1.0 ).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\=baz a=1.0 1");
 	}
 
+	@Test
+	public void testDeprecatedFieldMethodOnlyProducesFloatingPointValues() {
+		
+		Object[] ints = {(byte) 1, (short) 1, (int) 1, (long) 1, BigInteger.ONE};
+		
+		for (Object intExample : ints) {
+			Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", intExample ).build();
+			assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1");
+		}
+
+	}
 	/**
 	 * Test for issue #117.
 	 */
@@ -169,7 +180,7 @@ public class PointTest {
 		Point.Builder pointBuilder = Point.measurement("nulltest").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar");
 
 		pointBuilder.field("field1", "value1");
-		pointBuilder.field("field2", null);
+		pointBuilder.field("field2", (Number) null);
 		pointBuilder.field("field3", (Integer) 1);
 
 		Point point = pointBuilder.build();
@@ -204,5 +215,8 @@ public class PointTest {
 		Point.measurement("dontcare").tag(map);
 	}
 	
-	
+	@Test(expectedExceptions=IllegalArgumentException.class)
+	public void testNullValueThrowsExceptionViaAddField() {
+		Point.measurement("dontcare").addField("field", (String) null);
+	}
 }
