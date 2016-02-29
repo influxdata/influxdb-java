@@ -23,7 +23,8 @@ BatchPoints batchPoints = BatchPoints
 				.build();
 Point point1 = Point.measurement("cpu")
 					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-					.field("idle", 90L).field("system", 9L)
+					.field("idle", 90L)
+					.field("user", 9L)
 					.field("system", 1L)
 					.build();
 Point point2 = Point.measurement("disk")
@@ -52,7 +53,8 @@ influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 
 Point point1 = Point.measurement("cpu")
 					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-					.field("idle", 90L).field("system", 9L)
+					.field("idle", 90L)
+					.field("user", 9L)
 					.field("system", 1L)
 					.build();
 Point point2 = Point.measurement("disk")
