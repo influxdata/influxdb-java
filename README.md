@@ -56,7 +56,7 @@ Point point1 = Point.measurement("cpu")
 					.field("idle", 90L)
 					.field("user", 9L)
 					.field("system", 1L)
-					.build()
+					.build();
 Point point2 = Point.measurement("disk")
 					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
 					.field("used", 80L)
