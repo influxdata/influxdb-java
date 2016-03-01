@@ -254,4 +254,96 @@ public class InfluxDBTest {
 		Assert.assertTrue(result.contains(numericDbName));
 		this.influxDB.deleteDatabase(numericDbName);
 	}
+	
+	/**
+	 * Test that writing asynchronously to the new lineprotocol.
+	 */
+	@Test(enabled = true)
+	public void testWriteAsync() {
+		final String dbName = "write_unittest_" + System.currentTimeMillis();
+		final InfluxDB db = influxDB;
+		db.createDatabase(dbName);
+
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
+		Point point1 = Point
+				.measurement("cpu")
+				.tag("atag", "test")
+				.field("idle", 90L)
+				.field("usertime", 9L)
+				.field("system", 1L)
+				.build();
+		Point point2 = Point.measurement("disk").tag("atag", "test").field("used", 80L).field("free", 1L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
+		db.write(batchPoints, wRes -> {
+			Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+			QueryResult result = db.query(query);
+			Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+			db.deleteDatabase(dbName);
+		});
+	}
+
+    /**
+     * Test writing to the database asynchronously using string protocol.
+     */
+    @Test(enabled = true)
+    public void testWriteStringDataAsync() {
+    	final String dbName = "write_unittest_" + System.currentTimeMillis();
+		final InfluxDB db = influxDB;
+		db.createDatabase(dbName);
+
+		db.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test idle=90,usertime=9,system=1", res -> {
+			Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+	        QueryResult result = db.query(query);
+	        Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+	        db.deleteDatabase(dbName);
+		}); 
+    }
+
+    /**
+     * Test writing multiple records to the database asynchronously using string protocol.
+     */
+    @Test(enabled = true)
+    public void testWriteMultipleStringDataAsync() {
+    	final String dbName = "write_unittest_" + System.currentTimeMillis();
+		final InfluxDB db = influxDB;
+		db.createDatabase(dbName);
+
+		db.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3", res -> {
+			Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+	        QueryResult result = db.query(query);
+
+	        Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+	        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
+	        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
+	        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+	        db.deleteDatabase(dbName);
+		});
+    }
+
+    /**
+     * Test writing multiple separate records to the database asynchronously using string protocol.
+     */
+    @Test(enabled = true)
+    public void testWriteMultipleStringDataLinesAsync() {
+    	final String dbName = "write_unittest_" + System.currentTimeMillis();
+		final InfluxDB db = influxDB;
+		db.createDatabase(dbName);
+
+		db.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
+                "cpu,atag=test1 idle=100,usertime=10,system=1",
+                "cpu,atag=test2 idle=200,usertime=20,system=2",
+                "cpu,atag=test3 idle=300,usertime=30,system=3"
+        ), res -> {
+			Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+	        QueryResult result = influxDB.query(query);
+
+	        Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+	        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
+	        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
+	        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+	        db.deleteDatabase(dbName);
+		});
+        
+    }
 }

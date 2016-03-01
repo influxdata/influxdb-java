@@ -5,19 +5,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.base.Joiner;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.CustomCallback;
+import org.influxdb.dto.CustomCallbackImpl;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
+import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.client.Header;
@@ -126,17 +129,22 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void write(final String database, final String retentionPolicy, final Point point) {
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final Point point) {
 		if (this.batchEnabled.get()) {
 			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
 			this.batchProcessor.put(batchEntry);
 		} else {
-			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
+			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).consistency(consistency).build();
 			batchPoints.point(point);
 			this.write(batchPoints);
 			this.unBatchedCount.incrementAndGet();
 		}
 		this.writeCount.incrementAndGet();
+	}
+	
+	@Override
+	public void write(final String database, final String retentionPolicy, final Point point) {
+		this.write(database, retentionPolicy, null, point);
 	}
 
 	@Override
@@ -226,4 +234,74 @@ public class InfluxDBImpl implements InfluxDB {
 		return databases;
 	}
 
+
+	@Override
+	public void write(final BatchPoints batchPoints, final CustomCallback<Void> callback) {
+		this.batchedCount.addAndGet(batchPoints.getPoints().size());
+		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
+		Callback<Void> retrofitCallback = new CustomCallbackImpl<>(callback);
+		this.influxDBService.writePoints(
+				this.username,
+				this.password,
+				batchPoints.getDatabase(),
+				batchPoints.getRetentionPolicy(),
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				batchPoints.getConsistency().value(),
+				lineProtocol,
+				retrofitCallback);
+
+	}
+
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records, final CustomCallback<Void> callback) {
+		Callback<Void> retrofitCallback = new CustomCallbackImpl<>(callback);
+		this.influxDBService.writePoints(
+				this.username,
+				this.password,
+				database,
+				retentionPolicy,
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				consistency.value(),
+				new TypedString(records),
+				retrofitCallback);
+	}
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records, final CustomCallback<Void> callback) {
+		final String joinedRecords = Joiner.on("\n").join(records);
+		write(database, retentionPolicy, consistency, joinedRecords, callback);
+	}
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final Point point, final CustomCallback<Void> callback) {
+		if (this.batchEnabled.get()) {
+			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
+			this.batchProcessor.put(batchEntry);
+			callback.onComplete(null);
+		} else {
+			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).consistency(consistency).build();
+			batchPoints.point(point);
+			this.write(batchPoints, callback);
+			this.unBatchedCount.incrementAndGet();
+		}
+		this.writeCount.incrementAndGet();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void query(final Query query, final CustomCallback<QueryResult> callback) {
+		Callback<QueryResult> retrofitCallback = new CustomCallbackImpl<>(callback);
+		this.influxDBService
+				.query(this.username, this.password, query.getDatabase(), query.getCommand(), retrofitCallback);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void query(final Query query, final TimeUnit timeUnit, final CustomCallback<QueryResult> callback) {
+		Callback<QueryResult> retrofitCallback = new CustomCallbackImpl<>(callback);
+		this.influxDBService
+				.query(this.username, this.password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit), query.getCommand(), retrofitCallback);
+	}
 }
