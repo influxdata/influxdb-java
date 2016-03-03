@@ -172,18 +172,12 @@ public class InfluxDBTest {
 		Point point1 = Point
 				.measurement("cpu")
 				.tag("atag", "test")
-				.tag("async", "true")
-				.field("idle", 90L)
-				.field("usertime", 9L)
-				.field("system", 1L)
+				.addField("idle", 90L)
+				.addField("usertime", 9L)
+				.addField("system", 1L)
 				.build();
-		Point point2 = Point.measurement("disk")
-				.tag("atag", "test")
-				.tag("async", "true")
-				.field("used", 80L).field("free", 1L).build();
-		
+		Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 		influxDB.write(dbName, "default", ConsistencyLevel.ONE, Lists.newArrayList(point1, point2));
-		
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());

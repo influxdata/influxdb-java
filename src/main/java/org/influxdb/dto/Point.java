@@ -1,5 +1,6 @@
 package org.influxdb.dto;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.List;
@@ -27,8 +28,6 @@ public class Point {
 	private Long time;
 	private TimeUnit precision = TimeUnit.NANOSECONDS;
 	private Map<String, Object> fields;
-
-	private boolean useInteger = false;
 
 	private static final Escaper FIELD_ESCAPER = Escapers.builder().addEscape('"', "\\\"").build();
 	private static final Escaper KEY_ESCAPER = Escapers.builder().addEscape(' ', "\\ ").addEscape(',', "\\,").addEscape('=', "\\=").build();
@@ -60,25 +59,13 @@ public class Point {
 		private Long time;
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
-		private boolean useInteger = false;
+		
 		/**
 		 * @param measurement
 		 */
 		protected Builder(final String measurement) {
 			this.measurement = measurement;
 		}
-
-		/**
-		 * Use Integer type instead of float cast
-		 * @param enable
-		 * 			the value
-		 * @return the Builder instance
-		 */
-		public Builder useInteger(final boolean enable) {
-			useInteger = enable;
-			return this;
-		}
-
 
 		/**
 		 * Add a tag to this point.
@@ -119,11 +106,59 @@ public class Point {
 		 *            the value of this field
 		 * @return the Builder instance.
 		 */
-		public Builder field(final String field, final Object value) {
-			this.fields.put(field, value);
+		@Deprecated
+		public Builder field(final String field, Object value) {
+			if (value instanceof Number) {
+				if (value instanceof Byte) {
+					value = ((Byte) value).doubleValue();
+				}
+				if (value instanceof Short) {
+					value = ((Short) value).doubleValue();
+				}
+				if (value instanceof Integer) {
+					value = ((Integer) value).doubleValue();
+				}
+				if (value instanceof Long) {
+					value = ((Long) value).doubleValue();
+				}
+				if (value instanceof BigInteger) {
+					value = ((BigInteger) value).doubleValue();
+				}
+				
+			}
+			fields.put(field, value);
 			return this;
 		}
-
+		
+		public Builder addField(final String field, final boolean value) {
+			fields.put(field, value);
+			return this;
+		}
+		
+		public Builder addField(final String field, final long value) {
+			fields.put(field, value);
+			return this;
+		}
+		
+		public Builder addField(final String field, final double value) {
+			fields.put(field, value);
+			return this;
+		}
+		
+		public Builder addField(String field, Number value) {
+			fields.put(field, value);
+			return this;
+		}
+		
+		public Builder addField(final String field, final String value) {
+			if (value == null) {
+				throw new IllegalArgumentException("Field value cannot be null");
+			}
+			
+			fields.put(field, value);
+			return this;
+		}
+		
 		/**
 		 * Add a Map of fields to this point.
 		 *
@@ -160,7 +195,6 @@ public class Point {
 					.checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
 			Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
 			Point point = new Point();
-			point.setUseInteger(this.useInteger);
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
 			if (this.time != null) {
@@ -235,14 +269,6 @@ public class Point {
 	}
 
 	/**
-	 * @param enable
-	 *            enable integer type
-	 */
-	void setUseInteger(final boolean enable) {
-		this.useInteger = enable;
-	}
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -258,8 +284,6 @@ public class Point {
 		builder.append(this.precision);
 		builder.append(", fields=");
 		builder.append(this.fields);
-		builder.append(", useInteger=");
-		builder.append(this.useInteger);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -291,7 +315,7 @@ public class Point {
 		sb.append(" ");
 		return sb;
 	}
-
+	
 	private StringBuilder concatenateFields() {
 		final StringBuilder sb = new StringBuilder();
 		final int fieldCount = this.fields.size();
@@ -313,10 +337,12 @@ public class Point {
 			if (value instanceof String) {
 				String stringValue = (String) value;
 				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
-			} else if(useInteger && (value instanceof Integer || value instanceof BigInteger || value instanceof Long)) {
-				sb.append(value).append("i");
 			} else if (value instanceof Number) {
-				sb.append(numberFormat.format(value));
+				if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
+					sb.append(numberFormat.format(value));
+				} else {
+					sb.append(value).append("i");
+				}
 			} else {
 				sb.append(value);
 			}

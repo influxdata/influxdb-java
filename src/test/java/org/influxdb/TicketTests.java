@@ -96,7 +96,7 @@ public class TicketTests {
 		Point point1 = Point
 				.measurement("metric")
 				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-				.field("value", 5)
+				.addField("value", 5.0)
 				.tag("host", "host A")
 				.tag("host", "host-B")
 				.tag("host", "host-\"C")

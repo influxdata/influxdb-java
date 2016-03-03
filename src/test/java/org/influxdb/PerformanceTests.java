@@ -32,7 +32,10 @@ public class PerformanceTests {
 		influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int j = 0; j < SINGLE_POINT_COUNT; j++) {
-			Point point = Point.measurement("cpu").field("idle", j).field("user", 2 * j).field("system", 3 * j).build();
+			Point point = Point.measurement("cpu")
+					.addField("idle", (double) j)
+					.addField("user", 2.0 * j)
+					.addField("system", 3.0 * j).build();
 			influxDB.write(dbName, "default", ConsistencyLevel.ONE, point);
 		}
 		influxDB.disableBatch();
@@ -52,10 +55,9 @@ public class PerformanceTests {
 			for (int j = 0; j < POINT_COUNT; j++) {
 				Point point = Point
 						.measurement("cpu")
-						.field("idle", j)
-						.field("user", 2 * j)
-						.field("system", 3 * j)
-						.tag("blubber", "bla")
+						.addField("idle", (double) j)
+						.addField("user", 2.0 * j)
+						.addField("system", 3.0 * j)
 						.build();
 				points.add(point);
 			}
@@ -74,7 +76,7 @@ public class PerformanceTests {
 
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < 2000000; i++) {
-			Point point = Point.measurement("s").field("v", 1).build();
+			Point point = Point.measurement("s").addField("v", 1.0).build();
 			influxDB.write(dbName, "default", ConsistencyLevel.ONE, point);
 		}
 		System.out.println("5Mio points:" + watch);
