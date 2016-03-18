@@ -95,6 +95,11 @@ public interface InfluxDB {
 	public void disableBatch();
 
 	/**
+	 * Returns whether Batching is enabled.
+	 */
+	public boolean isBatchEnabled();
+
+	/**
 	 * Ping this influxDB-
 	 * 
 	 * @return the response of the ping execution.

@@ -3,6 +3,7 @@ package org.influxdb;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -253,5 +254,19 @@ public class InfluxDBTest {
 		List<String> result = this.influxDB.describeDatabases();
 		Assert.assertTrue(result.contains(numericDbName));
 		this.influxDB.deleteDatabase(numericDbName);
+	}
+	
+	/**
+	 * Test the implementation of {@link InfluxDB#isBatchEnabled()}.
+	 */
+	@Test(enabled = true)
+	public void testIsBatchEnabled() {
+		Assert.assertFalse(this.influxDB.isBatchEnabled());
+		
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+		Assert.assertTrue(this.influxDB.isBatchEnabled());
+		
+		this.influxDB.disableBatch();
+		Assert.assertFalse(this.influxDB.isBatchEnabled());
 	}
 }

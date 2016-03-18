@@ -102,6 +102,11 @@ public class InfluxDBImpl implements InfluxDB {
 							+ this.batchedCount);
 		}
 	}
+	
+	@Override
+	public boolean isBatchEnabled() {
+		return this.batchEnabled.get();
+	}
 
 	@Override
 	public Pong ping() {
