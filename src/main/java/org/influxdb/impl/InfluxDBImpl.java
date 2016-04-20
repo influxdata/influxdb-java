@@ -120,7 +120,7 @@ public class InfluxDBImpl implements InfluxDB {
 			final int flushIntervalMax,
 			final TimeUnit flushIntervalTimeUnit) {
 		
-		enableBatch(0, 
+		enableBatch(null, 
 				flushActions, 
 				flushIntervalMin, 
 				flushIntervalMax,
