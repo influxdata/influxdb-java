@@ -113,7 +113,7 @@ public class BatchProcessorTest {
 	}
 
 	@Test(expectedExceptions={IllegalStateException.class})
-    public void addingThrowsExceptionWhenBehaviourIsThrowExceptionAndQueueAtCapacity() {
+    public void itThrowsExceptionWhenQueueAtCapacityAndBehaviourIsThrowException() {
     	BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
     			.interval(1, 2, TimeUnit.DAYS)
     			.capacityAndActions(1, 1)
@@ -128,7 +128,7 @@ public class BatchProcessorTest {
     }
     
 	@Test
-	public void addingEvictsOldestWhenBehaviourIsDropOldestAndQueueAtCapacity() {
+	public void itEvictsTheOldestWhenQueueAtCapacityAndBehaviourIsDropOldest() {
 		BatchProcessor subject = BatchProcessor.builder(getErrorThrowingDB())
 				.interval(1, 2, TimeUnit.DAYS)
 				.capacityAndActions(1, 1)
@@ -148,7 +148,7 @@ public class BatchProcessorTest {
     }
     
 	@Test
-    public void addingDoesNotInsertCurrentWhenBehaviourIsDropCurrentAndKeepOnFailedWriteAndQueueAtCapacity() {
+    public void itDoesNotInsertIfQueueAtCapcityeAndBehaviourIsDropCurrentAndKeppOnFailedWrite() {
     	BatchProcessor subject = new NonScheduledWriteBatchProcessor(getErrorThrowingDB(), 1, TimeUnit.SECONDS, 1, 1, BufferFailBehaviour.DROP_CURRENT, false, 50);
 		
 		subject.put(ANON_DB, ANON_RETENTION, ANON_CONSISTENCY, getPoint("measure1"));
@@ -173,7 +173,7 @@ public class BatchProcessorTest {
     }
 	
 	@Test
-    public void pointsAreRemovedFromQueueAfterSuccessfulWrite() {
+    public void itRemovesPointsFromQueueAfterSuccessfulWrite() {
 		BatchProcessor subject = BatchProcessor.builder(getAnonInfluxDB())
 			.interval(1, 2, TimeUnit.DAYS)
 			.build();
