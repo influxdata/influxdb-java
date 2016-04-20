@@ -44,7 +44,7 @@ public class TicketTests {
 		DockerClientConfig config = DockerClientConfig
 				.createDefaultConfigBuilder()
 				.withVersion("1.16")
-				.withUri("tcp://localhost:4243")
+				.withUri("tcp://" + TestUtils.getInfluxIP() + ":4243")
 				.withUsername("roott")
 				.withPassword("root")
 				.build();
