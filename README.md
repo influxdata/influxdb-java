@@ -78,7 +78,7 @@ influxDB.deleteDatabase(dbName)
 		<dependency>
 			<groupId>org.influxdb</groupId>
 			<artifactId>influxdb-java</artifactId>
-			<version>2.1</version>
+			<version>2.2</version>
 		</dependency>
 ```
 
@@ -108,6 +108,11 @@ Then you can build influxdb-java with all tests with:
 If you don't have Docker running locally, you can skip tests with -DskipTests flag set to true:
 
     $ mvn clean install -DskipTests=true
+    
+If you have Docker running, but it is not at localhost (e.g. you are on a Mac and using `docker-machine`) you can set an optional environment variable `INFLUXDB_IP` to point to the correct IP address:
+
+    $ export INFLUXDB_IP=192.168.99.100
+    $ mvn test
 
 
 

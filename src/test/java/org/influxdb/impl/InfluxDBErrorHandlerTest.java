@@ -2,6 +2,8 @@ package org.influxdb.impl;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+
+import org.influxdb.TestUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import retrofit.RetrofitError;
@@ -19,7 +21,7 @@ public class InfluxDBErrorHandlerTest {
     @Test
     public void testHandleErrorAndCloseTheStream() {
         final String influxDbInternalError = "InfluxDB internal error";
-        String url = "http://localhost:8096";
+        String url = "http://" + TestUtils.getInfluxIP() + ":8096";
 
         final AtomicBoolean closed = new AtomicBoolean(false);
         Response response = new Response(url, 500, "Internal error",

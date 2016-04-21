@@ -76,8 +76,7 @@ public class InfluxDBTest {
 		// .exec();
 
 		// String ip = inspectContainerResponse.getNetworkSettings().getIpAddress();
-		String ip = "127.0.0.1";
-		this.influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":8086", "root", "root");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;
