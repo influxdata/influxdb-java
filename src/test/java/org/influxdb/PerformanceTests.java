@@ -18,8 +18,7 @@ public class PerformanceTests {
 
 	@BeforeClass
 	public void setUp() {
-		String ip = "127.0.0.1";
-		this.influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":8086", "root", "root");
 		this.influxDB.setLogLevel(LogLevel.NONE);
 	}
 
