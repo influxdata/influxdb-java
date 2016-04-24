@@ -37,7 +37,7 @@ batchPoints.point(point2);
 influxDB.write(batchPoints);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
-influxDB.deleteDatabase(dbName)
+influxDB.deleteDatabase(dbName);
 ```
 
 
@@ -67,7 +67,7 @@ influxDB.write(dbName, "default", point1);
 influxDB.write(dbName, "default", point2);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
-influxDB.deleteDatabase(dbName)
+influxDB.deleteDatabase(dbName);
 ```
 
 
