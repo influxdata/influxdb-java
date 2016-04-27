@@ -3,6 +3,7 @@ package org.influxdb.dto;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,7 +63,7 @@ public class Point {
 		/**
 		 * @param measurement
 		 */
-		Builder(final String measurement) {
+		protected Builder(final String measurement) {
 			this.measurement = measurement;
 		}
 
@@ -215,6 +216,10 @@ public class Point {
 	void setMeasurement(final String measurement) {
 		this.measurement = measurement;
 	}
+	
+	public String getMeasurement() {
+		return measurement;
+	}
 
 	/**
 	 * @param time
@@ -222,6 +227,10 @@ public class Point {
 	 */
 	void setTime(final Long time) {
 		this.time = time;
+	}
+	
+	public Long getTime() {
+		return time;
 	}
 
 	/**
@@ -245,6 +254,10 @@ public class Point {
 	 */
 	void setPrecision(final TimeUnit precision) {
 		this.precision = precision;
+	}
+	
+	public TimeUnit getPrecision() {
+		return precision;
 	}
 
 	/**
@@ -292,7 +305,7 @@ public class Point {
 		sb.append(formatedTime());
 		return sb.toString();
 	}
-
+	
 	private StringBuilder concatenatedTags() {
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, String> tag : this.tags.entrySet()) {
@@ -350,5 +363,14 @@ public class Point {
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		return sb;
 	}
+
+	public static String toLineProtocol(List<Point> points) {
+		StringBuilder sb = new StringBuilder();
+		for (Point point : points) {
+			sb.append(point.lineProtocol()).append("\n");
+		}
+		return sb.toString();
+	}
+
 
 }

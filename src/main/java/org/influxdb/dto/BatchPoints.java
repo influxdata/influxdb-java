@@ -19,6 +19,7 @@ import com.google.common.collect.Ordering;
  * @author stefan
  *
  */
+@Deprecated
 public class BatchPoints {
 	private String database;
 	private String retentionPolicy;

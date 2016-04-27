@@ -5,22 +5,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.base.Joiner;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import com.squareup.okhttp.OkHttpClient;
 
 import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.client.Header;
+import retrofit.client.OkClient;
 import retrofit.client.Response;
 import retrofit.mime.TypedString;
 
@@ -47,12 +48,16 @@ public class InfluxDBImpl implements InfluxDB {
 		super();
 		this.username = username;
 		this.password = password;
-		this.restAdapter = new RestAdapter.Builder()
+		restAdapter = new RestAdapter.Builder()
 				.setEndpoint(url)
 				.setErrorHandler(new InfluxDBErrorHandler())
 				.setClient(client)
 				.build();
-		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
+		influxDBService = restAdapter.create(InfluxDBService.class);
+	}
+	
+	protected BatchProcessor getBatchProcessor() {
+		return batchProcessor;
 	}
 	
 
@@ -60,16 +65,16 @@ public class InfluxDBImpl implements InfluxDB {
 	public InfluxDB setLogLevel(final LogLevel logLevel) {
 		switch (logLevel) {
 		case NONE:
-			this.restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.NONE);
+			restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.NONE);
 			break;
 		case BASIC:
-			this.restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.BASIC);
+			restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.BASIC);
 			break;
 		case HEADERS:
-			this.restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.HEADERS);
+			restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.HEADERS);
 			break;
 		case FULL:
-			this.restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.FULL);
+			restAdapter.setLogLevel(retrofit.RestAdapter.LogLevel.FULL);
 			break;
 		default:
 			break;
@@ -78,28 +83,60 @@ public class InfluxDBImpl implements InfluxDB {
 		return this;
 	}
 
-	@Override
-	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit) {
-		if (this.batchEnabled.get()) {
+	public InfluxDB enableBatch(
+			final Integer capacity,
+			final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit,
+			BufferFailBehaviour behaviour,
+			boolean discardOnFailedWrite,
+			int maxBatchWriteSize) {
+		if (batchEnabled.get()) {
 			throw new IllegalArgumentException("BatchProcessing is already enabled.");
 		}
-		this.batchProcessor = BatchProcessor
+		batchProcessor = BatchProcessor
 				.builder(this)
-				.actions(actions)
-				.interval(flushDuration, flushDurationTimeUnit)
+				.capacityAndActions(capacity, flushActions)
+				.interval(flushIntervalMin, flushIntervalMax, flushIntervalTimeUnit)
+				.behaviour(behaviour)
+				.discardOnFailedWrite(discardOnFailedWrite)
+				.maxBatchWriteSize(maxBatchWriteSize)
 				.build();
-		this.batchEnabled.set(true);
+		batchEnabled.set(true);
+		return this;
+	}
+
+	@Override
+	public InfluxDB enableBatch(final int actions,
+			final int flushInterval,
+			final TimeUnit flushIntervalTimeUnit) {
+		return enableBatch(actions, flushInterval, 5 * flushInterval, flushIntervalTimeUnit);
+	}
+
+	@Override
+	public InfluxDB enableBatch(final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit) {
+		
+		enableBatch(null, 
+				flushActions, 
+				flushIntervalMin, 
+				flushIntervalMax,
+				flushIntervalTimeUnit,
+				BufferFailBehaviour.THROW_EXCEPTION,
+				true, flushActions);
 		return this;
 	}
 
 	@Override
 	public void disableBatch() {
-		this.batchEnabled.set(false);
-		this.batchProcessor.flush();
-		if (this.logLevel != LogLevel.NONE) {
-			System.out.println(
-					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
-							+ this.batchedCount);
+		batchEnabled.set(false);
+		batchProcessor.flush();
+		if (logLevel != LogLevel.NONE) {
+			System.out.println(String.format("Total writes:%d Unbatched:%d Batched:%d",
+					writeCount.get(), unBatchedCount.get(), batchedCount.get()));
 		}
 	}
 	
@@ -111,7 +148,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public Pong ping() {
 		Stopwatch watch = Stopwatch.createStarted();
-		Response response = this.influxDBService.ping();
+		Response response = influxDBService.ping();
 		List<Header> headers = response.getHeaders();
 		String version = "unknown";
 		for (Header header : headers) {
@@ -132,31 +169,50 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final Point point) {
-		if (this.batchEnabled.get()) {
-			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
-			this.batchProcessor.put(batchEntry);
-		} else {
-			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
-			batchPoints.point(point);
-			this.write(batchPoints);
-			this.unBatchedCount.incrementAndGet();
-		}
-		this.writeCount.incrementAndGet();
+		write(database, retentionPolicy, ConsistencyLevel.ONE, point);
 	}
 
 	@Override
-	public void write(final BatchPoints batchPoints) {
-		this.batchedCount.addAndGet(batchPoints.getPoints().size());
-		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
-		this.influxDBService.writePoints(
-				this.username,
-				this.password,
-				batchPoints.getDatabase(),
-				batchPoints.getRetentionPolicy(),
-				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
-				batchPoints.getConsistency().value(),
-				lineProtocol);
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final Point point) {
+		if (batchEnabled.get()) {
+			batchProcessor.put(database, retentionPolicy, consistencyLevel, point);
+		} else {
+			writeUnbatched(database, retentionPolicy, ConsistencyLevel.ONE, point);
+		}
+	}
+	
+	@Override
+	public void write(BatchPoints batchPoints) {
+		write(batchPoints.getDatabase(), batchPoints.getRetentionPolicy(), ConsistencyLevel.ONE, batchPoints.getPoints());
+	}
+	
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points) {
+		writeBatched(database, retentionPolicy, consistencyLevel, points);
+	}
+	
+	protected void writeBatched(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points) {
+		batchedCount.addAndGet(points.size());
+		writeCount.addAndGet(points.size());
+		writeLine(database, retentionPolicy, consistencyLevel, Point.toLineProtocol(points));
+	}
 
+	protected void writeUnbatched(String database, String retentionPolicy, ConsistencyLevel consistencyLevel, Point point) {
+		unBatchedCount.incrementAndGet();
+		writeCount.incrementAndGet();
+		writeLine(database, retentionPolicy, consistencyLevel, point.lineProtocol());
+	}
+	
+	private void writeLine(String database, String retentionPolicy, ConsistencyLevel consistency, String line) {
+		TypedString lineProtocol = new TypedString(line);
+		influxDBService.writePoints(
+				username,
+				password,
+				database,
+				retentionPolicy,
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+				consistency.value(),
+				lineProtocol);
 	}
 
 	@Override
@@ -170,19 +226,14 @@ public class InfluxDBImpl implements InfluxDB {
 				consistency.value(),
 				new TypedString(records));
 	}
-	@Override
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records) {
-		final String joinedRecords = Joiner.on("\n").join(records);
-		write(database, retentionPolicy, consistency, joinedRecords);
-	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public QueryResult query(final Query query) {
-		QueryResult response = this.influxDBService
-				.query(this.username, this.password, query.getDatabase(), query.getCommand());
+		QueryResult response = influxDBService
+				.query(username, password, query.getDatabase(), query.getCommand());
 		return response;
 	}
 
@@ -191,8 +242,8 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public QueryResult query(final Query query, final TimeUnit timeUnit) {
-		QueryResult response = this.influxDBService
-				.query(this.username, this.password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit) , query.getCommand());
+		QueryResult response = influxDBService
+				.query(username, password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit) , query.getCommand());
 		return response;
 	}
 	
@@ -218,7 +269,7 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public List<String> describeDatabases() {
-		QueryResult result = this.influxDBService.query(this.username, this.password, "SHOW DATABASES");
+		QueryResult result = influxDBService.query(username, password, "SHOW DATABASES");
 		// {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
 		// Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
 		List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();
@@ -231,4 +282,24 @@ public class InfluxDBImpl implements InfluxDB {
 		return databases;
 	}
 
+	public int getBufferedCount() {
+		if (batchEnabled.get()) {
+			return batchProcessor.getBufferedCount();
+		}
+		
+		return 0;
+	}
+	
+	@Override
+	public Optional<Point> peekFirstBuffered() {
+		if (batchEnabled.get()) {
+			Optional<Point> point = batchProcessor.peekFirstBuffered();
+			
+			if (point.isPresent()) {
+				return Optional.of(point.get());
+			}
+		}
+		
+		return Optional.absent();
+	}
 }

@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.assertj.core.util.Lists;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.Maps;
@@ -80,23 +81,17 @@ public class PointTest {
 		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000000");
 
-		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
-		BatchPoints batchPoints = BatchPoints.database("db").point(point).build();
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1\n");
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", 1).build();
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1\n");
 
-		point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).addField("a", 1.0).build();
-		batchPoints = BatchPoints.database("db").point(point).build();
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000\n");
+		point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).field("a", 1).build();
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1000\n");
 
-		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).addField("a", 1.0).build();
-		batchPoints = BatchPoints.database("db").point(point).build();
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000000\n");
+		point = Point.measurement("test").time(1, TimeUnit.MILLISECONDS).field("a", 1).build();
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1000000\n");
 
-		point = Point.measurement("test").addField("a", 1.0).time(1, TimeUnit.MILLISECONDS).build();
-		batchPoints = BatchPoints.database("db").build();
-		batchPoints = batchPoints.point(point);
-		assertThat(batchPoints.lineProtocol()).asString().isEqualTo("test a=1.0 1000000\n");
-
+		point = Point.measurement("test").field("a", 1).time(1, TimeUnit.MILLISECONDS).build();
+		assertThat(Point.toLineProtocol(Lists.newArrayList(point))).asString().isEqualTo("test a=1.0 1000000\n");
 	}
 
 	/**

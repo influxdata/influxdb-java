@@ -9,6 +9,8 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 
+import com.google.common.base.Optional;
+
 /**
  * Interface with all available methods to access a InfluxDB database.
  * 
@@ -66,6 +68,21 @@ public interface InfluxDB {
 			return this.value;
 		}
 	}
+	
+	/**
+	 * Behaviour options for when a put fails to add to the buffer. This is
+	 * particularly important when using capacity limited buffering.
+	 */
+	public enum BufferFailBehaviour {
+		/** Throw an exception if cannot add to buffer */
+		THROW_EXCEPTION,
+		/** Drop (do not add) the element attempting to be added */
+		DROP_CURRENT,
+		/** Drop the oldest element in the queue and add the current element */
+		DROP_OLDEST, 
+		/** Block the thread until the space becomes available (NB: Not tested) */
+		BLOCK_THREAD,
+	}
 
 	/**
 	 * Set the loglevel which is used for REST related actions.
@@ -75,7 +92,7 @@ public interface InfluxDB {
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
 	public InfluxDB setLogLevel(final LogLevel logLevel);
-
+	
 	/**
 	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
 	 * flushDurations is reached first, a batchwrite is issued.
@@ -83,12 +100,75 @@ public interface InfluxDB {
 	 * @param actions
 	 *            the number of actions to collect
 	 * @param flushDuration
-	 *            the time to wait at most.
+	 *            the minimun time to wait at most. NB: The 'maximum' time is set to 5 time this number.
 	 * @param flushDurationTimeUnit
 	 * @return the InfluxDB instance to be able to use it in a fluent manner.
 	 */
+	@Deprecated
 	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+	
+	
+	/**
+	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
+	 * flushDurations is reached first, a batchwrite is issued.
+	 *
+	 * @param actions
+	 *            the number of actions to collect
+	 * @param flushIntervalMin
+	 *            the minimum time to wait before sending the batched writes.
+	 * @param flushIntervalMax
+	 *            The maximum time, when backing off for failure, between sending batched writes.
+	 * @param flushDurationTimeUnit
+	 * @return the InfluxDB instance to be able to use it in a fluent manner.
+	 */
+	public InfluxDB enableBatch(final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit);
 
+	/**
+	 * Enable Batching of single Point with a capacity limit. Batching provides
+	 * a significant performance improvement in write speed. If either actions
+	 * or flushDurations is reached first, a batchwrite is issued.
+	 * 
+	 * This allows greater control over the behaviour when the capacity of the
+	 * underlying buffer is limited.
+	 * 
+	 * @param capacity
+	 *            the maximum number of points to hold. Should be NULL, for no
+	 *            buffering OR > 0 for buffering (NB: a capacity of 1 will not
+	 *            really buffer)
+	 * @param flushActions
+	 *            the number of actions to collect before triggering a batched
+	 *            write
+	 * @param flushIntervalMin
+	 *            the amount of time to wait before triggering a batched write
+	 * @param flushIntervalMax
+	 *            the maximum amount of time to wait before triggering a batched write, 
+	 *            when backing off due to failure
+	 * @param flushIntervalTimeUnit
+	 *            the time unit for the flushIntervalMin and flushIntervalMax parameters
+	 * @param behaviour
+	 *            the desired behaviour when capacity constrains are met
+	 * @param discardOnFailedWrite
+	 *            if FALSE, the points from a failed batch write buffer will
+	 *            attempt to put them back onto the queue if TRUE, the points
+	 *            froma failed batch write will be discarded
+	 * @param maxBatchWriteSize
+	 *            the maximum number of points to include in one batch write
+	 *            attempt. NB: this is different from the flushActions parameter, as
+	 *            the buffer can hold more than the flushActions parameter
+	 * @return
+	 */
+	public InfluxDB enableBatch(final Integer capacity,
+			final int flushActions,
+			final int flushIntervalMin,
+			final int flushIntervalMax,
+			final TimeUnit flushIntervalTimeUnit,
+			BufferFailBehaviour behaviour,
+			boolean discardOnFailedWrite,
+			int maxBatchWriteSize);
+	
 	/**
 	 * Disable Batching.
 	 */
@@ -114,7 +194,7 @@ public interface InfluxDB {
 	public String version();
 
 	/**
-	 * Write a single Point to the database.
+	 * Write a single Point to the database with ConsistencyLevel.One.
 	 * 
 	 * @param database
 	 *            the database to write to.
@@ -123,16 +203,38 @@ public interface InfluxDB {
 	 * @param point
 	 *            The point to write
 	 */
+	@Deprecated
 	public void write(final String database, final String retentionPolicy, final Point point);
+	
+	/**
+	 * Write a single Point to the database.
+	 * 
+	 * @param database
+	 * @param retentionPolicy
+	 * @param consistencyLevel
+	 * @param point
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final Point point);
 
 	/**
 	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
 	 * 
 	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
-	 *
+	 * 
 	 * @param batchPoints
 	 */
+	@Deprecated
 	public void write(final BatchPoints batchPoints);
+	
+	/**
+	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
+	 * 
+	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+	 * 
+	 * @param batchPoints
+	 */
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistencyLevel, final List<Point> points);
+
 
 	/**
 	 * Write a set of Points to the influxdb database with the string records.
@@ -142,17 +244,6 @@ public interface InfluxDB {
 	 * @param records
 	 */
 	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records);
-
-	/**
-	 * Write a set of Points to the influxdb database with the list of string records.
-	 *
-	 * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
-	 *
-	 * @param records
-	 */
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records);
-
-	/**
 
 	/**
 	 * Execute a query agains a database.
@@ -195,5 +286,21 @@ public interface InfluxDB {
 	 * @return a List of all Database names.
 	 */
 	public List<String> describeDatabases();
+
+	/**
+	 * Get the number of buffered points NB: If batching is not enabled this
+	 * will return 0
+	 * 
+	 * @return
+	 */
+	public int getBufferedCount();
+
+	/**
+	 * Retrieves, but does not remove, the first element of the buffer
+	 * 
+	 * @return an Optional<Point> containing the first element in the queue if
+	 *         it is present
+	 */
+	public Optional<Point> peekFirstBuffered();
 
 }

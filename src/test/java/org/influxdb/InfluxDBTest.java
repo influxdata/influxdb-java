@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
@@ -22,6 +22,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 
 /**
  * Test the InfluxDB API.
@@ -165,9 +167,8 @@ public class InfluxDBTest {
 	@Test(enabled = true)
 	public void testWrite() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
 		Point point1 = Point
 				.measurement("cpu")
 				.tag("atag", "test")
@@ -176,13 +177,11 @@ public class InfluxDBTest {
 				.addField("system", 1L)
 				.build();
 		Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
-		batchPoints.point(point1);
-		batchPoints.point(point2);
-		this.influxDB.write(batchPoints);
+		influxDB.write(dbName, "default", ConsistencyLevel.ONE, Lists.newArrayList(point1, point2));
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-		this.influxDB.deleteDatabase(dbName);
+		influxDB.deleteDatabase(dbName);
 	}
 
     /**
@@ -227,11 +226,12 @@ public class InfluxDBTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
 
-        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
+		final String joinedRecords = Joiner.on("\n").join(Arrays.asList(
                 "cpu,atag=test1 idle=100,usertime=10,system=1",
                 "cpu,atag=test2 idle=200,usertime=20,system=2",
-                "cpu,atag=test3 idle=300,usertime=30,system=3"
-        ));
+                "cpu,atag=test3 idle=300,usertime=30,system=3"));
+
+        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, joinedRecords);
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
 
