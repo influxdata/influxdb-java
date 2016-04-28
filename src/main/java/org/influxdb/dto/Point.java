@@ -280,6 +280,8 @@ public class Point {
 			builder.append(this.time);
 			builder.append(", precision=");
 			builder.append(this.precision);
+		} else {
+			builder.append(", time=SET_BY_SERVER");
 		}
 
 		builder.append(", tags=");
