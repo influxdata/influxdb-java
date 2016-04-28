@@ -28,7 +28,7 @@ Point point1 = Point.measurement("cpu")
 					.addField("system", 1L)
 					.build();
 Point point2 = Point.measurement("disk")
-					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+					// timestamp not sent, InfluxDB uses the server’s local nanosecond timestamp in Unix epoch
 					.addField("used", 80L)
 					.addField("free", 1L)
 					.build();
