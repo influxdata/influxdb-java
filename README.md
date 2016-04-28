@@ -22,7 +22,7 @@ BatchPoints batchPoints = BatchPoints
 				.consistency(ConsistencyLevel.ALL)
 				.build();
 Point point1 = Point.measurement("cpu")
-					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+					.fillTimeMilli()
 					.addField("idle", 90L)
 					.addField("user", 9L)
 					.addField("system", 1L)

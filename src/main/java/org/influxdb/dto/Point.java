@@ -185,6 +185,18 @@ public class Point {
 		}
 
 		/**
+		 * Adds a time using the system clock, with millisecond precision
+		 *
+		 * @return the Builder instance.
+		 */
+		public Builder fillTimeMilli() {
+			this.time = System.currentTimeMillis();
+			this.precision = TimeUnit.MILLISECONDS;
+
+			return this;
+		}
+
+		/**
 		 * Create a new Point.
 		 *
 		 * @return the newly created Point.
@@ -196,13 +208,12 @@ public class Point {
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
+
 			if (this.time != null) {
 			    point.setTime(this.time);
 			    point.setPrecision(this.precision);
-			} else {
-			    point.setTime(System.currentTimeMillis());
-			    point.setPrecision(TimeUnit.MILLISECONDS);
 			}
+
 			point.setTags(this.tags);
 			return point;
 		}
@@ -263,12 +274,16 @@ public class Point {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Point [name=");
 		builder.append(this.measurement);
-		builder.append(", time=");
-		builder.append(this.time);
+
+		if (this.time != null) {
+			builder.append(", time=");
+			builder.append(this.time);
+			builder.append(", precision=");
+			builder.append(this.precision);
+		}
+
 		builder.append(", tags=");
 		builder.append(this.tags);
-		builder.append(", precision=");
-		builder.append(this.precision);
 		builder.append(", fields=");
 		builder.append(this.fields);
 		builder.append("]");
@@ -289,7 +304,7 @@ public class Point {
 		sb.append(KEY_ESCAPER.escape(this.measurement));
 		sb.append(concatenatedTags());
 		sb.append(concatenateFields());
-		sb.append(formatedTime());
+		formatedTime(sb);
 		return sb.toString();
 	}
 
@@ -342,13 +357,10 @@ public class Point {
 		return sb;
 	}
 
-	private StringBuilder formatedTime() {
-		final StringBuilder sb = new StringBuilder();
-		if (null == this.time) {
-			this.time = System.nanoTime();
+	private void formatedTime(StringBuilder sb) {
+		if (null != this.time) {
+			sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		}
-		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-		return sb;
 	}
 
 }
