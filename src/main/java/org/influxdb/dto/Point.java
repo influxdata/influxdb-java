@@ -306,7 +306,7 @@ public class Point {
 		sb.append(KEY_ESCAPER.escape(this.measurement));
 		sb.append(concatenatedTags());
 		sb.append(concatenateFields());
-		formatedTime(sb);
+		formattedTime(sb);
 		return sb.toString();
 	}
 
@@ -359,7 +359,7 @@ public class Point {
 		return sb;
 	}
 
-	private void formatedTime(StringBuilder sb) {
+	private void formattedTime(StringBuilder sb) {
 		if (null != this.time) {
 			sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		}
