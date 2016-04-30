@@ -55,6 +55,7 @@ public class Point {
 	public static final class Builder {
 		private final String measurement;
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
+		private boolean omitTime = false;
 		private Long time;
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
@@ -171,6 +172,17 @@ public class Point {
 		}
 
 		/**
+		 * The point will inherit the server’s local timestamp at its' default precision,
+		 *
+		 * @return the Builder instance.
+		 */
+		public Builder useServerTimestamp() {
+			this.omitTime = true;
+
+			return this;
+		}
+
+		/**
 		 * Add a time to this point
 		 *
 		 * @param precisionToSet
@@ -205,6 +217,12 @@ public class Point {
 			Preconditions
 					.checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
 			Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
+
+			if (this.time == null) {
+				Preconditions.checkArgument(this.omitTime, "The choice of using the server's timestamp has to be "
+						+ "explicit.");
+			}
+
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);

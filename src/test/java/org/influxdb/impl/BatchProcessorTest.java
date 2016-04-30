@@ -23,7 +23,7 @@ public class BatchProcessorTest {
 
         doThrow(new RuntimeException()).when(mockInfluxDB).write(any(BatchPoints.class));
 
-        Point point = Point.measurement("cpu").field("6", "").build();
+        final Point point = Point.measurement("cpu").field("6", "").useServerTimestamp().build();
         BatchProcessor.BatchEntry batchEntry1 = new BatchProcessor.BatchEntry(point, "db1", "");
         BatchProcessor.BatchEntry batchEntry2 = new BatchProcessor.BatchEntry(point, "db2", "");
 

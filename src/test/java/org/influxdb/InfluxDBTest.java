@@ -174,8 +174,17 @@ public class InfluxDBTest {
 				.addField("idle", 90L)
 				.addField("usertime", 9L)
 				.addField("system", 1L)
+				.useServerTimestamp()
 				.build();
-		Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+
+		final Point point2 = Point
+				.measurement("disk")
+				.tag("atag", "test")
+				.addField("used", 80L)
+				.addField("free", 1L)
+				.useServerTimestamp()
+				.build();
+
 		batchPoints.point(point1);
 		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);
