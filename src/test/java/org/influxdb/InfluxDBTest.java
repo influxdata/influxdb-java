@@ -174,7 +174,7 @@ public class InfluxDBTest {
 				.addField("idle", 90L)
 				.addField("usertime", 9L)
 				.addField("system", 1L)
-				.useServerTimestamp()
+				.useServerTimestampAtDefaultPrecision()
 				.build();
 
 		final Point point2 = Point
@@ -182,7 +182,7 @@ public class InfluxDBTest {
 				.tag("atag", "test")
 				.addField("used", 80L)
 				.addField("free", 1L)
-				.useServerTimestamp()
+				.useServerTimestampAtDefaultPrecision()
 				.build();
 
 		batchPoints.point(point1);
