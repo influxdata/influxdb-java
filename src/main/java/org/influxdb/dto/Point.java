@@ -255,6 +255,13 @@ public class Point {
 	}
 
 	/**
+	 *
+	 */
+	public Long getTime() {
+		return this.time;
+	}
+
+	/**
 	 * @param tags
 	 *            the tags to set
 	 */
