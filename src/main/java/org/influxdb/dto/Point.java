@@ -57,6 +57,7 @@ public class Point {
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
 		private boolean omitTime = false;
 		private Long time;
+		// TODO - precision has to be null, and set by the user or omitted completely and left to the server to decide
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
 		
@@ -176,7 +177,7 @@ public class Point {
 		 *
 		 * @return the Builder instance.
 		 */
-		public Builder useServerTimestamp() {
+		public Builder useServerTimestampAtDefaultPrecision() {
 			this.omitTime = true;
 
 			return this;
