@@ -6,12 +6,11 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Ordering;
 import com.google.common.escape.Escaper;
 import com.google.common.escape.Escapers;
 
@@ -54,10 +53,10 @@ public class Point {
 	 */
 	public static final class Builder {
 		private final String measurement;
-		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
+		private final Map<String, String> tags = new TreeMap<>();
 		private Long time;
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
-		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
+		private final Map<String, Object> fields = new TreeMap<>();
 		
 		/**
 		 * @param measurement
