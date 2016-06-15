@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.google.common.collect.Maps;
+import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -9,9 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.testng.annotations.Test;
-
-import com.google.common.collect.Maps;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test for the Point DTO.
@@ -186,6 +185,37 @@ public class PointTest {
 		Point point = pointBuilder.build();
 
 		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
+	}
+
+	@Test
+	public void testIgnoreFieldNullValues(){
+		Number val = null;
+		Point point;
+		// Line Protocol Example: cpu,host=server02,region=uswest value=3 1434055562000010000
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", 1.0).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc a=1.0 1");
+
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", 1.0).addField("b", val).addField("c", val).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc a=1.0 1");
+
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", val).addField("b", 1.0).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc b=1.0 1");
+
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", val).addField("b", 1.0).addField("c", val).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc b=1.0 1");
+
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", 1.0).addField("b", val).addField("c", 1.0).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc a=1.0,c=1.0 1");
+
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", 1.0).addField("b", val).addField("d", val).addField("c", 1.0).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc a=1.0,c=1.0 1");
+
+		//Special Case if all fields given have null values
+		/*
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("tagKey", "abc").addField("a", val).addField("b", val).addField("d", val).addField("c", val).build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test,tagKey=abc 1");
+		*/
+
 	}
 	
 	/**
