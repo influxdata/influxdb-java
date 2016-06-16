@@ -66,12 +66,13 @@ public class WriteTest {
 
 
     @Test
-    public void testValidateBatchProcessor(){
-        influxDB.enableBatch(5000, 5, TimeUnit.SECONDS);
+    public void testValidateBatchProcessor() throws InterruptedException{
+        influxDB.enableBatch(25000, 300, TimeUnit.MILLISECONDS);
+        int numberOfEvents = 5100000;
 
-        for (int i = 0; i < 400000; i++){
+        for (int i = 1; i <= numberOfEvents; i++){
             Point point = Point.measurement("batchEvents")
-                    .time(System.nanoTime(), TimeUnit.NANOSECONDS)
+                    .time(i, TimeUnit.NANOSECONDS)
                     .tag("tag1", "abc")
                     .addField("field1", i)
                     .build();
@@ -80,22 +81,42 @@ public class WriteTest {
 
             if (i%50000 == 0)
                 System.out.println(i);
-
         }
-
-        try {
-            Thread.sleep(5000);
-        }
-        catch (InterruptedException e){
-            System.out.println("ex");
-        }
-
 
         Query query = new Query("Select Count(field1) from batchEvents", database);
         QueryResult result = influxDB.query(query);
         String count = result.getResults().get(0).getSeries().get(0).getValues().get(0).toString();
         String parts[] = count.split(",");
-        Assert.assertEquals(parts[1].trim(), "400000.0]");
+        Assert.assertEquals(parts[1].trim(), numberOfEvents + ".0]");
+    }
+
+
+    @Test
+    public void testValidateSingleBatchWrite(){
+
+        BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy("default").consistency(InfluxDB.ConsistencyLevel.ALL).build();
+        int numberOfEvents = 2100000;
+
+        for (int i = 1; i <= numberOfEvents; i++){
+            Point point = Point.measurement("batchEvents")
+                    .time(i, TimeUnit.NANOSECONDS)
+                    .tag("tag1", "abc")
+                    .addField("field1", i)
+                    .build();
+
+            batchPoints.point(point);
+
+            if (i%50000 == 0)
+                System.out.println(i);
+        }
+
+        influxDB.write(batchPoints);
+
+        Query query = new Query("Select Count(field1) from batchEvents", database);
+        QueryResult result = influxDB.query(query);
+        String count = result.getResults().get(0).getSeries().get(0).getValues().get(0).toString();
+        String parts[] = count.split(",");
+        Assert.assertEquals(parts[1].trim(), numberOfEvents + ".0]");
     }
 
 
