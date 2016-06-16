@@ -67,7 +67,8 @@ public class WriteTest {
 
     @Test
     public void testValidateBatchProcessor() throws InterruptedException{
-        influxDB.enableBatch(25000, 300, TimeUnit.MILLISECONDS);
+        int flushInterval = 800;
+        influxDB.enableBatch(25000, flushInterval, TimeUnit.MILLISECONDS);
         int numberOfEvents = 5100000;
 
         for (int i = 1; i <= numberOfEvents; i++){
@@ -82,6 +83,9 @@ public class WriteTest {
             if (i%50000 == 0)
                 System.out.println(i);
         }
+
+        //Wait for terminating all writes
+        Thread.sleep(flushInterval*3);
 
         Query query = new Query("Select Count(field1) from batchEvents", database);
         QueryResult result = influxDB.query(query);

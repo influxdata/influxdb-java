@@ -142,8 +142,6 @@ public class BatchProcessor {
 		this.scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				//ToDo if write is activated here, a deadlock between scheduler and main thread is possible
-				//ToDo write BatchProcessor with either an action limit or with a flushInterval
 				write();
 			}
 		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
