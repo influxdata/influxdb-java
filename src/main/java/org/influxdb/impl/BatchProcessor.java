@@ -29,6 +29,7 @@ public class BatchProcessor {
 
 	private static final Logger logger = Logger.getLogger(BatchProcessor.class.getName());
 	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
+	private final List<BatchEntry> batchEntries = new ArrayList<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
 	final int actions;
@@ -141,20 +142,23 @@ public class BatchProcessor {
 		this.scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
+				//ToDo if write is activated here, a deadlock between scheduler and main thread is possible
+				//ToDo write BatchProcessor with either an action limit or with a flushInterval
 				write();
 			}
 		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
 
 	}
 
-	void write() {
+
+	synchronized void write() {
 		try {
+			batchEntries.clear();
 			if (this.queue.isEmpty()) {
 				return;
 			}
 
 			Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-			List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
 			this.queue.drainTo(batchEntries);
 
 			for (BatchEntry batchEntry : batchEntries) {
@@ -170,8 +174,10 @@ public class BatchProcessor {
 			for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
 				BatchProcessor.this.influxDB.write(batchPoints);
 			}
-		} catch (Throwable t) {
+
+		} catch (Exception t) {
 			// any exception would stop the scheduler
+			t.printStackTrace();
 			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
 		}
 	}

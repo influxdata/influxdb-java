@@ -131,7 +131,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void write(final String database, final String retentionPolicy, final Point point) {
+	synchronized public void write(final String database, final String retentionPolicy, final Point point) {
 		if (this.batchEnabled.get()) {
 			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
 			this.batchProcessor.put(batchEntry);
@@ -145,7 +145,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public void write(final BatchPoints batchPoints) {
+	synchronized public void write(final BatchPoints batchPoints) {
 		this.batchedCount.addAndGet(batchPoints.getPoints().size());
 		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
 		this.influxDBService.writePoints(
