@@ -354,7 +354,7 @@ public class Point {
 			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			if (value instanceof String) {
 				String stringValue = (String) value;
-				stringValue = stringValue.replaceAll("\\\\", "//");
+				stringValue = stringValue.replace("\\", "/");
 				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
 			} else if (value instanceof Number) {
 				if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
