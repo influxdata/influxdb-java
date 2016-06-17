@@ -76,6 +76,8 @@ public class WriteTest {
                     .time(i, TimeUnit.NANOSECONDS)
                     .tag("tag1", "abc")
                     .addField("field1", i)
+                    .addField("field2", "test abc\\nde\\basd\\tge\\rasd\\ffewg\\'ger\\")
+                    .addField("field3", "C:\\Users\\ADM~1\\AppData\\Local\\Temp\\nsm192C.tmp\\nsExec.dll")
                     .build();
 
             influxDB.write(database, "default", point);
@@ -106,6 +108,8 @@ public class WriteTest {
                     .time(i, TimeUnit.NANOSECONDS)
                     .tag("tag1", "abc")
                     .addField("field1", i)
+                    .addField("field2", "test abc\\nde\\basd\\tge\\rasd\\ffewg\\'ger\\")
+                    .addField("field3", "C:\\Users\\ADM~1\\AppData\\Local\\Temp\\nsm192C.tmp\\nsExec.dll")
                     .build();
 
             batchPoints.point(point);

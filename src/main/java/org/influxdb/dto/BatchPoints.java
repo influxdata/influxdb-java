@@ -1,15 +1,14 @@
 package org.influxdb.dto;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import org.influxdb.InfluxDB.ConsistencyLevel;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import org.influxdb.InfluxDB.ConsistencyLevel;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * {Purpose of This Type}
@@ -97,11 +96,11 @@ public class BatchPoints {
 		/**
 		 * Add a set of Points to this set of points.
 		 *
-		 * @param pointsToAdd
+		 * @param pointList
 		 * @return the Builder instance
 		 */
-		public Builder points(final Point... pointsToAdd) {
-			this.points.addAll(Arrays.asList(pointsToAdd));
+		public Builder points(List<Point> pointList) {
+			this.points.addAll(pointList);
 			return this;
 		}
 

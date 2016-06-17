@@ -1,22 +1,17 @@
 package org.influxdb.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A BatchProcessor can be attached to a InfluxDB Instance to collect single point writes and
@@ -173,9 +168,8 @@ public class BatchProcessor {
 				BatchProcessor.this.influxDB.write(batchPoints);
 			}
 
-		} catch (Exception t) {
+		} catch (Throwable t) {
 			// any exception would stop the scheduler
-			t.printStackTrace();
 			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
 		}
 	}

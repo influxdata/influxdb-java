@@ -1,28 +1,22 @@
 package org.influxdb.impl;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Joiner;
-import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
-
+import org.influxdb.InfluxDB;
+import org.influxdb.dto.*;
+import org.influxdb.impl.BatchProcessor.BatchEntry;
 import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.client.Header;
 import retrofit.client.Response;
 import retrofit.mime.TypedString;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of a InluxDB API.
@@ -131,7 +125,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	synchronized public void write(final String database, final String retentionPolicy, final Point point) {
+	public void write(final String database, final String retentionPolicy, final Point point) {
 		if (this.batchEnabled.get()) {
 			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
 			this.batchProcessor.put(batchEntry);
@@ -145,7 +139,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	synchronized public void write(final BatchPoints batchPoints) {
+	public void write(final BatchPoints batchPoints) {
 		this.batchedCount.addAndGet(batchPoints.getPoints().size());
 		TypedString lineProtocol = new TypedString(batchPoints.lineProtocol());
 		this.influxDBService.writePoints(
@@ -160,7 +154,7 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	synchronized public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records) {
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records) {
 		this.influxDBService.writePoints(
 				this.username,
 				this.password,
@@ -171,7 +165,7 @@ public class InfluxDBImpl implements InfluxDB {
 				new TypedString(records));
 	}
 	@Override
-	synchronized public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records) {
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records) {
 		final String joinedRecords = Joiner.on("\n").join(records);
 		write(database, retentionPolicy, consistency, joinedRecords);
 	}
