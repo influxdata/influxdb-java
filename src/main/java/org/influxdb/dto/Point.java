@@ -1,19 +1,20 @@
 package org.influxdb.dto;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.NumberFormat;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.escape.Escaper;
 import com.google.common.escape.Escapers;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -150,13 +151,43 @@ public class Point {
 		}
 		
 		public Builder addField(final String field, final String value) {
-			if (value == null) {
-				throw new IllegalArgumentException("Field value cannot be null");
-			}
-			
 			fields.put(field, value);
 			return this;
 		}
+
+
+		public Builder addField(final String field, final boolean value, final boolean activated) {
+			if (activated)
+				fields.put(field, value);
+			return this;
+		}
+
+		public Builder addField(final String field, final long value, final boolean activated) {
+			if (activated)
+				fields.put(field, value);
+			return this;
+		}
+
+		public Builder addField(final String field, final double value, final boolean activated) {
+			if (activated)
+				fields.put(field, value);
+			return this;
+		}
+
+		public Builder addField(String field, Number value, final boolean activated) {
+			if (activated)
+				fields.put(field, value);
+			return this;
+		}
+
+		public Builder addField(final String field, final String value, final boolean activated) {
+			if (activated)
+				fields.put(field, value);
+			return this;
+		}
+
+
+
 		
 		/**
 		 * Add a Map of fields to this point.
@@ -303,8 +334,8 @@ public class Point {
 		return sb;
 	}
 	
-	private StringBuilder concatenateFields() {
-		final StringBuilder sb = new StringBuilder();
+	private String concatenateFields() {
+		final StringJoiner joiner = new StringJoiner(",");
 		final int fieldCount = this.fields.size();
 		int loops = 0;
 
@@ -314,7 +345,7 @@ public class Point {
 		numberFormat.setMinimumFractionDigits(1);
 
 		for (Entry<String, Object> field : this.fields.entrySet()) {
-			loops++;
+			StringBuilder sb = new StringBuilder();
 			Object value = field.getValue();
 			if (value == null) {
 				continue;
@@ -323,6 +354,7 @@ public class Point {
 			sb.append(KEY_ESCAPER.escape(field.getKey())).append("=");
 			if (value instanceof String) {
 				String stringValue = (String) value;
+				stringValue = stringValue.replace("\\", "/");
 				sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
 			} else if (value instanceof Number) {
 				if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
@@ -335,11 +367,15 @@ public class Point {
 			}
 
 			if (loops < fieldCount) {
-				sb.append(",");
+				joiner.add(sb.toString());
 			}
+			loops++;
 		}
 
-		return sb;
+		if (joiner.toString().length() == 0)
+			throw new IllegalArgumentException("There must be at least one field as an input that is not null");
+
+		return joiner.toString();
 	}
 
 	private StringBuilder formatedTime() {

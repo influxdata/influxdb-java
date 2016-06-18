@@ -1,22 +1,17 @@
 package org.influxdb.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A BatchProcessor can be attached to a InfluxDB Instance to collect single point writes and
@@ -29,6 +24,7 @@ public class BatchProcessor {
 
 	private static final Logger logger = Logger.getLogger(BatchProcessor.class.getName());
 	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
+	private final List<BatchEntry> batchEntries = new ArrayList<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
 	final int actions;
@@ -147,14 +143,15 @@ public class BatchProcessor {
 
 	}
 
-	void write() {
+
+	synchronized void write() {
 		try {
+			batchEntries.clear();
 			if (this.queue.isEmpty()) {
 				return;
 			}
 
 			Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-			List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
 			this.queue.drainTo(batchEntries);
 
 			for (BatchEntry batchEntry : batchEntries) {
@@ -170,6 +167,7 @@ public class BatchProcessor {
 			for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
 				BatchProcessor.this.influxDB.write(batchPoints);
 			}
+
 		} catch (Throwable t) {
 			// any exception would stop the scheduler
 			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
