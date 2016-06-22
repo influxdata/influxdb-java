@@ -18,62 +18,25 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-
 /**
  * Test the InfluxDB API.
- * 
+ *
  * @author stefan.majer [at] gmail.com
- * 
+ *
  */
 @Test
 public class InfluxDBTest {
 
 	private InfluxDB influxDB;
-	private DockerClient dockerClient;
-	private CreateContainerResponse container;
 
 	/**
 	 * Create a influxDB connection before all tests start.
-	 * 
+	 *
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
 	@BeforeClass
 	public void setUp() throws InterruptedException, IOException {
-		// Disable logging for the DockerClient.
-		Logger.getLogger("com.sun.jersey").setLevel(Level.OFF);
-		DockerClientConfig config = DockerClientConfig
-				.createDefaultConfigBuilder()
-				.withVersion("1.16")
-				.withUri("tcp://localhost:4243")
-				.withUsername("roott")
-				.withPassword("root")
-				.build();
-		this.dockerClient = DockerClientBuilder.getInstance(config).build();
-		// this.dockerClient.pullImageCmd("majst01/influxdb-java");
-
-		// ExposedPort tcp8086 = ExposedPort.tcp(8086);
-		//
-		// Ports portBindings = new Ports();
-		// portBindings.bind(tcp8086, Ports.Binding(8086));
-		// this.container = this.dockerClient.createContainerCmd("influxdb:0.9.0-rc7").exec();
-		// this.dockerClient.startContainerCmd(this.container.getId()).withPortBindings(portBindings).exec();
-		//
-		// InspectContainerResponse inspectContainerResponse =
-		// this.dockerClient.inspectContainerCmd(
-		// this.container.getId()).exec();
-		//
-		// InputStream containerLogsStream = this.dockerClient
-		// .logContainerCmd(this.container.getId())
-		// .withStdErr()
-		// .withStdOut()
-		// .exec();
-
-		// String ip = inspectContainerResponse.getNetworkSettings().getIpAddress();
 		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":8086", "root", "root");
 		boolean influxDBstarted = false;
 		do {
@@ -97,15 +60,6 @@ public class InfluxDBTest {
 		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
-	}
-
-	/**
-	 * Ensure all Databases created get dropped afterwards.
-	 */
-	@AfterClass
-	public void tearDown() {
-		System.out.println("Kill the Docker container");
-		// this.dockerClient.killContainerCmd(this.container.getId()).exec();
 	}
 
 	/**
@@ -254,17 +208,17 @@ public class InfluxDBTest {
 		Assert.assertTrue(result.contains(numericDbName));
 		this.influxDB.deleteDatabase(numericDbName);
 	}
-	
+
 	/**
 	 * Test the implementation of {@link InfluxDB#isBatchEnabled()}.
 	 */
 	@Test(enabled = true)
 	public void testIsBatchEnabled() {
 		Assert.assertFalse(this.influxDB.isBatchEnabled());
-		
+
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 		Assert.assertTrue(this.influxDB.isBatchEnabled());
-		
+
 		this.influxDB.disableBatch();
 		Assert.assertFalse(this.influxDB.isBatchEnabled());
 	}

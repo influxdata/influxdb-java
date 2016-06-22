@@ -13,44 +13,26 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-
 /**
  * Test the InfluxDB API.
- * 
+ *
  * @author stefan.majer [at] gmail.com
- * 
+ *
  */
 @Test
 public class TicketTests {
 
 	private InfluxDB influxDB;
-	private DockerClient dockerClient;
-	private CreateContainerResponse container;
 
 	/**
 	 * Create a influxDB connection before all tests start.
-	 * 
+	 *
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
 	@BeforeClass
 	public void setUp() throws InterruptedException, IOException {
-		// Disable logging for the DockerClient.
-		Logger.getLogger("com.sun.jersey").setLevel(Level.OFF);
-		DockerClientConfig config = DockerClientConfig
-				.createDefaultConfigBuilder()
-				.withVersion("1.16")
-				.withUri("tcp://" + TestUtils.getInfluxIP() + ":4243")
-				.withUsername("roott")
-				.withPassword("root")
-				.build();
-		this.dockerClient = DockerClientBuilder.getInstance(config).build();
-		String ip = "127.0.0.1";
-		this.influxDB = InfluxDBFactory.connect("http://" + ip + ":8086", "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":8086", "root", "root");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;
@@ -73,15 +55,6 @@ public class TicketTests {
 		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
-	}
-
-	/**
-	 * Ensure all Databases created get dropped afterwards.
-	 */
-	@AfterClass
-	public void tearDown() {
-		System.out.println("Kill the Docker container");
-		// this.dockerClient.killContainerCmd(this.container.getId()).exec();
 	}
 
 	/**
