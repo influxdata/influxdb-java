@@ -91,16 +91,6 @@ For additional usage examples have a look at [InfluxDBTest.java](https://github.
 * Maven 3.0+
 * Docker daemon running
 
-Maven will run tests during build process using a docker image with influxdb actual image is majst01/influxdb-java.
-This docker image is pulled during the first test run which will take some time. So the first test execution will fail because the image to pull is not there.
-You can check with:
-
-```
-    $ docker images | grep majst01
-majst01/influxdb-java      latest              50256afac0c9        About an hour ago   298.7 MB
-
-```
-
 Then you can build influxdb-java with all tests with:
 
     $ mvn clean install
@@ -108,12 +98,17 @@ Then you can build influxdb-java with all tests with:
 If you don't have Docker running locally, you can skip tests with -DskipTests flag set to true:
 
     $ mvn clean install -DskipTests=true
-    
+
 If you have Docker running, but it is not at localhost (e.g. you are on a Mac and using `docker-machine`) you can set an optional environment variable `INFLUXDB_IP` to point to the correct IP address:
 
     $ export INFLUXDB_IP=192.168.99.100
     $ mvn test
 
+For convenience we provide a small shell script which starts a influxdb server locally and executes `mvn clean install` with all tests inside docker containers.
+
+```
+$ ./compile-and-test.sh
+```
 
 
 ### Publishing
