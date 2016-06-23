@@ -15,4 +15,8 @@ public class TestUtils {
 		return ip;
 	}
 
+	static String genDatabaseName() {
+		return "write_unittest_" + System.currentTimeMillis();
+	}
+
 }

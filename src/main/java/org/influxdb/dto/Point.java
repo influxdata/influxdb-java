@@ -55,7 +55,9 @@ public class Point {
 	public static final class Builder {
 		private final String measurement;
 		private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
+		private boolean omitTime = false;
 		private Long time;
+		// TODO - precision has to be null, and set by the user or omitted completely and left to the server to decide
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final Map<String, Object> fields = Maps.newTreeMap(Ordering.natural());
 		
@@ -171,6 +173,17 @@ public class Point {
 		}
 
 		/**
+		 * The point will inherit the server’s local timestamp at its' default precision,
+		 *
+		 * @return the Builder instance.
+		 */
+		public Builder useServerTimestampAtDefaultPrecision() {
+			this.omitTime = true;
+
+			return this;
+		}
+
+		/**
 		 * Add a time to this point
 		 *
 		 * @param precisionToSet
@@ -185,6 +198,18 @@ public class Point {
 		}
 
 		/**
+		 * Adds a time using the system clock, with millisecond precision
+		 *
+		 * @return the Builder instance.
+		 */
+		public Builder fillTimeMilli() {
+			this.time = System.currentTimeMillis();
+			this.precision = TimeUnit.MILLISECONDS;
+
+			return this;
+		}
+
+		/**
 		 * Create a new Point.
 		 *
 		 * @return the newly created Point.
@@ -193,16 +218,21 @@ public class Point {
 			Preconditions
 					.checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
 			Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
+
+			if (this.time == null) {
+				Preconditions.checkArgument(this.omitTime, "The choice of using the server's timestamp has to be "
+						+ "explicit.");
+			}
+
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
+
 			if (this.time != null) {
 			    point.setTime(this.time);
 			    point.setPrecision(this.precision);
-			} else {
-			    point.setTime(System.currentTimeMillis());
-			    point.setPrecision(TimeUnit.MILLISECONDS);
 			}
+
 			point.setTags(this.tags);
 			return point;
 		}
@@ -222,6 +252,13 @@ public class Point {
 	 */
 	void setTime(final Long time) {
 		this.time = time;
+	}
+
+	/**
+	 *
+	 */
+	public Long getTime() {
+		return this.time;
 	}
 
 	/**
@@ -263,12 +300,18 @@ public class Point {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Point [name=");
 		builder.append(this.measurement);
-		builder.append(", time=");
-		builder.append(this.time);
+
+		if (this.time != null) {
+			builder.append(", time=");
+			builder.append(this.time);
+			builder.append(", precision=");
+			builder.append(this.precision);
+		} else {
+			builder.append(", time=SET_BY_SERVER");
+		}
+
 		builder.append(", tags=");
 		builder.append(this.tags);
-		builder.append(", precision=");
-		builder.append(this.precision);
 		builder.append(", fields=");
 		builder.append(this.fields);
 		builder.append("]");
@@ -289,7 +332,7 @@ public class Point {
 		sb.append(KEY_ESCAPER.escape(this.measurement));
 		sb.append(concatenatedTags());
 		sb.append(concatenateFields());
-		sb.append(formatedTime());
+		formattedTime(sb);
 		return sb.toString();
 	}
 
@@ -342,13 +385,10 @@ public class Point {
 		return sb;
 	}
 
-	private StringBuilder formatedTime() {
-		final StringBuilder sb = new StringBuilder();
-		if (null == this.time) {
-			this.time = System.nanoTime();
+	private void formattedTime(StringBuilder sb) {
+		if (null != this.time) {
+			sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		}
-		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-		return sb;
 	}
 
 }

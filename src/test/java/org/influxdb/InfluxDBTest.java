@@ -13,6 +13,8 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -128,8 +130,17 @@ public class InfluxDBTest {
 				.addField("idle", 90L)
 				.addField("usertime", 9L)
 				.addField("system", 1L)
+				.useServerTimestampAtDefaultPrecision()
 				.build();
-		Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+
+		final Point point2 = Point
+				.measurement("disk")
+				.tag("atag", "test")
+				.addField("used", 80L)
+				.addField("free", 1L)
+				.useServerTimestampAtDefaultPrecision()
+				.build();
+
 		batchPoints.point(point1);
 		batchPoints.point(point2);
 		this.influxDB.write(batchPoints);
@@ -137,6 +148,48 @@ public class InfluxDBTest {
 		QueryResult result = this.influxDB.query(query);
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
+	}
+
+	@Test()
+	public void testTimestampExistence() {
+		final String measurementKey = "aint_got_time";
+		final Point point1 = Point
+				.measurement(measurementKey)
+				.useServerTimestampAtDefaultPrecision()
+				.tag("point", "p1")
+				.addField("blah", 1)
+				.build();
+		Assert.assertEquals(point1.getTime(), null);
+
+		final Point point2 = Point
+				.measurement(measurementKey)
+				.tag("point", "p2")
+				.addField("blah", 2)
+				.fillTimeMilli()
+				.build();
+		Assert.assertEquals((System.currentTimeMillis() / 100L), (point2.getTime() / 100L));
+
+		final String dbName = TestUtils.genDatabaseName();
+		this.influxDB.createDatabase(dbName);
+
+		final BatchPoints batchPoints = BatchPoints
+				.database(dbName)
+				.retentionPolicy("default")
+				.points(point1, point2)
+				.build();
+
+		this.influxDB.write(batchPoints);
+
+		final Query query = new Query("SELECT * FROM " + measurementKey, dbName);
+		final QueryResult result = this.influxDB.query(query);
+
+		final List<List<Object>> values = result.getResults().get(0).getSeries().get(0).getValues();
+
+		final long p1Time = new DateTime(values.get(1).get(0)).getMillis();
+		final long p2Time = new DateTime(values.get(0).get(0)).getMillis();
+
+		// Depends heavily on having the influxDB server time correct, maximum distance of 1s between the points
+		Assert.assertTrue((p1Time - p2Time) < 1000);
 	}
 
     /**
