@@ -343,9 +343,10 @@ public class Point {
 	}
 
 	private StringBuilder formatedTime() {
+		Preconditions.checkArgument(this.precision != null, "Precision must not be null.");
 		final StringBuilder sb = new StringBuilder();
 		if (null == this.time) {
-			this.time = System.nanoTime();
+			this.time = this.precision.convert(System.currentTimeMillis(),TimeUnit.MILLISECONDS);
 		}
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		return sb;
