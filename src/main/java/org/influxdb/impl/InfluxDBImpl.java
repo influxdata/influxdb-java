@@ -1,28 +1,23 @@
 package org.influxdb.impl;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.google.common.base.Joiner;
-import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
-
+import org.influxdb.InfluxDB;
+import org.influxdb.dto.*;
+import org.influxdb.impl.BatchProcessor.BatchEntry;
 import retrofit.RestAdapter;
 import retrofit.client.Client;
 import retrofit.client.Header;
 import retrofit.client.Response;
 import retrofit.mime.TypedString;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
 
 /**
  * Implementation of a InluxDB API.
@@ -202,7 +197,11 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void createDatabase(final String name) {
 		Preconditions.checkArgument(!name.contains("-"), "Databasename cant contain -");
-		this.influxDBService.query(this.username, this.password, "CREATE DATABASE IF NOT EXISTS \"" + name + "\"");
+		String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
+		if ( this.version().startsWith("0.") ) {
+			createDatabaseQueryString = String.format("CREATE DATABASE IF NOT EXISTS \"%s\"", name);
+		}
+		this.influxDBService.query(this.username, this.password, createDatabaseQueryString);
 	}
 
 	/**

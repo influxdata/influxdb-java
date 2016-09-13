@@ -15,4 +15,12 @@ public class TestUtils {
 		return ip;
 	}
 
+	public static String defaultRetentionPolicy(String version) {
+		if (version.startsWith("0.") ) {
+			return "default";
+		} else {
+			return "autogen";
+		}
+	}
+
 }

@@ -24,7 +24,7 @@ interface InfluxDBService {
 	public Response ping();
 
 	// db: required The database to write points
-	// rp: optional The retention policy to write points. If not specified, the default retention
+	// rp: optional The retention policy to write points. If not specified, the autogen retention
 	// policy will be used.
 	// precision: optional The precision of the time stamps (n, u, ms, s,m,h). If not specified, n
 	// is used.
