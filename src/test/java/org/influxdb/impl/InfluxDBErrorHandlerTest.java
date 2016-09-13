@@ -21,7 +21,7 @@ public class InfluxDBErrorHandlerTest {
     @Test
     public void testHandleErrorAndCloseTheStream() {
         final String influxDbInternalError = "InfluxDB internal error";
-        String url = "http://" + TestUtils.getInfluxIP() + ":8096";
+        String url = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(false);
 
         final AtomicBoolean closed = new AtomicBoolean(false);
         Response response = new Response(url, 500, "Internal error",

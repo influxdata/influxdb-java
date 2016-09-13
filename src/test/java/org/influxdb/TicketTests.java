@@ -32,7 +32,7 @@ public class TicketTests {
 	 */
 	@BeforeClass
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":8086", "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;
