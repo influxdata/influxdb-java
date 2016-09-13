@@ -1,22 +1,15 @@
 package org.influxdb;
 
+import org.influxdb.InfluxDB.LogLevel;
+import org.influxdb.dto.*;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * Test the InfluxDB API.
@@ -121,7 +114,7 @@ public class InfluxDBTest {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 
-		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("default").build();
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("autogen").build();
 		Point point1 = Point
 				.measurement("cpu")
 				.tag("atag", "test")
@@ -147,7 +140,7 @@ public class InfluxDBTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
 
-        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test idle=90,usertime=9,system=1");
+        this.influxDB.write(dbName, "autogen", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test idle=90,usertime=9,system=1");
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
         Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
@@ -162,7 +155,7 @@ public class InfluxDBTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
 
-        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
+        this.influxDB.write(dbName, "autogen", InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
 
@@ -181,7 +174,7 @@ public class InfluxDBTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
 
-        this.influxDB.write(dbName, "default", InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
+        this.influxDB.write(dbName, "autogen", InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
                 "cpu,atag=test1 idle=100,usertime=10,system=1",
                 "cpu,atag=test2 idle=200,usertime=20,system=2",
                 "cpu,atag=test3 idle=300,usertime=30,system=3"

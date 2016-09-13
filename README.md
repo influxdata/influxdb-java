@@ -18,7 +18,7 @@ influxDB.createDatabase(dbName);
 BatchPoints batchPoints = BatchPoints
 				.database(dbName)
 				.tag("async", "true")
-				.retentionPolicy("default")
+				.retentionPolicy("autogen")
 				.consistency(ConsistencyLevel.ALL)
 				.build();
 Point point1 = Point.measurement("cpu")
@@ -39,7 +39,7 @@ Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.deleteDatabase(dbName);
 ```
-
+Note : If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
 
 If your application produces only single Points, you can enable the batching functionality of influxdb-java:
 
@@ -63,8 +63,8 @@ Point point2 = Point.measurement("disk")
 					.addField("free", 1L)
 					.build();
 
-influxDB.write(dbName, "default", point1);
-influxDB.write(dbName, "default", point2);
+influxDB.write(dbName, "autogen", point1);
+influxDB.write(dbName, "autogen", point2);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.deleteDatabase(dbName);

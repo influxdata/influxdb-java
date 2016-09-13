@@ -1,14 +1,13 @@
 package org.influxdb;
 
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Stopwatch;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Stopwatch;
+import java.util.concurrent.TimeUnit;
 
 public class PerformanceTests {
 	private InfluxDB influxDB;
@@ -33,7 +32,7 @@ public class PerformanceTests {
 					.addField("idle", (double) j)
 					.addField("user", 2.0 * j)
 					.addField("system", 3.0 * j).build();
-			this.influxDB.write(dbName, "default", point);
+			this.influxDB.write(dbName, "autogen", point);
 		}
 		this.influxDB.disableBatch();
 		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of  Points took:" + watch);
@@ -51,7 +50,7 @@ public class PerformanceTests {
 			BatchPoints batchPoints = BatchPoints
 					.database(dbName)
 					.tag("blubber", "bla")
-					.retentionPolicy("default")
+					.retentionPolicy("autogen")
 					.build();
 			for (int j = 0; j < POINT_COUNT; j++) {
 				Point point = Point
@@ -78,7 +77,7 @@ public class PerformanceTests {
 		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < 2000000; i++) {
 			Point point = Point.measurement("s").addField("v", 1.0).build();
-			this.influxDB.write(dbName, "default", point);
+			this.influxDB.write(dbName, "autogen", point);
 		}
 		System.out.println("5Mio points:" + watch);
 		this.influxDB.deleteDatabase(dbName);
