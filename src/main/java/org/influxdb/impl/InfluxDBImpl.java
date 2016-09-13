@@ -1,6 +1,15 @@
 package org.influxdb.impl;
 
 import com.google.common.base.Joiner;
+import org.influxdb.InfluxDB;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
+import org.influxdb.impl.BatchProcessor.BatchEntry;
+import org.influxdb.impl.BatchProcessor.BatchEntryLineProtocol;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
@@ -30,13 +39,13 @@ public class InfluxDBImpl implements InfluxDB {
 	private final String password;
 	private final RestAdapter restAdapter;
 	private final InfluxDBService influxDBService;
-	private BatchProcessor batchProcessor;
-	private final AtomicBoolean batchEnabled = new AtomicBoolean(false);
+	private BatchProcessor batchProcessor;	
+	private final AtomicBoolean batchEnabled = new AtomicBoolean(false);	
 	private final AtomicLong writeCount = new AtomicLong();
 	private final AtomicLong unBatchedCount = new AtomicLong();
 	private final AtomicLong batchedCount = new AtomicLong();
 	private LogLevel logLevel = LogLevel.NONE;
-	
+
 	public InfluxDBImpl(final String url, final String username, final String password, 
 			final Client client) {
 		super();
@@ -49,7 +58,6 @@ public class InfluxDBImpl implements InfluxDB {
 				.build();
 		this.influxDBService = this.restAdapter.create(InfluxDBService.class);
 	}
-	
 
 	@Override
 	public InfluxDB setLogLevel(final LogLevel logLevel) {
@@ -84,6 +92,7 @@ public class InfluxDBImpl implements InfluxDB {
 				.interval(flushDuration, flushDurationTimeUnit)
 				.build();
 		this.batchEnabled.set(true);
+		
 		return this;
 	}
 
@@ -93,11 +102,11 @@ public class InfluxDBImpl implements InfluxDB {
 		this.batchProcessor.flush();
 		if (this.logLevel != LogLevel.NONE) {
 			System.out.println(
-					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
+					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:" 
 							+ this.batchedCount);
-		}
+		}				
 	}
-	
+
 	@Override
 	public boolean isBatchEnabled() {
 		return this.batchEnabled.get();
@@ -156,21 +165,32 @@ public class InfluxDBImpl implements InfluxDB {
 
 	@Override
 	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records) {
-		this.influxDBService.writePoints(
-				this.username,
-				this.password,
-				database,
-				retentionPolicy,
-				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
-				consistency.value(),
-				new TypedString(records));
-	}
-	@Override
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records) {
-		final String joinedRecords = Joiner.on("\n").join(records);
-		write(database, retentionPolicy, consistency, joinedRecords);
+		if (this.batchEnabled.get()) {
+			BatchEntryLineProtocol batchEntry = new BatchEntryLineProtocol(records, database, retentionPolicy, consistency);
+			this.batchProcessor.put(batchEntry);
+		} else {
+			this.influxDBService.writePoints(
+					this.username,
+					this.password,
+					database,
+					retentionPolicy,
+					TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+					consistency.value(),
+					new TypedString(records));
+		}
 	}
 
+	@Override
+	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records) {
+		final String joinedRecords = Joiner.on("\n").join(records);				
+		writeDirect(database, retentionPolicy, consistency, joinedRecords);
+	}
+
+	private void writeDirect(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records) {
+		this.influxDBService.writePoints(this.username, this.password, database, retentionPolicy,
+				TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS), consistency.value(), new TypedString(records));
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -190,7 +210,7 @@ public class InfluxDBImpl implements InfluxDB {
 				.query(this.username, this.password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit) , query.getCommand());
 		return response;
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */

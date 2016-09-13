@@ -3,6 +3,7 @@ package org.influxdb.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,10 +13,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 
 /**
@@ -29,6 +32,7 @@ public class BatchProcessor {
 
 	private static final Logger logger = Logger.getLogger(BatchProcessor.class.getName());
 	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
+	protected final BlockingQueue<BatchEntryLineProtocol> queuelineprotocol = new LinkedBlockingQueue<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
 	final int actions;
@@ -118,6 +122,38 @@ public class BatchProcessor {
 		}
 	}
 
+	static class BatchEntryLineProtocol {
+		private final String cmdLine;
+		private final String db;
+		private final String rp;
+		private final ConsistencyLevel cLvl;
+
+		public BatchEntryLineProtocol(final String cmdLine, final String db, final String rp, final ConsistencyLevel cLvl) {
+			super();
+			this.cmdLine = cmdLine;
+			this.db = db;
+			this.rp = rp;
+			this.cLvl = cLvl;
+		}
+
+		public String getcmdLine() {
+			return this.cmdLine;
+		}
+
+		public String getDb() {
+			return this.db;
+		}
+
+		public String getRp() {
+			return this.rp;
+		}
+
+		public ConsistencyLevel getcLvl() {
+			return this.cLvl;
+		}
+
+	}
+	
 	/**
 	 * Static method to create the Builder for this BatchProcessor.
 	 *
@@ -141,13 +177,24 @@ public class BatchProcessor {
 		this.scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				write();
+				write();				
 			}
 		}, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
 
 	}
 
 	void write() {
+		
+		if (!this.queue.isEmpty()) {
+			writePoints();
+		}
+		
+		if (!this.queuelineprotocol.isEmpty()) {
+			writeLineProtocol();
+		}		
+	}
+	
+	void writePoints() {
 		try {
 			if (this.queue.isEmpty()) {
 				return;
@@ -176,6 +223,45 @@ public class BatchProcessor {
 		}
 	}
 
+	void writeLineProtocol() {
+		try {
+
+			if (this.queuelineprotocol.isEmpty()) {
+				return;
+			}
+					
+			HashMultimap<String, BatchEntryLineProtocol> databaseToBatchPoints = HashMultimap.create();
+			List<BatchEntryLineProtocol> batchEntries = new ArrayList<>(this.queuelineprotocol.size());
+			this.queuelineprotocol.drainTo(batchEntries);
+
+			for (BatchEntryLineProtocol batchEntry : batchEntries) {
+				String sKey = batchEntry.getDb() + "." + batchEntry.getRp();							
+				databaseToBatchPoints.put(sKey, batchEntry);							
+			}
+						
+			for (String sKey : databaseToBatchPoints.keySet()) {
+				List<String> records = new ArrayList<>();				
+				BatchEntryLineProtocol bLineEntry = null;
+
+				Set<BatchEntryLineProtocol> bEntries = databaseToBatchPoints.get(sKey);
+								
+				for (BatchEntryLineProtocol bEntry : bEntries) {
+
+					if (bLineEntry == null)
+						bLineEntry = bEntry;
+
+					records.add(bEntry.getcmdLine());									
+				}				
+				
+				BatchProcessor.this.influxDB.write(bLineEntry.getDb(), bLineEntry.getRp(), bLineEntry.getcLvl(), records);				
+			}
+
+		} catch (Throwable t) {
+			// any exception would stop the scheduler
+			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
+		}
+	}
+	
 	/**
 	 * Put a single BatchEntry to the cache for later processing.
 	 *
@@ -185,7 +271,20 @@ public class BatchProcessor {
 	void put(final BatchEntry batchEntry) {
 		this.queue.add(batchEntry);
 		if (this.queue.size() >= this.actions) {
-			write();
+			writePoints();
+		}
+	}
+	
+	/**
+	 * Put a single BatchEntryLineProtocol to the cache for later processing.
+	 *
+	 * @param batchEntry
+	 *            the batchEntry to write to the cache.
+	 */
+	void put(final BatchEntryLineProtocol batchEntry) {
+		this.queuelineprotocol.add(batchEntry);
+		if (this.queuelineprotocol.size() >= this.actions) {
+			writeLineProtocol();
 		}
 	}
 
@@ -195,7 +294,7 @@ public class BatchProcessor {
 	 *
 	 */
 	void flush() {
-		this.write();
+		this.write();		
 		this.scheduler.shutdown();
 	}
 
