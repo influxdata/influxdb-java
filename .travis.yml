@@ -1,1 +1,6 @@
 language: java
+sudo: required
+
+services:
+  - docker
+script: ./compile-and-test.sh
