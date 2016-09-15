@@ -80,7 +80,7 @@ influxDB.deleteDatabase(dbName);
 		<dependency>
 			<groupId>org.influxdb</groupId>
 			<artifactId>influxdb-java</artifactId>
-			<version>2.2</version>
+			<version>2.3</version>
 		</dependency>
 ```
 
