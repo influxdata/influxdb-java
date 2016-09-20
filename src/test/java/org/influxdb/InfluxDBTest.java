@@ -30,7 +30,7 @@ public class InfluxDBTest {
 	 */
 	@BeforeClass
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;

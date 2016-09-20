@@ -7,6 +7,7 @@ import org.influxdb.dto.Point;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class PerformanceTests {
@@ -22,7 +23,7 @@ public class PerformanceTests {
 	}
 
 	@Test(threadPoolSize = 10, enabled = false)
-	public void writeSinglePointPerformance() throws InterruptedException {
+	public void writeSinglePointPerformance() throws InterruptedException, IOException {
 		String dbName = "write_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
@@ -41,7 +42,7 @@ public class PerformanceTests {
 	}
 
 	@Test(enabled = false)
-	public void writePerformance() {
+	public void writePerformance() throws IOException {
 		String dbName = "writepoints_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());

@@ -19,8 +19,7 @@ public class TestUtils {
 		String port = "8086";
 		
 		Map<String, String> getenv = System.getenv();		
-		if(apiPort) 
-		{		
+		if(apiPort) {		
 			if (getenv.containsKey("INFLUXDB_PORT_API")) 
 				port = getenv.get("INFLUXDB_PORT_API");
 		}
