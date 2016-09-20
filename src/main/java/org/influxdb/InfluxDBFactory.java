@@ -4,10 +4,9 @@ import org.influxdb.impl.InfluxDBImpl;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.squareup.okhttp.OkHttpClient;
 
-import retrofit.client.Client;
-import retrofit.client.OkClient;
+import okhttp3.OkHttpClient;
+
 
 /**
  * A Factory to create a instance of a InfluxDB Database adapter.
@@ -32,7 +31,7 @@ public enum InfluxDBFactory {
 	public static InfluxDB connect(final String url, final String username, final String password) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "The URL may not be null or empty.");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), "The username may not be null or empty.");
-		return new InfluxDBImpl(url, username, password, new OkClient(new OkHttpClient()));
+		return new InfluxDBImpl(url, username, password, new OkHttpClient.Builder());
 	}
 
 
@@ -51,7 +50,7 @@ public enum InfluxDBFactory {
 	 * @return a InfluxDB adapter suitable to access a InfluxDB.
 	 */
 	public static InfluxDB connect(final String url, final String username, final String password,
-			final Client client) {
+			final OkHttpClient.Builder client) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "The URL may not be null or empty.");
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), "The username may not be null or empty.");
 		Preconditions.checkNotNull(client, "The client may not be null.");

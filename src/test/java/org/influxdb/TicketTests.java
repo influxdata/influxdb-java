@@ -32,7 +32,7 @@ public class TicketTests {
 	 */
 	@BeforeClass
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;
@@ -74,7 +74,7 @@ public class TicketTests {
 				.tag("host", "host-\"C")
 				.tag("region", "region")
 				.build();
-		this.influxDB.write(dbName, "default", point1);
+		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -89,7 +89,7 @@ public class TicketTests {
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
 				.tag("async", "true")
-				.retentionPolicy("default")
+				.retentionPolicy(TestUtils.defaultRetentionPolicy(this.influxDB.version()))
 				.consistency(InfluxDB.ConsistencyLevel.ALL)
 				.build();
 		Point.Builder builder = Point.measurement("my_type");
@@ -110,7 +110,7 @@ public class TicketTests {
 		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
 		for (int i = 0; i < 1000; i++) {
 			Point point = Point.measurement("cpu").addField("idle", 99.0).build();
-			this.influxDB.write(dbName, "default", point);
+			this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
 		}
 		this.influxDB.deleteDatabase(dbName);
 	}

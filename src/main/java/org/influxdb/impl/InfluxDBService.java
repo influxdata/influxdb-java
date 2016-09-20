@@ -1,13 +1,15 @@
 package org.influxdb.impl;
 
 import org.influxdb.dto.QueryResult;
-import retrofit.client.Response;
-import retrofit.http.Body;
-import retrofit.http.GET;
-import retrofit.http.Headers;
-import retrofit.http.POST;
-import retrofit.http.Query;
-import retrofit.mime.TypedString;
+
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Query;
 
 interface InfluxDBService {
 
@@ -21,32 +23,38 @@ interface InfluxDBService {
 	public static final String EPOCH = "epoch";
 
 	@GET("/ping")
-	public Response ping();
+	public Call<ResponseBody> ping();
 
-	// db: required The database to write points
-	// rp: optional The retention policy to write points. If not specified, the autogen retention
-	// policy will be used.
-	// precision: optional The precision of the time stamps (n, u, ms, s,m,h). If not specified, n
-	// is used.
-	// consistency: optional The write consistency level required for the write to succeed. Can be
-	// one of one, any, all,quorum. Defaults to all.
-	// u: optional The username for authentication
-	// p: optional The password for authentication
-	@Headers("Content-Type: text/plain")
+	 /** 
+	 * @param username u: optional The username for authentication
+	 * @param password p: optional The password for authentication
+	 * @param database db: required The database to write points
+	 * @param retentionPolicy rp: optional The retention policy to write points. If not specified, the autogen retention
+	 * @param precision optional The precision of the time stamps (n, u, ms, s,m,h). If not specified, n
+	 * @param consistency optional The write consistency level required for the write to succeed. Can be one of one, any, 
+	 *	 all,quorum. Defaults to all.
+	 */
 	@POST("/write")
-	public Response writePoints(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
+	public Call<ResponseBody> writePoints(@Query(U) String username, @Query(P) String password, @Query(DB) String database,
 			@Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
-			@Query(CONSISTENCY) String consistency, @Body TypedString batchPoints);
+			@Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
 
 	@GET("/query")
-	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+	public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(EPOCH) String epoch, @Query(Q) String query);
 
 	@GET("/query")
-	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+	public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+			@Query(Q) String query);
+	
+	 @POST("/query")
+	public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(Q) String query);
 
 	@GET("/query")
-	public QueryResult query(@Query(U) String username, @Query(P) String password, @Query(Q) String query);
+	public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(Q) String query);
+	
+	@POST("/query")
+	public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(Q) String query);
 
 }
