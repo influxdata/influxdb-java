@@ -199,9 +199,13 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public QueryResult query(final Query query)	{
-		return execute(query.requiresPost()
-				? this.influxDBService.postQuery(this.username, this.password, query.getDatabase(), query.getCommand())
-				: this.influxDBService.query(this.username, this.password, query.getDatabase(), query.getCommand()));
+		Call<QueryResult> call;
+		if (query.requiresPost()) {
+			call = this.influxDBService.postQuery(this.username, this.password, query.getDatabase(), query.getCommand());
+		} else {
+			call = this.influxDBService.query(this.username, this.password, query.getDatabase(), query.getCommand());
+		}
+		return execute(call);
 	}
 
 	/**
