@@ -196,7 +196,7 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public void createDatabase(final String name) {
-		Preconditions.checkArgument(!name.contains("-"), "Databasename cant contain -");
+		Preconditions.checkArgument(!name.contains("-"), "Database name cant contain -");
 		String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
 		if ( this.version().startsWith("0.") ) {
 			createDatabaseQueryString = String.format("CREATE DATABASE IF NOT EXISTS \"%s\"", name);
