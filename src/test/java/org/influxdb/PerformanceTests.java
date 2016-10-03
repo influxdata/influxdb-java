@@ -4,8 +4,9 @@ import com.google.common.base.Stopwatch;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
@@ -15,13 +16,13 @@ public class PerformanceTests {
 	private final static int POINT_COUNT = 100000;
 	private final static int SINGLE_POINT_COUNT = 10000;
 
-	@BeforeClass
+	@Before
 	public void setUp() {
 		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
 		this.influxDB.setLogLevel(LogLevel.NONE);
 	}
 
-	@Test(threadPoolSize = 10, enabled = false)
+	@Test
 	public void writeSinglePointPerformance() {
 		String dbName = "write_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -40,7 +41,8 @@ public class PerformanceTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
-	@Test(enabled = false)
+	@Ignore
+	@Test
 	public void writePerformance() {
 		String dbName = "writepoints_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -70,7 +72,7 @@ public class PerformanceTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
-	@Test(enabled = true)
+	@Test
 	public void maxWritePointsPerformance() {
 		String dbName = "d";
 		this.influxDB.createDatabase(dbName);

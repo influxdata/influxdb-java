@@ -7,8 +7,8 @@ import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test the InfluxDB API.
@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
  * @author stefan.majer [at] gmail.com
  *
  */
-@Test
 public class TicketTests {
 
 	private InfluxDB influxDB;
@@ -27,7 +26,7 @@ public class TicketTests {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	@BeforeClass
+	@Before
 	public void setUp() throws InterruptedException, IOException {
 		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
 		boolean influxDBstarted = false;
@@ -58,7 +57,7 @@ public class TicketTests {
 	 * Test for ticket #38
 	 *
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testTicket38() {
 		String dbName = "ticket38_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -79,7 +78,7 @@ public class TicketTests {
 	 * Test for ticket #39
 	 *
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testTicket39() {
 		String dbName = "ticket39_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -100,7 +99,7 @@ public class TicketTests {
 	/**
 	 * Test for ticket #40
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testTicket40() {
 		String dbName = "ticket40_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);

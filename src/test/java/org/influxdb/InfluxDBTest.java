@@ -2,9 +2,10 @@ package org.influxdb;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.*;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,7 +18,6 @@ import java.util.concurrent.TimeUnit;
  * @author stefan.majer [at] gmail.com
  *
  */
-@Test
 public class InfluxDBTest {
 
 	private InfluxDB influxDB;
@@ -28,7 +28,7 @@ public class InfluxDBTest {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	@BeforeClass
+	@Before
 	public void setUp() throws InterruptedException, IOException {
 		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
 		boolean influxDBstarted = false;
@@ -58,7 +58,7 @@ public class InfluxDBTest {
 	/**
 	 * Test for a ping.
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testPing() {
 		Pong result = this.influxDB.ping();
 		Assert.assertNotNull(result);
@@ -68,7 +68,7 @@ public class InfluxDBTest {
 	/**
 	 * Test that version works.
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testVersion() {
 		String version = this.influxDB.version();
 		Assert.assertNotNull(version);
@@ -78,7 +78,7 @@ public class InfluxDBTest {
 	/**
 	 * Simple Test for a query.
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testQuery() {
 		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"));
 		this.influxDB.query(new Query("DROP DATABASE mydb2", "mydb"));
@@ -87,7 +87,7 @@ public class InfluxDBTest {
 	/**
 	 * Test that describe Databases works.
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testDescribeDatabases() {
 		String dbName = "unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -103,13 +103,13 @@ public class InfluxDBTest {
 			}
 
 		}
-		Assert.assertTrue(found, "It is expected that describeDataBases contents the newly create database.");
+		Assert.assertTrue("It is expected that describeDataBases contents the newly create database.", found);
 	}
 
 	/**
 	 * Test that writing to the new lineprotocol.
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testWrite() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
@@ -135,7 +135,7 @@ public class InfluxDBTest {
     /**
      * Test writing to the database using string protocol.
      */
-    @Test(enabled = true)
+    @Test
     public void testWriteStringData() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
@@ -150,7 +150,7 @@ public class InfluxDBTest {
     /**
      * Test writing multiple records to the database using string protocol.
      */
-    @Test(enabled = true)
+    @Test
     public void testWriteMultipleStringData() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
@@ -170,7 +170,7 @@ public class InfluxDBTest {
     /**
      * Test writing multiple separate records to the database using string protocol.
      */
-    @Test(enabled = true)
+    @Test
     public void testWriteMultipleStringDataLines() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
@@ -194,7 +194,7 @@ public class InfluxDBTest {
 	/**
 	 * Test that creating database which name is composed of numbers only works
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testCreateNumericNamedDatabase() {
 		String numericDbName = "123";
 
@@ -207,7 +207,7 @@ public class InfluxDBTest {
 	/**
 	 * Test the implementation of {@link InfluxDB#isBatchEnabled()}.
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testIsBatchEnabled() {
 		Assert.assertFalse(this.influxDB.isBatchEnabled());
 

@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import com.google.common.collect.Maps;
 
@@ -72,7 +72,7 @@ public class PointTest {
 	/**
 	 * Test for ticket #44
 	 */
-	@Test(enabled = true)
+	@Test
 	public void testTicket44() {
 		Point point = Point.measurement("test").time(1, TimeUnit.MICROSECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1000");
@@ -187,35 +187,35 @@ public class PointTest {
 
 		assertThat(point.lineProtocol()).asString().isEqualTo("nulltest,foo=bar field1=\"value1\",field3=1.0 1");
 	}
-	
+
 	/**
 	 * Tests for issue #110
 	 */
-	@Test(expectedExceptions = IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testAddingTagsWithNullNameThrowsAnError() {
 		Point.measurement("dontcare").tag(null, "DontCare");
 	}
 	
-	@Test(expectedExceptions = IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testAddingTagsWithNullValueThrowsAnError() {
 		Point.measurement("dontcare").tag("DontCare", null);
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testAddingMapOfTagsWithNullNameThrowsAnError() {
 		Map<String, String> map = Maps.newHashMap();
 		map.put(null, "DontCare");
 		Point.measurement("dontcare").tag(map);
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testAddingMapOfTagsWithNullValueThrowsAnError() {
 		Map<String, String> map = Maps.newHashMap();
 		map.put("DontCare", null);
 		Point.measurement("dontcare").tag(map);
 	}
 	
-	@Test(expectedExceptions=IllegalArgumentException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void testNullValueThrowsExceptionViaAddField() {
 		Point.measurement("dontcare").addField("field", (String) null);
 	}

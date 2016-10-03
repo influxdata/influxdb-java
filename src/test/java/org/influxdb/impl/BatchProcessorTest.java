@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 public class BatchProcessorTest {
 

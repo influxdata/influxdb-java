@@ -2,7 +2,8 @@ package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
+
 
 /**
  * Test for the Query DTO.
