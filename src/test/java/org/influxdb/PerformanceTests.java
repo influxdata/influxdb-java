@@ -22,7 +22,7 @@ public class PerformanceTests {
 	}
 
 	@Test(threadPoolSize = 10, enabled = false)
-	public void writeSinglePointPerformance() throws InterruptedException {
+	public void writeSinglePointPerformance() {
 		String dbName = "write_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
@@ -36,7 +36,7 @@ public class PerformanceTests {
 			this.influxDB.write(dbName, rp, point);
 		}
 		this.influxDB.disableBatch();
-		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of  Points took:" + watch);
+		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of Points took:" + watch);
 		this.influxDB.deleteDatabase(dbName);
 	}
 

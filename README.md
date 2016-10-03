@@ -72,6 +72,13 @@ influxDB.query(query);
 influxDB.deleteDatabase(dbName);
 ```
 
+### Changes in 2.4
+influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``
+to the ``InfluxDBFactory.connect`` if you wish to add more interceptors, etc, to OkHttp.
+
+Further, in InfluxDB 1.0.0, some queries now require a POST instead of GET.  There is a flag on ``Query``
+that allow this to be specified (default is still GET).
+
 
 
 

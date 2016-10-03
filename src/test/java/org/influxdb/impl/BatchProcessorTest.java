@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB;
@@ -16,7 +17,7 @@ import org.testng.annotations.Test;
 public class BatchProcessorTest {
 
     @Test
-    public void testSchedulerExceptionHandling() throws InterruptedException {
+    public void testSchedulerExceptionHandling() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
             .interval(1, TimeUnit.NANOSECONDS).build();

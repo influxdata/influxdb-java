@@ -10,15 +10,26 @@ public class Query {
 
 	private final String command;
 	private final String database;
+	private final boolean requiresPost;
 
 	/**
 	 * @param command
 	 * @param database
 	 */
 	public Query(final String command, final String database) {
+		this(command, database, false);
+	}
+
+	 /**
+	 * @param command
+	 * @param database
+	 * @param requiresPost true if the command requires a POST instead of GET to influxdb
+	 */
+	 public Query(final String command, final String database, boolean requiresPost) {
 		super();
 		this.command = command;
 		this.database = database;
+		this.requiresPost = requiresPost;
 	}
 
 	/**
@@ -35,6 +46,10 @@ public class Query {
 		return this.database;
 	}
 
+	public boolean requiresPost()	{
+		return requiresPost;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
