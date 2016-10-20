@@ -104,6 +104,7 @@ public class InfluxDBTest {
 
 		}
 		Assert.assertTrue("It is expected that describeDataBases contents the newly create database.", found);
+		this.influxDB.deleteDatabase(dbName);
 	}
 
 	/**
