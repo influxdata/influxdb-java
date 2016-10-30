@@ -71,6 +71,7 @@ Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.deleteDatabase(dbName);
 ```
+Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a gracefull application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.disableBatch()```
 
 ### Changes in 2.4
 influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``
