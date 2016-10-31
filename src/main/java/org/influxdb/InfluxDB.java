@@ -78,7 +78,8 @@ public interface InfluxDB {
 
 	/**
 	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
-	 * flushDurations is reached first, a batchwrite is issued.
+	 * flushDurations is reached first, a batchwrite is issued. 
+	 * Note that batch processing needs to be explicitly stopped before the application is shutdown. To do so call disableBatch().
 	 *
 	 * @param actions
 	 *            the number of actions to collect
