@@ -105,11 +105,13 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void disableBatch() {
 		this.batchEnabled.set(false);
-		this.batchProcessor.flush();
-		if (this.logLevel != LogLevel.NONE) {
-			System.out.println(
-					"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
-							+ this.batchedCount);
+		if(this.batchProcessor != null) {
+			this.batchProcessor.flush();
+			if (this.logLevel != LogLevel.NONE) {
+				System.out.println(
+						"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
+								+ this.batchedCount);
+			}
 		}
 	}
 
