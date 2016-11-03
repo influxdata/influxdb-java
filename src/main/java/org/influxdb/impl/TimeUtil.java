@@ -13,6 +13,15 @@ import java.util.concurrent.TimeUnit;
  */
 public enum TimeUtil {
 	;
+	
+	private final static EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
+			TimeUnit.HOURS,
+			TimeUnit.MINUTES,
+			TimeUnit.SECONDS,
+			TimeUnit.MILLISECONDS,
+			TimeUnit.MICROSECONDS,
+			TimeUnit.NANOSECONDS);
+	
 	/**
 	 * Convert from a TimeUnit to a influxDB timeunit String.
 	 *
@@ -34,14 +43,7 @@ public enum TimeUtil {
 		case NANOSECONDS:
 			return "n";
 		default:
-			EnumSet<TimeUnit> allowedTimeunits = EnumSet.of(
-					TimeUnit.HOURS,
-					TimeUnit.MINUTES,
-					TimeUnit.SECONDS,
-					TimeUnit.MILLISECONDS,
-					TimeUnit.MICROSECONDS,
-					TimeUnit.NANOSECONDS);
-			throw new IllegalArgumentException("time precision must be one of:" + allowedTimeunits);
+			throw new IllegalArgumentException("time precision must be one of:" + ALLOWED_TIMEUNITS);
 		}
 	}
 
