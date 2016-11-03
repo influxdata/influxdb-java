@@ -131,6 +131,7 @@ public class InfluxDBImpl implements InfluxDB {
 			for (String name : headers.toMultimap().keySet()) {
 				if (null != name && name.equalsIgnoreCase("X-Influxdb-Version")) {
 					version = headers.get(name);
+					break;
 				}
 			}
 			Pong pong = new Pong();
