@@ -5,7 +5,6 @@ import org.influxdb.dto.QueryResult;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
-import retrofit2.Response;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
@@ -47,7 +46,7 @@ interface InfluxDBService {
 	public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(Q) String query);
 	
-	 @POST("/query")
+	@POST("/query")
 	public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
 			@Query(Q) String query);
 
