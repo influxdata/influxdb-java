@@ -171,7 +171,7 @@ public class BatchProcessor {
 				BatchProcessor.this.influxDB.write(batchPoints);
 			}
 		} catch (Throwable t) {
-			// any exception would stop the scheduler
+			// any exception wouldn't stop the scheduler
 			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
 		}
 	}
