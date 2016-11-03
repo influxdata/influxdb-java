@@ -9,7 +9,7 @@ INFLUXDB_VERSIONS="0.13-alpine 1.0-alpine 1.1.0-rc1-alpine"
 for version in ${INFLUXDB_VERSIONS}
 do
   echo "Tesing againts influxdb ${version}"
-  docker rm influxdb
+  docker rm influxdb || true
   docker run -d --name influxdb -p 8086:8086 influxdb:${version}
 
   docker run -it --rm  \
@@ -20,5 +20,5 @@ do
          -e INFLUXDB_IP=influxdb \
          maven mvn clean install
 
-  docker kill influxdb
+  docker kill influxdb || true
 done
