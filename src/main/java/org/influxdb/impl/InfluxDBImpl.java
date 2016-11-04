@@ -1,19 +1,37 @@
 package org.influxdb.impl;
 
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
+
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.UdpBatchPoints;
+import org.influxdb.impl.BatchProcessor.AbstractBatchEntry;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
+import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
+
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Range;
+
 import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
@@ -25,11 +43,6 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of a InluxDB API.
@@ -37,8 +50,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author stefan.majer [at] gmail.com
  */
 public class InfluxDBImpl implements InfluxDB {
+	
+	static final Logger logger = Logger.getLogger(InfluxDBImpl.class.getName());
 	static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
+	private final String host;
 	private final String username;
 	private final String password;
 	private final Retrofit retrofit;
@@ -54,6 +70,7 @@ public class InfluxDBImpl implements InfluxDB {
 	public InfluxDBImpl(final String url, final String username, final String password,
 			final OkHttpClient.Builder client) {
 		super();
+		this.host = HttpUrl.parse(url).host();
 		this.username = username;
 		this.password = password;
 		this.loggingInterceptor = new HttpLoggingInterceptor();
@@ -147,6 +164,33 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public String version()	{
 		return ping().getVersion();
+	}
+	
+	@Override
+	public void write(final int udpPort, final Point point) {
+		Preconditions.checkArgument(Range.closed(0, 65535).contains(udpPort), "UDP port should >=0 and <=65535.");
+		if (this.batchEnabled.get()) {
+			AbstractBatchEntry batchEntry = new UdpBatchEntry(point, udpPort);
+			this.batchProcessor.put(batchEntry);
+		} else {
+			UdpBatchPoints batchPoints = UdpBatchPoints.udpPort(udpPort).build();
+			batchPoints.point(point);
+			this.write(batchPoints);
+			this.unBatchedCount.incrementAndGet();
+		}
+		this.writeCount.incrementAndGet();
+	}
+	
+	@Override
+	public void write(final UdpBatchPoints batchPoints) {
+		this.batchedCount.addAndGet(batchPoints.getPoints().size());
+		int udpPort = batchPoints.getUdpPort();
+		try (DatagramSocket datagramSocket = new DatagramSocket()){
+ 			byte[] bytes = batchPoints.lineProtocol().getBytes(Charsets.UTF_8);
+			datagramSocket.send(new DatagramPacket(bytes, bytes.length, new InetSocketAddress(host, udpPort)));
+		} catch (IOException e) {
+			logger.log(java.util.logging.Level.SEVERE, "UdpBatchPoints could not be sent. Data will be lost", e);
+  		}  
 	}
 
 	@Override
