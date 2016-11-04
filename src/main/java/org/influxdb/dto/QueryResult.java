@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * {Purpose of This Type}
+ * {Purpose of This Type}.
  *
  * {Other Notes Relating to This Type (Optional)}
  *
@@ -25,8 +25,8 @@ import java.util.Map;
 // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
 public class QueryResult {
 
-	private List<Result> results;
-	private String error;
+  private List<Result> results;
+  private String error;
 
 	/**
 	 * @return the results

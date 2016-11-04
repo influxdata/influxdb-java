@@ -4,17 +4,17 @@ import com.google.common.base.MoreObjects;
 
 /**
  * Representation of the response for a influxdb ping.
- * 
+ *
  * @author stefan.majer [at] gmail.com
- * 
+ *
  */
 public class Pong {
-	private String version;
-	private long responseTime;
+  private String version;
+  private long responseTime;
 
-	/**
-	 * @return the status
-	 */
+  /**
+   * @return the status
+   */
 	public String getVersion() {
 		return this.version;
 	}

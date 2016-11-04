@@ -105,7 +105,7 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public void disableBatch() {
 		this.batchEnabled.set(false);
-		if(this.batchProcessor != null) {
+		if (this.batchProcessor != null) {
 			this.batchProcessor.flush();
 			if (this.logLevel != LogLevel.NONE) {
 				System.out.println(
@@ -138,8 +138,7 @@ public class InfluxDBImpl implements InfluxDB {
 			pong.setVersion(version);
 			pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
 			return pong;
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw Throwables.propagate(e);
 		}
 	}
@@ -265,11 +264,10 @@ public class InfluxDBImpl implements InfluxDB {
 			if (response.isSuccessful()) {
 				return response.body();
 			}
-			try (ResponseBody errorBody = response.errorBody()){
+			try (ResponseBody errorBody = response.errorBody()) {
 				throw new RuntimeException(errorBody.string());
 			}
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			throw Throwables.propagate(e);
 		}
 	}

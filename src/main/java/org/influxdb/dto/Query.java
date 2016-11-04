@@ -8,9 +8,9 @@ package org.influxdb.dto;
  */
 public class Query {
 
-	private final String command;
-	private final String database;
-	private final boolean requiresPost;
+  private final String command;
+  private final String database;
+  private final boolean requiresPost;
 
 	/**
 	 * @param command
@@ -49,7 +49,7 @@ public class Query {
 	public boolean requiresPost()	{
 		return requiresPost;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

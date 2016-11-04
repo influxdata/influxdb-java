@@ -10,29 +10,29 @@ import okhttp3.OkHttpClient;
 
 /**
  * A Factory to create a instance of a InfluxDB Database adapter.
- * 
+ *
  * @author stefan.majer [at] gmail.com
- * 
+ *
  */
 public enum InfluxDBFactory {
-	
-	;
-	
-	/**
-	 * Create a connection to a InfluxDB.
-	 * 
-	 * @param url
-	 *            the url to connect to.
-	 * @return a InfluxDB adapter suitable to access a InfluxDB.
-	 */
+
+  ;
+
+  /**
+   * Create a connection to a InfluxDB.
+   *
+   * @param url
+   *            the url to connect to.
+   * @return a InfluxDB adapter suitable to access a InfluxDB.
+   */
 	public static InfluxDB connect(final String url) {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "The URL may not be null or empty.");
-		return new InfluxDBImpl(url, null, null, new OkHttpClient.Builder());
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(url), "The URL may not be null or empty.");
+    return new InfluxDBImpl(url, null, null, new OkHttpClient.Builder());
 	}
-	
+
 	/**
 	 * Create a connection to a InfluxDB.
-	 * 
+	 *
 	 * @param url
 	 *            the url to connect to.
 	 * @param username
@@ -47,10 +47,10 @@ public enum InfluxDBFactory {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(username), "The username may not be null or empty.");
 		return new InfluxDBImpl(url, username, password, new OkHttpClient.Builder());
 	}
-	
+
 	/**
 	 * Create a connection to a InfluxDB.
-	 * 
+	 *
 	 * @param url
 	 *            the url to connect to.
 	 * @param client
@@ -65,7 +65,7 @@ public enum InfluxDBFactory {
 
 	/**
 	 * Create a connection to a InfluxDB.
-	 * 
+	 *
 	 * @param url
 	 *            the url to connect to.
 	 * @param username

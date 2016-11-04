@@ -13,15 +13,15 @@ import java.util.concurrent.TimeUnit;
  */
 public enum TimeUtil {
 	;
-	
-	private final static EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
+
+	private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
 			TimeUnit.HOURS,
 			TimeUnit.MINUTES,
 			TimeUnit.SECONDS,
 			TimeUnit.MILLISECONDS,
 			TimeUnit.MICROSECONDS,
 			TimeUnit.NANOSECONDS);
-	
+
 	/**
 	 * Convert from a TimeUnit to a influxDB timeunit String.
 	 *

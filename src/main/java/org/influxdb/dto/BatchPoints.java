@@ -12,7 +12,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 
 /**
- * {Purpose of This Type}
+ * {Purpose of This Type}.
  *
  * {Other Notes Relating to This Type (Optional)}
  *
@@ -20,18 +20,18 @@ import com.google.common.collect.Ordering;
  *
  */
 public class BatchPoints {
-	private String database;
-	private String retentionPolicy;
-	private Map<String, String> tags;
-	private List<Point> points;
-	private ConsistencyLevel consistency;
+  private String database;
+  private String retentionPolicy;
+  private Map<String, String> tags;
+  private List<Point> points;
+  private ConsistencyLevel consistency;
 
 	BatchPoints() {
 		// Only visible in the Builder
 	}
 
 	/**
-	 * Create a new BatchPoints build to create a new BatchPoints in a fluent manner-
+	 * Create a new BatchPoints build to create a new BatchPoints in a fluent manner.
 	 *
 	 * @param database
 	 *            the name of the Database

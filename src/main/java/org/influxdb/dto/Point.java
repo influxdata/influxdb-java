@@ -16,9 +16,9 @@ import com.google.common.escape.Escapers;
 
 /**
  * Representation of a InfluxDB database Point.
- * 
+ *
  * @author stefan.majer [at] gmail.com
- * 
+ *
  */
 public class Point {
 	private String measurement;
@@ -34,7 +34,7 @@ public class Point {
 	}
 
 	/**
-	 * Create a new Point Build build to create a new Point in a fluent manner-
+	 * Create a new Point Build build to create a new Point in a fluent manner.
 	 *
 	 * @param measurement
 	 *            the name of the measurement.
@@ -57,7 +57,7 @@ public class Point {
 		private Long time;
 		private TimeUnit precision = TimeUnit.NANOSECONDS;
 		private final Map<String, Object> fields = new TreeMap<>();
-		
+
 		/**
 		 * @param measurement
 		 */
@@ -122,41 +122,41 @@ public class Point {
 				if (value instanceof BigInteger) {
 					value = ((BigInteger) value).doubleValue();
 				}
-				
+
 			}
 			fields.put(field, value);
 			return this;
 		}
-		
+
 		public Builder addField(final String field, final boolean value) {
 			fields.put(field, value);
 			return this;
 		}
-		
+
 		public Builder addField(final String field, final long value) {
 			fields.put(field, value);
 			return this;
 		}
-		
+
 		public Builder addField(final String field, final double value) {
 			fields.put(field, value);
 			return this;
 		}
-		
+
 		public Builder addField(String field, Number value) {
 			fields.put(field, value);
 			return this;
 		}
-		
+
 		public Builder addField(final String field, final String value) {
 			if (value == null) {
 				throw new IllegalArgumentException("Field value cannot be null");
 			}
-			
+
 			fields.put(field, value);
 			return this;
 		}
-		
+
 		/**
 		 * Add a Map of fields to this point.
 		 *
@@ -170,7 +170,7 @@ public class Point {
 		}
 
 		/**
-		 * Add a time to this point
+		 * Add a time to this point.
 		 *
 		 * @param precisionToSet
 		 * @param timeToSet
@@ -276,9 +276,9 @@ public class Point {
 
 	/**
 	 * calculate the lineprotocol entry for a single Point.
-	 * 
+	 *
 	 * Documentation is WIP : https://github.com/influxdb/influxdb/pull/2997
-	 * 
+	 *
 	 * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md
 	 *
 	 * @return the String without newLine.
@@ -301,7 +301,7 @@ public class Point {
 		sb.append(" ");
 		return sb;
 	}
-	
+
 	private StringBuilder concatenateFields() {
 		final StringBuilder sb = new StringBuilder();
 		final int fieldCount = this.fields.size();
@@ -344,7 +344,7 @@ public class Point {
 	private StringBuilder formatedTime() {
 		final StringBuilder sb = new StringBuilder();
 		if (null == this.time) {
-			this.time = this.precision.convert(System.currentTimeMillis(),TimeUnit.MILLISECONDS);
+			this.time = this.precision.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 		}
 		sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
 		return sb;
