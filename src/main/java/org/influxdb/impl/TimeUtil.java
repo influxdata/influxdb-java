@@ -12,40 +12,40 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public enum TimeUtil {
-	;
+  ;
 
-	private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
-			TimeUnit.HOURS,
-			TimeUnit.MINUTES,
-			TimeUnit.SECONDS,
-			TimeUnit.MILLISECONDS,
-			TimeUnit.MICROSECONDS,
-			TimeUnit.NANOSECONDS);
+  private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
+      TimeUnit.HOURS,
+      TimeUnit.MINUTES,
+      TimeUnit.SECONDS,
+      TimeUnit.MILLISECONDS,
+      TimeUnit.MICROSECONDS,
+      TimeUnit.NANOSECONDS);
 
-	/**
-	 * Convert from a TimeUnit to a influxDB timeunit String.
-	 *
-	 * @param t
-	 * @return the String representation.
-	 */
-	public static String toTimePrecision(final TimeUnit t) {
-		switch (t) {
-		case HOURS:
-			return "h";
-		case MINUTES:
-			return "m";
-		case SECONDS:
-			return "s";
-		case MILLISECONDS:
-			return "ms";
-		case MICROSECONDS:
-			return "u";
-		case NANOSECONDS:
-			return "n";
-		default:
-			throw new IllegalArgumentException("time precision must be one of:" + ALLOWED_TIMEUNITS);
-		}
-	}
+  /**
+   * Convert from a TimeUnit to a influxDB timeunit String.
+   *
+   * @param t
+   * @return the String representation.
+   */
+  public static String toTimePrecision(final TimeUnit t) {
+    switch (t) {
+    case HOURS:
+      return "h";
+    case MINUTES:
+      return "m";
+    case SECONDS:
+      return "s";
+    case MILLISECONDS:
+      return "ms";
+    case MICROSECONDS:
+      return "u";
+    case NANOSECONDS:
+      return "n";
+    default:
+      throw new IllegalArgumentException("time precision must be one of:" + ALLOWED_TIMEUNITS);
+    }
+  }
 
     /**
      * convert a unix epoch time to timestamp used by influxdb.

@@ -15,43 +15,43 @@ public class Pong {
   /**
    * @return the status
    */
-	public String getVersion() {
-		return this.version;
-	}
+  public String getVersion() {
+    return this.version;
+  }
 
-	/**
-	 * @param version
-	 *            the status to set
-	 */
-	public void setVersion(final String version) {
-		this.version = version;
-	}
+  /**
+   * @param version
+   *            the status to set
+   */
+  public void setVersion(final String version) {
+    this.version = version;
+  }
 
-	/**
-	 * @return the responseTime
-	 */
-	public long getResponseTime() {
-		return this.responseTime;
-	}
+  /**
+   * @return the responseTime
+   */
+  public long getResponseTime() {
+    return this.responseTime;
+  }
 
-	/**
-	 * @param responseTime
-	 *            the responseTime to set
-	 */
-	public void setResponseTime(final long responseTime) {
-		this.responseTime = responseTime;
-	}
+  /**
+   * @param responseTime
+   *            the responseTime to set
+   */
+  public void setResponseTime(final long responseTime) {
+    this.responseTime = responseTime;
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String toString() {
-		return MoreObjects
-				.toStringHelper(this.getClass())
-				.add("version", this.version)
-				.add("responseTime", this.responseTime)
-				.toString();
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String toString() {
+    return MoreObjects
+        .toStringHelper(this.getClass())
+        .add("version", this.version)
+        .add("responseTime", this.responseTime)
+        .toString();
+  }
 
 }

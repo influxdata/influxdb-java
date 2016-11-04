@@ -7,8 +7,7 @@
   <module name="SuppressWarningsFilter"/>
   <module name="NewlineAtEndOfFile"/>
   <module name="FileLength"/>
-  <!-- FIXME reenable tab check-->
-  <!--<module name="FileTabCharacter"/>-->
+  <module name="FileTabCharacter"/>
 
   <!-- Trailing spaces -->
   <module name="RegexpSingleline">
@@ -41,7 +40,7 @@
 
     <!-- Checks for Naming Conventions.                  -->
     <!-- See http://checkstyle.sf.net/config_naming.html -->
-    <!--<module name="ConstantName"/>-->
+    <module name="ConstantName"/>
     <module name="LocalFinalVariableName"/>
     <module name="LocalVariableName"/>
     <module name="MemberName"/>
