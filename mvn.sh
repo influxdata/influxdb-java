@@ -8,4 +8,4 @@ docker run -it --rm  \
        -v $PWD:/usr/src/mymaven \
        -v $PWD/.m2:/root/.m2 \
        -w /usr/src/mymaven \
-       maven mvn clean checkstyle:checkstyle
+       maven mvn clean "$@"
