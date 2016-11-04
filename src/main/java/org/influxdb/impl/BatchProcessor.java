@@ -27,7 +27,7 @@ import com.google.common.collect.Maps;
  */
 public class BatchProcessor {
 
-  private static final Logger logger = Logger.getLogger(BatchProcessor.class.getName());
+  private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
   protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   final InfluxDBImpl influxDB;
@@ -173,7 +173,7 @@ public class BatchProcessor {
       }
     } catch (Throwable t) {
       // any exception wouldn't stop the scheduler
-      logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
+      LOG.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
     }
   }
 
