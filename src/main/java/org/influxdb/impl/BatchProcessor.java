@@ -8,12 +8,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.influxdb.InfluxDB;
+import org.influxdb.dto.AbstractBatchPoints;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.UdpBatchPoints;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -28,7 +31,7 @@ import com.google.common.collect.Maps;
 public class BatchProcessor {
 
 	private static final Logger logger = Logger.getLogger(BatchProcessor.class.getName());
-	protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
+	protected final BlockingQueue<AbstractBatchEntry> queue = new LinkedBlockingQueue<>();
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	final InfluxDBImpl influxDB;
 	final int actions;
@@ -92,21 +95,27 @@ public class BatchProcessor {
 			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
 		}
 	}
-
-	static class BatchEntry {
+	
+	static class AbstractBatchEntry {
 		private final Point point;
-		private final String db;
-		private final String rp;
 
-		public BatchEntry(final Point point, final String db, final String rp) {
-			super();
+		public AbstractBatchEntry(final Point point) {
 			this.point = point;
-			this.db = db;
-			this.rp = rp;
 		}
 
 		public Point getPoint() {
 			return this.point;
+		}
+	}
+
+	static class BatchEntry extends AbstractBatchEntry{
+		private final String db;
+		private final String rp;
+
+		public BatchEntry(final Point point, final String db, final String rp) {
+			super(point);
+			this.db = db;
+			this.rp = rp;
 		}
 
 		public String getDb() {
@@ -115,6 +124,19 @@ public class BatchProcessor {
 
 		public String getRp() {
 			return this.rp;
+		}
+	}
+	
+	static class UdpBatchEntry extends AbstractBatchEntry{
+		private final int udpPort;
+
+		public UdpBatchEntry(final Point point, final int udpPort) {
+			super(point);
+			this.udpPort = udpPort;
+		}
+
+		public int getUdpPort() {
+			return this.udpPort;
 		}
 	}
 
@@ -154,27 +176,70 @@ public class BatchProcessor {
 			}
 
 			Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-			List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
-			this.queue.drainTo(batchEntries);
+			Map<Integer, UdpBatchPoints> udpPortToBatchPoints = Maps.newHashMap();
 
-			for (BatchEntry batchEntry : batchEntries) {
-				String dbName = batchEntry.getDb();
-				if (!databaseToBatchPoints.containsKey(dbName)) {
-					BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
-					databaseToBatchPoints.put(dbName, batchPoints);
-				}
-				Point point = batchEntry.getPoint();
-				databaseToBatchPoints.get(dbName).point(point);
-			}
+			List<AbstractBatchEntry> abstractBatchEntries = new ArrayList<>(this.queue.size());
+			this.queue.drainTo(abstractBatchEntries);
 
-			for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-				BatchProcessor.this.influxDB.write(batchPoints);
-			}
+			assignBatchEntriesToMap(abstractBatchEntries, databaseToBatchPoints, udpPortToBatchPoints);
+
+			write(databaseToBatchPoints, udpPortToBatchPoints);
 		} catch (Throwable t) {
 			// any exception wouldn't stop the scheduler
 			logger.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
 		}
 	}
+
+	private void write(Map<String, BatchPoints> databaseToBatchPoints,
+			Map<Integer, UdpBatchPoints> udpPortToBatchPoints) {
+		for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
+			BatchProcessor.this.influxDB.write(batchPoints);
+		}
+		
+		for (UdpBatchPoints udpBatchPoints : udpPortToBatchPoints.values()) {
+			BatchProcessor.this.influxDB.write(udpBatchPoints);
+		}
+	}
+
+	private void assignBatchEntriesToMap(List<AbstractBatchEntry> abstractBatchEntries,
+			Map<String, BatchPoints> databaseToBatchPoints, Map<Integer, UdpBatchPoints> udpToBatchPoints) {
+		for(AbstractBatchEntry abstractBatchEntry: abstractBatchEntries){
+			AbstractBatchPoints<?> abstractBatchPoints = getExistedOrCreateBatchPoints(abstractBatchEntry, databaseToBatchPoints, udpToBatchPoints);
+			abstractBatchPoints.point(abstractBatchEntry.getPoint());
+		}
+	}
+	
+	private AbstractBatchPoints<?> getExistedOrCreateBatchPoints(AbstractBatchEntry abstractBatchEntry,
+			Map<String, BatchPoints> databaseToBatchPoints, Map<Integer, UdpBatchPoints> udpToBatchPoints) {
+		if (abstractBatchEntry instanceof BatchEntry) {
+			final BatchEntry batchEntry = (BatchEntry) abstractBatchEntry;
+			String dbName = batchEntry.getDb();
+			BatchPoints computeIfAbsent = databaseToBatchPoints.computeIfAbsent(dbName,
+				new Function<String, BatchPoints>() {
+					@Override
+					public BatchPoints apply(String dbName) {
+						return BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
+					}
+				});
+			return computeIfAbsent;
+
+		}
+
+		if (abstractBatchEntry instanceof UdpBatchEntry) {
+			final UdpBatchEntry batchEntry = (UdpBatchEntry) abstractBatchEntry;
+			int udpPort = batchEntry.getUdpPort();
+			return udpToBatchPoints.computeIfAbsent(udpPort, new Function<Integer, UdpBatchPoints>() {
+				@Override
+				public UdpBatchPoints apply(Integer udpPort) {
+					return UdpBatchPoints.udpPort(udpPort).build();
+				}
+			});
+
+		}
+
+		throw new RuntimeException("BatchEntry instance isn't belong to UdpBatchEntry or BatchEntry");
+	}
+	
 
 	/**
 	 * Put a single BatchEntry to the cache for later processing.
@@ -182,7 +247,7 @@ public class BatchProcessor {
 	 * @param batchEntry
 	 *            the batchEntry to write to the cache.
 	 */
-	void put(final BatchEntry batchEntry) {
+	void put(final AbstractBatchEntry batchEntry) {
 		this.queue.add(batchEntry);
 		if (this.queue.size() >= this.actions) {
 			write();

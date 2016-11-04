@@ -29,7 +29,7 @@ interface InfluxDBService {
 	 * @param password p: optional The password for authentication
 	 * @param database db: required The database to write points
 	 * @param retentionPolicy rp: optional The retention policy to write points. If not specified, the autogen retention
-	 * @param precision optional The precision of the time stamps (n, u, ms, s,m,h). If not specified, n
+	 * @param precision optional The precision of the time stamps (n, u, ms, s, m, h). If not specified, n
 	 * @param consistency optional The write consistency level required for the write to succeed. Can be one of one, any, 
 	 *	 all,quorum. Defaults to all.
 	 */

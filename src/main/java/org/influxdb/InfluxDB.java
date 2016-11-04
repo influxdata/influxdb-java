@@ -8,6 +8,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.UdpBatchPoints;
 
 /**
  * Interface with all available methods to access a InfluxDB database.
@@ -113,6 +114,23 @@ public interface InfluxDB {
 	 * @return the version String, otherwise unknown.
 	 */
 	public String version();
+	
+	/**
+	 * Write a single Point to the database by UDP.
+	 * 
+	 * @param udpPort
+	 *            the udpPort to write to.
+	 * @param point
+	 *            The point to write
+	 */	
+	public void write(final int udpPort, final Point point);
+ 
+	/**
+	 * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol by UDP.
+	 *
+	 * @param UdpBatchPoints
+	 */
+	public void write(final UdpBatchPoints batchPoints);
 
 	/**
 	 * Write a single Point to the database.
