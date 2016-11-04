@@ -131,7 +131,7 @@ public class InfluxDBImpl implements InfluxDB {
       Headers headers = response.headers();
       String version = "unknown";
       for (String name : headers.toMultimap().keySet()) {
-        if (null != name && name.equalsIgnoreCase("X-Influxdb-Version")) {
+        if (null != name && "X-Influxdb-Version".equalsIgnoreCase(name)) {
           version = headers.get(name);
           break;
         }

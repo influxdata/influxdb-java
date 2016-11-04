@@ -45,7 +45,7 @@
     <module name="LocalVariableName"/>
     <module name="MemberName"/>
     <module name="MethodName"/>
-    <!--<module name="PackageName"/>-->
+    <module name="PackageName"/>
     <module name="ParameterName"/>
     <module name="StaticVariableName"/>
     <module name="TypeName"/>
@@ -103,7 +103,7 @@
     <!-- Checks for blocks. You know, those {}'s         -->
     <!-- See http://checkstyle.sf.net/config_blocks.html -->
     <module name="AvoidNestedBlocks"/>
-    <!--module name="EmptyBlock"/-->
+    <module name="EmptyBlock"/>
     <module name="LeftCurly"/>
     <!--<module name="NeedBraces"/>-->
     <module name="RightCurly"/>
@@ -114,7 +114,7 @@
     <!--module name="AvoidInlineConditionals"/-->
     <module name="CovariantEquals"/>
     <module name="EmptyStatement"/>
-    <!--<module name="EqualsAvoidNull"/>-->
+    <module name="EqualsAvoidNull"/>
     <module name="EqualsHashCode"/>
     <!--module name="HiddenField"/-->
     <module name="IllegalInstantiation"/>
