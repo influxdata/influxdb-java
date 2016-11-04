@@ -33,9 +33,9 @@
 	</properties>
 
 	<scm>
-		<connection>scm:git:git@github.com:influxdb/influxdb-java.git</connection>
-		<developerConnection>scm:git:git@github.com:influxdb/influxdb-java.git</developerConnection>
-		<url>git@github.com:influxdb/influxdb-java.git</url>
+		<connection>scm:git:git@github.com:influxdata/influxdb-java.git</connection>
+		<developerConnection>scm:git:git@github.com:influxdata/influxdb-java.git</developerConnection>
+		<url>git@github.com:influxdata/influxdb-java.git</url>
 	</scm>
 
 	<developers>
