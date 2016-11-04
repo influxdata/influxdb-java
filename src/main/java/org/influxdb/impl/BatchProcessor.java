@@ -86,10 +86,10 @@ public class BatchProcessor {
 		 * @return the BatchProcessor instance.
 		 */
 		public BatchProcessor build() {
-			Preconditions.checkNotNull(this.actions, "actions may not be null");
-			Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
-			Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
-			return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
+      Preconditions.checkNotNull(this.actions, "actions may not be null");
+      Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
+      Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
+      return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
 		}
 	}
 
@@ -160,7 +160,8 @@ public class BatchProcessor {
 			for (BatchEntry batchEntry : batchEntries) {
 				String dbName = batchEntry.getDb();
 				if (!databaseToBatchPoints.containsKey(dbName)) {
-					BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(batchEntry.getRp()).build();
+					BatchPoints batchPoints = BatchPoints.database(dbName)
+                                               .retentionPolicy(batchEntry.getRp()).build();
 					databaseToBatchPoints.put(dbName, batchPoints);
 				}
 				Point point = batchEntry.getPoint();

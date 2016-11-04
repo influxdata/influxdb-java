@@ -89,7 +89,8 @@ public class InfluxDBImpl implements InfluxDB {
 	}
 
 	@Override
-	public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit)	{
+	public InfluxDB enableBatch(final int actions, final int flushDuration,
+                              final TimeUnit flushDurationTimeUnit)	{
 		if (this.batchEnabled.get()) {
 			throw new IllegalArgumentException("BatchProcessing is already enabled.");
 		}
@@ -109,8 +110,9 @@ public class InfluxDBImpl implements InfluxDB {
 			this.batchProcessor.flush();
 			if (this.logLevel != LogLevel.NONE) {
 				System.out.println(
-						"total writes:" + this.writeCount.get() + " unbatched:" + this.unBatchedCount.get() + "batchPoints:"
-								+ this.batchedCount);
+						"total writes:" + this.writeCount.get()
+						+ " unbatched:" + this.unBatchedCount.get()
+						+ " batchPoints:" + this.batchedCount);
 			}
 		}
 	}
@@ -154,7 +156,8 @@ public class InfluxDBImpl implements InfluxDB {
 			BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
 			this.batchProcessor.put(batchEntry);
 		} else {
-			BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
+			BatchPoints batchPoints = BatchPoints.database(database)
+			                                     .retentionPolicy(retentionPolicy).build();
 			batchPoints.point(point);
 			this.write(batchPoints);
 			this.unBatchedCount.incrementAndGet();
@@ -203,9 +206,11 @@ public class InfluxDBImpl implements InfluxDB {
 	public QueryResult query(final Query query)	{
 		Call<QueryResult> call;
 		if (query.requiresPost()) {
-			call = this.influxDBService.postQuery(this.username, this.password, query.getDatabase(), query.getCommand());
+			call = this.influxDBService.postQuery(this.username,
+			                                      this.password, query.getDatabase(), query.getCommand());
 		} else {
-			call = this.influxDBService.query(this.username, this.password, query.getDatabase(), query.getCommand());
+			call = this.influxDBService.query(this.username,
+			                                  this.password, query.getDatabase(), query.getCommand());
 		}
 		return execute(call);
 	}
@@ -245,7 +250,8 @@ public class InfluxDBImpl implements InfluxDB {
 	 */
 	@Override
 	public List<String> describeDatabases()	{
-		QueryResult result = execute(this.influxDBService.query(this.username, this.password, "SHOW DATABASES"));
+		QueryResult result = execute(this.influxDBService.query(this.username,
+		                                                        this.password, "SHOW DATABASES"));
 		// {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
 		// Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
 		List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();

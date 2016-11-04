@@ -48,8 +48,10 @@ public enum TimeUtil {
 	}
 
     /**
-     * convert a unix epoch time to timestamp used by influxdb. this can then be used in query expressions against influxdb's time column like so:
-     * influxDB.query(new Query("SELECT * FROM some_measurement WHERE time >= '" + toInfluxDBTimeFormat(timeStart) + "'", some_database))
+     * convert a unix epoch time to timestamp used by influxdb.
+     * this can then be used in query expressions against influxdb's time column like so:
+     * influxDB.query(new Query("SELECT * FROM some_measurement WHERE time >= '"
+     *                          + toInfluxDBTimeFormat(timeStart) + "'", some_database))
      * influxdb time format example: 2016-10-31T06:52:20.020Z
      *
      * @param time timestamp to use, in unix epoch time

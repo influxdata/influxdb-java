@@ -79,7 +79,8 @@ public interface InfluxDB {
 	/**
 	 * Enable Batching of single Point writes to speed up writes significant. If either actions or
 	 * flushDurations is reached first, a batchwrite is issued.
-	 * Note that batch processing needs to be explicitly stopped before the application is shutdown. To do so call disableBatch().
+	 * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch().
 	 *
 	 * @param actions
 	 *            the number of actions to collect
@@ -142,7 +143,8 @@ public interface InfluxDB {
 	 *
 	 * @param records
 	 */
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final String records);
+	public void write(final String database, final String retentionPolicy,
+                    final ConsistencyLevel consistency, final String records);
 
 	/**
 	 * Write a set of Points to the influxdb database with the list of string records.
@@ -151,7 +153,8 @@ public interface InfluxDB {
 	 *
 	 * @param records
 	 */
-	public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency, final List<String> records);
+	public void write(final String database, final String retentionPolicy,
+                    final ConsistencyLevel consistency, final List<String> records);
 
 	/**
 	 * Execute a query agains a database.

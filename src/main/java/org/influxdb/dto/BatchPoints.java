@@ -122,7 +122,8 @@ public class BatchPoints {
 		 * @return the created BatchPoints.
 		 */
 		public BatchPoints build() {
-			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database), "Database must not be null or empty.");
+			Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database),
+                                  "Database must not be null or empty.");
 			BatchPoints batchPoints = new BatchPoints();
 			batchPoints.setDatabase(this.database);
 			for (Point point : this.points) {

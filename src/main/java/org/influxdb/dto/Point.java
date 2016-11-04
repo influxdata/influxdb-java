@@ -28,7 +28,11 @@ public class Point {
 	private Map<String, Object> fields;
 
 	private static final Escaper FIELD_ESCAPER = Escapers.builder().addEscape('"', "\\\"").build();
-	private static final Escaper KEY_ESCAPER = Escapers.builder().addEscape(' ', "\\ ").addEscape(',', "\\,").addEscape('=', "\\=").build();
+	private static final Escaper KEY_ESCAPER = Escapers.builder()
+	                                                   .addEscape(' ', "\\ ")
+	                                                   .addEscape(',', "\\,")
+	                                                   .addEscape('=', "\\=")
+	                                                   .build();
 
 	Point() {
 	}
@@ -190,8 +194,11 @@ public class Point {
 		 */
 		public Point build() {
 			Preconditions
-					.checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
-			Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
+					.checkArgument(!Strings.isNullOrEmpty(this.measurement),
+					"Point name must not be null or empty.");
+			Preconditions
+					.checkArgument(this.fields.size() > 0,
+					"Point must have at least one field specified.");
 			Point point = new Point();
 			point.setFields(this.fields);
 			point.setMeasurement(this.measurement);
@@ -295,8 +302,10 @@ public class Point {
 	private StringBuilder concatenatedTags() {
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, String> tag : this.tags.entrySet()) {
-			sb.append(",");
-			sb.append(KEY_ESCAPER.escape(tag.getKey())).append("=").append(KEY_ESCAPER.escape(tag.getValue()));
+			sb.append(",")
+				.append(KEY_ESCAPER.escape(tag.getKey()))
+				.append("=")
+				.append(KEY_ESCAPER.escape(tag.getValue()));
 		}
 		sb.append(" ");
 		return sb;

@@ -21,7 +21,8 @@ import java.util.Map;
 // "error": "...."
 // }
 
-// {"results":[{"series":[{"name":"cpu","columns":["time","value"],"values":[["2015-06-06T14:55:27.195Z",90],["2015-06-06T14:56:24.556Z",90]]}]}]}
+// {"results":[{"series":[{"name":"cpu","columns":["time","value"],
+//           "values":[["2015-06-06T14:55:27.195Z",90],["2015-06-06T14:56:24.556Z",90]]}]}]}
 // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
 public class QueryResult {
 

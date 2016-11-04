@@ -66,8 +66,7 @@
     <!-- Checks for Size Violations.                    -->
     <!-- See http://checkstyle.sf.net/config_sizes.html -->
     <module name="LineLength">
-      <!-- FIXME reduce to 120 again -->
-      <property name="max" value="150"/>
+      <property name="max" value="120"/>
     </module>
     <module name="MethodLength">
       <property name="max" value="200"/>
