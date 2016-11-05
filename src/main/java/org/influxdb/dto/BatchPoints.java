@@ -237,6 +237,8 @@ public class BatchPoints {
     builder.append(this.database);
     builder.append(", retentionPolicy=");
     builder.append(this.retentionPolicy);
+    builder.append(", consistency=");
+    builder.append(this.consistency);
     builder.append(", tags=");
     builder.append(this.tags);
     builder.append(", points=");
