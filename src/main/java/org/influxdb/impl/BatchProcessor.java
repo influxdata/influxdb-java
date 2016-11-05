@@ -86,8 +86,8 @@ public class BatchProcessor {
      * @return the BatchProcessor instance.
      */
     public BatchProcessor build() {
-      Preconditions.checkNotNull(this.actions, "actions may not be null");
-      Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
+      Preconditions.checkArgument(this.actions > 0, "actions should > 0");
+      Preconditions.checkArgument(this.flushInterval > 0, "flushInterval should > 0");
       Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
       return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
     }
