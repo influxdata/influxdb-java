@@ -4,7 +4,6 @@ package org.influxdb.impl;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -141,7 +140,7 @@ public class InfluxDBImpl implements InfluxDB {
       pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
       return pong;
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -274,7 +273,7 @@ public class InfluxDBImpl implements InfluxDB {
         throw new RuntimeException(errorBody.string());
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
