@@ -39,4 +39,25 @@ public class BatchProcessorTest {
         // without try catch the 2nd time does not occur
         verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
     }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testActionsIsZero() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor.builder(mockInfluxDB).actions(0)
+            .interval(1, TimeUnit.NANOSECONDS).build();
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testIntervalIsZero() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor.builder(mockInfluxDB).actions(1)
+            .interval(0, TimeUnit.NANOSECONDS).build();
+    }
+    
+    @Test(expected = NullPointerException.class)
+    public void testInfluxDBIsNull() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = null;
+        BatchProcessor.builder(mockInfluxDB).actions(1)
+            .interval(1, TimeUnit.NANOSECONDS).build();
+    }
 }
