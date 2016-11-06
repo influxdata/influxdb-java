@@ -47,20 +47,20 @@ public class BatchProcessor {
     private int flushInterval;
 
     /**
-     * @param influxDB
-     *            is mandatory.
-     */
-    public Builder(final InfluxDB influxDB) {
-      this.influxDB = (InfluxDBImpl) influxDB;
-    }
-
-    /**
      * @param threadFactory
      *            is optional.
      */
     public Builder threadFactory(final ThreadFactory threadFactory) {
       this.threadFactory = threadFactory;
       return this;
+    }
+
+    /**
+     * @param influxDB
+     *            is mandatory.
+     */
+    public Builder(final InfluxDB influxDB) {
+      this.influxDB = (InfluxDBImpl) influxDB;
     }
 
     /**
@@ -101,6 +101,7 @@ public class BatchProcessor {
       Preconditions.checkArgument(this.actions > 0, "actions should > 0");
       Preconditions.checkArgument(this.flushInterval > 0, "flushInterval should > 0");
       Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
+      Preconditions.checkNotNull(this.threadFactory, "threadFactory may not be null");
       return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
                                 this.flushInterval);
     }

@@ -106,7 +106,7 @@ public interface InfluxDB {
    * @param threadFactory
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
-  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit, 
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory);
 
   /**

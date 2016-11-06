@@ -1,21 +1,18 @@
 package org.influxdb;
 
+import org.influxdb.InfluxDB.LogLevel;
+import org.influxdb.dto.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test the InfluxDB API.
@@ -229,7 +226,7 @@ public class InfluxDBTest {
 	 */
 	@Test
 	public void testBatchEnabledWithThreadFactory() {
- 		final String threadName = "async_influxdb_write";
+		final String threadName = "async_influxdb_write";
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
 			
 			@Override
@@ -251,4 +248,10 @@ public class InfluxDBTest {
 		Assert.assertTrue(existThreadWithSettedName);
 		this.influxDB.disableBatch();
 	}
+
+	@Test(expected = NullPointerException.class)
+	public void testBatchEnabledWithThreadFactoryIsNull() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, null);
+	}
+
 }
