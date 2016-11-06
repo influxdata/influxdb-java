@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.dto.BatchPoints;
@@ -90,6 +91,23 @@ public interface InfluxDB {
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+
+  /**
+   * Enable Batching of single Point writes to speed up writes significant. If either actions or
+   * flushDurations is reached first, a batchwrite is issued.
+   * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch().
+   *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   * @param threadFactory
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit, 
+                              final ThreadFactory threadFactory);
 
   /**
    * Disable Batching.

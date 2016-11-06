@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,7 +30,7 @@ public class BatchProcessor {
 
   private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
   protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
-  private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+  private final ScheduledExecutorService scheduler;
   final InfluxDBImpl influxDB;
   final int actions;
   private final TimeUnit flushIntervalUnit;
@@ -40,6 +41,7 @@ public class BatchProcessor {
    */
   public static final class Builder {
     private final InfluxDBImpl influxDB;
+    private ThreadFactory threadFactory = Executors.defaultThreadFactory();
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
@@ -50,6 +52,15 @@ public class BatchProcessor {
      */
     public Builder(final InfluxDB influxDB) {
       this.influxDB = (InfluxDBImpl) influxDB;
+    }
+
+    /**
+     * @param threadFactory
+     *            is optional.
+     */
+    public Builder threadFactory(final ThreadFactory threadFactory) {
+      this.threadFactory = threadFactory;
+      return this;
     }
 
     /**
@@ -86,10 +97,12 @@ public class BatchProcessor {
      * @return the BatchProcessor instance.
      */
     public BatchProcessor build() {
-      Preconditions.checkNotNull(this.actions, "actions may not be null");
-      Preconditions.checkNotNull(this.flushInterval, "flushInterval may not be null");
+      Preconditions.checkNotNull(this.influxDB, "influxDB may not be null");
+      Preconditions.checkArgument(this.actions > 0, "actions should > 0");
+      Preconditions.checkArgument(this.flushInterval > 0, "flushInterval should > 0");
       Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
-      return new BatchProcessor(this.influxDB, this.actions, this.flushIntervalUnit, this.flushInterval);
+      return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
+                                this.flushInterval);
     }
   }
 
@@ -129,14 +142,14 @@ public class BatchProcessor {
     return new Builder(influxDB);
   }
 
-  BatchProcessor(final InfluxDBImpl influxDB, final int actions, final TimeUnit flushIntervalUnit,
-      final int flushInterval) {
+  BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
+                 final TimeUnit flushIntervalUnit, final int flushInterval) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
     this.flushIntervalUnit = flushIntervalUnit;
     this.flushInterval = flushInterval;
-
+    this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
     // Flush at specified Rate
     this.scheduler.scheduleAtFixedRate(new Runnable() {
       @Override

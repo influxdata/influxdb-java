@@ -27,6 +27,8 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -91,6 +93,13 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit) {
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, Executors.defaultThreadFactory());
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(final int actions, final int flushDuration,
+                              final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
     if (this.batchEnabled.get()) {
       throw new IllegalArgumentException("BatchProcessing is already enabled.");
     }
@@ -98,6 +107,7 @@ public class InfluxDBImpl implements InfluxDB {
         .builder(this)
         .actions(actions)
         .interval(flushDuration, flushDurationTimeUnit)
+        .threadFactory(threadFactory)
         .build();
     this.batchEnabled.set(true);
     return this;
