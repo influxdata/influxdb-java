@@ -10,6 +10,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -218,4 +220,38 @@ public class InfluxDBTest {
 		this.influxDB.disableBatch();
 		Assert.assertFalse(this.influxDB.isBatchEnabled());
 	}
+	
+	/**
+	 * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, ThreadFactory)}.
+	 */
+	@Test
+	public void testBatchEnabledWithThreadFactory() {
+		final String threadName = "async_influxdb_write";
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
+			
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread thread = new Thread(r);
+				thread.setName(threadName);
+				return thread;
+			}
+		});
+		Set<Thread> threads = Thread.getAllStackTraces().keySet();
+		boolean existThreadWithSettedName = false;
+		for(Thread thread: threads){
+			if(thread.getName().equalsIgnoreCase(threadName)){
+				existThreadWithSettedName = true;
+				break;
+			}
+			
+		}
+		Assert.assertTrue(existThreadWithSettedName);
+		this.influxDB.disableBatch();
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void testBatchEnabledWithThreadFactoryIsNull() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, null);
+	}
+
 }

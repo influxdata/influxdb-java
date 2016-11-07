@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.dto.BatchPoints;
@@ -77,6 +78,14 @@ public interface InfluxDB {
   public InfluxDB setLogLevel(final LogLevel logLevel);
 
   /**
+   * Enable Batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
+   * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
+   *
+   * @see #enableBatch(int, int, TimeUnit, ThreadFactory)
+   */
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+
+  /**
    * Enable Batching of single Point writes to speed up writes significant. If either actions or
    * flushDurations is reached first, a batchwrite is issued.
    * Note that batch processing needs to be explicitly stopped before the application is shutdown.
@@ -87,9 +96,11 @@ public interface InfluxDB {
    * @param flushDuration
    *            the time to wait at most.
    * @param flushDurationTimeUnit
+   * @param threadFactory
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
-  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ThreadFactory threadFactory);
 
   /**
    * Disable Batching.
