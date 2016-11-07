@@ -4,3 +4,6 @@ sudo: required
 services:
   - docker
 script: ./compile-and-test.sh
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
