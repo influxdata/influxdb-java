@@ -200,7 +200,12 @@ public class BatchProcessor {
   void put(final BatchEntry batchEntry) {
     this.queue.add(batchEntry);
     if (this.queue.size() >= this.actions) {
-      write();
+      this.scheduler.submit(new Runnable() {
+        @Override
+        public void run() {
+          write();
+        }
+      });
     }
   }
 
