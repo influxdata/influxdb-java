@@ -181,7 +181,7 @@ public class Point {
      * @return the Builder instance.
      */
     public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-        Preconditions.checkNotNull(precisionToSet, "Precision must be not null!");
+      Preconditions.checkNotNull(precisionToSet, "Precision must be not null!");
       this.time = timeToSet;
       this.precision = precisionToSet;
       return this;
@@ -352,9 +352,6 @@ public class Point {
 
   private StringBuilder formatedTime() {
     final StringBuilder sb = new StringBuilder();
-    if (null == this.time) {
-      this.time = this.precision.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    }
     sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
     return sb;
   }
