@@ -9,6 +9,7 @@ INFLUXDB_VERSIONS="0.13-alpine 1.0-alpine 1.1.0-rc1-alpine"
 for version in ${INFLUXDB_VERSIONS}
 do
   echo "Tesing againts influxdb ${version}"
+  docker kill influxdb || true
   docker rm influxdb || true
   docker run -d --name influxdb -p 8086:8086 influxdb:${version}
 
