@@ -168,6 +168,22 @@ public interface InfluxDB {
                     final ConsistencyLevel consistency, final List<String> records);
 
   /**
+   * Write a set of Points to the influxdb database with the string records through UDP.
+   *
+   * @param udpPort
+   * @param records the content will be encoded by UTF-8 before sent.
+   */
+  public void write(final int udpPort, final String records);
+
+  /**
+   * Write a set of Points to the influxdb database with the list of string records through UDP.
+   *
+   * @param udpPort
+   * @param records list of record, the content will be encoded by UTF-8 before sent.
+   */
+  public void write(final int udpPort, final List<String> records);
+
+  /**
    * Execute a query against a database.
    *
    * @param query
@@ -208,5 +224,10 @@ public interface InfluxDB {
    * @return a List of all Database names.
    */
   public List<String> describeDatabases();
+
+  /**
+   * close thread for asynchronous batch write and UDP socket to release resources if need.
+   */
+  public void close();
 
 }
