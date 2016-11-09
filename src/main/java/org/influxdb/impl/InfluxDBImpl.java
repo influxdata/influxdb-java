@@ -1,6 +1,7 @@
 package org.influxdb.impl;
 
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -13,6 +14,7 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.BatchEntry;
 import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
@@ -25,6 +27,11 @@ import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -40,6 +47,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class InfluxDBImpl implements InfluxDB {
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
+  private final InetAddress hostAddress;
   private final String username;
   private final String password;
   private final Retrofit retrofit;
@@ -49,12 +57,14 @@ public class InfluxDBImpl implements InfluxDB {
   private final AtomicLong writeCount = new AtomicLong();
   private final AtomicLong unBatchedCount = new AtomicLong();
   private final AtomicLong batchedCount = new AtomicLong();
+  private volatile DatagramSocket datagramSocket;
   private final HttpLoggingInterceptor loggingInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
 
   public InfluxDBImpl(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
     super();
+    this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
     this.loggingInterceptor = new HttpLoggingInterceptor();
@@ -65,6 +75,14 @@ public class InfluxDBImpl implements InfluxDB {
         .addConverterFactory(MoshiConverterFactory.create())
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
+  }
+
+  private InetAddress parseHostAddress(final String url) {
+      try {
+          return InetAddress.getByName(HttpUrl.parse(url).host());
+      } catch (UnknownHostException e) {
+          throw new RuntimeException(e);
+      }
   }
 
   @Override
@@ -100,7 +118,7 @@ public class InfluxDBImpl implements InfluxDB {
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
     if (this.batchEnabled.get()) {
-      throw new IllegalArgumentException("BatchProcessing is already enabled.");
+      throw new IllegalStateException("BatchProcessing is already enabled.");
     }
     this.batchProcessor = BatchProcessor
         .builder(this)
@@ -212,6 +230,43 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
+  public void write(final int udpPort, final String records) {
+    initialDatagramSocket();
+    byte[] bytes = records.getBytes(Charsets.UTF_8);
+    try {
+        datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+  }
+
+  private void initialDatagramSocket() {
+    if (datagramSocket == null) {
+        synchronized (InfluxDBImpl.class) {
+            if (datagramSocket == null) {
+                try {
+                    datagramSocket = new DatagramSocket();
+                } catch (SocketException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+}
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void write(final int udpPort, final List<String> records) {
+    final String joinedRecords = Joiner.on("\n").join(records);
+    write(udpPort, joinedRecords);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public QueryResult query(final Query query) {
     Call<QueryResult> call;
     if (query.requiresPost()) {
@@ -284,6 +339,20 @@ public class InfluxDBImpl implements InfluxDB {
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void close() {
+    try {
+        this.disableBatch();
+    } finally {
+        if (datagramSocket != null && !datagramSocket.isClosed()) {
+            datagramSocket.close();
+        }
     }
   }
 
