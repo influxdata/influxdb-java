@@ -170,8 +170,8 @@ public class InfluxDBTest {
     public void testWriteStringDataThroughUDP() {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, measurement + ",atag=test idle=90,usertime=9,system=1");
-        //write with UDP may be executed on server after query with HTTP. so sleep 1s to handle this case
-        Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+        //write with UDP may be executed on server after query with HTTP. so sleep 2s to handle this case
+        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
         Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
