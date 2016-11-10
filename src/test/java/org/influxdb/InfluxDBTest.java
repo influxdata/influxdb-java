@@ -330,6 +330,16 @@ public class InfluxDBTest {
 		InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
 	}
 
+	@Test(expected = IllegalStateException.class)
+	public void testBatchEnabledTwice() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+		try{
+			this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+		} finally {
+			this.influxDB.disableBatch();
+		}
+	}
+
 	/**
 	 * Test the implementation of {@link InfluxDB#close()}.
 	 */
