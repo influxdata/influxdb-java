@@ -29,7 +29,7 @@ import com.google.common.collect.Maps;
 public class BatchProcessor {
 
   private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
-  protected final BlockingQueue<BatchEntry> queue = new LinkedBlockingQueue<>();
+  protected final BlockingQueue<AbstractBatchEntry> queue = new LinkedBlockingQueue<>();
   private final ScheduledExecutorService scheduler;
   final InfluxDBImpl influxDB;
   final int actions;
@@ -107,20 +107,26 @@ public class BatchProcessor {
     }
   }
 
-  static class BatchEntry {
-    private final Point point;
+  abstract static class AbstractBatchEntry {
+      private final Point point;
+
+      public AbstractBatchEntry(final Point point) {
+        this.point = point;
+      }
+
+      public Point getPoint() {
+        return this.point;
+      }
+  }
+
+  static class HttpBatchEntry extends AbstractBatchEntry {
     private final String db;
     private final String rp;
 
-    public BatchEntry(final Point point, final String db, final String rp) {
-      super();
-      this.point = point;
+    public HttpBatchEntry(final Point point, final String db, final String rp) {
+      super(point);
       this.db = db;
       this.rp = rp;
-    }
-
-    public Point getPoint() {
-      return this.point;
     }
 
     public String getDb() {
@@ -130,6 +136,19 @@ public class BatchProcessor {
     public String getRp() {
       return this.rp;
     }
+  }
+
+  static class UdpBatchEntry extends AbstractBatchEntry {
+      private final int udpPort;
+
+      public UdpBatchEntry(final Point point, final int udpPort) {
+        super(point);
+        this.udpPort = udpPort;
+      }
+
+      public int getUdpPort() {
+        return this.udpPort;
+      }
   }
 
   /**
@@ -168,18 +187,22 @@ public class BatchProcessor {
       }
 
       Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
-      List<BatchEntry> batchEntries = new ArrayList<>(this.queue.size());
+      List<AbstractBatchEntry> batchEntries = new ArrayList<>(this.queue.size());
       this.queue.drainTo(batchEntries);
 
-      for (BatchEntry batchEntry : batchEntries) {
-        String dbName = batchEntry.getDb();
-        if (!databaseToBatchPoints.containsKey(dbName)) {
-          BatchPoints batchPoints = BatchPoints.database(dbName)
-                                               .retentionPolicy(batchEntry.getRp()).build();
-          databaseToBatchPoints.put(dbName, batchPoints);
+      for (AbstractBatchEntry batchEntry : batchEntries) {
+        if (batchEntry instanceof HttpBatchEntry) {
+            HttpBatchEntry httpBatchEntry = HttpBatchEntry.class.cast(batchEntry);
+            String dbName = httpBatchEntry.getDb();
+            if (!databaseToBatchPoints.containsKey(dbName)) {
+              BatchPoints batchPoints = BatchPoints.database(dbName)
+                                                   .retentionPolicy(httpBatchEntry.getRp()).build();
+              databaseToBatchPoints.put(dbName, batchPoints);
+            }
+            Point point = batchEntry.getPoint();
+            databaseToBatchPoints.get(dbName).point(point);
         }
-        Point point = batchEntry.getPoint();
-        databaseToBatchPoints.get(dbName).point(point);
+
       }
 
       for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
@@ -197,7 +220,7 @@ public class BatchProcessor {
    * @param batchEntry
    *            the batchEntry to write to the cache.
    */
-  void put(final BatchEntry batchEntry) {
+  void put(final AbstractBatchEntry batchEntry) {
     this.queue.add(batchEntry);
     if (this.queue.size() >= this.actions) {
       this.scheduler.submit(new Runnable() {
