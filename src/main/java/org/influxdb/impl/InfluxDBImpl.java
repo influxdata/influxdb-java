@@ -118,7 +118,7 @@ public class InfluxDBImpl implements InfluxDB {
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
     if (this.batchEnabled.get()) {
-      throw new IllegalArgumentException("BatchProcessing is already enabled.");
+      throw new IllegalStateException("BatchProcessing is already enabled.");
     }
     this.batchProcessor = BatchProcessor
         .builder(this)
