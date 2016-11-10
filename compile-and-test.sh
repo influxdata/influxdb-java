@@ -4,7 +4,7 @@
 #
 set -e
 
-INFLUXDB_VERSIONS="0.13-alpine 1.0-alpine 1.1.0-rc1-alpine"
+INFLUXDB_VERSIONS="0.13-alpine 1.0-alpine 1.1.0-rc2-alpine"
 
 for version in ${INFLUXDB_VERSIONS}
 do
