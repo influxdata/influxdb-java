@@ -78,6 +78,21 @@ public interface InfluxDB {
   public InfluxDB setLogLevel(final LogLevel logLevel);
 
   /**
+   * Enable Gzip compress for http request body.
+   */
+  public InfluxDB enableGzip();
+
+  /**
+   * Disable Gzip compress for http request body.
+   */
+  public InfluxDB disableGzip();
+
+  /**
+   * Returns whether Gzip compress for http request body is enabled.
+   */
+  public boolean isGzipEnabled();
+
+  /**
    * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
    * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
    *

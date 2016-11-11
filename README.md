@@ -74,6 +74,8 @@ influxDB.deleteDatabase(dbName);
 ```
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a gracefull application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 
+influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfter data's size , you can call: ```influxDB.enableGzip()```
+
 ### Changes in 2.4
 influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``
 to the ``InfluxDBFactory.connect`` if you wish to add more interceptors, etc, to OkHttp.
