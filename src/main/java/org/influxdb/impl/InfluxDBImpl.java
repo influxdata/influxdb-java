@@ -59,6 +59,7 @@ public class InfluxDBImpl implements InfluxDB {
   private final AtomicLong batchedCount = new AtomicLong();
   private volatile DatagramSocket datagramSocket;
   private final HttpLoggingInterceptor loggingInterceptor;
+  private final GzipRequestInterceptor gzipRequestInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
 
   public InfluxDBImpl(final String url, final String username, final String password,
@@ -69,9 +70,10 @@ public class InfluxDBImpl implements InfluxDB {
     this.password = password;
     this.loggingInterceptor = new HttpLoggingInterceptor();
     this.loggingInterceptor.setLevel(Level.NONE);
+    this.gzipRequestInterceptor = new GzipRequestInterceptor();
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).build())
+        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
         .addConverterFactory(MoshiConverterFactory.create())
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
@@ -105,6 +107,32 @@ public class InfluxDBImpl implements InfluxDB {
     }
     this.logLevel = logLevel;
     return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public InfluxDB enableGzip() {
+    this.gzipRequestInterceptor.enable();
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public InfluxDB disableGzip() {
+    this.gzipRequestInterceptor.disable();
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean isGzipEnabled() {
+    return this.gzipRequestInterceptor.isEnabled();
   }
 
   @Override

@@ -352,4 +352,54 @@ public class InfluxDBTest {
 		Assert.assertFalse(influxDB.isBatchEnabled());
 	}
 
+    /**
+     * Test writing multiple separate records to the database by Gzip compress
+     */
+    @Test
+    public void testWriteEnableGzip() {
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        try {
+            influxDBForTestGzip.setLogLevel(LogLevel.FULL);
+            influxDBForTestGzip.enableGzip();
+            influxDBForTestGzip.createDatabase(dbName);
+            String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+
+            influxDBForTestGzip.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
+                    "cpu,atag=test1 idle=100,usertime=10,system=1",
+                    "cpu,atag=test2 idle=200,usertime=20,system=2",
+                    "cpu,atag=test3 idle=300,usertime=30,system=3"
+            ));
+            Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+            QueryResult result = influxDBForTestGzip.query(query);
+
+            Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+            Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
+            Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
+            Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        } finally {
+            influxDBForTestGzip.deleteDatabase(dbName);
+            influxDBForTestGzip.close();
+        }
+    }
+
+    /**
+     * Test the implementation of flag control for gzip such as:
+     * {@link InfluxDB#disableGzip()}} and {@link InfluxDB#isBatchEnabled()}},etc
+     */
+    @Test
+    public void testWriteEnableGzipAndDisableGzip() {
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        try {
+            //test default: gzip is disable
+            Assert.assertFalse(influxDBForTestGzip.isGzipEnabled());
+            influxDBForTestGzip.enableGzip();
+            Assert.assertTrue(influxDBForTestGzip.isGzipEnabled());
+            influxDBForTestGzip.disableGzip();
+            Assert.assertFalse(influxDBForTestGzip.isGzipEnabled());
+        } finally {
+            influxDBForTestGzip.close();
+        }
+    }
+
 }
