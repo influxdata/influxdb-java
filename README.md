@@ -74,7 +74,18 @@ influxDB.deleteDatabase(dbName);
 ```
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a gracefull application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 
+Gzip's support:
+
 influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfter data's size , you can call: ```influxDB.enableGzip()```
+
+UDP's support:
+
+influxdb-java client support udp protocol now. you can call followed methods directly to wirte through UDP.
+```
+public void write(final int udpPort, final String records);
+public void write(final int udpPort, final List<String> records);
+public void write(final int udpPort, final Point point);
+```
 
 ### Changes in 2.4
 influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``

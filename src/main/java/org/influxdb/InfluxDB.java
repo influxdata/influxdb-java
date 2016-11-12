@@ -154,6 +154,16 @@ public interface InfluxDB {
   public void write(final String database, final String retentionPolicy, final Point point);
 
   /**
+   * Write a single Point to the database through UDP.
+   *
+   * @param udpPort
+   *            the udpPort to write to.
+   * @param point
+   *            The point to write.
+   */
+  public void write(final int udpPort, final Point point);
+
+  /**
    * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
    *
    * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}

@@ -3,6 +3,7 @@ package org.influxdb.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -187,10 +188,12 @@ public class BatchProcessor {
       }
 
       Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
+      Map<Integer, List<String>> udpPortToBatchPoints = Maps.newHashMap();
       List<AbstractBatchEntry> batchEntries = new ArrayList<>(this.queue.size());
       this.queue.drainTo(batchEntries);
 
       for (AbstractBatchEntry batchEntry : batchEntries) {
+        Point point = batchEntry.getPoint();
         if (batchEntry instanceof HttpBatchEntry) {
             HttpBatchEntry httpBatchEntry = HttpBatchEntry.class.cast(batchEntry);
             String dbName = httpBatchEntry.getDb();
@@ -199,14 +202,23 @@ public class BatchProcessor {
                                                    .retentionPolicy(httpBatchEntry.getRp()).build();
               databaseToBatchPoints.put(dbName, batchPoints);
             }
-            Point point = batchEntry.getPoint();
             databaseToBatchPoints.get(dbName).point(point);
+        } else if (batchEntry instanceof UdpBatchEntry) {
+            UdpBatchEntry udpBatchEntry = UdpBatchEntry.class.cast(batchEntry);
+            int udpPort = udpBatchEntry.getUdpPort();
+            if (!udpPortToBatchPoints.containsKey(udpPort)) {
+              List<String> batchPoints = new ArrayList<String>();
+              udpPortToBatchPoints.put(udpPort, batchPoints);
+            }
+            udpPortToBatchPoints.get(udpPort).add(point.lineProtocol());
         }
-
       }
 
       for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
         BatchProcessor.this.influxDB.write(batchPoints);
+      }
+      for (Entry<Integer, List<String>> entry : udpPortToBatchPoints.entrySet()) {
+          BatchProcessor.this.influxDB.write(entry.getKey(), entry.getValue());
       }
     } catch (Throwable t) {
       // any exception wouldn't stop the scheduler

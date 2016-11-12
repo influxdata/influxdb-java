@@ -13,6 +13,8 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
+import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
+
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -215,6 +217,21 @@ public class InfluxDBImpl implements InfluxDB {
                                            .retentionPolicy(retentionPolicy).build();
       batchPoints.point(point);
       this.write(batchPoints);
+      this.unBatchedCount.incrementAndGet();
+    }
+    this.writeCount.incrementAndGet();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void write(final int udpPort, final Point point) {
+    if (this.batchEnabled.get()) {
+      UdpBatchEntry batchEntry = new UdpBatchEntry(point, udpPort);
+      this.batchProcessor.put(batchEntry);
+    } else {
+      this.write(udpPort, point.lineProtocol());
       this.unBatchedCount.incrementAndGet();
     }
     this.writeCount.incrementAndGet();
