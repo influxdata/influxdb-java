@@ -12,7 +12,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.BatchEntry;
+import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -208,7 +208,7 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public void write(final String database, final String retentionPolicy, final Point point) {
     if (this.batchEnabled.get()) {
-      BatchEntry batchEntry = new BatchEntry(point, database, retentionPolicy);
+      HttpBatchEntry batchEntry = new HttpBatchEntry(point, database, retentionPolicy);
       this.batchProcessor.put(batchEntry);
     } else {
       BatchPoints batchPoints = BatchPoints.database(database)

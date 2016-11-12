@@ -25,8 +25,8 @@ public class BatchProcessorTest {
         doThrow(new RuntimeException()).when(mockInfluxDB).write(any(BatchPoints.class));
 
         Point point = Point.measurement("cpu").field("6", "").build();
-        BatchProcessor.BatchEntry batchEntry1 = new BatchProcessor.BatchEntry(point, "db1", "");
-        BatchProcessor.BatchEntry batchEntry2 = new BatchProcessor.BatchEntry(point, "db2", "");
+        BatchProcessor.HttpBatchEntry batchEntry1 = new BatchProcessor.HttpBatchEntry(point, "db1", "");
+        BatchProcessor.HttpBatchEntry batchEntry2 = new BatchProcessor.HttpBatchEntry(point, "db2", "");
 
         batchProcessor.put(batchEntry1);
         Thread.sleep(200); // wait for scheduler
