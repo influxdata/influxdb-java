@@ -147,6 +147,41 @@ public class InfluxDBTest {
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
+	
+	/**
+	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s sync support.
+	 */
+	@Test
+	public void testSyncWritePointThroughUDP() {
+		this.influxDB.disableBatch();
+		String measurement = TestUtils.getRandomMeasurement();
+		Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+		this.influxDB.write(UDP_PORT, point);
+		Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
+		QueryResult result = this.influxDB.query(query);
+		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+	}
+	
+	/**
+	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
+	 */
+	@Test
+	public void testAsyncWritePointThroughUDP() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+		try{
+			Assert.assertTrue(this.influxDB.isBatchEnabled());
+			String measurement = TestUtils.getRandomMeasurement();
+			Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+			this.influxDB.write(UDP_PORT, point);
+			Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+			Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
+			QueryResult result = this.influxDB.query(query);
+			Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+		}finally{
+			this.influxDB.disableBatch();
+		}
+	}
 
     /**
      * Test writing to the database using string protocol.
