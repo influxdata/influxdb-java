@@ -49,6 +49,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class InfluxDBImpl implements InfluxDB {
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
+  private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
+
   private final InetAddress hostAddress;
   private final String username;
   private final String password;
@@ -316,10 +318,10 @@ public class InfluxDBImpl implements InfluxDB {
     Call<QueryResult> call;
     if (query.requiresPost()) {
       call = this.influxDBService.postQuery(this.username,
-                                            this.password, query.getDatabase(), query.getCommand());
+                                            this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
     } else {
       call = this.influxDBService.query(this.username,
-                                        this.password, query.getDatabase(), query.getCommand());
+                                        this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
     }
     return execute(call);
   }
@@ -330,7 +332,7 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public QueryResult query(final Query query, final TimeUnit timeUnit) {
     return execute(this.influxDBService.query(this.username, this.password, query.getDatabase(),
-        TimeUtil.toTimePrecision(timeUnit), query.getCommand()));
+        TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded()));
   }
 
   /**
@@ -343,7 +345,7 @@ public class InfluxDBImpl implements InfluxDB {
     if (this.version().startsWith("0.")) {
       createDatabaseQueryString = String.format("CREATE DATABASE IF NOT EXISTS \"%s\"", name);
     }
-    execute(this.influxDBService.postQuery(this.username, this.password, createDatabaseQueryString));
+    execute(this.influxDBService.postQuery(this.username, this.password, Query.encode(createDatabaseQueryString)));
   }
 
   /**
@@ -351,7 +353,8 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void deleteDatabase(final String name) {
-    execute(this.influxDBService.postQuery(this.username, this.password, "DROP DATABASE \"" + name + "\""));
+    execute(this.influxDBService.postQuery(this.username, this.password,
+                                           Query.encode("DROP DATABASE \"" + name + "\"")));
   }
 
   /**
@@ -360,7 +363,7 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public List<String> describeDatabases() {
     QueryResult result = execute(this.influxDBService.query(this.username,
-                                                            this.password, "SHOW DATABASES"));
+                                                            this.password, SHOW_DATABASE_COMMAND_ENCODED));
     // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
     // Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
     List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();
