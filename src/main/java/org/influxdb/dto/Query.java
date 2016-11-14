@@ -1,5 +1,10 @@
 package org.influxdb.dto;
 
+import com.google.common.base.Charsets;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 /**
  * Represents a Query against Influxdb.
  *
@@ -37,6 +42,13 @@ public class Query {
    */
   public String getCommand() {
     return this.command;
+  }
+
+  /**
+   * @return url encoded command
+   */
+  public String getCommandWithUrlEncoded() {
+    return encode(this.command);
   }
 
   /**
@@ -80,5 +92,19 @@ public class Query {
     } else if (!database.equals(other.database))
       return false;
     return true;
+  }
+
+  /**
+   * Encode a command into {@code x-www-form-urlencoded} format.
+   * @param command
+   *            the command to be encoded.
+   * @return a encoded command.
+   */
+  public static String encode(String command) {
+    try {
+      return URLEncoder.encode(command, Charsets.UTF_8.toString());
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
