@@ -186,8 +186,9 @@ public class BatchProcessor {
       if (this.queue.isEmpty()) {
         return;
       }
-
-      Map<String, BatchPoints> databaseToBatchPoints = Maps.newHashMap();
+      //for batch on HTTP.
+      Map<String, BatchPoints> batchKeyToBatchPoints = Maps.newHashMap();
+      //for batch on UDP.
       Map<Integer, List<String>> udpPortToBatchPoints = Maps.newHashMap();
       List<AbstractBatchEntry> batchEntries = new ArrayList<>(this.queue.size());
       this.queue.drainTo(batchEntries);
@@ -197,12 +198,14 @@ public class BatchProcessor {
         if (batchEntry instanceof HttpBatchEntry) {
             HttpBatchEntry httpBatchEntry = HttpBatchEntry.class.cast(batchEntry);
             String dbName = httpBatchEntry.getDb();
-            if (!databaseToBatchPoints.containsKey(dbName)) {
+            String rp = httpBatchEntry.getRp();
+            String batchKey = dbName + "_" + rp;
+            if (!batchKeyToBatchPoints.containsKey(batchKey)) {
               BatchPoints batchPoints = BatchPoints.database(dbName)
-                                                   .retentionPolicy(httpBatchEntry.getRp()).build();
-              databaseToBatchPoints.put(dbName, batchPoints);
+                                                   .retentionPolicy(rp).build();
+              batchKeyToBatchPoints.put(batchKey, batchPoints);
             }
-            databaseToBatchPoints.get(dbName).point(point);
+            batchKeyToBatchPoints.get(batchKey).point(point);
         } else if (batchEntry instanceof UdpBatchEntry) {
             UdpBatchEntry udpBatchEntry = UdpBatchEntry.class.cast(batchEntry);
             int udpPort = udpBatchEntry.getUdpPort();
@@ -214,8 +217,8 @@ public class BatchProcessor {
         }
       }
 
-      for (BatchPoints batchPoints : databaseToBatchPoints.values()) {
-        BatchProcessor.this.influxDB.write(batchPoints);
+      for (BatchPoints batchPoints : batchKeyToBatchPoints.values()) {
+          BatchProcessor.this.influxDB.write(batchPoints);
       }
       for (Entry<Integer, List<String>> entry : udpPortToBatchPoints.entrySet()) {
           BatchProcessor.this.influxDB.write(entry.getKey(), entry.getValue());
