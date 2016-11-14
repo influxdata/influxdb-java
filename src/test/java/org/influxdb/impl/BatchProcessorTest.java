@@ -39,7 +39,25 @@ public class BatchProcessorTest {
         // without try catch the 2nd time does not occur
         verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
     }
-    
+
+    @Test
+    public void testBatchWriteWithDifferenctRp() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+            .interval(1, TimeUnit.NANOSECONDS).build();
+
+        Point point = Point.measurement("cpu").field("6", "").build();
+        BatchProcessor.HttpBatchEntry batchEntry1 = new BatchProcessor.HttpBatchEntry(point, "db1", "rp_1");
+        BatchProcessor.HttpBatchEntry batchEntry2 = new BatchProcessor.HttpBatchEntry(point, "db1", "rp_2");
+
+        batchProcessor.put(batchEntry1);
+        batchProcessor.put(batchEntry2);
+
+        Thread.sleep(200); // wait for scheduler
+        // same dbname with different rp should write two batchs instead of only one.
+        verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testActionsIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
