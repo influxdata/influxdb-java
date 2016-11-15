@@ -5,6 +5,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -340,7 +341,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void createDatabase(final String name) {
-    Preconditions.checkArgument(!name.contains("-"), "Database name cant contain -");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Database name may not be null or empty");
     String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
     if (this.version().startsWith("0.")) {
       createDatabaseQueryString = String.format("CREATE DATABASE IF NOT EXISTS \"%s\"", name);
