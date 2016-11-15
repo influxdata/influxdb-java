@@ -308,6 +308,30 @@ public class InfluxDBTest {
 		Assert.assertTrue(result.contains(numericDbName));
 		this.influxDB.deleteDatabase(numericDbName);
 	}
+	
+    /**
+     * Test that creating database which name is empty will throw expected exception
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateEmptyNamedDatabase() {
+        String emptyName = "";
+        this.influxDB.createDatabase(emptyName);
+    }
+
+    /**
+     * Test that creating database which name contains -
+     */
+    @Test()
+    public void testCreateDatabaseWithNameContainHyphen() {
+        String databaseName = "123-456";
+        this.influxDB.createDatabase(databaseName);
+        try {
+            List<String> result = this.influxDB.describeDatabases();
+            Assert.assertTrue(result.contains(databaseName));
+        } finally {
+            this.influxDB.deleteDatabase(databaseName);
+        }
+    }
 
 	/**
 	 * Test the implementation of {@link InfluxDB#isBatchEnabled()}.
