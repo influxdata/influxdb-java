@@ -221,7 +221,9 @@ public class BatchProcessor {
           BatchProcessor.this.influxDB.write(batchPoints);
       }
       for (Entry<Integer, List<String>> entry : udpPortToBatchPoints.entrySet()) {
-          BatchProcessor.this.influxDB.write(entry.getKey(), entry.getValue());
+          for (String lineprotocolStr : entry.getValue()) {
+              BatchProcessor.this.influxDB.write(entry.getKey(), lineprotocolStr);
+          }
       }
     } catch (Throwable t) {
       // any exception wouldn't stop the scheduler

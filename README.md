@@ -80,12 +80,13 @@ influxdb-java client doesn't enable gzip compress for http request body by defau
 
 UDP's support:
 
-influxdb-java client support udp protocol now. you can call followed methods directly to wirte through UDP.
+influxdb-java client support udp protocol now. you can call followed methods directly to write through UDP.
 ```
 public void write(final int udpPort, final String records);
 public void write(final int udpPort, final List<String> records);
 public void write(final int udpPort, final Point point);
 ```
+note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
 ### Changes in 2.4
 influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``

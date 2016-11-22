@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -250,6 +251,31 @@ public class InfluxDBTest {
         Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
         Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
         Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3"); 
+    }
+
+    /**
+     * When batch of points' size is over UDP limit, the expected exception
+     * is java.lang.RuntimeException: java.net.SocketException: 
+     * The message is larger than the maximum supported by the underlying transport: Datagram send failed
+     * @throws Exception
+     */
+    @Test(expected = RuntimeException.class)
+    public void writeMultipleStringDataLinesOverUDPLimit() throws Exception {
+        //prepare data
+        List<String> lineProtocols = new ArrayList<String>();
+        int i = 0;
+        int length = 0;
+        while ( true ) {
+            Point point = Point.measurement("udp_single_poit").addField("v", i).build();
+            String lineProtocol = point.lineProtocol();
+            length += (lineProtocol.getBytes("utf-8")).length;
+            lineProtocols.add(lineProtocol);
+            if( length > 65535 ){
+                break;
+            }
+        }
+        //write batch of string which size is over 64K
+        this.influxDB.write(UDP_PORT, lineProtocols);
     }
 
     /**
