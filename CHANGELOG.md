@@ -1,3 +1,24 @@
+## v2.5 [unreleased]
+
+#### Features
+
+ - Support writing by UDP protocal.
+ - Support gzip compress for http request body.
+ - Support setting thread factory for batch processor.
+
+#### Fixes
+
+ - [Issue #162] (https://github.com/influxdb/influxdb-java/issues/162) Write point using async batch mode with different rp will use same rp.
+ - [Issue #214] (https://github.com/influxdb/influxdb-java/issues/214) Send multiple queries in one query statement will get only one result.  
+ - Write can't be always async if batch is enabled.
+
+#### Improvements 
+
+ - Remove the limit for database name: not contain '-'.
+ - Support creating influxdb instance without username and password.
+ - Add time related util methods for converting influxdb timestamp or unix epoch time.
+ - correct exception type when disable batch twice.
+
 ## v2.3 [unreleased]
 
 #### Features
