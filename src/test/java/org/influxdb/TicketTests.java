@@ -1,6 +1,8 @@
 package org.influxdb;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.LogLevel;
@@ -111,4 +113,27 @@ public class TicketTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
+	/**
+	 * Test for ticket #41
+	 */
+	@Test
+	public void testTicket41() {
+		String dbName = "ticket41_" + System.currentTimeMillis();
+
+		final Map<String, String> tags = new HashMap<>();
+		tags.put("host", "host A");
+		tags.put("host", "host-B");
+		tags.put("host", "host-\"C");
+		tags.put("region", "region");
+
+		this.influxDB.createDatabase(dbName);
+		Point point1 = Point
+				.measurement("metric")
+				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+				.addField("value", 5.0)
+				.tag(tags)
+				.build();
+		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
+		this.influxDB.deleteDatabase(dbName);
+	}
 }
