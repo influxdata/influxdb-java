@@ -74,11 +74,11 @@ influxDB.deleteDatabase(dbName);
 ```
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a gracefull application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 
-Gzip's support:
+Gzip's support (version 2.5+ required):
 
 influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfter data's size , you can call: ```influxDB.enableGzip()```
 
-UDP's support:
+UDP's support (version 2.5+ required):
 
 influxdb-java client support udp protocol now. you can call followed methods directly to write through UDP.
 ```
