@@ -1,4 +1,4 @@
-## v2.5 [unreleased]
+## v2.5 [2016-12-05]
 
 #### Features
 
@@ -18,11 +18,6 @@
  - Support creating influxdb instance without username and password.
  - Add time related util methods for converting influxdb timestamp or unix epoch time.
  - correct exception type when disable batch twice.
-
-## v2.3 [unreleased]
-
-#### Features
-
 
 ## v2.2 [2016-04-11]
 
