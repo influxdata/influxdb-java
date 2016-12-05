@@ -103,7 +103,7 @@ that allow this to be specified (default is still GET).
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.4</version>
+  <version>2.5</version>
 </dependency>
 ```
 
