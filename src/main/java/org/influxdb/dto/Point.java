@@ -33,6 +33,7 @@ public class Point {
                                                      .addEscape(',', "\\,")
                                                      .addEscape('=', "\\=")
                                                      .build();
+  private static final int MAX_FRACTION_DIGITS = 340;
 
   Point() {
   }
@@ -108,6 +109,7 @@ public class Point {
      *            the value of this field
      * @return the Builder instance.
      */
+    @SuppressWarnings("checkstyle:finalparameters")
     @Deprecated
     public Builder field(final String field, Object value) {
       if (value instanceof Number) {
@@ -147,7 +149,7 @@ public class Point {
       return this;
     }
 
-    public Builder addField(String field, Number value) {
+    public Builder addField(final String field, final Number value) {
       fields.put(field, value);
       return this;
     }
@@ -317,7 +319,7 @@ public class Point {
     int loops = 0;
 
     NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
-    numberFormat.setMaximumFractionDigits(340);
+    numberFormat.setMaximumFractionDigits(MAX_FRACTION_DIGITS);
     numberFormat.setGroupingUsed(false);
     numberFormat.setMinimumFractionDigits(1);
 

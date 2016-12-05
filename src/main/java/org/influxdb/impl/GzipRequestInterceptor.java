@@ -37,7 +37,7 @@ final class GzipRequestInterceptor implements Interceptor {
     }
 
     @Override
-    public Response intercept(Interceptor.Chain chain) throws IOException {
+    public Response intercept(final Interceptor.Chain chain) throws IOException {
         if (!enabled.get()) {
             return chain.proceed(chain.request());
         }
@@ -66,7 +66,7 @@ final class GzipRequestInterceptor implements Interceptor {
             }
 
             @Override
-            public void writeTo(BufferedSink sink) throws IOException {
+            public void writeTo(final BufferedSink sink) throws IOException {
                 BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
                 body.writeTo(gzipSink);
                 gzipSink.close();

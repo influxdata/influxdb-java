@@ -30,7 +30,7 @@ public class Query {
    * @param database
    * @param requiresPost true if the command requires a POST instead of GET to influxdb
    */
-   public Query(final String command, final String database, boolean requiresPost) {
+   public Query(final String command, final String database, final boolean requiresPost) {
     super();
     this.command = command;
     this.database = database;
@@ -62,6 +62,7 @@ public class Query {
     return requiresPost;
   }
 
+  @SuppressWarnings("checkstyle:avoidinlineconditionals")
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -72,8 +73,9 @@ public class Query {
     return result;
   }
 
+  @SuppressWarnings("checkstyle:needbraces")
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(final Object obj) {
     if (this == obj)
       return true;
     if (obj == null)
@@ -100,7 +102,7 @@ public class Query {
    *            the command to be encoded.
    * @return a encoded command.
    */
-  public static String encode(String command) {
+  public static String encode(final String command) {
     try {
       return URLEncoder.encode(command, Charsets.UTF_8.toString());
     } catch (UnsupportedEncodingException e) {

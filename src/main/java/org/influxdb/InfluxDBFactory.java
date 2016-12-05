@@ -15,8 +15,7 @@ import okhttp3.OkHttpClient;
  *
  */
 public enum InfluxDBFactory {
-
-  ;
+  INSTANCE;
 
   /**
    * Create a connection to a InfluxDB.

@@ -377,7 +377,7 @@ public class InfluxDBImpl implements InfluxDB {
     return databases;
   }
 
-  private <T> T execute(Call<T> call) {
+  private <T> T execute(final Call<T> call) {
     try {
       Response<T> response = call.execute();
       if (response.isSuccessful()) {

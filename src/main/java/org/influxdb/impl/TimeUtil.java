@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public enum TimeUtil {
-  ;
+  INSTANCE;
 
   private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
       TimeUnit.HOURS,
@@ -57,7 +57,7 @@ public enum TimeUtil {
      * @param time timestamp to use, in unix epoch time
      * @return influxdb compatible date-tome string
      */
-    public static String toInfluxDBTimeFormat(long time) {
+    public static String toInfluxDBTimeFormat(final long time) {
         SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd");
         SimpleDateFormat timeDF = new SimpleDateFormat("HH:mm:ss.SSS");
         dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -73,7 +73,7 @@ public enum TimeUtil {
      * @param time timestamp to use, in influxdb datetime format
      * @return time in unix epoch time
      */
-    public static long fromInfluxDBTimeFormat(String time) {
+    public static long fromInfluxDBTimeFormat(final String time) {
         try {
             String[] parts = time.split("T");
             String datePart = parts[0];
