@@ -12,7 +12,9 @@ To connect to InfluxDB 0.8.x you need to use influxdb-java version 1.6.
 This implementation is meant as a Java rewrite of the influxdb-go package.
 All low level REST Api calls are available.
 
-Typical usage looks like:
+## Usages 
+
+### Basic Usages:
 
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
@@ -75,11 +77,16 @@ influxDB.deleteDatabase(dbName);
 ```
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a gracefull application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 
-Gzip's support (version 2.5+ required):
+### Advanced Usages:
 
-influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfter data's size , you can call: ```influxDB.enableGzip()```
+#### Gzip's support (version 2.5+ required):
 
-UDP's support (version 2.5+ required):
+influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfter data's size , you can call: 
+```
+influxDB.enableGzip()
+```
+
+#### UDP's support (version 2.5+ required):
 
 influxdb-java client support udp protocol now. you can call followed methods directly to write through UDP.
 ```
@@ -89,17 +96,12 @@ public void write(final int udpPort, final Point point);
 ```
 note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
-### Changes in 2.4
-influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``
-to the ``InfluxDBFactory.connect`` if you wish to add more interceptors, etc, to OkHttp.
+### Other Usages:
+For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 
-Further, in InfluxDB 1.0.0, some queries now require a POST instead of GET.  There is a flag on ``Query``
-that allow this to be specified (default is still GET).
+## Version
 
-
-
-
-### Maven
+The latest version for maven dependence:
 ```
 <dependency>
   <groupId>org.influxdb</groupId>
@@ -107,9 +109,8 @@ that allow this to be specified (default is still GET).
   <version>2.5</version>
 </dependency>
 ```
+For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
 
-
-For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 
 ### Build Requirements
 
