@@ -18,6 +18,12 @@
  - Support creating influxdb instance without username and password.
  - Add time related util methods for converting influxdb timestamp or unix epoch time.
  - correct exception type when disable batch twice.
+ 
+## v2.4 [2016-10-24]
+#### Features
+
+ - now uses okhttp3 and retrofit2. As a result, you can now pass an OkHttpClient.Builder to the InfluxDBFactory.connect if you wish to add more interceptors, etc, to OkHttp.
+ - in InfluxDB 1.0.0, some queries now require a POST instead of GET. There is a flag on Query that allow this to be specified (default is still GET).
 
 ## v2.2 [2016-04-11]
 
