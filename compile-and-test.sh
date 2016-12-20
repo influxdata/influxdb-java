@@ -25,7 +25,7 @@ do
         --workdir /usr/src/mymaven \
         --link=influxdb \
         --env INFLUXDB_IP=influxdb \
-         maven mvn clean install
+         maven:alpine mvn clean install
 
   docker kill influxdb || true
 done
