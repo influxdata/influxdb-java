@@ -34,7 +34,6 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -349,27 +348,21 @@ public class InfluxDBImpl implements InfluxDB {
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
-                if (response.isSuccessful()) {
-                    BufferedSource source = null;
-                    try {
-                        source = response.body().source();
+                try {
+                    if (response.isSuccessful()) {
+                        BufferedSource source = response.body().source();
                         while (true) {
                             QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
-                            consumer.accept(result);
-                        }
-                    } catch (EOFException e) {
-                        // do nothing, EOF reached
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        try {
-                            source.close();
-                        } catch (IOException e) {
-                            throw new RuntimeException("error closing socked");
+                            if (result != null) {
+                                consumer.accept(result);
+                            }
                         }
                     }
-                } else {
-                    throw new RuntimeException("call failed");
+                    try (ResponseBody errorBody = response.errorBody()) {
+                        throw new RuntimeException(errorBody.string());
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
 

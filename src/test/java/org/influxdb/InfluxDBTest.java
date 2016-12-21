@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -489,10 +490,11 @@ public class InfluxDBTest {
     }
 
     /**
-     * Test that writing to the new lineprotocol.
+     * Test chunking.
+     * @throws InterruptedException
      */
     @Test
-    public void testChunking() {
+    public void testChunking() throws InterruptedException {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
@@ -508,13 +510,39 @@ public class InfluxDBTest {
         batchPoints.point(point1);
         batchPoints.point(point2);
         this.influxDB.write(batchPoints);
+
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         this.influxDB.query(query, 10, new Consumer<QueryResult>() {
             @Override
             public void accept(QueryResult result) {
-                Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+                if (!result.getResults().get(0).getSeries().get(0).getTags().isEmpty()) {
+                    countDownLatch.countDown();
+                }
             }});
         this.influxDB.deleteDatabase(dbName);
+        Assert.assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
+    }
+
+    /**
+     * Test chunking edge case.
+     * @throws InterruptedException
+     */
+    @Test
+    public void testChunkingFail() throws InterruptedException {
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        Query query = new Query("XXX", dbName);
+        this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+            @Override
+            public void accept(QueryResult result) {
+                countDownLatch.countDown();
+            }
+        });
+        this.influxDB.deleteDatabase(dbName);
+        Assert.assertFalse(countDownLatch.await(1, TimeUnit.SECONDS));
     }
 
 }
