@@ -521,7 +521,7 @@ public class InfluxDBTest {
                 }
             }});
         this.influxDB.deleteDatabase(dbName);
-        Assert.assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
+        Assert.assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
     }
 
     /**
@@ -542,7 +542,7 @@ public class InfluxDBTest {
             }
         });
         this.influxDB.deleteDatabase(dbName);
-        Assert.assertFalse(countDownLatch.await(1, TimeUnit.SECONDS));
+        Assert.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
     }
 
 }

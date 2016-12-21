@@ -34,6 +34,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -361,6 +362,8 @@ public class InfluxDBImpl implements InfluxDB {
                     try (ResponseBody errorBody = response.errorBody()) {
                         throw new RuntimeException(errorBody.string());
                     }
+                } catch (EOFException e) {
+                    // do nothing
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -369,7 +372,6 @@ public class InfluxDBImpl implements InfluxDB {
             @Override
             public void onFailure(final Call<ResponseBody> call, final Throwable t) {
                 throw new RuntimeException(t);
-
             }
         });
   }
