@@ -3,6 +3,7 @@ package org.influxdb;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -216,6 +217,18 @@ public interface InfluxDB {
    * @return a List of Series which matched the query.
    */
   public QueryResult query(final Query query);
+
+  /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param consumer
+   *            the consumer to invoke for each received QueryResult
+   */
+    public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
 
   /**
    * Execute a query against a database.

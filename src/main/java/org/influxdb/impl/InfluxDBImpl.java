@@ -7,6 +7,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -24,11 +27,14 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
+import okio.BufferedSource;
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -41,6 +47,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Implementation of a InluxDB API.
@@ -66,10 +73,12 @@ public class InfluxDBImpl implements InfluxDB {
   private final HttpLoggingInterceptor loggingInterceptor;
   private final GzipRequestInterceptor gzipRequestInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
+  private JsonAdapter<QueryResult> adapter;
 
   public InfluxDBImpl(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
     super();
+    Moshi moshi = new Moshi.Builder().build();
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
@@ -82,6 +91,7 @@ public class InfluxDBImpl implements InfluxDB {
         .addConverterFactory(MoshiConverterFactory.create())
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
+    this.adapter = moshi.adapter(QueryResult.class);
   }
 
   private InetAddress parseHostAddress(final String url) {
@@ -325,6 +335,48 @@ public class InfluxDBImpl implements InfluxDB {
                                         this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
     }
     return execute(call);
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
+
+        Call<ResponseBody> call = this.influxDBService.query(this.username, this.password, query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    BufferedSource source = null;
+                    try {
+                        source = response.body().source();
+                        while (true) {
+                            QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
+                            consumer.accept(result);
+                        }
+                    } catch (EOFException e) {
+                        // do nothing, EOF reached
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        try {
+                            source.close();
+                        } catch (IOException e) {
+                            throw new RuntimeException("error closing socked");
+                        }
+                    }
+                } else {
+                    throw new RuntimeException("call failed");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                throw new RuntimeException(t);
+
+            }
+        });
   }
 
   /**
