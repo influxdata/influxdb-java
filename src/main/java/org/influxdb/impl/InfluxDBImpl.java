@@ -343,6 +343,10 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
     public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
 
+        if (version().startsWith("0.") || version().startsWith("1.0")) {
+            throw new RuntimeException("chunking not supported");
+        }
+
         Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
                 query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
 

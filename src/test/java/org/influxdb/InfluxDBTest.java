@@ -5,7 +5,9 @@ import org.influxdb.dto.*;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ public class InfluxDBTest {
 	private final static int UDP_PORT = 8089;
 	private final static String UDP_DATABASE = "udp";
 
+    @Rule public final ExpectedException exception = ExpectedException.none();
 	/**
 	 * Create a influxDB connection before all tests start.
 	 *
@@ -495,6 +498,10 @@ public class InfluxDBTest {
      */
     @Test
     public void testChunking() throws InterruptedException {
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+            // do not test version 0.13 and 1.0
+            return;
+        }
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
@@ -510,7 +517,6 @@ public class InfluxDBTest {
         batchPoints.point(point1);
         batchPoints.point(point2);
         this.influxDB.write(batchPoints);
-
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         this.influxDB.query(query, 10, new Consumer<QueryResult>() {
@@ -530,9 +536,12 @@ public class InfluxDBTest {
      */
     @Test
     public void testChunkingFail() throws InterruptedException {
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+            // do not test version 0.13 and 1.0
+            return;
+        }
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
-
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         Query query = new Query("XXX", dbName);
         this.influxDB.query(query, 10, new Consumer<QueryResult>() {
@@ -543,6 +552,26 @@ public class InfluxDBTest {
         });
         this.influxDB.deleteDatabase(dbName);
         Assert.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    /**
+     * Test chunking on 0.13 and 1.0.
+     * @throws InterruptedException
+     */
+    @Test()
+    public void testChunkingOldVersion() throws InterruptedException {
+
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+
+            this.exception.expect(RuntimeException.class);
+            String dbName = "write_unittest_" + System.currentTimeMillis();
+            Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+            this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+                @Override
+                public void accept(QueryResult result) {
+                }
+            });
+        }
     }
 
 }
