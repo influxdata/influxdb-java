@@ -336,17 +336,19 @@ public class InfluxDBImpl implements InfluxDB {
     }
     return execute(call);
   }
-  
+
   /**
    * {@inheritDoc}
    */
   @Override
     public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
 
-        Call<ResponseBody> call = this.influxDBService.query(this.username, this.password, query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+        Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
+                query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+
         call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     BufferedSource source = null;
                     try {
@@ -372,7 +374,7 @@ public class InfluxDBImpl implements InfluxDB {
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
+            public void onFailure(final Call<ResponseBody> call, final Throwable t) {
                 throw new RuntimeException(t);
 
             }
