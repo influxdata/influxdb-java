@@ -511,7 +511,7 @@ public class InfluxDBTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
-        BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy(rp).build();
+        BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
         Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
         Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
         Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
@@ -520,6 +520,7 @@ public class InfluxDBTest {
         batchPoints.point(point3);
         this.influxDB.write(batchPoints);
 
+        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
         Query query = new Query("SELECT * FROM disk", dbName);
         this.influxDB.query(query, 2, new Consumer<QueryResult>() {
@@ -528,6 +529,7 @@ public class InfluxDBTest {
                 queue.add(result);
             }});
 
+        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         this.influxDB.deleteDatabase(dbName);
 
         QueryResult result = queue.poll(20, TimeUnit.SECONDS);
