@@ -5,6 +5,7 @@
  - Support writing by UDP protocal.
  - Support gzip compress for http request body.
  - Support setting thread factory for batch processor.
+ - Support chunking
 
 #### Fixes
 

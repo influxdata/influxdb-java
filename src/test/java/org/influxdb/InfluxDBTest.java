@@ -1,19 +1,29 @@
 package org.influxdb;
 
-import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.*;
-import org.influxdb.impl.InfluxDBImpl;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import org.influxdb.InfluxDB.LogLevel;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
+import org.influxdb.impl.InfluxDBImpl;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 
@@ -29,6 +39,7 @@ public class InfluxDBTest {
 	private final static int UDP_PORT = 8089;
 	private final static String UDP_DATABASE = "udp";
 
+    @Rule public final ExpectedException exception = ExpectedException.none();
 	/**
 	 * Create a influxDB connection before all tests start.
 	 *
@@ -57,7 +68,7 @@ public class InfluxDBTest {
 		this.influxDB.createDatabase(UDP_DATABASE);
 		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
 		// Charsets.UTF_8));
-		System.out.println("##################################################################################");
+        System.out.println("################################################################################## ");
 		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
@@ -219,8 +230,8 @@ public class InfluxDBTest {
     @Test
     public void testWriteMultipleStringDataThroughUDP() {
         String measurement = TestUtils.getRandomMeasurement();
-        this.influxDB.write(UDP_PORT, measurement + ",atag=test1 idle=100,usertime=10,system=1\n" + 
-                                      measurement + ",atag=test2 idle=200,usertime=20,system=2\n" + 
+        this.influxDB.write(UDP_PORT, measurement + ",atag=test1 idle=100,usertime=10,system=1\n" +
+                                      measurement + ",atag=test2 idle=200,usertime=20,system=2\n" +
                                       measurement + ",atag=test3 idle=300,usertime=30,system=3");
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
@@ -250,12 +261,12 @@ public class InfluxDBTest {
         Assert.assertEquals(3, result.getResults().get(0).getSeries().size());
         Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
         Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3"); 
+        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
     }
 
     /**
      * When batch of points' size is over UDP limit, the expected exception
-     * is java.lang.RuntimeException: java.net.SocketException: 
+     * is java.lang.RuntimeException: java.net.SocketException:
      * The message is larger than the maximum supported by the underlying transport: Datagram send failed
      * @throws Exception
      */
@@ -484,6 +495,95 @@ public class InfluxDBTest {
             Assert.assertFalse(influxDBForTestGzip.isGzipEnabled());
         } finally {
             influxDBForTestGzip.close();
+        }
+    }
+
+    /**
+     * Test chunking.
+     * @throws InterruptedException
+     */
+    @Test
+    public void testChunking() throws InterruptedException {
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+            // do not test version 0.13 and 1.0
+            return;
+        }
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+        String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+        BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+        Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+        Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+        Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+        batchPoints.point(point1);
+        batchPoints.point(point2);
+        batchPoints.point(point3);
+        this.influxDB.write(batchPoints);
+
+        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+        Query query = new Query("SELECT * FROM disk", dbName);
+        this.influxDB.query(query, 2, new Consumer<QueryResult>() {
+            @Override
+            public void accept(QueryResult result) {
+                queue.add(result);
+            }});
+
+        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        this.influxDB.deleteDatabase(dbName);
+
+        QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+        Assert.assertNotNull(result);
+        System.out.println(result);
+        Assert.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+        result = queue.poll(20, TimeUnit.SECONDS);
+        Assert.assertNotNull(result);
+        System.out.println(result);
+        Assert.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+    }
+
+    /**
+     * Test chunking edge case.
+     * @throws InterruptedException
+     */
+    @Test
+    public void testChunkingFail() throws InterruptedException {
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+            // do not test version 0.13 and 1.0
+            return;
+        }
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        Query query = new Query("XXX", dbName);
+        this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+            @Override
+            public void accept(QueryResult result) {
+                countDownLatch.countDown();
+            }
+        });
+        this.influxDB.deleteDatabase(dbName);
+        Assert.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    /**
+     * Test chunking on 0.13 and 1.0.
+     * @throws InterruptedException
+     */
+    @Test()
+    public void testChunkingOldVersion() throws InterruptedException {
+
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+
+            this.exception.expect(RuntimeException.class);
+            String dbName = "write_unittest_" + System.currentTimeMillis();
+            Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+            this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+                @Override
+                public void accept(QueryResult result) {
+                }
+            });
         }
     }
 

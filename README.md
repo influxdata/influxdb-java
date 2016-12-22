@@ -96,6 +96,16 @@ public void write(final int udpPort, final Point point);
 ```
 note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
+
+#### chunking support (version 2.5+ required):
+
+influxdb-java client now supports influxdb chunking. The following example uses a chunkSize of 20 and invokes the specified Consumer (e.g. System.out.println) for each received QueryResult
+```
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
+```
+
+
 ### Other Usages:
 For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 

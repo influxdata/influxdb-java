@@ -9,6 +9,7 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
+import retrofit2.http.Streaming;
 
 interface InfluxDBService {
 
@@ -20,6 +21,7 @@ interface InfluxDBService {
   public static final String PRECISION = "precision";
   public static final String CONSISTENCY = "consistency";
   public static final String EPOCH = "epoch";
+  public static final String CHUNK_SIZE = "chunk_size";
 
   @GET("/ping")
   public Call<ResponseBody> ping();
@@ -61,4 +63,9 @@ interface InfluxDBService {
   public Call<QueryResult> postQuery(@Query(U) String username,
       @Query(P) String password, @Query(value = Q, encoded = true) String query);
 
+  @Streaming
+  @GET("/query?chunked=true")
+  public Call<ResponseBody> query(@Query(U) String username,
+      @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
+      @Query(CHUNK_SIZE) int chunkSize);
 }
