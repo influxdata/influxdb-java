@@ -1,23 +1,29 @@
 package org.influxdb;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
 import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.*;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 
@@ -506,28 +512,31 @@ public class InfluxDBTest {
         this.influxDB.createDatabase(dbName);
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
         BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy(rp).build();
-        Point point1 = Point
-                .measurement("cpu")
-                .tag("atag", "test")
-                .addField("idle", 90L)
-                .addField("usertime", 9L)
-                .addField("system", 1L)
-                .build();
-        Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+        Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+        Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+        Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
         batchPoints.point(point1);
         batchPoints.point(point2);
+        batchPoints.point(point3);
         this.influxDB.write(batchPoints);
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
-        this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+
+        final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+        Query query = new Query("SELECT * FROM disk", dbName);
+        this.influxDB.query(query, 2, new Consumer<QueryResult>() {
             @Override
             public void accept(QueryResult result) {
-                if (!result.getResults().get(0).getSeries().get(0).getTags().isEmpty()) {
-                    countDownLatch.countDown();
-                }
+                queue.add(result);
             }});
+
         this.influxDB.deleteDatabase(dbName);
-        Assert.assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+
+        QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+        result = queue.poll(20, TimeUnit.SECONDS);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
     }
 
     /**
