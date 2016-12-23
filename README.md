@@ -81,7 +81,7 @@ Note that the batching functionality creates an internal thread pool that needs 
 
 #### Gzip's support (version 2.5+ required):
 
-influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfter data's size , you can call: 
+influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfer data's size , you can call: 
 ```
 influxDB.enableGzip()
 ```
