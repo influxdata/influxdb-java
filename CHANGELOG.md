@@ -1,3 +1,13 @@
+## v2.6 [unreleased]
+
+#### Features
+
+ - Support chunking
+
+#### Fixes
+#### Improvements
+
+
 ## v2.5 [2016-12-05]
 
 #### Features
