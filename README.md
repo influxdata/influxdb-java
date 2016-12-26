@@ -97,7 +97,7 @@ public void write(final int udpPort, final Point point);
 note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
 
-#### chunking support (version 2.5+ required):
+#### chunking support (version 2.6+ required, unreleased):
 
 influxdb-java client now supports influxdb chunking. The following example uses a chunkSize of 20 and invokes the specified Consumer (e.g. System.out.println) for each received QueryResult
 ```
