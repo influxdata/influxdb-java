@@ -3,8 +3,12 @@
 #### Features
 
  - Support chunking
+ - Add a databaseExists method to InfluxDB interface 
 
 #### Fixes
+
+ - [Issue #263] (https://github.com/influxdata/influxdb-java/issues/263) Add databaseExists method to InfluxDB interface.
+
 #### Improvements
 
 

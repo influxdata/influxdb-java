@@ -430,6 +430,20 @@ public class InfluxDBImpl implements InfluxDB {
     return databases;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean databaseExists(final String name) {
+    List<String> databases = this.describeDatabases();
+    for (String databaseName : databases) {
+      if (databaseName.trim().equals(name)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private <T> T execute(final Call<T> call) {
     try {
       Response<T> response = call.execute();

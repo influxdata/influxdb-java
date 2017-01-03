@@ -264,6 +264,16 @@ public interface InfluxDB {
   public List<String> describeDatabases();
 
   /**
+   * Check if a database exists.
+   *
+   * @param name
+   *            the name of the database to search.
+   *
+   * @return true if the database exists or false if it doesn't exist
+   */
+  public boolean databaseExists(final String name);
+
+  /**
    * close thread for asynchronous batch write and UDP socket to release resources if need.
    */
   public void close();
