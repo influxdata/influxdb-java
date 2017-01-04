@@ -133,6 +133,21 @@ public class InfluxDBTest {
 		Assert.assertTrue("It is expected that describeDataBases contents the newly create database.", found);
 		this.influxDB.deleteDatabase(dbName);
 	}
+	
+	/**
+	 * Test that Database exists works.
+	 */
+	@Test
+	public void testDatabaseExists() {
+		String existentdbName = "unittest_1";
+		String notExistentdbName = "unittest_2";
+		this.influxDB.createDatabase(existentdbName);
+		boolean checkDbExistence = this.influxDB.databaseExists(existentdbName);
+		Assert.assertTrue("It is expected that databaseExists return true for " + existentdbName + " database", checkDbExistence);
+		checkDbExistence = this.influxDB.databaseExists(notExistentdbName);
+		Assert.assertFalse("It is expected that databaseExists return false for " + notExistentdbName + " database", checkDbExistence);
+		this.influxDB.deleteDatabase(existentdbName);
+	}
 
 	/**
 	 * Test that writing to the new lineprotocol.
