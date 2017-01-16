@@ -6,6 +6,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
@@ -261,6 +262,25 @@ public class Point {
    */
   void setFields(final Map<String, Object> fields) {
     this.fields = fields;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    Point point = (Point) o;
+    return Objects.equals(measurement, point.measurement) &&
+            Objects.equals(tags, point.tags) &&
+            Objects.equals(time, point.time) &&
+            precision == point.precision &&
+            Objects.equals(fields, point.fields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(measurement, tags, time, precision, fields);
   }
 
   /**

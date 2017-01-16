@@ -3,6 +3,8 @@ package org.influxdb.dto;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import org.influxdb.InfluxDB.ConsistencyLevel;
 
 import com.google.common.base.Preconditions;
@@ -225,6 +227,25 @@ public class BatchPoints {
    */
   void setConsistency(final ConsistencyLevel consistency) {
     this.consistency = consistency;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    BatchPoints that = (BatchPoints) o;
+    return Objects.equals(database, that.database) &&
+            Objects.equals(retentionPolicy, that.retentionPolicy) &&
+            Objects.equals(tags, that.tags) &&
+            Objects.equals(points, that.points) &&
+            consistency == that.consistency;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(database, retentionPolicy, tags, points, consistency);
   }
 
   /**
