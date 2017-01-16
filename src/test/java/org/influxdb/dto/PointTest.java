@@ -219,4 +219,82 @@ public class PointTest {
 	public void testNullValueThrowsExceptionViaAddField() {
 		Point.measurement("dontcare").addField("field", (String) null);
 	}
+
+	/**
+	 * Tests for issue #266
+	 */
+	@Test
+	public void testEquals() throws Exception {
+		// GIVEN two point objects with identical data
+		Map<String, Object> fields = Maps.newHashMap();
+		fields.put("foo", "bar");
+
+		String measurement = "measurement";
+
+		TimeUnit precision = TimeUnit.NANOSECONDS;
+
+		Map<String, String> tags = Maps.newHashMap();
+		tags.put("bar", "baz");
+
+		Long time = System.currentTimeMillis();
+
+		Point p1 = new Point();
+		p1.setFields(fields);
+		p1.setMeasurement(measurement);
+		p1.setPrecision(precision);
+		p1.setTags(tags);
+		p1.setTime(time);
+
+		Point p2 = new Point();
+		p2.setFields(fields);
+		p2.setMeasurement(measurement);
+		p2.setPrecision(precision);
+		p2.setTags(tags);
+		p2.setTime(time);
+
+		// WHEN I call equals on one with the other as arg
+		boolean equals = p1.equals(p2);
+
+		// THEN equals returns true
+		assertThat(equals).isEqualTo(true);
+	}
+
+	@Test
+	public void testUnEquals() throws Exception {
+		// GIVEN two point objects with different data
+		Map<String, Object> fields1 = Maps.newHashMap();
+		fields1.put("foo", "bar");
+
+		Map<String, Object> fields2 = Maps.newHashMap();
+		fields2.put("foo", "baz");
+
+		String measurement = "measurement";
+
+		TimeUnit precision = TimeUnit.NANOSECONDS;
+
+		Map<String, String> tags = Maps.newHashMap();
+		tags.put("bar", "baz");
+
+		Long time = System.currentTimeMillis();
+
+		Point p1 = new Point();
+		p1.setFields(fields1);
+		p1.setMeasurement(measurement);
+		p1.setPrecision(precision);
+		p1.setTags(tags);
+		p1.setTime(time);
+
+		Point p2 = new Point();
+		p2.setFields(fields2);
+		p2.setMeasurement(measurement);
+		p2.setPrecision(precision);
+		p2.setTags(tags);
+		p2.setTime(time);
+
+		// WHEN I call equals on one with the other as arg
+		boolean equals = p1.equals(p2);
+
+		// THEN equals returns true
+		assertThat(equals).isEqualTo(false);
+	}
 }
