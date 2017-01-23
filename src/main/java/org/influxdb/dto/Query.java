@@ -1,9 +1,8 @@
 package org.influxdb.dto;
 
-import com.google.common.base.Charsets;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Represents a Query against Influxdb.
@@ -104,7 +103,7 @@ public class Query {
    */
   public static String encode(final String command) {
     try {
-      return URLEncoder.encode(command, Charsets.UTF_8.toString());
+      return URLEncoder.encode(command, StandardCharsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
