@@ -4,7 +4,7 @@
 #
 set -e
 
-INFLUXDB_VERSIONS="0.13-alpine 1.0-alpine 1.1-alpine"
+INFLUXDB_VERSIONS="1.2 1.1 1.0 0.13"
 
 for version in ${INFLUXDB_VERSIONS}
 do
@@ -17,7 +17,7 @@ do
             --publish 8086:8086 \
             --publish 8089:8089/udp \
             --volume ${PWD}/influxdb.conf:/etc/influxdb/influxdb.conf \
-        influxdb:${version}
+        influxdb:${version}-alpine
 
   docker run -it --rm  \
         --volume $PWD:/usr/src/mymaven \
