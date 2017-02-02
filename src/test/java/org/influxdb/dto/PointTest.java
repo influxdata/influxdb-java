@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
@@ -158,6 +159,10 @@ public class PointTest {
 		// Test escaping of equals sign
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar=baz").addField( "a", 1.0 ).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\=baz a=1.0 1");
+
+		// Test escaping of escape character
+		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("foo", "test\\test").build();
+		assertThat(point.lineProtocol()).asString().isEqualTo("test foo=\"test\\\\test\" 1");
 	}
 
 	@Test
@@ -218,6 +223,21 @@ public class PointTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullValueThrowsExceptionViaAddField() {
 		Point.measurement("dontcare").addField("field", (String) null);
+	}
+
+	@Test
+	public void testEmptyValuesAreIgnored() {
+		Point point = Point.measurement("dontcare").tag("key","").addField("dontcare", true).build();
+		assertThat(point.getTags().size()).isEqualTo(0);
+
+		point = Point.measurement("dontcare").tag("","value").addField("dontcare", true).build();
+		assertThat(point.getTags().size()).isEqualTo(0);
+
+		point = Point.measurement("dontcare").tag(ImmutableMap.of("key","")).addField("dontcare", true).build();
+		assertThat(point.getTags().size()).isEqualTo(0);
+
+		point = Point.measurement("dontcare").tag(ImmutableMap.of("","value")).addField("dontcare", true).build();
+		assertThat(point.getTags().size()).isEqualTo(0);
 	}
 
 	/**
