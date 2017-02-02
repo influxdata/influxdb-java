@@ -86,7 +86,9 @@ public class Point {
     public Builder tag(final String tagName, final String value) {
       Preconditions.checkArgument(tagName != null);
       Preconditions.checkArgument(value != null);
-      tags.put(tagName, value);
+      if (!tagName.isEmpty() && !value.isEmpty()) {
+        tags.put(tagName, value);
+      }
       return this;
     }
 
