@@ -1,5 +1,7 @@
 package org.influxdb;
 
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -170,7 +172,7 @@ public class TicketTests {
 
         // Compare the value we got back with the value we wrote in
         if (outlval != lval) {
-            throw new Exception("Got bad lval back as [" + (outlval_obj) + "] -> " + outlval + " != " + lval);
+            fail("Got bad lval back as [" + (outlval_obj) + "] -> " + outlval + " != " + lval);
         }
 
     }
@@ -245,7 +247,7 @@ public class TicketTests {
         long outmillis = outnano / 1000000;
         outstamp = Instant.ofEpochMilli(outmillis).plusNanos(outnano - (outmillis * 1000000));
         if ((outnano != innano) || (!outstamp.equals(instamp))) {
-            throw new Exception("Got bad long nanos back as double [" + tsnano_obj + "] -> " + outnano + " ?= " + innano
+            fail("Got bad long nanos back as double [" + tsnano_obj + "] -> " + outnano + " ?= " + innano
                     + "\nAND/OR Got bad timestamp back as double [" + tsnano_obj + "] -> " + outstamp + " ?= "
                     + instamp);
         }
