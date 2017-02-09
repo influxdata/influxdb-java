@@ -25,7 +25,7 @@ import org.junit.Test;
  * @author stefan.majer [at] gmail.com
  *
  */
-public class TicketTests {
+public class TicketTest {
 
 	private InfluxDB influxDB;
 
