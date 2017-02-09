@@ -556,6 +556,11 @@ public class InfluxDBTest {
         Assert.assertNotNull(result);
         System.out.println(result);
         Assert.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+        result = queue.poll(20, TimeUnit.SECONDS);
+        Assert.assertNotNull(result);
+        System.out.println(result);
+        Assert.assertEquals("DONE", result.getError());
     }
 
     /**
