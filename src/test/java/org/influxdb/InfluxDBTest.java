@@ -209,6 +209,24 @@ public class InfluxDBTest {
 			this.influxDB.disableBatch();
 		}
 	}
+	
+    
+    /**
+     *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
+     */
+    @Test(expected = RuntimeException.class)
+    public void testAsyncWritePointThroughUDPFail() {
+        this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+        try{
+            Assert.assertTrue(this.influxDB.isBatchEnabled());
+            String measurement = TestUtils.getRandomMeasurement();
+            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            Thread.currentThread().interrupt();
+            this.influxDB.write(UDP_PORT, point);
+        }finally{
+            this.influxDB.disableBatch();
+        }
+    }
 
     /**
      * Test writing to the database using string protocol.

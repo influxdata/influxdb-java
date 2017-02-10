@@ -30,7 +30,7 @@ import com.google.common.collect.Maps;
 public class BatchProcessor {
 
   private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
-  protected final BlockingQueue<AbstractBatchEntry> queue = new LinkedBlockingQueue<>();
+  protected final BlockingQueue<AbstractBatchEntry> queue;
   private final ScheduledExecutorService scheduler;
   final InfluxDBImpl influxDB;
   final int actions;
@@ -171,6 +171,11 @@ public class BatchProcessor {
     this.flushIntervalUnit = flushIntervalUnit;
     this.flushInterval = flushInterval;
     this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        if (actions > 1 && actions < Integer.MAX_VALUE) {
+        this.queue = new LinkedBlockingQueue<>(actions);
+    } else {
+        this.queue = new LinkedBlockingQueue<>();
+    }
     // Flush at specified Rate
     this.scheduler.scheduleAtFixedRate(new Runnable() {
       @Override
@@ -238,7 +243,11 @@ public class BatchProcessor {
    *            the batchEntry to write to the cache.
    */
   void put(final AbstractBatchEntry batchEntry) {
-    this.queue.add(batchEntry);
+    try {
+        this.queue.put(batchEntry);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+    }
     if (this.queue.size() >= this.actions) {
       this.scheduler.submit(new Runnable() {
         @Override
