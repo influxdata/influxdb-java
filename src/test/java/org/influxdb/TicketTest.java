@@ -1,12 +1,21 @@
 package org.influxdb;
 
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.QueryResult.Series;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -110,5 +119,140 @@ public class TicketTest {
 		}
 		this.influxDB.deleteDatabase(dbName);
 	}
+
+    /**
+     * Test for ticket #276
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testTicket276() throws Exception {
+        String dbName = "ticket276_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+
+        // Make a nanosecond accurate timestamp
+        long millis = System.currentTimeMillis();
+        long innano = millis * 1000000 + 1;
+        // Use a long value that will overflow a Double
+        long lval = 1485370052974000001L;
+
+        // Insert a point using the large long value
+        BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("autogen")
+                .consistency(ConsistencyLevel.ALL).build();
+        Point point = Point.measurement("testProblems").time(innano, TimeUnit.NANOSECONDS).addField("long", lval)
+                .build();
+
+        batchPoints.point(point);
+        influxDB.write(batchPoints);
+
+        // Query the point back out
+        Query query = new Query("SELECT * FROM testProblems ORDER BY time DESC LIMIT 1", dbName);
+        QueryResult result = influxDB.query(query);
+        // We are done with the database
+        this.influxDB.deleteDatabase(dbName);
+
+        // Extract the columns and value for the first (only) series
+        Series series0 = result.getResults().get(0).getSeries().get(0);
+        List<String> cols = series0.getColumns();
+        List<Object> val0 = series0.getValues().get(0);
+
+        // Extract the object associated with the long field
+        Object outlval_obj = val0.get(cols.indexOf("long"));
+        long outlval;
+
+        // Convert from Double (which we expect) or try to convert from String
+        // (something is wrong)
+        if (!(outlval_obj instanceof Double)) {
+            System.err.println("Got unexpected type output numeric (not Double), trying conversion from string: "
+                    + outlval_obj.getClass().getName());
+            outlval = Long.valueOf(outlval_obj.toString());
+        } else {
+            outlval = ((Double) outlval_obj).longValue();
+        }
+
+        // Compare the value we got back with the value we wrote in
+        if (outlval != lval) {
+            fail("Got bad lval back as [" + (outlval_obj) + "] -> " + outlval + " != " + lval);
+        }
+
+    }
+
+    /**
+     * Test for ticket #276 timestamp specific problems
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testTicket276_timestamp() throws Exception {
+        String dbName = "ticket276_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+
+        // Make a nanosecond accurate timestamp
+        long millis = System.currentTimeMillis();
+        long innano = millis * 1000000 + 1;
+        Instant instamp = Instant.ofEpochMilli(millis).plusNanos(1);
+
+        // write a point to the database
+        BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy("autogen")
+                .consistency(ConsistencyLevel.ALL).build();
+        Point point = Point.measurement("testProblems").time(innano, TimeUnit.NANOSECONDS).addField("double", 3.14)
+                .build();
+
+        batchPoints.point(point);
+        influxDB.write(batchPoints);
+
+        Query query = new Query("SELECT * FROM testProblems ORDER BY time DESC LIMIT 1", dbName);
+        // Query the point using rfc3339 date time format
+        QueryResult result = influxDB.query(query);
+
+        Series series0 = result.getResults().get(0).getSeries().get(0);
+        List<String> cols = series0.getColumns();
+        List<Object> val0 = series0.getValues().get(0);
+
+        String tsstr = (String) val0.get(cols.indexOf("time"));
+
+        // Query the poing using long nanoseconds date time format
+        result = influxDB.query(query, TimeUnit.NANOSECONDS);
+
+        series0 = result.getResults().get(0).getSeries().get(0);
+        cols = series0.getColumns();
+        val0 = series0.getValues().get(0);
+
+        long outnano;
+        Object tsnano_obj = val0.get(cols.indexOf("time"));
+        // Convert from Double (which we expect) or try to convert from String
+        // (something is wrong)
+        if (!(tsnano_obj instanceof Double)) {
+            System.err.println("Got unexpected type output numeric (not Double), trying conversion from string: "
+                    + tsnano_obj.getClass().getName());
+            outnano = Long.valueOf(tsnano_obj.toString());
+        } else {
+            outnano = ((Double) tsnano_obj).longValue();
+        }
+
+        // We are done with the database
+        this.influxDB.deleteDatabase(dbName);
+
+        // Convert the string timestamp and check against the original timestamp
+        Instant outstamp = Instant.from(DateTimeFormatter.ISO_INSTANT.parse(tsstr));
+
+        // This should work...
+        if (!outstamp.equals(instamp)) {
+            throw new Exception(
+                    "Got bad timestamp value back as string [" + tsstr + "] -> " + outstamp + " != " + instamp);
+        }
+
+        // This will fail if numeric conversion fails
+        // Convert the numeric timestamp and compare against the original
+        // timestamp
+        long outmillis = outnano / 1000000;
+        outstamp = Instant.ofEpochMilli(outmillis).plusNanos(outnano - (outmillis * 1000000));
+        if ((outnano != innano) || (!outstamp.equals(instamp))) {
+            fail("Got bad long nanos back as double [" + tsnano_obj + "] -> " + outnano + " ?= " + innano
+                    + "\nAND/OR Got bad timestamp back as double [" + tsnano_obj + "] -> " + outstamp + " ?= "
+                    + instamp);
+        }
+
+    }
 
 }
