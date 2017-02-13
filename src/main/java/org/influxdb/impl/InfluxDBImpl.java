@@ -367,7 +367,9 @@ public class InfluxDBImpl implements InfluxDB {
                         throw new RuntimeException(errorBody.string());
                     }
                 } catch (EOFException e) {
-                    // do nothing
+                    QueryResult queryResult = new QueryResult();
+                    queryResult.setError("DONE");
+                    consumer.accept(queryResult);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
