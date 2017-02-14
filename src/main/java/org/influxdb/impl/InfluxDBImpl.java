@@ -11,6 +11,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBStreamingConsumer;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
@@ -47,7 +48,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 /**
  * Implementation of a InluxDB API.
@@ -341,7 +341,7 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
+    public void query(final Query query, final int chunkSize, final InfluxDBStreamingConsumer consumer) {
 
         if (version().startsWith("0.") || version().startsWith("1.0")) {
             throw new RuntimeException("chunking not supported");
@@ -367,9 +367,7 @@ public class InfluxDBImpl implements InfluxDB {
                         throw new RuntimeException(errorBody.string());
                     }
                 } catch (EOFException e) {
-                    QueryResult queryResult = new QueryResult();
-                    queryResult.setError("DONE");
-                    consumer.accept(queryResult);
+                  consumer.completed();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

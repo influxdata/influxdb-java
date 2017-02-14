@@ -10,7 +10,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
@@ -556,11 +555,19 @@ public class InfluxDBTest {
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
         Query query = new Query("SELECT * FROM disk", dbName);
-        this.influxDB.query(query, 2, new Consumer<QueryResult>() {
+        this.influxDB.query(query, 2, new InfluxDBStreamingConsumer() {
             @Override
             public void accept(QueryResult result) {
                 queue.add(result);
-            }});
+            }
+
+			@Override
+			public void completed() {
+            	QueryResult done = new QueryResult();
+            	done.setError("DONE");
+            	queue.add(done);
+			}
+		});
 
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         this.influxDB.deleteDatabase(dbName);
@@ -595,12 +602,17 @@ public class InfluxDBTest {
         this.influxDB.createDatabase(dbName);
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         Query query = new Query("XXX", dbName);
-        this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+        this.influxDB.query(query, 10, new InfluxDBStreamingConsumer() {
             @Override
             public void accept(QueryResult result) {
                 countDownLatch.countDown();
             }
-        });
+
+			@Override
+			public void completed() {
+				System.out.println("Completed");
+			}
+		});
         this.influxDB.deleteDatabase(dbName);
         Assert.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
     }
@@ -617,11 +629,15 @@ public class InfluxDBTest {
             this.exception.expect(RuntimeException.class);
             String dbName = "write_unittest_" + System.currentTimeMillis();
             Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
-            this.influxDB.query(query, 10, new Consumer<QueryResult>() {
+            this.influxDB.query(query, 10, new InfluxDBStreamingConsumer() {
                 @Override
                 public void accept(QueryResult result) {
                 }
-            });
+
+				@Override
+				public void completed() {
+				}
+			});
         }
     }
 
