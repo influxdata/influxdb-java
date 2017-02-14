@@ -561,13 +561,13 @@ public class InfluxDBTest {
                 queue.add(result);
             }
 
-			@Override
-			public void completed() {
-            	QueryResult done = new QueryResult();
-            	done.setError("DONE");
-            	queue.add(done);
-			}
-		});
+            @Override
+            public void completed() {
+                QueryResult done = new QueryResult();
+                done.setError("DONE");
+                queue.add(done);
+            }
+        });
 
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         this.influxDB.deleteDatabase(dbName);
@@ -608,11 +608,11 @@ public class InfluxDBTest {
                 countDownLatch.countDown();
             }
 
-			@Override
-			public void completed() {
-				System.out.println("Completed");
-			}
-		});
+            @Override
+            public void completed() {
+                System.out.println("Completed");
+            }
+        });
         this.influxDB.deleteDatabase(dbName);
         Assert.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
     }
@@ -634,10 +634,10 @@ public class InfluxDBTest {
                 public void accept(QueryResult result) {
                 }
 
-				@Override
-				public void completed() {
-				}
-			});
+                @Override
+                public void completed() {
+                }
+            });
         }
     }
 

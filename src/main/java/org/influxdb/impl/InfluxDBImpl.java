@@ -367,7 +367,7 @@ public class InfluxDBImpl implements InfluxDB {
                         throw new RuntimeException(errorBody.string());
                     }
                 } catch (EOFException e) {
-                  consumer.completed();
+                    consumer.completed();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
