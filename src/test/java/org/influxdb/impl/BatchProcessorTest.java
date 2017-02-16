@@ -14,6 +14,9 @@ import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.*;
+
 public class BatchProcessorTest {
 
     @Test
@@ -58,20 +61,38 @@ public class BatchProcessorTest {
         verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
     }
 
+    @Test
+    public void testNoBlockOnCapacityExceeded() {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(2)
+            .interval(10, TimeUnit.MINUTES).build();
+
+        Point point = Point.measurement("cpu").addField("4", "").build();
+        BatchProcessor.HttpBatchEntry batchEntry1 = new BatchProcessor.HttpBatchEntry(point, "db1", "rp_1");
+        BatchProcessor.HttpBatchEntry batchEntry2 = new BatchProcessor.HttpBatchEntry(point, "db1", "rp_2");
+        BatchProcessor.HttpBatchEntry batchEntry3 = new BatchProcessor.HttpBatchEntry(point, "db1", "rp_3");
+
+        assertThat(batchProcessor.offer(batchEntry1), is(true));
+        assertThat(batchProcessor.offer(batchEntry2), is(true));
+        assertThat(batchProcessor.offer(batchEntry3), is(false));
+
+        batchProcessor.flush();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testActionsIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor.builder(mockInfluxDB).actions(0)
             .interval(1, TimeUnit.NANOSECONDS).build();
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testIntervalIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor.builder(mockInfluxDB).actions(1)
             .interval(0, TimeUnit.NANOSECONDS).build();
     }
-    
+
     @Test(expected = NullPointerException.class)
     public void testInfluxDBIsNull() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = null;

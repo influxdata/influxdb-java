@@ -248,14 +248,15 @@ public class BatchProcessor {
     } catch (InterruptedException e) {
         throw new RuntimeException(e);
     }
-    if (this.queue.size() >= this.actions) {
-      this.scheduler.submit(new Runnable() {
-        @Override
-        public void run() {
-          write();
-        }
-      });
+    scheduleWriteIfAtCapacity();
+  }
+
+  boolean offer(final AbstractBatchEntry batchEntry) {
+    if (this.queue.offer(batchEntry)) {
+      scheduleWriteIfAtCapacity();
+      return true;
     }
+    return false;
   }
 
   /**
@@ -268,4 +269,14 @@ public class BatchProcessor {
     this.scheduler.shutdown();
   }
 
+  private void scheduleWriteIfAtCapacity() {
+    if (this.queue.size() >= this.actions) {
+      this.scheduler.submit(new Runnable() {
+        @Override
+        public void run() {
+          write();
+        }
+      });
+    }
+  }
 }

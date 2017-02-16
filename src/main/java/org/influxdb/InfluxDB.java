@@ -155,6 +155,18 @@ public interface InfluxDB {
   public void write(final String database, final String retentionPolicy, final Point point);
 
   /**
+   * Try to write a single Point to the database. Useful if batching is enabled with a bounded
+   * <code>actions</code> size: once the maximum batch size is reached, calls to
+   * {@link #tryWrite(String, String, Point)} will return <code>false</code> until the batch is
+   * written to Influx.
+   *
+   * @return <code>true</code> if the point was enqueued or written, <code>false</code> otherwise.
+   *
+   * @see #write(String, String, Point)
+   */
+  public boolean tryWrite(final String database, final String retentionPolicy, final Point point);
+
+  /**
    * Write a single Point to the database through UDP.
    *
    * @param udpPort
@@ -163,6 +175,18 @@ public interface InfluxDB {
    *            The point to write.
    */
   public void write(final int udpPort, final Point point);
+
+  /**
+   * Try to write a single Point to the database through UDP. Useful if batching is enabled with a
+   * bounded <code>actions</code> size: once the maximum batch size is reached, calls to
+   * {@link #tryWrite(int, Point)} will return <code>false</code> until the batch is written to
+   * Influx.
+   *
+   * @return <code>true</code> if the point was enqueued or written, <code>false</code> otherwise.
+   *
+   * @see #write(int, Point)
+   */
+  public boolean tryWrite(final int udpPort, final Point point);
 
   /**
    * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
