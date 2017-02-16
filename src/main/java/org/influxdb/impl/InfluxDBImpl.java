@@ -235,13 +235,12 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-  public boolean tryWrite(String database, String retentionPolicy, Point point) {
+  public boolean tryWrite(final String database, final String retentionPolicy, final Point point) {
     boolean written = true;
     if (this.batchEnabled.get()) {
       HttpBatchEntry batchEntry = new HttpBatchEntry(point, database, retentionPolicy);
       written = this.batchProcessor.offer(batchEntry);
-    }
-    else {
+    } else {
       writeDirect(database, retentionPolicy, point);
     }
     this.writeCount.incrementAndGet();
@@ -272,8 +271,7 @@ public class InfluxDBImpl implements InfluxDB {
     if (this.batchEnabled.get()) {
       UdpBatchEntry batchEntry = new UdpBatchEntry(point, udpPort);
       written = this.batchProcessor.offer(batchEntry);
-    }
-    else {
+    } else {
       this.write(udpPort, point.lineProtocol());
       this.unBatchedCount.incrementAndGet();
     }
