@@ -54,7 +54,6 @@ public class InfluxDBTest {
 			Pong response;
 			try {
 				response = this.influxDB.ping();
-				System.out.println(response);
 				if (!response.getVersion().equalsIgnoreCase("unknown")) {
 					influxDBstarted = true;
 				}
@@ -64,12 +63,9 @@ public class InfluxDBTest {
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.FULL);
+		this.influxDB.setLogLevel(LogLevel.NONE);
 		this.influxDB.createDatabase(UDP_DATABASE);
-		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
-		// Charsets.UTF_8));
         System.out.println("################################################################################## ");
-		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
@@ -489,7 +485,7 @@ public class InfluxDBTest {
         InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         String dbName = "write_unittest_" + System.currentTimeMillis();
         try {
-            influxDBForTestGzip.setLogLevel(LogLevel.FULL);
+            influxDBForTestGzip.setLogLevel(LogLevel.NONE);
             influxDBForTestGzip.enableGzip();
             influxDBForTestGzip.createDatabase(dbName);
             String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
