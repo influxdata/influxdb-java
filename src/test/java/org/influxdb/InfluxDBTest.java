@@ -594,7 +594,7 @@ public class InfluxDBTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         this.influxDB.createDatabase(dbName);
         final CountDownLatch countDownLatch = new CountDownLatch(1);
-        Query query = new Query("XXX", dbName);
+        Query query = new Query("UNKNOWN_QUERY", dbName);
         this.influxDB.query(query, 10, new Consumer<QueryResult>() {
             @Override
             public void accept(QueryResult result) {
