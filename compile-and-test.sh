@@ -4,7 +4,7 @@
 #
 set -e
 
-INFLUXDB_VERSIONS="1.2 1.1 1.0 0.13"
+INFLUXDB_VERSIONS="1.2"
 
 for version in ${INFLUXDB_VERSIONS}
 do
