@@ -1,6 +1,7 @@
 target/
 *~
 .classpath
+.m2
 .project
 .settings/
 test-output/
