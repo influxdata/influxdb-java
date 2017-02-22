@@ -3,7 +3,7 @@
 #### Features
 
  - Support chunking
- - Add a databaseExists method to InfluxDB interface 
+ - Add a databaseExists method to InfluxDB interface
 
 #### Fixes
 
@@ -11,6 +11,10 @@
 
 #### Improvements
 
+ - Update retrofit from 2.1 to 2.2
+ - Update slf4j from 1.7.22 to 1.7.23
+ - Update okhttp3 from 3.5 to 3.6
+ - automatically adjust batch processor capacity [PR #282]
 
 ## v2.5 [2016-12-05]
 
@@ -27,13 +31,13 @@
  - [Issue #214] (https://github.com/influxdb/influxdb-java/issues/214) Send multiple queries in one query statement will get only one result.  
  - Write can't be always async if batch is enabled.
 
-#### Improvements 
+#### Improvements
 
  - Remove the limit for database name: not contain '-'.
  - Support creating influxdb instance without username and password.
  - Add time related util methods for converting influxdb timestamp or unix epoch time.
  - correct exception type when disable batch twice.
- 
+
 ## v2.4 [2016-10-24]
 #### Features
 
@@ -89,7 +93,7 @@ No major functional changes or improvements. Mainly library updates and code str
 - API: introduction of InfluxDB#createShardSpare, InfluxDB#getShardSpace and InfluxDB#dropShardSpace
 - API: deprecated InfluxDB#createShard, InfluxDB#getShards and InfluxDB#dropShard, this is replaced with shardSpaces in InfluxDB >= 0.8.0
 - API: renamed InfluxDB#deletePoints to InfluxDB#deleteSeries because this is what it actually does.
-- [Issue #14] update docker-java for tests to 0.10.0 
+- [Issue #14] update docker-java for tests to 0.10.0
 - Update retrofit from 1.6.0 -> 1.6.1
 - Use ms instead of m for millisecond timeprecision.
 
@@ -103,8 +107,8 @@ No major functional changes or improvements. Mainly library updates and code str
 #### Tasks
 
 - [Issue #8] (https://github.com/influxdb/influxdb-java/issues/8) Use com.github.docker-java which replaces com.kpelykh for Integration tests.
-- [Issue #6] (https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0 
-- [Issue #7] (https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0 
+- [Issue #6] (https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0
+- [Issue #7] (https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0
 - fix dependency to guava.
 
 ## v1.1 [2014-05-31]
