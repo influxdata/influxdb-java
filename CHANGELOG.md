@@ -12,7 +12,7 @@
 #### Improvements
 
  - Update retrofit from 2.1 to 2.2
- - Update slf4j from 1.7.22 to 1.7.23
+ - Update slf4j from 1.7.22 to 1.7.24
  - Update okhttp3 from 3.5 to 3.6
  - automatically adjust batch processor capacity [PR #282]
 
