@@ -226,13 +226,25 @@ public class InfluxDBImpl implements InfluxDB {
       HttpBatchEntry batchEntry = new HttpBatchEntry(point, database, retentionPolicy);
       this.batchProcessor.put(batchEntry);
     } else {
-      BatchPoints batchPoints = BatchPoints.database(database)
-                                           .retentionPolicy(retentionPolicy).build();
-      batchPoints.point(point);
-      this.write(batchPoints);
-      this.unBatchedCount.incrementAndGet();
+      writeDirect(database, retentionPolicy, point);
     }
     this.writeCount.incrementAndGet();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean tryWrite(final String database, final String retentionPolicy, final Point point) {
+    boolean written = true;
+    if (this.batchEnabled.get()) {
+      HttpBatchEntry batchEntry = new HttpBatchEntry(point, database, retentionPolicy);
+      written = this.batchProcessor.offer(batchEntry);
+    } else {
+      writeDirect(database, retentionPolicy, point);
+    }
+    this.writeCount.incrementAndGet();
+    return written;
   }
 
   /**
@@ -248,6 +260,23 @@ public class InfluxDBImpl implements InfluxDB {
       this.unBatchedCount.incrementAndGet();
     }
     this.writeCount.incrementAndGet();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean tryWrite(final int udpPort, final Point point) {
+    boolean written = true;
+    if (this.batchEnabled.get()) {
+      UdpBatchEntry batchEntry = new UdpBatchEntry(point, udpPort);
+      written = this.batchProcessor.offer(batchEntry);
+    } else {
+      this.write(udpPort, point.lineProtocol());
+      this.unBatchedCount.incrementAndGet();
+    }
+    this.writeCount.incrementAndGet();
+    return written;
   }
 
   @Override
@@ -474,4 +503,10 @@ public class InfluxDBImpl implements InfluxDB {
     }
   }
 
+  private void writeDirect(final String database, final String retentionPolicy, final Point point) {
+    BatchPoints batchPoints = BatchPoints.database(database).retentionPolicy(retentionPolicy).build();
+    batchPoints.point(point);
+    this.write(batchPoints);
+    this.unBatchedCount.incrementAndGet();
+  }
 }
