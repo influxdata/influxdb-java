@@ -2,13 +2,11 @@ package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.base.Charsets;
-import com.google.common.primitives.Chars;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -87,6 +85,6 @@ public class QueryTest {
 	}
 
 	private static String decode(String str) throws UnsupportedEncodingException {
-		return URLDecoder.decode(str, Charsets.UTF_8.toString());
+		return URLDecoder.decode(str, StandardCharsets.UTF_8.toString());
 	}
 }

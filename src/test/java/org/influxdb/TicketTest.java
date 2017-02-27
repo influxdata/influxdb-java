@@ -34,7 +34,6 @@ public class TicketTest {
 			Pong response;
 			try {
 				response = this.influxDB.ping();
-				System.out.println(response);
 				if (!response.getVersion().equalsIgnoreCase("unknown")) {
 					influxDBstarted = true;
 				}
@@ -44,11 +43,8 @@ public class TicketTest {
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.FULL);
-		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
-		// Charsets.UTF_8));
+		this.influxDB.setLogLevel(LogLevel.NONE);
 		System.out.println("##################################################################################");
-		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}

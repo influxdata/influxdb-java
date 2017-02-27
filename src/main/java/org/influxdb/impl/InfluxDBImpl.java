@@ -1,7 +1,6 @@
 package org.influxdb.impl;
 
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -42,6 +41,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -290,7 +290,7 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public void write(final int udpPort, final String records) {
     initialDatagramSocket();
-    byte[] bytes = records.getBytes(Charsets.UTF_8);
+    byte[] bytes = records.getBytes(StandardCharsets.UTF_8);
     try {
         datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
     } catch (IOException e) {
