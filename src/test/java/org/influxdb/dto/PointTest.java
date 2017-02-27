@@ -4,14 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 /**
@@ -316,5 +318,42 @@ public class PointTest {
 
 		// THEN equals returns true
 		assertThat(equals).isEqualTo(false);
+	}
+	
+	@Test
+	public void testBuilderReuse() throws Exception {
+	  // GIVEN 10 points with different time and values, but shared tags
+	  Point.Builder builder = Point.measurement("test");
+	  builder.tag("tag1", "foo");
+	  builder.tag("tag2", "bar");
+	  String field = "a";
+	  final long startTime = System.currentTimeMillis();
+	  long time = startTime;
+	  List<Point> points = new ArrayList<Point>(10);
+	  for (int i = 0; i < 10; i++) {
+	    builder.time(time, TimeUnit.MILLISECONDS);
+	    builder.addField(field, i);
+	    time += TimeUnit.MINUTES.toMillis(1);
+	    points.add(builder.build());
+	  }
+	  // AND the 11th value has different tags
+	  builder.tag("tag1", "baz");
+    builder.time(time, TimeUnit.MILLISECONDS);
+    builder.addField(field, 10);
+	  points.add(builder.build());
+	  
+	  // THEN the values are all unique after building the points and all have the same tags
+	  time = startTime;
+	  for (int i = 0; i < 10; i++) {
+	    Point point = points.get(i);
+	    assertThat(point.lineProtocol()).asString().
+	        isEqualTo("test,tag1=foo,tag2=bar a=" + i + "i " + TimeUnit.MILLISECONDS.toNanos(time));
+	    time += TimeUnit.MINUTES.toMillis(1);
+	  }
+	  // AND the 11th value has a different value and tag
+	  Point point = points.get(10);
+    assertThat(point.lineProtocol()).asString().
+        isEqualTo("test,tag1=baz,tag2=bar a=10i " + TimeUnit.MILLISECONDS.toNanos(time));
+    time += TimeUnit.MINUTES.toMillis(1);
 	}
 }

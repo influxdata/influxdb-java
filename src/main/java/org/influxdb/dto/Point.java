@@ -208,7 +208,7 @@ public class Point {
           .checkArgument(this.fields.size() > 0,
           "Point must have at least one field specified.");
       Point point = new Point();
-      point.setFields(this.fields);
+      point.setFields(new TreeMap<String, Object>(this.fields));
       point.setMeasurement(this.measurement);
       if (this.time != null) {
           point.setTime(this.time);
@@ -217,7 +217,7 @@ public class Point {
           point.setTime(System.currentTimeMillis());
           point.setPrecision(TimeUnit.MILLISECONDS);
       }
-      point.setTags(this.tags);
+      point.setTags(new TreeMap<String, String>(this.tags));
       return point;
     }
   }
