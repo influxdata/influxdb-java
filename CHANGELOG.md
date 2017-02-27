@@ -4,6 +4,7 @@
 
  - Support chunking
  - Add a databaseExists method to InfluxDB interface
+ - [Issue #289] (https://github.com/influxdata/influxdb-java/issues/289) Batching enhancements: Pending asynchronous writes can be explicitly flushed via `InfluxDB.flush()`.
 
 #### Fixes
 
@@ -15,6 +16,7 @@
  - Update slf4j from 1.7.22 to 1.7.24
  - Update okhttp3 from 3.5 to 3.6
  - automatically adjust batch processor capacity [PR #282]
+ - [Issue #289] (https://github.com/influxdata/influxdb-java/issues/289) Batching enhancements: Consistency Level may be specified when batching is enabled.
 
 ## v2.5 [2016-12-05]
 

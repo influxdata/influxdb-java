@@ -94,12 +94,22 @@ public interface InfluxDB {
   public boolean isGzipEnabled();
 
   /**
-   * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
-   * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
+   * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ConsistencyLevel, ThreadFactory)}
+   * with a default consistency level of {@link ConsistencyLevel#QUORUM QUORUM} using
+   * {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
    *
-   * @see #enableBatch(int, int, TimeUnit, ThreadFactory)
+   * @see #enableBatch(int, int, TimeUnit, ConsistencyLevel, ThreadFactory)
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
+
+  /**
+   * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ConsistencyLevel, ThreadFactory)}
+   * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
+   *
+   * @see #enableBatch(int, int, TimeUnit, ConsistencyLevel, ThreadFactory)
+   */
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ConsistencyLevel consistencyLevel);
 
   /**
    * Enable batching of single Point writes to speed up writes significant. If either actions or
@@ -112,10 +122,15 @@ public interface InfluxDB {
    * @param flushDuration
    *            the time to wait at most.
    * @param flushDurationTimeUnit
+   *            the unit the flush duration is measured in.
+   * @param consistencyLevel
+   *            The write consistency level to use when writing batched points.
    * @param threadFactory
+   *            The thread factory to use when creating new threads to handle asynchronous writes.
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ConsistencyLevel consistencyLevel,
                               final ThreadFactory threadFactory);
 
   /**
@@ -272,6 +287,14 @@ public interface InfluxDB {
    * @return true if the database exists or false if it doesn't exist
    */
   public boolean databaseExists(final String name);
+
+  /**
+   * Send any buffered points to InfluxDB. This method is synchronous and will block while all pending points are
+   * written.
+   *
+   * @throws IllegalStateException if batching is not enabled.
+   */
+  public void flush();
 
   /**
    * close thread for asynchronous batch write and UDP socket to release resources if need.

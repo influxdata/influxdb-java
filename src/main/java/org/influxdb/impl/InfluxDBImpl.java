@@ -153,13 +153,20 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit) {
-    enableBatch(actions, flushDuration, flushDurationTimeUnit, Executors.defaultThreadFactory());
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, ConsistencyLevel.ONE);
     return this;
   }
 
   @Override
-  public InfluxDB enableBatch(final int actions, final int flushDuration,
-                              final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ConsistencyLevel consistencyLevel) {
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, consistencyLevel, Executors.defaultThreadFactory());
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ConsistencyLevel consistencyLevel, final ThreadFactory threadFactory) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
@@ -167,6 +174,7 @@ public class InfluxDBImpl implements InfluxDB {
         .builder(this)
         .actions(actions)
         .interval(flushDuration, flushDurationTimeUnit)
+        .consistencyLevel(consistencyLevel)
         .threadFactory(threadFactory)
         .build();
     this.batchEnabled.set(true);
@@ -177,7 +185,7 @@ public class InfluxDBImpl implements InfluxDB {
   public void disableBatch() {
     this.batchEnabled.set(false);
     if (this.batchProcessor != null) {
-      this.batchProcessor.flush();
+      this.batchProcessor.flushAndShutdown();
       if (this.logLevel != LogLevel.NONE) {
         System.out.println(
             "total writes:" + this.writeCount.get()
@@ -458,6 +466,17 @@ public class InfluxDBImpl implements InfluxDB {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void flush() {
+    if (!batchEnabled.get()) {
+      throw new IllegalStateException("BatchProcessing is not enabled.");
+    }
+    batchProcessor.flush();
   }
 
   /**

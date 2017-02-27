@@ -1,17 +1,6 @@
 package org.influxdb;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -25,7 +14,17 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.util.concurrent.Uninterruptibles;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Test the InfluxDB API.
@@ -414,12 +413,12 @@ public class InfluxDBTest {
 	}
 	
 	/**
-	 * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, ThreadFactory)}.
+	 * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, InfluxDB.ConsistencyLevel, ThreadFactory)}.
 	 */
 	@Test
 	public void testBatchEnabledWithThreadFactory() {
 		final String threadName = "async_influxdb_write";
-		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, InfluxDB.ConsistencyLevel.ONE, new ThreadFactory() {
 			
 			@Override
 			public Thread newThread(Runnable r) {
@@ -619,6 +618,35 @@ public class InfluxDBTest {
                 }
             });
         }
+    }
+
+    @Test
+    public void testFlushPendingWritesWhenBatchingEnabled() {
+        String dbName = "flush_tests_" + System.currentTimeMillis();
+        try {
+            this.influxDB.createDatabase(dbName);
+
+            // Enable batching with a very large buffer and flush interval so writes will be triggered by our call to flush().
+            this.influxDB.enableBatch(Integer.MAX_VALUE, Integer.MAX_VALUE, TimeUnit.HOURS);
+
+            String measurement = TestUtils.getRandomMeasurement();
+            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
+            this.influxDB.flush();
+
+            Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", dbName);
+            QueryResult result = this.influxDB.query(query);
+            Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+        } finally {
+            this.influxDB.deleteDatabase(dbName);
+            this.influxDB.disableBatch();
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFlushThrowsIfBatchingIsNotEnabled() {
+        Assert.assertFalse(this.influxDB.isBatchEnabled());
+        this.influxDB.flush();
     }
 
 }
