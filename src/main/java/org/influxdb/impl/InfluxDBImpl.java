@@ -150,16 +150,32 @@ public class InfluxDBImpl implements InfluxDB {
     return this.gzipRequestInterceptor.isEnabled();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit) {
-    enableBatch(actions, flushDuration, flushDurationTimeUnit, Executors.defaultThreadFactory());
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, ConsistencyLevel.ONE);
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public InfluxDB enableBatch(final int actions, final int flushDuration,
-                              final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ConsistencyLevel consistencyLevel) {
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, consistencyLevel, Executors.defaultThreadFactory());
+    return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ConsistencyLevel consistencyLevel, final ThreadFactory threadFactory) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
@@ -167,6 +183,7 @@ public class InfluxDBImpl implements InfluxDB {
         .builder(this)
         .actions(actions)
         .interval(flushDuration, flushDurationTimeUnit)
+        .consistencyLevel(consistencyLevel)
         .threadFactory(threadFactory)
         .build();
     this.batchEnabled.set(true);
