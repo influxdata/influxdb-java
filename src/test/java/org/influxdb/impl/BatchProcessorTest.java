@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,32 @@ public class BatchProcessorTest {
         Thread.sleep(200); // wait for scheduler
         // same dbname with different rp should write two batchs instead of only one.
         verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
+    }
+
+    @Test
+    public void testFlushWritesBufferedPointsAndDoesNotShutdownScheduler() throws InterruptedException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB)
+                .actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).build();
+
+        Point point = Point.measurement("test").addField("region", "a").build();
+        BatchProcessor.HttpBatchEntry httpBatchEntry = new BatchProcessor.HttpBatchEntry(point, "http", "http-rp");
+
+        batchProcessor.put(httpBatchEntry);
+        Thread.sleep(100); // wait for scheduler
+        // Our put should have been written
+        verify(mockInfluxDB).write(any(BatchPoints.class));
+
+        // Force a flush which should not stop the scheduler
+        batchProcessor.flush();
+
+        batchProcessor.put(httpBatchEntry);
+        Thread.sleep(100); // wait for scheduler
+        // Our second put should have been written if the scheduler is still running
+        verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
+
+        verifyNoMoreInteractions(mockInfluxDB);
     }
 
     @Test(expected = IllegalArgumentException.class)

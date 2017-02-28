@@ -621,4 +621,33 @@ public class InfluxDBTest {
         }
     }
 
+    @Test
+    public void testFlushPendingWritesWhenBatchingEnabled() {
+        String dbName = "flush_tests_" + System.currentTimeMillis();
+        try {
+            this.influxDB.createDatabase(dbName);
+
+            // Enable batching with a very large buffer and flush interval so writes will be triggered by our call to flush().
+            this.influxDB.enableBatch(Integer.MAX_VALUE, Integer.MAX_VALUE, TimeUnit.HOURS);
+
+            String measurement = TestUtils.getRandomMeasurement();
+            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
+            this.influxDB.flush();
+
+            Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", dbName);
+            QueryResult result = this.influxDB.query(query);
+            Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+        } finally {
+            this.influxDB.deleteDatabase(dbName);
+            this.influxDB.disableBatch();
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFlushThrowsIfBatchingIsNotEnabled() {
+        Assert.assertFalse(this.influxDB.isBatchEnabled());
+        this.influxDB.flush();
+    }
+
 }

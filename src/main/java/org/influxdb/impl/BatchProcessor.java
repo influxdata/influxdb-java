@@ -263,9 +263,15 @@ public class BatchProcessor {
    * called if no batch processing is needed anymore.
    *
    */
-  void flush() {
+  void flushAndShutdown() {
     this.write();
     this.scheduler.shutdown();
   }
 
+  /**
+   * Flush the current open writes to InfluxDB. This will block until all pending points are written.
+   */
+  void flush() {
+    this.write();
+  }
 }
