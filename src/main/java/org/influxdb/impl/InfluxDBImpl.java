@@ -177,7 +177,7 @@ public class InfluxDBImpl implements InfluxDB {
   public void disableBatch() {
     this.batchEnabled.set(false);
     if (this.batchProcessor != null) {
-      this.batchProcessor.flush();
+      this.batchProcessor.flushAndShutdown();
       if (this.logLevel != LogLevel.NONE) {
         System.out.println(
             "total writes:" + this.writeCount.get()
@@ -458,6 +458,17 @@ public class InfluxDBImpl implements InfluxDB {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void flush() {
+    if (!batchEnabled.get()) {
+      throw new IllegalStateException("BatchProcessing is not enabled.");
+    }
+    batchProcessor.flush();
   }
 
   /**
