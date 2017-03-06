@@ -9,15 +9,13 @@ import java.util.concurrent.TimeUnit;
  * Utils for time related methods.
  *
  * @author stefan.majer [at] gmail.com
- *
  */
 public enum TimeUtil {
     INSTANCE;
 
-    private static final ThreadLocal<SimpleDateFormat> formatter = new ThreadLocal<SimpleDateFormat>(){
+    private static final ThreadLocal<SimpleDateFormat> FORMATTER = new ThreadLocal<SimpleDateFormat>() {
         @Override
-        protected SimpleDateFormat initialValue()
-        {
+        protected SimpleDateFormat initialValue() {
             SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
             dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
             return dateDF;
@@ -67,7 +65,7 @@ public enum TimeUtil {
      * @return influxdb compatible date-tome string
      */
     public static String toInfluxDBTimeFormat(final long time) {
-        return formatter.get().format(time);
+        return FORMATTER.get().format(time);
     }
 
     /**
@@ -79,7 +77,7 @@ public enum TimeUtil {
      */
     public static long fromInfluxDBTimeFormat(final String time) {
         try {
-            return formatter.get().parse(time).getTime();
+            return FORMATTER.get().parse(time).getTime();
         } catch (Exception e) {
             throw new RuntimeException("unexpected date format", e);
         }
