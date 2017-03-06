@@ -9,11 +9,18 @@ import java.util.concurrent.TimeUnit;
  * Utils for time related methods.
  *
  * @author stefan.majer [at] gmail.com
- *
  */
 public enum TimeUtil {
-  INSTANCE;
+    INSTANCE;
 
+    private static final ThreadLocal<SimpleDateFormat> FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return dateDF;
+        }
+    };
   private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
       TimeUnit.HOURS,
       TimeUnit.MINUTES,
@@ -58,12 +65,7 @@ public enum TimeUtil {
      * @return influxdb compatible date-tome string
      */
     public static String toInfluxDBTimeFormat(final long time) {
-        SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat timeDF = new SimpleDateFormat("HH:mm:ss.SSS");
-        dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-        timeDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        return dateDF.format(time) + "T" + timeDF.format(time) + "Z";
+        return FORMATTER.get().format(time);
     }
 
     /**
@@ -75,15 +77,7 @@ public enum TimeUtil {
      */
     public static long fromInfluxDBTimeFormat(final String time) {
         try {
-            String[] parts = time.split("T");
-            String datePart = parts[0];
-            String timePart = parts[1].substring(0, parts[1].length() - 1);
-            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat timeDF = new SimpleDateFormat("HH:mm:ss.SSS");
-            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-            timeDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-            return dateDF.parse(datePart).getTime() + timeDF.parse(timePart).getTime();
+            return FORMATTER.get().parse(time).getTime();
         } catch (Exception e) {
             throw new RuntimeException("unexpected date format", e);
         }
