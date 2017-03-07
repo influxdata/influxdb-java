@@ -11,16 +11,16 @@ import java.util.concurrent.TimeUnit;
  * @author stefan.majer [at] gmail.com
  */
 public enum TimeUtil {
-    INSTANCE;
+  INSTANCE;
 
-    private static final ThreadLocal<SimpleDateFormat> FORMATTER = new ThreadLocal<SimpleDateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-            return dateDF;
-        }
-    };
+  private static final ThreadLocal<SimpleDateFormat> FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+      @Override
+      protected SimpleDateFormat initialValue() {
+          SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+          dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+          return dateDF;
+      }
+  };
   private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
       TimeUnit.HOURS,
       TimeUnit.MINUTES,
