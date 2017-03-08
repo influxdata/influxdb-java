@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * @author stefan.majer [at] gmail.com
  */
 public enum TimeUtil {
-    INSTANCE;
+  INSTANCE;
 
     private static final ThreadLocal<SimpleDateFormat> FORMATTER_MILLIS = new ThreadLocal<SimpleDateFormat>() {
         @Override
@@ -30,6 +30,7 @@ public enum TimeUtil {
             return dateDF;
         }
     };
+
   private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
       TimeUnit.HOURS,
       TimeUnit.MINUTES,
