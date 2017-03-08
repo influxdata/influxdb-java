@@ -13,10 +13,19 @@ import java.util.concurrent.TimeUnit;
 public enum TimeUtil {
     INSTANCE;
 
-    private static final ThreadLocal<SimpleDateFormat> FORMATTER = new ThreadLocal<SimpleDateFormat>() {
+    private static final ThreadLocal<SimpleDateFormat> FORMATTER_MILLIS = new ThreadLocal<SimpleDateFormat>() {
         @Override
         protected SimpleDateFormat initialValue() {
             SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return dateDF;
+        }
+    };
+
+    private static final ThreadLocal<SimpleDateFormat> FORMATTER_SECONDS = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
             return dateDF;
         }
@@ -65,19 +74,22 @@ public enum TimeUtil {
      * @return influxdb compatible date-tome string
      */
     public static String toInfluxDBTimeFormat(final long time) {
-        return FORMATTER.get().format(time);
+        return FORMATTER_MILLIS.get().format(time);
     }
 
     /**
      * convert an influxdb timestamp used by influxdb to unix epoch time.
-     * influxdb time format example: 2016-10-31T06:52:20.020Z
+     * influxdb time format example: 2016-10-31T06:52:20.020Z or 2016-10-31T06:52:20Z
      *
      * @param time timestamp to use, in influxdb datetime format
      * @return time in unix epoch time
      */
     public static long fromInfluxDBTimeFormat(final String time) {
         try {
-            return FORMATTER.get().parse(time).getTime();
+            if (time.length() == 20) {
+                return FORMATTER_SECONDS.get().parse(time).getTime();
+            }
+            return FORMATTER_MILLIS.get().parse(time).getTime();
         } catch (Exception e) {
             throw new RuntimeException("unexpected date format", e);
         }
