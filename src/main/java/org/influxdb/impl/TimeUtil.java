@@ -39,6 +39,8 @@ public enum TimeUtil {
       TimeUnit.MICROSECONDS,
       TimeUnit.NANOSECONDS);
 
+    public static final int TIME_IN_SECOND_LENGTH = 20;
+
   /**
    * Convert from a TimeUnit to a influxDB timeunit String.
    *
@@ -87,7 +89,7 @@ public enum TimeUtil {
      */
     public static long fromInfluxDBTimeFormat(final String time) {
         try {
-            if (time.length() == 20) {
+            if (time.length() == TIME_IN_SECOND_LENGTH) {
                 return FORMATTER_SECONDS.get().parse(time).getTime();
             }
             return FORMATTER_MILLIS.get().parse(time).getTime();
