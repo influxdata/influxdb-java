@@ -17,5 +17,7 @@ public class TimeUtilTest {
     public void fromInfluxDBTimeFormatTest() throws Exception {
         assertThat(TimeUtil.fromInfluxDBTimeFormat("2016-10-31T06:52:20.020Z"), is(equalTo(1477896740020L)));
         assertThat(TimeUtil.fromInfluxDBTimeFormat("2016-10-31T16:52:20.005Z"), is(equalTo(1477932740005L)));
+        assertThat(TimeUtil.fromInfluxDBTimeFormat("2016-10-31T16:52:20Z"), is(equalTo(1477932740000L)));
+        assertThat(TimeUtil.fromInfluxDBTimeFormat("2016-10-31T06:52:20Z"), is(equalTo(1477896740000L)));
     }
 }
