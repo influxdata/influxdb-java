@@ -106,5 +106,30 @@ public class TicketTest {
 		}
 		this.influxDB.deleteDatabase(dbName);
 	}
+	
+	/**
+	 * Test for ticket #303
+	 *
+	 */
+	@Test
+	public void testTicket303() {
+		String dbName = "ticket303_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		
+                
+                Date rundate1 = new Date() ; 
+                long rundate1Sec = rundate1.getTime() / 1000;
+       
+              
+        
+          Point point1 = Point
+                            .measurement("TestSlash")
+                            .time(rundate1Sec, TimeUnit.SECONDS)
+                            .tag("precision", "Second")                       
+                            .addField("MultipleSlash" ,  "echo \\\".ll 12.0i\\\";")                            
+                            .build(); 
+		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
+		this.influxDB.deleteDatabase(dbName);
+	}
 
 }
