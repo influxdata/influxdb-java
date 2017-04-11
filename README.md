@@ -82,14 +82,14 @@ Note that the batching functionality creates an internal thread pool that needs 
 #### Gzip's support (version 2.5+ required):
 
 influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfer data's size , you can call: 
-```
+```java
 influxDB.enableGzip()
 ```
 
 #### UDP's support (version 2.5+ required):
 
 influxdb-java client support udp protocol now. you can call followed methods directly to write through UDP.
-```
+```java
 public void write(final int udpPort, final String records);
 public void write(final int udpPort, final List<String> records);
 public void write(final int udpPort, final Point point);
@@ -100,7 +100,7 @@ note: make sure write content's total size should not > UDP protocol's limit(64K
 #### chunking support (version 2.6+ required, unreleased):
 
 influxdb-java client now supports influxdb chunking. The following example uses a chunkSize of 20 and invokes the specified Consumer (e.g. System.out.println) for each received QueryResult
-```
+```java
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
@@ -112,7 +112,7 @@ For additional usage examples have a look at [InfluxDBTest.java](https://github.
 ## Version
 
 The latest version for maven dependence:
-```
+```xml
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
@@ -130,20 +130,26 @@ For version change history have a look at [ChangeLog](https://github.com/influxd
 
 Then you can build influxdb-java with all tests with:
 
-    $ mvn clean install
+```bash
+$ mvn clean install
+```
 
 If you don't have Docker running locally, you can skip tests with -DskipTests flag set to true:
 
-    $ mvn clean install -DskipTests=true
+```bash
+$ mvn clean install -DskipTests=true
+```
 
 If you have Docker running, but it is not at localhost (e.g. you are on a Mac and using `docker-machine`) you can set an optional environment variable `INFLUXDB_IP` to point to the correct IP address:
 
-    $ export INFLUXDB_IP=192.168.99.100
-    $ mvn test
+```bash
+$ export INFLUXDB_IP=192.168.99.100
+$ mvn test
+```
 
 For convenience we provide a small shell script which starts a influxdb server locally and executes `mvn clean install` with all tests inside docker containers.
 
-```
+```bash
 $ ./compile-and-test.sh
 ```
 
