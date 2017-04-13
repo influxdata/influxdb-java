@@ -230,6 +230,14 @@ public class Point {
     this.measurement = measurement;
   }
 
+  public String getMeasurement() {
+    return measurement;
+  }
+
+  public Map<String, Object> getFields() {
+    return fields;
+  }
+
   /**
    * @param time
    *            the time to set
@@ -249,7 +257,7 @@ public class Point {
   /**
    * @return the tags
    */
-  Map<String, String> getTags() {
+  public Map<String, String> getTags() {
     return this.tags;
   }
 

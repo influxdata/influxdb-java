@@ -1,38 +1,6 @@
 package org.influxdb.impl;
 
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
-
-import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
-import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
-
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-import okhttp3.logging.HttpLoggingInterceptor;
-import okhttp3.logging.HttpLoggingInterceptor.Level;
-import okio.BufferedSource;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.moshi.MoshiConverterFactory;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -42,12 +10,44 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.logging.HttpLoggingInterceptor.Level;
+import okio.BufferedSource;
+import org.influxdb.InfluxDB;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
+import org.influxdb.exception.DeleteInfluxException;
+import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
+import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.moshi.MoshiConverterFactory;
 
 /**
  * Implementation of a InluxDB API.
@@ -251,6 +251,52 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   @Override
+  public void dropMeasurement(final String database, final String measurement) throws DeleteInfluxException {
+    final String query = "DROP MEASUREMENT \"" + measurement + "\"";
+
+    // todo for debug logger
+    System.out.println("query: " + query);
+
+    final String encodeQuery = Query.encode(query);
+    final QueryResult execute = execute(this.influxDBService.postQuery(this.username, this.password, database,
+            encodeQuery));
+    final QueryResult.Result result = execute.getResults().get(0);
+    if (result.hasError()) {
+      throw new DeleteInfluxException(result.getError());
+    }
+  }
+
+  @Override
+  public void delete(final String database, final Point point) throws DeleteInfluxException {
+    String query = "DELETE FROM \"" + point.getMeasurement() + "\"";
+
+    if (!point.getFields().isEmpty()) {
+      query += " WHERE 1 = 1";
+      for (Map.Entry<String, String> entry : point.getTags().entrySet()) {
+        query += " AND \"" + entry.getKey() + "\" = \'" + entry.getValue() + "\'";
+      }
+
+      // TODO https://github.com/influxdata/influxdb/issues/3210
+//      org.influxdb.exception.DeleteInfluxException: fields not supported in WHERE clause during deletion
+//      final Set<Map.Entry<String, Object>> entries = tags.entrySet();
+//      for (Map.Entry<String, Object> entry : entries) {
+//          query += " AND \"" + entry.getKey() + "\" = \'" + entry.getValue() + "\'";
+//      }
+    }
+
+    // todo for debug logger
+    System.out.println("query: " + query);
+
+    final String encodeQuery = Query.encode(query);
+    final Call<QueryResult> call = this.influxDBService.postQuery(this.username, this.password, database, encodeQuery);
+    final QueryResult execute = execute(call);
+    final QueryResult.Result result = execute.getResults().get(0);
+    if (result.hasError()) {
+      throw new DeleteInfluxException(result.getError());
+    }
+  }
+
+  @Override
   public void write(final BatchPoints batchPoints) {
     this.batchedCount.addAndGet(batchPoints.getPoints().size());
     RequestBody lineProtocol = RequestBody.create(MEDIA_TYPE_STRING, batchPoints.lineProtocol());
@@ -450,6 +496,7 @@ public class InfluxDBImpl implements InfluxDB {
     try {
       Response<T> response = call.execute();
       if (response.isSuccessful()) {
+        // todo when empty don't return list with one empty element
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {

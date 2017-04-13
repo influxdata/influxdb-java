@@ -10,6 +10,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.exception.DeleteInfluxException;
 
 /**
  * Interface with all available methods to access a InfluxDB database.
@@ -163,6 +164,16 @@ public interface InfluxDB {
    *            The point to write.
    */
   public void write(final int udpPort, final Point point);
+
+  void dropMeasurement(String database, String measurement) throws DeleteInfluxException;
+
+  /**
+   *
+   * @param database - name database
+   * @param point - point for delete by tags
+   * @throws DeleteInfluxException
+   */
+  void delete(String database, Point point) throws DeleteInfluxException;
 
   /**
    * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
