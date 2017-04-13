@@ -1,5 +1,6 @@
 package org.influxdb;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -174,6 +175,35 @@ public interface InfluxDB {
    * @throws DeleteInfluxException
    */
   void delete(String database, Point point) throws DeleteInfluxException;
+
+    /**
+     * Delete data by time: "WHERE time < now()".
+     *
+     * @param database    - name database
+     * @param measurement - where we will delete data
+     * @throws DeleteInfluxException
+     */
+  void deleteOld(String database, String measurement) throws DeleteInfluxException;
+
+    /**
+     * Delete data by time: "WHERE time < date".
+     *
+     * @param database    - name database
+     * @param measurement - where we will delete data
+     * @param date        - where we will delete data
+     * @throws DeleteInfluxException
+     */
+  void deleteBeforeDate(String database, String measurement, Date date) throws DeleteInfluxException;
+
+    /**
+     * Delete data by time: "WHERE time > date".
+     *
+     * @param database    - name database
+     * @param measurement - where we will delete data
+     * @param date        - where we will delete data
+     * @throws DeleteInfluxException
+     */
+  void deleteAfterDate(String database, String measurement, Date date) throws DeleteInfluxException;
 
   /**
    * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.

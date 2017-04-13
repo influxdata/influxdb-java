@@ -9,8 +9,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -275,6 +278,13 @@ public class InfluxDBImpl implements InfluxDB {
       for (Map.Entry<String, String> entry : point.getTags().entrySet()) {
         query += " AND \"" + entry.getKey() + "\" = \'" + entry.getValue() + "\'";
       }
+      final String encodeQuery = Query.encode(query);
+      final QueryResult execute = execute(this.influxDBService.postQuery(this.username, this.password, database,
+              encodeQuery));
+      final QueryResult.Result result = execute.getResults().get(0);
+      if (result.hasError()) {
+        throw new DeleteInfluxException(result.getError());
+      }
 
       // TODO https://github.com/influxdata/influxdb/issues/3210
 //      org.influxdb.exception.DeleteInfluxException: fields not supported in WHERE clause during deletion
@@ -283,6 +293,51 @@ public class InfluxDBImpl implements InfluxDB {
 //          query += " AND \"" + entry.getKey() + "\" = \'" + entry.getValue() + "\'";
 //      }
     }
+  }
+
+  @Override
+  public void deleteOld(final String database, final String measurement) throws DeleteInfluxException {
+    String query = "DELETE FROM \"" + measurement + "\" WHERE time < now()";
+
+    // todo for debug logger
+    System.out.println("query: " + query);
+
+    final String encodeQuery = Query.encode(query);
+    final Call<QueryResult> call = this.influxDBService.postQuery(this.username, this.password, database, encodeQuery);
+    final QueryResult execute = execute(call);
+    final QueryResult.Result result = execute.getResults().get(0);
+    if (result.hasError()) {
+      throw new DeleteInfluxException(result.getError());
+    }
+  }
+
+  @Override
+  public void deleteBeforeDate(final String database, final String measurement, final Date date)
+          throws DeleteInfluxException {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    final String timestamps = dateFormat.format(date);
+    String query = "DELETE FROM \"" + measurement + "\" WHERE time < '" + timestamps + "'";
+
+    // todo for debug logger
+    System.out.println("query: " + query);
+
+    final String encodeQuery = Query.encode(query);
+    final Call<QueryResult> call = this.influxDBService.postQuery(this.username, this.password, database, encodeQuery);
+    final QueryResult execute = execute(call);
+    final QueryResult.Result result = execute.getResults().get(0);
+    if (result.hasError()) {
+      throw new DeleteInfluxException(result.getError());
+    }
+  }
+
+  @Override
+  public void deleteAfterDate(final String database, final String measurement, final Date date)
+          throws DeleteInfluxException {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    final String timestamps = dateFormat.format(date);
+    String query = "DELETE FROM \"" + measurement + "\" WHERE time > '" + timestamps + "'";
 
     // todo for debug logger
     System.out.println("query: " + query);
