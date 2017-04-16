@@ -68,4 +68,10 @@ interface InfluxDBService {
   public Call<ResponseBody> query(@Query(U) String username,
       @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
       @Query(CHUNK_SIZE) int chunkSize);
+  @Streaming
+  @GET("/query?chunked=true")
+  public Call<ResponseBody> query(@Query(U) String username,
+      @Query(P) String password, @Query(DB) String db, @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
+      @Query(CHUNK_SIZE) int chunkSize);
+
 }

@@ -340,13 +340,18 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   @Override
-  public Iterator<QueryResult> query(final Query query, final int chunkSize) {
+  public Iterator<QueryResult> query(Query query, int chunkSize) {
+    return query(query, chunkSize, TimeUnit.NANOSECONDS);
+  }
+
+  @Override
+  public Iterator<QueryResult> query(final Query query, final int chunkSize, TimeUnit timeUnit) {
     if (version().startsWith("0.") || version().startsWith("1.0")) {
         throw new RuntimeException("chunking not supported");
     }
 
-    Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
-            query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+    Call<ResponseBody> call = this.influxDBService.query(this.username,
+            this.password, query.getDatabase(), TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(), chunkSize);
 
     try {
         Response<ResponseBody> response = call.execute();
@@ -403,8 +408,7 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
-
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
         if (version().startsWith("0.") || version().startsWith("1.0")) {
             throw new RuntimeException("chunking not supported");
         }

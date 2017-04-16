@@ -253,6 +253,18 @@ public interface InfluxDB {
   public QueryResult query(final Query query, TimeUnit timeUnit);
 
   /**
+   * Execute a query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param timeUnit the time unit of the results.
+   * @return an Iterator of a list of Series which matched the query.
+   */
+  public Iterator<QueryResult> query(final Query query, int chunkSize, TimeUnit timeUnit);
+
+  /**
    * Create a new Database.
    *
    * @param name
