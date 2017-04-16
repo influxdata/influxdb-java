@@ -1,5 +1,6 @@
 package org.influxdb;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -217,6 +218,17 @@ public interface InfluxDB {
    * @return a List of Series which matched the query.
    */
   public QueryResult query(final Query query);
+
+  /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @return an Iterator of a list of Series which matched the query.
+   */
+  public Iterator<QueryResult> query(Query query, int chunkSize);
 
   /**
    * Execute a streaming query against a database.

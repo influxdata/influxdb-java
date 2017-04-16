@@ -7,6 +7,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.JsonReader;
 import com.squareup.moshi.Moshi;
 
 import org.influxdb.InfluxDB;
@@ -41,6 +42,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -335,6 +337,66 @@ public class InfluxDBImpl implements InfluxDB {
                                         this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
     }
     return execute(call);
+  }
+
+  @Override
+  public Iterator<QueryResult> query(final Query query, final int chunkSize) {
+    if (version().startsWith("0.") || version().startsWith("1.0")) {
+        throw new RuntimeException("chunking not supported");
+    }
+
+    Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
+            query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+
+    try {
+        Response<ResponseBody> response = call.execute();
+
+        try {
+            if (response.isSuccessful()) {
+                final BufferedSource source = response.body().source();
+
+                return new Iterator<QueryResult>() {
+
+                    private boolean ready;
+                    private QueryResult next;
+
+                    @Override
+                    public boolean hasNext() {
+                        if (!ready) {
+                            next();
+                            ready = true;
+                        }
+                        return next != null;
+                    }
+
+                    @Override
+                    public QueryResult next() {
+                        QueryResult current = next;
+                        try {
+                            next = InfluxDBImpl.this.adapter.fromJson(source);
+                        } catch (IOException e) {
+                            next = null;
+                        }
+                        return current;
+                    }
+
+                    @Override
+                    public void remove() {
+                        // Do nothing
+                    }
+                };
+            }
+            try (ResponseBody errorBody = response.errorBody()) {
+                throw new RuntimeException(errorBody.string());
+            }
+        } catch (EOFException e) {
+            // Do nothing
+        }
+    } catch (IOException e) {
+        throw new RuntimeException(e.getMessage());
+    }
+
+    return null;
   }
 
   /**
