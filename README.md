@@ -124,7 +124,7 @@ For version change history have a look at [ChangeLog](https://github.com/influxd
 
 ### Build Requirements
 
-* Java 1.7+
+* Java 1.8+
 * Maven 3.0+
 * Docker daemon running
 
