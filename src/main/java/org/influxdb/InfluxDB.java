@@ -273,6 +273,14 @@ public interface InfluxDB {
   public boolean databaseExists(final String name);
 
   /**
+   * Send any buffered points to InfluxDB. This method is synchronous and will block while all pending points are
+   * written.
+   *
+   * @throws IllegalStateException if batching is not enabled.
+   */
+  public void flush();
+
+  /**
    * close thread for asynchronous batch write and UDP socket to release resources if need.
    */
   public void close();

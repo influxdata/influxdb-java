@@ -9,10 +9,27 @@ import java.util.concurrent.TimeUnit;
  * Utils for time related methods.
  *
  * @author stefan.majer [at] gmail.com
- *
  */
 public enum TimeUtil {
   INSTANCE;
+
+    private static final ThreadLocal<SimpleDateFormat> FORMATTER_MILLIS = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return dateDF;
+        }
+    };
+
+    private static final ThreadLocal<SimpleDateFormat> FORMATTER_SECONDS = new ThreadLocal<SimpleDateFormat>() {
+        @Override
+        protected SimpleDateFormat initialValue() {
+            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
+            return dateDF;
+        }
+    };
 
   private static final EnumSet<TimeUnit> ALLOWED_TIMEUNITS = EnumSet.of(
       TimeUnit.HOURS,
@@ -21,6 +38,8 @@ public enum TimeUtil {
       TimeUnit.MILLISECONDS,
       TimeUnit.MICROSECONDS,
       TimeUnit.NANOSECONDS);
+
+    public static final int TIME_IN_SECOND_LENGTH = 20;
 
   /**
    * Convert from a TimeUnit to a influxDB timeunit String.
@@ -58,32 +77,22 @@ public enum TimeUtil {
      * @return influxdb compatible date-tome string
      */
     public static String toInfluxDBTimeFormat(final long time) {
-        SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat timeDF = new SimpleDateFormat("HH:mm:ss.SSS");
-        dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-        timeDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-        return dateDF.format(time) + "T" + timeDF.format(time) + "Z";
+        return FORMATTER_MILLIS.get().format(time);
     }
 
     /**
      * convert an influxdb timestamp used by influxdb to unix epoch time.
-     * influxdb time format example: 2016-10-31T06:52:20.020Z
+     * influxdb time format example: 2016-10-31T06:52:20.020Z or 2016-10-31T06:52:20Z
      *
      * @param time timestamp to use, in influxdb datetime format
      * @return time in unix epoch time
      */
     public static long fromInfluxDBTimeFormat(final String time) {
         try {
-            String[] parts = time.split("T");
-            String datePart = parts[0];
-            String timePart = parts[1].substring(0, parts[1].length() - 1);
-            SimpleDateFormat dateDF = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat timeDF = new SimpleDateFormat("HH:mm:ss.SSS");
-            dateDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-            timeDF.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-            return dateDF.parse(datePart).getTime() + timeDF.parse(timePart).getTime();
+            if (time.length() == TIME_IN_SECOND_LENGTH) {
+                return FORMATTER_SECONDS.get().parse(time).getTime();
+            }
+            return FORMATTER_MILLIS.get().parse(time).getTime();
         } catch (Exception e) {
             throw new RuntimeException("unexpected date format", e);
         }
