@@ -446,6 +446,16 @@ public class InfluxDBTest {
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, null);
 	}
 	
+	@Test(expected = IllegalStateException.class)
+	public void testBatchEnabledTwice() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+		try{
+			this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+		} finally {
+			this.influxDB.disableBatch();
+		}
+	}
+
 	/**
 	 * Test the implementation of {@link InfluxDBImpl#InfluxDBImpl(String, String, String, okhttp3.OkHttpClient.Builder)}.
 	 */
