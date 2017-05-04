@@ -103,7 +103,7 @@ public class BatchProcessor {
      *
      * @return this Builder to use it fluent
      */
-    public Builder exceptionHandler(Consumer<Throwable> handler) {
+    public Builder exceptionHandler(final Consumer<Throwable> handler) {
       this.exceptionHandler = handler;
       return this;
     }
@@ -181,7 +181,7 @@ public class BatchProcessor {
   }
 
   BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
-                 final TimeUnit flushIntervalUnit, final int flushInterval, Consumer<Throwable> exceptionHandler) {
+                 final TimeUnit flushIntervalUnit, final int flushInterval, final Consumer<Throwable> exceptionHandler) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
