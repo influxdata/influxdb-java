@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +33,7 @@ public class BatchProcessor {
   private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
   protected final BlockingQueue<AbstractBatchEntry> queue;
   private final ScheduledExecutorService scheduler;
+  private final Consumer<Throwable> exceptionHandler;
   final InfluxDBImpl influxDB;
   final int actions;
   private final TimeUnit flushIntervalUnit;
@@ -46,6 +48,7 @@ public class BatchProcessor {
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
+    private Consumer<Throwable> exceptionHandler = throwable -> {};
 
     /**
      * @param threadFactory
@@ -93,6 +96,19 @@ public class BatchProcessor {
     }
 
     /**
+     * A callback to be used when an error occurs during a batchwrite
+     *
+     * @param handler
+     *            the handler
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder exceptionHandler(Consumer<Throwable> handler) {
+      this.exceptionHandler = handler;
+      return this;
+    }
+
+    /**
      * Create the BatchProcessor.
      *
      * @return the BatchProcessor instance.
@@ -103,8 +119,9 @@ public class BatchProcessor {
       Preconditions.checkArgument(this.flushInterval > 0, "flushInterval should > 0");
       Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
       Preconditions.checkNotNull(this.threadFactory, "threadFactory may not be null");
+      Preconditions.checkNotNull(this.exceptionHandler, "exceptionHandler may not be null");
       return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
-                                this.flushInterval);
+                                this.flushInterval, exceptionHandler);
     }
   }
 
@@ -164,14 +181,15 @@ public class BatchProcessor {
   }
 
   BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
-                 final TimeUnit flushIntervalUnit, final int flushInterval) {
+                 final TimeUnit flushIntervalUnit, final int flushInterval, Consumer<Throwable> exceptionHandler) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
     this.flushIntervalUnit = flushIntervalUnit;
     this.flushInterval = flushInterval;
     this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        if (actions > 1 && actions < Integer.MAX_VALUE) {
+    this.exceptionHandler = exceptionHandler;
+    if (actions > 1 && actions < Integer.MAX_VALUE) {
         this.queue = new LinkedBlockingQueue<>(actions);
     } else {
         this.queue = new LinkedBlockingQueue<>();
@@ -232,6 +250,7 @@ public class BatchProcessor {
       }
     } catch (Throwable t) {
       // any exception wouldn't stop the scheduler
+      exceptionHandler.accept(t);
       LOG.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
     }
   }
