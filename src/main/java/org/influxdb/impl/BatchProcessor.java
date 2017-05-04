@@ -48,7 +48,7 @@ public class BatchProcessor {
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
-    private Consumer<Throwable> exceptionHandler = throwable -> {};
+    private Consumer<Throwable> exceptionHandler = throwable -> { };
 
     /**
      * @param threadFactory
@@ -96,7 +96,7 @@ public class BatchProcessor {
     }
 
     /**
-     * A callback to be used when an error occurs during a batchwrite
+     * A callback to be used when an error occurs during a batchwrite.
      *
      * @param handler
      *            the handler
@@ -181,7 +181,8 @@ public class BatchProcessor {
   }
 
   BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
-                 final TimeUnit flushIntervalUnit, final int flushInterval, final Consumer<Throwable> exceptionHandler) {
+                 final TimeUnit flushIntervalUnit, final int flushInterval,
+                 final Consumer<Throwable> exceptionHandler) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
