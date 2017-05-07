@@ -11,7 +11,7 @@ do
   echo "Tesing againts influxdb ${version}"
   docker kill influxdb || true
   docker rm influxdb || true
-  docker pull influxdb:${version}-alpine
+  docker pull influxdb:${version}-alpine || true
   docker run \
             --detach \
             --name influxdb \
