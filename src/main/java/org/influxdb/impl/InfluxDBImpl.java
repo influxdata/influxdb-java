@@ -160,15 +160,21 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, threadFactory, (throwable) -> { });
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(int actions, int flushDuration, TimeUnit flushDurationTimeUnit, ThreadFactory threadFactory, Consumer<Throwable> exceptionHandler) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
     this.batchProcessor = BatchProcessor
-        .builder(this)
-        .actions(actions)
-        .interval(flushDuration, flushDurationTimeUnit)
-        .threadFactory(threadFactory)
-        .build();
+            .builder(this)
+            .actions(actions)
+            .interval(flushDuration, flushDurationTimeUnit)
+            .threadFactory(threadFactory)
+            .build();
     this.batchEnabled.set(true);
     return this;
   }
