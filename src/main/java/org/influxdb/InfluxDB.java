@@ -102,7 +102,8 @@ public interface InfluxDB {
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
 
   /**
-   * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory, Consumer<Throwable>)}
+   * Enable batching of single Point writes as
+   * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, Consumer<Throwable>)}
    * using with a exceptionHandler that does nothing.
    *
    * @see #enableBatch(int, int, TimeUnit, ThreadFactory, Consumer<Throwable>)
