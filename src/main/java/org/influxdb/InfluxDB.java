@@ -1,15 +1,16 @@
 package org.influxdb;
 
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Interface with all available methods to access a InfluxDB database.
@@ -103,10 +104,10 @@ public interface InfluxDB {
 
   /**
    * Enable batching of single Point writes as
-   * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, Consumer<Throwable>)}
+   * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer<Iterable<Point>, Throwable>)}
    * using with a exceptionHandler that does nothing.
    *
-   * @see #enableBatch(int, int, TimeUnit, ThreadFactory, Consumer<Throwable>)
+   * @see #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer<Iterable<Point>, Throwable>)
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory);
@@ -128,7 +129,8 @@ public interface InfluxDB {
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
-                              final ThreadFactory threadFactory, final Consumer<Throwable> exceptionHandler);
+                              final ThreadFactory threadFactory,
+                              final BiConsumer<Iterable<Point>, Throwable> exceptionHandler);
 
   /**
    * Disable Batching.

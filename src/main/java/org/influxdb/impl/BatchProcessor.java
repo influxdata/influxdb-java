@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +33,7 @@ public class BatchProcessor {
   private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
   protected final BlockingQueue<AbstractBatchEntry> queue;
   private final ScheduledExecutorService scheduler;
-  private final Consumer<Throwable> exceptionHandler;
+  private final BiConsumer<Iterable<Point>, Throwable> exceptionHandler;
   final InfluxDBImpl influxDB;
   final int actions;
   private final TimeUnit flushIntervalUnit;
@@ -48,7 +48,7 @@ public class BatchProcessor {
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
-    private Consumer<Throwable> exceptionHandler = throwable -> { };
+    private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> { };
 
     /**
      * @param threadFactory
@@ -103,7 +103,7 @@ public class BatchProcessor {
      *
      * @return this Builder to use it fluent
      */
-    public Builder exceptionHandler(final Consumer<Throwable> handler) {
+    public Builder exceptionHandler(final BiConsumer<Iterable<Point>, Throwable> handler) {
       this.exceptionHandler = handler;
       return this;
     }
@@ -182,7 +182,7 @@ public class BatchProcessor {
 
   BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
                  final TimeUnit flushIntervalUnit, final int flushInterval,
-                 final Consumer<Throwable> exceptionHandler) {
+                 final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
@@ -206,6 +206,7 @@ public class BatchProcessor {
   }
 
   void write() {
+    List<Point> currentBatch = null;
     try {
       if (this.queue.isEmpty()) {
         return;
@@ -216,9 +217,11 @@ public class BatchProcessor {
       Map<Integer, List<String>> udpPortToBatchPoints = Maps.newHashMap();
       List<AbstractBatchEntry> batchEntries = new ArrayList<>(this.queue.size());
       this.queue.drainTo(batchEntries);
+      currentBatch = new ArrayList<>(batchEntries.size());
 
       for (AbstractBatchEntry batchEntry : batchEntries) {
         Point point = batchEntry.getPoint();
+        currentBatch.add(point);
         if (batchEntry instanceof HttpBatchEntry) {
             HttpBatchEntry httpBatchEntry = HttpBatchEntry.class.cast(batchEntry);
             String dbName = httpBatchEntry.getDb();
@@ -251,7 +254,7 @@ public class BatchProcessor {
       }
     } catch (Throwable t) {
       // any exception wouldn't stop the scheduler
-      exceptionHandler.accept(t);
+      exceptionHandler.accept(currentBatch, t);
       LOG.log(Level.SEVERE, "Batch could not be sent. Data will be lost", t);
     }
   }

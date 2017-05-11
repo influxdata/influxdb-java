@@ -1,15 +1,17 @@
 package org.influxdb.impl;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -45,7 +47,7 @@ public class BatchProcessorTest {
   @Test
   public void testSchedulerExceptionHandlingCallback() throws InterruptedException, IOException {
     InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
-    Consumer<Throwable> mockHandler = mock(Consumer.class);
+    BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
     BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
         .interval(1, TimeUnit.NANOSECONDS).exceptionHandler(mockHandler).build();
 
@@ -58,7 +60,7 @@ public class BatchProcessorTest {
     batchProcessor.put(batchEntry1);
     Thread.sleep(200); // wait for scheduler
 
-    verify(mockHandler, times(1)).accept(any(RuntimeException.class));
+    verify(mockHandler, times(1)).accept(argThat(hasItems(point, point)), any(RuntimeException.class));
   }
 
     @Test

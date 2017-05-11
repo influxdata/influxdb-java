@@ -47,6 +47,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -160,19 +161,21 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit, final ThreadFactory threadFactory) {
-    enableBatch(actions, flushDuration, flushDurationTimeUnit, threadFactory, (throwable) -> { });
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, threadFactory, (points, throwable) -> { });
     return this;
   }
 
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
-                              final ThreadFactory threadFactory, final Consumer<Throwable> exceptionHandler) {
+                              final ThreadFactory threadFactory,
+                              final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
     this.batchProcessor = BatchProcessor
             .builder(this)
             .actions(actions)
+            .exceptionHandler(exceptionHandler)
             .interval(flushDuration, flushDurationTimeUnit)
             .threadFactory(threadFactory)
             .build();
