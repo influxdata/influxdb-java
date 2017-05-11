@@ -75,7 +75,16 @@ Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.deleteDatabase(dbName);
 ```
-Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a gracefull application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
+Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
+
+Also note that any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
+
+If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `Consumer<Throwable>` using the overloaded `enableBatch` method:
+ 
+```java
+// Flush every 2000 Points, at least every 100ms
+influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, Executors.defaultThreadFactory(), (throwable) -> { /* custom error handling here */ });
+```
 
 ### Advanced Usages:
 
