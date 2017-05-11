@@ -6,6 +6,7 @@
  - Support chunking
  - Add a databaseExists method to InfluxDB interface
  - [Issue #289] (https://github.com/influxdata/influxdb-java/issues/289) Batching enhancements: Pending asynchronous writes can be explicitly flushed via `InfluxDB.flush()`.
+ - Add a listener to notify asynchronous errors during batch flushes (https://github.com/influxdata/influxdb-java/pull/318).
 
 #### Fixes
 
