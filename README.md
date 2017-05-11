@@ -79,11 +79,11 @@ Note that the batching functionality creates an internal thread pool that needs 
 
 Also note that any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
 
-If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `Consumer<Throwable>` using the overloaded `enableBatch` method:
+If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:
  
 ```java
 // Flush every 2000 Points, at least every 100ms
-influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, Executors.defaultThreadFactory(), (throwable) -> { /* custom error handling here */ });
+influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, Executors.defaultThreadFactory(), (failedPoints, throwable) -> { /* custom error handling here */ });
 ```
 
 ### Advanced Usages:
