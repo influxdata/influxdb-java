@@ -18,6 +18,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.exception.DeleteInfluxException;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,7 +70,7 @@ public class InfluxDBTest {
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
-	
+
 	/**
 	 * delete UDP database after all tests end.
 	 */
@@ -170,7 +171,133 @@ public class InfluxDBTest {
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
-	
+
+	/**
+	 * Test that writing to the new lineprotocol.
+	 */
+	@Test
+	public void testDropMeasurement() throws DeleteInfluxException {
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		// fill test data
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		final String measurement1 = "measurement_1";
+		BatchPoints batchPoints = BatchPoints.database(dbName)
+				.tag("async", "true").retentionPolicy(rp).build();
+		Point point1 = Point
+				.measurement(measurement1)
+				.tag("atag", "test")
+				.addField("idle", 90L)
+				.addField("usertime", 9L)
+				.addField("system", 1L)
+				.build();
+		batchPoints.point(point1);
+
+		final String measurement2 = "measurement_2";
+		Point point2 = Point.measurement(measurement2)
+				.tag("atag", "test")
+				.addField("used", 80L)
+				.addField("free", 1L).build();
+		batchPoints.point(point2);
+
+		this.influxDB.write(batchPoints);
+
+		// check test data
+		assertMeasurementTagsExists(dbName, measurement1);
+		assertMeasurementTagsExists(dbName, measurement2);
+
+		// delete measurement1 data
+		this.influxDB.dropMeasurement(dbName, measurement1);
+
+		// check we don't delete other measurement data
+		assertMeasurementEmpty(dbName, measurement1);
+		assertMeasurementTagsExists(dbName, measurement2);
+
+		// delete measurement2 data
+		this.influxDB.dropMeasurement(dbName, measurement2);
+
+		// check we delete
+		assertMeasurementEmpty(dbName, measurement1);
+		assertMeasurementEmpty(dbName, measurement2);
+
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * Test that writing to the new lineprotocol.
+	 */
+	@Test
+	public void testDelete() throws DeleteInfluxException {
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		// fill test data
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		final String measurement1 = "measurement_1";
+		BatchPoints batchPoints = BatchPoints.database(dbName)
+				.tag("async", "true").retentionPolicy(rp).build();
+		Point point1 = Point
+				.measurement(measurement1)
+				.tag("atag", "test")
+				.addField("idle", 90L)
+				.addField("usertime", 9L)
+				.addField("system", 1L)
+				.build();
+		batchPoints.point(point1);
+
+		final String measurement2 = "measurement_2";
+		Point point2 = Point.measurement(measurement2)
+				.tag("atag", "test")
+				.addField("used", 80L)
+				.addField("free", 1L).build();
+		batchPoints.point(point2);
+
+		this.influxDB.write(batchPoints);
+
+		// check test data
+		assertMeasurementTagsExists(dbName, measurement1);
+		assertMeasurementTagsExists(dbName, measurement2);
+
+		// delete measurement1 data
+		this.influxDB.delete(dbName, point1);
+
+		// check we don't delete other measurement data
+		assertMeasurementEmpty(dbName, measurement1);
+		assertMeasurementTagsExists(dbName, measurement2);
+
+		// delete measurement2 data
+        this.influxDB.delete(dbName, point2);
+
+		// check we delete
+		assertMeasurementEmpty(dbName, measurement1);
+		assertMeasurementEmpty(dbName, measurement2);
+
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	private void assertMeasurementTagsExists(String dbName, String measurement) {
+		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", dbName);
+		QueryResult result = this.influxDB.query(query);
+		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+
+		System.out.printf("CHECKED: %s tags exists\n", measurement);
+	}
+
+	private void assertMeasurementEmpty(String dbName, String measurement) {
+		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", dbName);
+		QueryResult result = this.influxDB.query(query);
+		final List<QueryResult.Result> results = result.getResults();
+		if(results.size() == 1) {
+			Assert.assertTrue(results.get(0).getSeries() == null);
+			Assert.assertTrue(results.get(0).getError() == null);
+		} else {
+			Assert.assertTrue(results.isEmpty());
+		}
+
+		System.out.printf("CHECKED: %s empty\n", measurement);
+	}
+
 	/**
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s sync support.
 	 */
@@ -181,9 +308,7 @@ public class InfluxDBTest {
 		Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 		this.influxDB.write(UDP_PORT, point);
 		Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
-		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-		QueryResult result = this.influxDB.query(query);
-		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+		assertMeasurementTagsExists(UDP_DATABASE, measurement);
 	}
 	
 	/**
@@ -198,9 +323,7 @@ public class InfluxDBTest {
 			Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 			this.influxDB.write(UDP_PORT, point);
 			Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
-			Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-			QueryResult result = this.influxDB.query(query);
-			Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+			assertMeasurementTagsExists(UDP_DATABASE, measurement);
 		}finally{
 			this.influxDB.disableBatch();
 		}
@@ -248,9 +371,7 @@ public class InfluxDBTest {
         this.influxDB.write(UDP_PORT, measurement + ",atag=test idle=90,usertime=9,system=1");
         //write with UDP may be executed on server after query with HTTP. so sleep 2s to handle this case
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
-        Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-        QueryResult result = this.influxDB.query(query);
-        Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+		assertMeasurementTagsExists(UDP_DATABASE, measurement);
     }
 
     /**
@@ -420,7 +541,7 @@ public class InfluxDBTest {
 	public void testBatchEnabledWithThreadFactory() {
 		final String threadName = "async_influxdb_write";
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
-			
+
 			@Override
 			public Thread newThread(Runnable r) {
 				Thread thread = new Thread(r);
@@ -635,9 +756,7 @@ public class InfluxDBTest {
             this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
             this.influxDB.flush();
 
-            Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", dbName);
-            QueryResult result = this.influxDB.query(query);
-            Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+			assertMeasurementTagsExists(dbName, measurement);
         } finally {
             this.influxDB.deleteDatabase(dbName);
             this.influxDB.disableBatch();
