@@ -1,15 +1,16 @@
 package org.influxdb;
 
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Interface with all available methods to access a InfluxDB database.
@@ -102,6 +103,16 @@ public interface InfluxDB {
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
 
   /**
+   * Enable batching of single Point writes as
+   * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer<Iterable<Point>, Throwable>)}
+   * using with a exceptionHandler that does nothing.
+   *
+   * @see #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer<Iterable<Point>, Throwable>)
+   */
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ThreadFactory threadFactory);
+
+  /**
    * Enable batching of single Point writes to speed up writes significant. If either actions or
    * flushDurations is reached first, a batch write is issued.
    * Note that batch processing needs to be explicitly stopped before the application is shutdown.
@@ -113,10 +124,13 @@ public interface InfluxDB {
    *            the time to wait at most.
    * @param flushDurationTimeUnit
    * @param threadFactory
+   * @param exceptionHandler
+   *            a consumer function to handle asynchronous errors
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
-                              final ThreadFactory threadFactory);
+                              final ThreadFactory threadFactory,
+                              final BiConsumer<Iterable<Point>, Throwable> exceptionHandler);
 
   /**
    * Disable Batching.
