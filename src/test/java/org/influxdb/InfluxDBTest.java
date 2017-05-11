@@ -414,12 +414,12 @@ public class InfluxDBTest {
 	}
 	
 	/**
-	 * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, ThreadFactory)}.
+	 * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, InfluxDB.ConsistencyLevel, ThreadFactory)}.
 	 */
 	@Test
 	public void testBatchEnabledWithThreadFactory() {
 		final String threadName = "async_influxdb_write";
-		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, InfluxDB.ConsistencyLevel.ONE, new ThreadFactory() {
 			
 			@Override
 			public Thread newThread(Runnable r) {

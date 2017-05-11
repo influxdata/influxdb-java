@@ -36,6 +36,7 @@ public class BatchProcessor {
   final int actions;
   private final TimeUnit flushIntervalUnit;
   private final int flushInterval;
+  private final InfluxDB.ConsistencyLevel consistencyLevel;
 
   /**
    * The Builder to create a BatchProcessor instance.
@@ -46,6 +47,7 @@ public class BatchProcessor {
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
+    private InfluxDB.ConsistencyLevel consistencyLevel;
 
     /**
      * @param threadFactory
@@ -93,6 +95,18 @@ public class BatchProcessor {
     }
 
     /**
+     * Set the consistency level writes should use.
+     *
+     * @param consistencyLevel
+     *            The consistency level.
+     * @return this Builder to use it fluent
+     */
+    public Builder consistencyLevel(final InfluxDB.ConsistencyLevel consistencyLevel) {
+      this.consistencyLevel = consistencyLevel;
+      return this;
+    }
+
+    /**
      * Create the BatchProcessor.
      *
      * @return the BatchProcessor instance.
@@ -102,9 +116,10 @@ public class BatchProcessor {
       Preconditions.checkArgument(this.actions > 0, "actions should > 0");
       Preconditions.checkArgument(this.flushInterval > 0, "flushInterval should > 0");
       Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
+      Preconditions.checkNotNull(this.consistencyLevel, "consistencyLevel must not be null");
       Preconditions.checkNotNull(this.threadFactory, "threadFactory may not be null");
       return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
-                                this.flushInterval);
+                                this.flushInterval, this.consistencyLevel);
     }
   }
 
@@ -164,12 +179,14 @@ public class BatchProcessor {
   }
 
   BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
-                 final TimeUnit flushIntervalUnit, final int flushInterval) {
+                 final TimeUnit flushIntervalUnit, final int flushInterval,
+                 final InfluxDB.ConsistencyLevel consistencyLevel) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
     this.flushIntervalUnit = flushIntervalUnit;
     this.flushInterval = flushInterval;
+    this.consistencyLevel = consistencyLevel;
     this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
         if (actions > 1 && actions < Integer.MAX_VALUE) {
         this.queue = new LinkedBlockingQueue<>(actions);
@@ -207,6 +224,7 @@ public class BatchProcessor {
             String batchKey = dbName + "_" + rp;
             if (!batchKeyToBatchPoints.containsKey(batchKey)) {
               BatchPoints batchPoints = BatchPoints.database(dbName)
+                                                   .consistency(consistencyLevel)
                                                    .retentionPolicy(rp).build();
               batchKeyToBatchPoints.put(batchKey, batchPoints);
             }
