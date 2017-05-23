@@ -496,18 +496,21 @@ public class InfluxDBTest {
 		String measurement = TestUtils.getRandomMeasurement();
 
 		// GIVEN a set of records using second precision
+		DateTimeFormatter formatter = DateTimeFormatter
+				.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+				.withZone(ZoneId.of("UTC"));
 		List<String> records = Lists.newArrayList();
-		records.add("cpu,atag=test1 idle=100,usertime=10,system=1 1485273600");
-		String timeP1 = TimeUtil.toInfluxDBTimeFormat(1485273600000L);
+		records.add(measurement + ",atag=test1 idle=100,usertime=10,system=1 1485273600");
+		String timeP1 = formatter.format(Instant.ofEpochSecond(1485273600));
 
-		records.add("cpu,atag=test2 idle=200,usertime=20,system=2 1485277200");
-		String timeP2 = TimeUtil.toInfluxDBTimeFormat(1485277200000L);
+		records.add(measurement + ",atag=test2 idle=200,usertime=20,system=2 1485277200");
+		String timeP2 = formatter.format(Instant.ofEpochSecond(1485277200));
 
-		records.add("cpu,atag=test3 idle=300,usertime=30,system=3 1485280800");
-		String timeP3 = TimeUtil.toInfluxDBTimeFormat(1485280800000L);
+		records.add(measurement + ",atag=test3 idle=300,usertime=30,system=3 1485280800");
+		String timeP3 = formatter.format(Instant.ofEpochSecond(1485280800));
 
 		// WHEN I write the batch
-		this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ALL, TimeUnit.SECONDS, records);
+		this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, TimeUnit.SECONDS, records);
 
 		// THEN the measure points have a timestamp with second precision
 		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
