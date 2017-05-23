@@ -259,30 +259,45 @@ public class InfluxDBImpl implements InfluxDB {
         this.password,
         batchPoints.getDatabase(),
         batchPoints.getRetentionPolicy(),
-        TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+        TimeUtil.toTimePrecision(batchPoints.getPrecision()),
         batchPoints.getConsistency().value(),
         lineProtocol));
+  }
+
+
+  @Override
+  public void write(String database, String retentionPolicy, ConsistencyLevel consistency,
+          TimeUnit precision, String records) {
+    execute(this.influxDBService.writePoints(
+            this.username,
+            this.password,
+            database,
+            retentionPolicy,
+            TimeUtil.toTimePrecision(precision),
+            consistency.value(),
+            RequestBody.create(MEDIA_TYPE_STRING, records)));
   }
 
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
       final String records) {
-    execute(this.influxDBService.writePoints(
-        this.username,
-        this.password,
-        database,
-        retentionPolicy,
-        TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
-        consistency.value(),
-        RequestBody.create(MEDIA_TYPE_STRING, records)));
+    write(database, retentionPolicy, consistency, TimeUnit.NANOSECONDS, records);
   }
 
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
       final List<String> records) {
-    final String joinedRecords = Joiner.on("\n").join(records);
-    write(database, retentionPolicy, consistency, joinedRecords);
+    write(database, retentionPolicy, consistency, TimeUnit.NANOSECONDS, records);
   }
+
+
+  @Override
+  public void write(String database, String retentionPolicy, ConsistencyLevel consistency,
+          TimeUnit precision, List<String> records) {
+    final String joinedRecords = Joiner.on("\n").join(records);
+    write(database, retentionPolicy, consistency, precision, joinedRecords);
+  }
+
 
   /**
    * {@inheritDoc}

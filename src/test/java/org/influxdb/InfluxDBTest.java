@@ -1,5 +1,7 @@
 package org.influxdb;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,12 +21,14 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.InfluxDBImpl;
+import org.influxdb.impl.TimeUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 /**
@@ -347,6 +351,143 @@ public class InfluxDBTest {
         Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
         this.influxDB.deleteDatabase(dbName);
     }
+
+	/**
+	 * Tests writing points using the time precision feature
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteBatchWithPrecision() throws Exception {
+		// GIVEN a database and a measurement
+		String dbName = "precision_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+
+		String measurement = TestUtils.getRandomMeasurement();
+
+		// GIVEN a batch of points using second precision
+		Point p1 = Point
+				.measurement(measurement)
+				.addField("foo", 1d)
+				.tag("device", "one")
+				.time(1485273600, TimeUnit.SECONDS).build(); // 2017-01-27T16:00:00
+		String timeP1 = TimeUtil.toInfluxDBTimeFormat(1485273600000L);
+		Point p2 = Point
+				.measurement(measurement)
+				.addField("foo", 2d)
+				.tag("device", "two")
+				.time(1485277200, TimeUnit.SECONDS).build(); // 2017-01-27T17:00:00
+		String timeP2 = TimeUtil.toInfluxDBTimeFormat(1485277200000L);
+		Point p3 = Point
+				.measurement(measurement)
+				.addField("foo", 3d)
+				.tag("device", "three")
+				.time(1485280800, TimeUnit.SECONDS).build(); // 2017-01-27T18:00:00
+		String timeP3 = TimeUtil.toInfluxDBTimeFormat(1485280800000L);
+
+		BatchPoints batchPoints = BatchPoints
+				.database(dbName)
+				.retentionPolicy(rp)
+				.precision(TimeUnit.SECONDS)
+				.points(p1, p2, p3)
+				.build();
+
+		// WHEN I write the batch
+		this.influxDB.write(batchPoints);
+
+		// THEN the measure points have a timestamp with second precision
+		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0)).isEqualTo(timeP3);
+
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	@Test
+	public void testWriteBatchWithoutPrecision() throws Exception {
+		// GIVEN a database and a measurement
+		String dbName = "precision_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+
+		String measurement = TestUtils.getRandomMeasurement();
+
+		// GIVEN a batch of points that has no specific precision
+		Point p1 = Point
+				.measurement(measurement)
+				.addField("foo", 1d)
+				.tag("device", "one")
+				.time(1485273600000000100L, TimeUnit.NANOSECONDS).build(); // 2017-01-27T16:00:00.000000100Z
+		String timeP1 = "2017-01-27T16:00:00.000000100Z";
+		Point p2 = Point
+				.measurement(measurement)
+				.addField("foo", 2d)
+				.tag("device", "two")
+				.time(1485277200000000200L, TimeUnit.NANOSECONDS).build(); // 2017-01-27T17:00:00.000000200Z
+		String timeP2 = "2017-01-27T17:00:00.000000200Z";
+		Point p3 = Point
+				.measurement(measurement)
+				.addField("foo", 3d)
+				.tag("device", "three")
+				.time(1485280800000000300L, TimeUnit.NANOSECONDS).build(); // 2017-01-27T18:00:00.000000300Z
+		String timeP3 = "2017-01-27T18:00:00.000000300Z";
+
+		BatchPoints batchPoints = BatchPoints
+				.database(dbName)
+				.retentionPolicy(rp)
+				.points(p1, p2, p3)
+				.build();
+
+		// WHEN I write the batch
+		this.influxDB.write(batchPoints);
+
+		// THEN the measure points have a timestamp with second precision
+		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0)).isEqualTo(timeP3);
+
+		this.influxDB.deleteDatabase(dbName);
+	}
+
+	@Test
+	public void testWriteRecordsWithPrecision() throws Exception {
+		// GIVEN a database and a measurement
+		String dbName = "precision_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+
+		String measurement = TestUtils.getRandomMeasurement();
+
+		// GIVEN a set of records using second precision
+		List<String> records = Lists.newArrayList();
+		records.add("cpu,atag=test1 idle=100,usertime=10,system=1 1485273600");
+		String timeP1 = TimeUtil.toInfluxDBTimeFormat(1485273600000L);
+
+		records.add("cpu,atag=test2 idle=200,usertime=20,system=2 1485277200");
+		String timeP2 = TimeUtil.toInfluxDBTimeFormat(1485277200000L);
+
+		records.add("cpu,atag=test3 idle=300,usertime=30,system=3 1485280800");
+		String timeP3 = TimeUtil.toInfluxDBTimeFormat(1485280800000L);
+
+		// WHEN I write the batch
+		this.influxDB.write(dbName, rp, null, TimeUnit.SECONDS, records);
+
+		// THEN the measure points have a timestamp with second precision
+		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
+		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0)).isEqualTo(timeP3);
+
+		this.influxDB.deleteDatabase(dbName);
+	}
 
 	/**
 	 * Test that creating database which name is composed of numbers only works
