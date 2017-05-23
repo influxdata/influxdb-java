@@ -1,17 +1,15 @@
 package org.influxdb.dto;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Ordering;
+import org.influxdb.impl.Preconditions;
 
 /**
  * {Purpose of This Type}.
@@ -49,8 +47,8 @@ public class BatchPoints {
   public static final class Builder {
     private final String database;
     private String retentionPolicy;
-    private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
-    private final List<Point> points = Lists.newArrayList();
+    private final Map<String, String> tags = new TreeMap<>();
+    private final List<Point> points = new ArrayList<>();
     private ConsistencyLevel consistency;
 
     /**
@@ -124,8 +122,7 @@ public class BatchPoints {
      * @return the created BatchPoints.
      */
     public BatchPoints build() {
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(this.database),
-                                  "Database must not be null or empty.");
+      Preconditions.checkNonEmptyString(this.database, "database");
       BatchPoints batchPoints = new BatchPoints();
       batchPoints.setDatabase(this.database);
       for (Point point : this.points) {
