@@ -3,6 +3,9 @@ package org.influxdb;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,7 +76,7 @@ public class InfluxDBTest {
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
-	
+
 	/**
 	 * delete UDP database after all tests end.
 	 */
@@ -133,7 +136,7 @@ public class InfluxDBTest {
 		Assert.assertTrue("It is expected that describeDataBases contents the newly create database.", found);
 		this.influxDB.deleteDatabase(dbName);
 	}
-	
+
 	/**
 	 * Test that Database exists works.
 	 */
@@ -174,7 +177,7 @@ public class InfluxDBTest {
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
-	
+
 	/**
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s sync support.
 	 */
@@ -189,7 +192,7 @@ public class InfluxDBTest {
 		QueryResult result = this.influxDB.query(query);
 		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 	}
-	
+
 	/**
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
 	 */
@@ -209,8 +212,8 @@ public class InfluxDBTest {
 			this.influxDB.disableBatch();
 		}
 	}
-	
-    
+
+
     /**
      *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
      */
@@ -381,24 +384,32 @@ public class InfluxDBTest {
 		String measurement = TestUtils.getRandomMeasurement();
 
 		// GIVEN a batch of points using second precision
+		DateTimeFormatter formatter = DateTimeFormatter
+				.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+				.withZone(ZoneId.of("UTC"));
+		int t1 = 1485273600;
 		Point p1 = Point
 				.measurement(measurement)
 				.addField("foo", 1d)
 				.tag("device", "one")
-				.time(1485273600, TimeUnit.SECONDS).build(); // 2017-01-27T16:00:00
-		String timeP1 = TimeUtil.toInfluxDBTimeFormat(1485273600000L);
+				.time(t1, TimeUnit.SECONDS).build(); // 2017-01-27T16:00:00
+		String timeP1 = formatter.format(Instant.ofEpochSecond(t1));
+
+		int t2 = 1485277200;
 		Point p2 = Point
 				.measurement(measurement)
 				.addField("foo", 2d)
 				.tag("device", "two")
-				.time(1485277200, TimeUnit.SECONDS).build(); // 2017-01-27T17:00:00
-		String timeP2 = TimeUtil.toInfluxDBTimeFormat(1485277200000L);
+				.time(t2, TimeUnit.SECONDS).build(); // 2017-01-27T17:00:00
+		String timeP2 = formatter.format(Instant.ofEpochSecond(t2));
+
+		int t3 = 1485280800;
 		Point p3 = Point
 				.measurement(measurement)
 				.addField("foo", 3d)
 				.tag("device", "three")
-				.time(1485280800, TimeUnit.SECONDS).build(); // 2017-01-27T18:00:00
-		String timeP3 = TimeUtil.toInfluxDBTimeFormat(1485280800000L);
+				.time(t3, TimeUnit.SECONDS).build(); // 2017-01-27T18:00:00
+		String timeP3 = formatter.format(Instant.ofEpochSecond(t3));
 
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
@@ -431,24 +442,29 @@ public class InfluxDBTest {
 		String measurement = TestUtils.getRandomMeasurement();
 
 		// GIVEN a batch of points that has no specific precision
+		long t1 = 1485273600000000100L;
 		Point p1 = Point
 				.measurement(measurement)
 				.addField("foo", 1d)
 				.tag("device", "one")
-				.time(1485273600000000100L, TimeUnit.NANOSECONDS).build(); // 2017-01-27T16:00:00.000000100Z
-		String timeP1 = "2017-01-27T16:00:00.000000100Z";
+				.time(t1, TimeUnit.NANOSECONDS).build(); // 2017-01-27T16:00:00.000000100Z
+		Double timeP1 = Double.valueOf(t1);
+
+		long t2 = 1485277200000000200L;
 		Point p2 = Point
 				.measurement(measurement)
 				.addField("foo", 2d)
 				.tag("device", "two")
-				.time(1485277200000000200L, TimeUnit.NANOSECONDS).build(); // 2017-01-27T17:00:00.000000200Z
-		String timeP2 = "2017-01-27T17:00:00.000000200Z";
+				.time(t2, TimeUnit.NANOSECONDS).build(); // 2017-01-27T17:00:00.000000200Z
+		Double timeP2 = Double.valueOf(t2);
+
+		long t3 = 1485280800000000300L;
 		Point p3 = Point
 				.measurement(measurement)
 				.addField("foo", 3d)
 				.tag("device", "three")
-				.time(1485280800000000300L, TimeUnit.NANOSECONDS).build(); // 2017-01-27T18:00:00.000000300Z
-		String timeP3 = "2017-01-27T18:00:00.000000300Z";
+				.time(t3, TimeUnit.NANOSECONDS).build(); // 2017-01-27T18:00:00.000000300Z
+		Double timeP3 = Double.valueOf(t3);
 
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
@@ -460,7 +476,7 @@ public class InfluxDBTest {
 		this.influxDB.write(batchPoints);
 
 		// THEN the measure points have a timestamp with second precision
-		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
+		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
 		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
 		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
 		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
@@ -491,7 +507,7 @@ public class InfluxDBTest {
 		String timeP3 = TimeUtil.toInfluxDBTimeFormat(1485280800000L);
 
 		// WHEN I write the batch
-		this.influxDB.write(dbName, rp, null, TimeUnit.SECONDS, records);
+		this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ALL, TimeUnit.SECONDS, records);
 
 		// THEN the measure points have a timestamp with second precision
 		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
@@ -515,7 +531,7 @@ public class InfluxDBTest {
 		Assert.assertTrue(result.contains(numericDbName));
 		this.influxDB.deleteDatabase(numericDbName);
 	}
-	
+
     /**
      * Test that creating database which name is empty will throw expected exception
      */
@@ -553,7 +569,7 @@ public class InfluxDBTest {
 		this.influxDB.disableBatch();
 		Assert.assertFalse(this.influxDB.isBatchEnabled());
 	}
-	
+
 	/**
 	 * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, ThreadFactory)}.
 	 */
@@ -561,7 +577,7 @@ public class InfluxDBTest {
 	public void testBatchEnabledWithThreadFactory() {
 		final String threadName = "async_influxdb_write";
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
-			
+
 			@Override
 			public Thread newThread(Runnable r) {
 				Thread thread = new Thread(r);
@@ -576,7 +592,7 @@ public class InfluxDBTest {
 				existThreadWithSettedName = true;
 				break;
 			}
-			
+
 		}
 		Assert.assertTrue(existThreadWithSettedName);
 		this.influxDB.disableBatch();
@@ -586,7 +602,7 @@ public class InfluxDBTest {
 	public void testBatchEnabledWithThreadFactoryIsNull() {
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, null);
 	}
-	
+
 	/**
 	 * Test the implementation of {@link InfluxDBImpl#InfluxDBImpl(String, String, String, okhttp3.OkHttpClient.Builder)}.
 	 */
