@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
 
@@ -27,6 +28,7 @@ public class BatchPoints {
   private Map<String, String> tags;
   private List<Point> points;
   private ConsistencyLevel consistency;
+  private TimeUnit precision;
 
   BatchPoints() {
     // Only visible in the Builder
@@ -52,6 +54,7 @@ public class BatchPoints {
     private final Map<String, String> tags = Maps.newTreeMap(Ordering.natural());
     private final List<Point> points = Lists.newArrayList();
     private ConsistencyLevel consistency;
+    private TimeUnit precision;
 
     /**
      * @param database
@@ -119,6 +122,16 @@ public class BatchPoints {
     }
 
     /**
+     * Set the time precision to use for the whole batch. If unspecified, will default to {@link TimeUnit#NANOSECONDS}
+     * @param precision
+     * @return the Builder instance
+     */
+    public Builder precision(final TimeUnit precision) {
+      this.precision = precision;
+      return this;
+    }
+
+    /**
      * Create a new BatchPoints instance.
      *
      * @return the created BatchPoints.
@@ -138,6 +151,10 @@ public class BatchPoints {
         this.consistency = ConsistencyLevel.ONE;
       }
       batchPoints.setConsistency(this.consistency);
+      if (null == this.precision) {
+        this.precision = TimeUnit.NANOSECONDS;
+      }
+      batchPoints.setPrecision(this.precision);
       return batchPoints;
     }
   }
@@ -185,6 +202,20 @@ public class BatchPoints {
    */
   void setPoints(final List<Point> points) {
     this.points = points;
+  }
+
+  /**
+   * @return the time precision unit
+   */
+  public TimeUnit getPrecision() {
+    return precision;
+  }
+
+  /**
+   * @param precision the time precision to set for the batch points
+   */
+  public void setPrecision(TimeUnit precision) {
+    this.precision = precision;
   }
 
   /**
@@ -242,12 +273,13 @@ public class BatchPoints {
             && Objects.equals(retentionPolicy, that.retentionPolicy)
             && Objects.equals(tags, that.tags)
             && Objects.equals(points, that.points)
-            && consistency == that.consistency;
+            && consistency == that.consistency
+            && precision == that.precision;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(database, retentionPolicy, tags, points, consistency);
+    return Objects.hash(database, retentionPolicy, tags, points, consistency, precision);
   }
 
   /**
@@ -264,6 +296,8 @@ public class BatchPoints {
     builder.append(this.consistency);
     builder.append(", tags=");
     builder.append(this.tags);
+    builder.append(", precision=");
+    builder.append(this.precision);
     builder.append(", points=");
     builder.append(this.points);
     builder.append("]");
@@ -278,8 +312,9 @@ public class BatchPoints {
    */
   public String lineProtocol() {
     StringBuilder sb = new StringBuilder();
+
     for (Point point : this.points) {
-      sb.append(point.lineProtocol()).append("\n");
+      sb.append(point.lineProtocol(this.precision)).append("\n");
     }
     return sb.toString();
   }

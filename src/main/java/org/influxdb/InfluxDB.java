@@ -198,6 +198,16 @@ public interface InfluxDB {
                     final ConsistencyLevel consistency, final String records);
 
   /**
+   * Write a set of Points to the influxdb database with the string records.
+   *
+   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   *
+   * @param records
+   */
+  public void write(final String database, final String retentionPolicy,
+          final ConsistencyLevel consistency, final TimeUnit precision, final String records);
+
+  /**
    * Write a set of Points to the influxdb database with the list of string records.
    *
    * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
@@ -206,6 +216,16 @@ public interface InfluxDB {
    */
   public void write(final String database, final String retentionPolicy,
                     final ConsistencyLevel consistency, final List<String> records);
+
+  /**
+   * Write a set of Points to the influxdb database with the list of string records.
+   *
+   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   *
+   * @param records
+   */
+  public void write(final String database, final String retentionPolicy,
+          final ConsistencyLevel consistency, final TimeUnit precision, final List<String> records);
 
   /**
    * Write a set of Points to the influxdb database with the string records through UDP.
