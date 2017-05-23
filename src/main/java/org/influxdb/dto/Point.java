@@ -1,5 +1,10 @@
 package org.influxdb.dto;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.escape.Escaper;
+import com.google.common.escape.Escapers;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
@@ -9,11 +14,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.escape.Escaper;
-import com.google.common.escape.Escapers;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -329,7 +329,7 @@ public class Point {
   }
 
   /**
-   * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp
+   * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
    * @param precision the time precision unit for this point
    * @return the String without newLine
    */
@@ -399,7 +399,7 @@ public class Point {
     return sb;
   }
 
-  private StringBuilder formatedTime(TimeUnit precision) {
+  private StringBuilder formatedTime(final TimeUnit precision) {
     final StringBuilder sb = new StringBuilder();
     sb.append(" ").append(precision.convert(this.time, this.precision));
     return sb;

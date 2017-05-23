@@ -1,18 +1,17 @@
 package org.influxdb.dto;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-import org.influxdb.InfluxDB.ConsistencyLevel;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import org.influxdb.InfluxDB.ConsistencyLevel;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {Purpose of This Type}.
@@ -214,7 +213,7 @@ public class BatchPoints {
   /**
    * @param precision the time precision to set for the batch points
    */
-  public void setPrecision(TimeUnit precision) {
+  public void setPrecision(final TimeUnit precision) {
     this.precision = precision;
   }
 

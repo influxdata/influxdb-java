@@ -276,8 +276,8 @@ public class InfluxDBImpl implements InfluxDB {
 
 
   @Override
-  public void write(String database, String retentionPolicy, ConsistencyLevel consistency,
-          TimeUnit precision, String records) {
+  public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
+          final TimeUnit precision, final String records) {
     execute(this.influxDBService.writePoints(
             this.username,
             this.password,
@@ -302,8 +302,8 @@ public class InfluxDBImpl implements InfluxDB {
 
 
   @Override
-  public void write(String database, String retentionPolicy, ConsistencyLevel consistency,
-          TimeUnit precision, List<String> records) {
+  public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
+          final TimeUnit precision, final List<String> records) {
     final String joinedRecords = Joiner.on("\n").join(records);
     write(database, retentionPolicy, consistency, precision, joinedRecords);
   }
