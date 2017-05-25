@@ -279,13 +279,13 @@ public class InfluxDBImpl implements InfluxDB {
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
           final TimeUnit precision, final String records) {
     execute(this.influxDBService.writePoints(
-            this.username,
-            this.password,
-            database,
-            retentionPolicy,
-            TimeUtil.toTimePrecision(precision),
-            consistency.value(),
-            RequestBody.create(MEDIA_TYPE_STRING, records)));
+        this.username,
+        this.password,
+        database,
+        retentionPolicy,
+        TimeUtil.toTimePrecision(precision),
+        consistency.value(),
+        RequestBody.create(MEDIA_TYPE_STRING, records)));
   }
 
   @Override
