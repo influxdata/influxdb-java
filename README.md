@@ -72,6 +72,36 @@ influxDB.query(query);
 influxDB.deleteDatabase(dbName);
 ```
 
+If all of your points are written to the same database and retention policy, the simpler write() methods can be used.
+
+```java
+InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+String dbName = "aTimeSeries";
+influxDB.createDatabase(dbName);
+influxDB.setDatabase(dbName);
+influxDB.setRetentionPolicy("autogen");
+
+// Flush every 2000 Points, at least every 100ms
+influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
+
+influxDB.write(Point.measurement("cpu")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.addField("idle", 90L)
+	.addField("user", 9L)
+	.addField("system", 1L)
+	.build());
+
+influxDB.write(Point.measurement("disk")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.addField("used", 80L)
+	.addField("free", 1L)
+	.build());
+
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query);
+influxDB.deleteDatabase(dbName);
+```
+
 ### Changes in 2.4
 influxdb-java now uses okhttp3 and retrofit2.  As a result, you can now pass an ``OkHttpClient.Builder``
 to the ``InfluxDBFactory.connect`` if you wish to add more interceptors, etc, to OkHttp.
@@ -87,7 +117,7 @@ that allow this to be specified (default is still GET).
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.3</version>
+  <version>2.4</version>
 </dependency>
 ```
 
