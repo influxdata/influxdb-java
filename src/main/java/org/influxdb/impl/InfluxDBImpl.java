@@ -50,6 +50,9 @@ public class InfluxDBImpl implements InfluxDB {
 	private final AtomicLong batchedCount = new AtomicLong();
 	private final HttpLoggingInterceptor loggingInterceptor;
 	private LogLevel logLevel = LogLevel.NONE;
+	private String database;
+	private String retentionPolicy = "autogen";
+	private ConsistencyLevel consistency = ConsistencyLevel.ONE;
 
 	public InfluxDBImpl(final String url, final String username, final String password,
 			final OkHttpClient.Builder client) {
@@ -64,6 +67,15 @@ public class InfluxDBImpl implements InfluxDB {
 				.addConverterFactory(MoshiConverterFactory.create())
 				.build();
 		this.influxDBService = this.retrofit.create(InfluxDBService.class);
+	}
+
+	public InfluxDBImpl(final String url, final String username, final String password,
+						final OkHttpClient.Builder client, final String database, final String retentionPolicy, final ConsistencyLevel consistency) {
+		this(url, username, password, client);
+
+		setConsistency(consistency);
+		setDatabase(database);
+		setRetentionPolicy(retentionPolicy);
 	}
 
 	@Override
@@ -144,6 +156,21 @@ public class InfluxDBImpl implements InfluxDB {
 	@Override
 	public String version()	{
 		return ping().getVersion();
+	}
+
+	@Override
+	public void write(Point point) {
+		write(database, retentionPolicy, point);
+	}
+
+	@Override
+	public void write(String records) {
+		write(database, retentionPolicy, consistency, records);
+	}
+
+	@Override
+	public void write(List<String> records) {
+		write(database, retentionPolicy, consistency, records);
 	}
 
 	@Override
@@ -254,6 +281,27 @@ public class InfluxDBImpl implements InfluxDB {
 			}
 		}
 		return databases;
+	}
+
+	@Override
+	public InfluxDB setConsistency(ConsistencyLevel consistency) {
+
+		this.consistency = consistency;
+		return this;
+	}
+
+	@Override
+	public InfluxDB setDatabase(String database) {
+
+		this.database = database;
+		return this;
+	}
+
+	@Override
+	public InfluxDB setRetentionPolicy(String retentionPolicy) {
+
+		this.retentionPolicy = retentionPolicy;
+		return this;
 	}
 
 	private <T> T execute(Call<T> call)	{
