@@ -15,6 +15,10 @@ public class TestUtils {
 		return ip;
 	}
 	
+	public static String getRandomMeasurement() {
+		return "measurement_" + System.nanoTime();
+	}
+	
 	public static String getInfluxPORT(boolean apiPort) {
 		String port = "8086";
 		

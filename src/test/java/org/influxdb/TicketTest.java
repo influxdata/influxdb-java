@@ -1,6 +1,8 @@
+
 package org.influxdb;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.LogLevel;
@@ -16,7 +18,7 @@ import org.junit.Test;
  * @author stefan.majer [at] gmail.com
  *
  */
-public class TicketTests {
+public class TicketTest {
 
 	private InfluxDB influxDB;
 
@@ -34,7 +36,6 @@ public class TicketTests {
 			Pong response;
 			try {
 				response = this.influxDB.ping();
-				System.out.println(response);
 				if (!response.getVersion().equalsIgnoreCase("unknown")) {
 					influxDBstarted = true;
 				}
@@ -44,11 +45,8 @@ public class TicketTests {
 			}
 			Thread.sleep(100L);
 		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.FULL);
-		// String logs = CharStreams.toString(new InputStreamReader(containerLogsStream,
-		// Charsets.UTF_8));
+		this.influxDB.setLogLevel(LogLevel.NONE);
 		System.out.println("##################################################################################");
-		// System.out.println("Container Logs: \n" + logs);
 		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
 		System.out.println("##################################################################################");
 	}
@@ -108,6 +106,31 @@ public class TicketTests {
 			Point point = Point.measurement("cpu").addField("idle", 99.0).build();
 			this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
 		}
+		this.influxDB.deleteDatabase(dbName);
+	}
+	
+	/**
+	 * Test for ticket #303
+	 *
+	 */
+	@Test
+	public void testTicket303() {
+		String dbName = "ticket303_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		
+                
+                Date rundate1 = new Date() ; 
+                long rundate1Sec = rundate1.getTime() / 1000;
+       
+              
+        
+          Point point1 = Point
+                            .measurement("TestSlash")
+                            .time(rundate1Sec, TimeUnit.SECONDS)
+                            .tag("precision", "Second")                       
+                            .addField("MultipleSlash" ,  "echo \\\".ll 12.0i\\\";")                            
+                            .build(); 
+		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
 		this.influxDB.deleteDatabase(dbName);
 	}
 

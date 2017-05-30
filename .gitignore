@@ -1,6 +1,8 @@
+/dependency-reduced-pom.xml
 target/
 *~
 .classpath
+.m2
 .project
 .settings/
 test-output/
