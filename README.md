@@ -128,6 +128,10 @@ The latest version for maven dependence:
   <version>2.5</version>
 </dependency>
 ```
+Or when using with gradle:
+```groovy
+compile 'org.influxdb:influxdb-java:2.5'
+```
 For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
 
 
