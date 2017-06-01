@@ -3,6 +3,7 @@ package org.influxdb.dto;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,6 +48,9 @@ public class Point {
             numberFormat.setMinimumFractionDigits(1);
             return numberFormat;
           });
+
+  private static final ThreadLocal<Map<String, MeasurementStringBuilder>> CACHED_STRINGBUILDERS =
+          ThreadLocal.withInitial(HashMap::new);
 
   Point() {
   }
@@ -324,8 +328,10 @@ public class Point {
    * @return the String without newLine.
    */
   public String lineProtocol() {
-    final StringBuilder sb = new StringBuilder(128);
-    sb.append(KEY_ESCAPER.escape(this.measurement));
+    final StringBuilder sb = CACHED_STRINGBUILDERS
+            .get()
+            .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
+            .resetForUse();
 
     concatenatedTags(sb);
     concatenatedFields(sb);
@@ -379,4 +385,18 @@ public class Point {
     sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
   }
 
+  private static class MeasurementStringBuilder {
+    private final StringBuilder sb = new StringBuilder(128);
+    private final int length;
+
+    MeasurementStringBuilder(final String measurement) {
+      this.sb.append(KEY_ESCAPER.escape(measurement));
+      this.length = sb.length();
+    }
+
+    StringBuilder resetForUse() {
+      sb.setLength(length);
+      return sb;
+    }
+  }
 }
