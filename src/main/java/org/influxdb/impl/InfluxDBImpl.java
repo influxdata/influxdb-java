@@ -96,8 +96,14 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   private InetAddress parseHostAddress(final String url) {
+      HttpUrl httpUrl = HttpUrl.parse(url);
+
+      if (httpUrl == null) {
+          throw new IllegalArgumentException("Unable to parse url: " + url);
+      }
+
       try {
-          return InetAddress.getByName(HttpUrl.parse(url).host());
+          return InetAddress.getByName(httpUrl.host());
       } catch (UnknownHostException e) {
           throw new RuntimeException(e);
       }
