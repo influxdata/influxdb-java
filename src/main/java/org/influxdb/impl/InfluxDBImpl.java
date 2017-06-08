@@ -232,6 +232,9 @@ public class InfluxDBImpl implements InfluxDB {
 
   @Override
   public void write(final String database, final String retentionPolicy, final Point point) {
+    Preconditions.checkArgument(
+            point.getFields().size() > 0,
+            "Point must have at least one field specified.");
     if (this.batchEnabled.get()) {
       HttpBatchEntry batchEntry = new HttpBatchEntry(point, database, retentionPolicy);
       this.batchProcessor.put(batchEntry);
@@ -250,6 +253,9 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void write(final int udpPort, final Point point) {
+    Preconditions.checkArgument(
+            point.getFields().size() > 0,
+            "Point must have at least one field specified.");
     if (this.batchEnabled.get()) {
       UdpBatchEntry batchEntry = new UdpBatchEntry(point, udpPort);
       this.batchProcessor.put(batchEntry);

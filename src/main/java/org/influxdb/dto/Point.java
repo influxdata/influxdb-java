@@ -204,9 +204,6 @@ public class Point {
       Preconditions
           .checkArgument(!Strings.isNullOrEmpty(this.measurement),
           "Point name must not be null or empty.");
-      Preconditions
-          .checkArgument(this.fields.size() > 0,
-          "Point must have at least one field specified.");
       Point point = new Point();
       point.setFields(this.fields);
       point.setMeasurement(this.measurement);
@@ -267,6 +264,11 @@ public class Point {
    */
   void setFields(final Map<String, Object> fields) {
     this.fields = fields;
+  }
+
+  public Map<String, Object> getFields() {
+
+    return fields;
   }
 
   @Override
@@ -385,4 +387,51 @@ public class Point {
     return sb;
   }
 
+  public Point tag(final String tagName, final String value) {
+
+    Preconditions.checkArgument(tagName != null);
+    Preconditions.checkArgument(value != null);
+    if (!tagName.isEmpty() && !value.isEmpty()) {
+      tags.put(tagName, value);
+    }
+    return this;
+  }
+
+  public Point tag(final Map<String, String> tagsToAdd) {
+
+    for (Entry<String, String> tag : tagsToAdd.entrySet()) {
+      tag(tag.getKey(), tag.getValue());
+    }
+
+    return this;
+  }
+
+  public Point addField(final String field, final boolean value) {
+    fields.put(field, value);
+    return this;
+  }
+
+  public Point addField(final String field, final long value) {
+    fields.put(field, value);
+    return this;
+  }
+
+  public Point addField(final String field, final double value) {
+    fields.put(field, value);
+    return this;
+  }
+
+  public Point addField(final String field, final Number value) {
+    fields.put(field, value);
+    return this;
+  }
+
+  public Point addField(final String field, final String value) {
+    if (value == null) {
+      throw new IllegalArgumentException("Field value cannot be null");
+    }
+
+    fields.put(field, value);
+    return this;
+  }
 }

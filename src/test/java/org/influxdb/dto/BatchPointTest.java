@@ -97,4 +97,13 @@ public class BatchPointTest {
         // THEN equals returns true
         assertThat(equals).isEqualTo(false);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPointMissingFields() {
+
+        String dbName = "point_missing_fields_" + System.currentTimeMillis();
+        BatchPoints batchPoints = BatchPoints.database(dbName).build();
+        Point point = Point.measurement("cpu").build();
+        batchPoints.point(point);
+    }
 }

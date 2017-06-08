@@ -650,4 +650,20 @@ public class InfluxDBTest {
         this.influxDB.flush();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+	public void testWritePointMissingFieldsUDP() {
+
+		String measurement = TestUtils.getRandomMeasurement();
+		Point point = Point.measurement(measurement).tag("atag", "test").build();
+		this.influxDB.write(UDP_PORT, point);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testWritePointMissingFields() {
+
+		String dbName = "write_point_missing_fields_" + System.currentTimeMillis();
+		String measurement = TestUtils.getRandomMeasurement();
+		Point point = Point.measurement(measurement).tag("atag", "test").build();
+		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
+	}
 }
