@@ -128,6 +128,7 @@
           </execution>
         </executions>
       </plugin>
+<!-- This is needed at release time only
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
@@ -142,6 +143,7 @@
            </execution>
         </executions>
       </plugin>
+-->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
