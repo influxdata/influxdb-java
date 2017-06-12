@@ -39,6 +39,14 @@ public class Point {
                                                      .build();
   private static final int MAX_FRACTION_DIGITS = 340;
 
+  private static final ThreadLocal<NumberFormat> FIELD_VALUE_FORMAT = ThreadLocal.withInitial(() -> {
+    NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
+    numberFormat.setMaximumFractionDigits(MAX_FRACTION_DIGITS);
+    numberFormat.setGroupingUsed(false);
+    numberFormat.setMinimumFractionDigits(1);
+    return numberFormat;
+  });
+
   Point() {
   }
 
@@ -322,33 +330,22 @@ public class Point {
   public String lineProtocol() {
     final StringBuilder sb = new StringBuilder();
     sb.append(KEY_ESCAPER.escape(this.measurement));
-    sb.append(concatenatedTags());
-    sb.append(concatenateFields());
-    sb.append(formatedTime());
+    appendTags(sb);
+    appendFields(sb);
+    appendFormatedTime(sb);
     return sb.toString();
   }
 
-  private StringBuilder concatenatedTags() {
-    final StringBuilder sb = new StringBuilder();
+  private void appendTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
-      sb.append(",")
-        .append(KEY_ESCAPER.escape(tag.getKey()))
-        .append("=")
-        .append(KEY_ESCAPER.escape(tag.getValue()));
+      sb.append(",").append(KEY_ESCAPER.escape(tag.getKey())).append("=").append(KEY_ESCAPER.escape(tag.getValue()));
     }
     sb.append(" ");
-    return sb;
   }
 
-  private StringBuilder concatenateFields() {
-    final StringBuilder sb = new StringBuilder();
+  private void appendFields(final StringBuilder sb) {
     final int fieldCount = this.fields.size();
     int loops = 0;
-
-    NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
-    numberFormat.setMaximumFractionDigits(MAX_FRACTION_DIGITS);
-    numberFormat.setGroupingUsed(false);
-    numberFormat.setMinimumFractionDigits(1);
 
     for (Entry<String, Object> field : this.fields.entrySet()) {
       loops++;
@@ -363,7 +360,7 @@ public class Point {
         sb.append("\"").append(FIELD_ESCAPER.escape(stringValue)).append("\"");
       } else if (value instanceof Number) {
         if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
-          sb.append(numberFormat.format(value));
+          sb.append(FIELD_VALUE_FORMAT.get().format(value));
         } else {
           sb.append(value).append("i");
         }
@@ -375,14 +372,9 @@ public class Point {
         sb.append(",");
       }
     }
-
-    return sb;
   }
 
-  private StringBuilder formatedTime() {
-    final StringBuilder sb = new StringBuilder();
+  private void appendFormatedTime(final StringBuilder sb) {
     sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-    return sb;
   }
-
 }
