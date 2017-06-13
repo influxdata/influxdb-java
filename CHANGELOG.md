@@ -6,7 +6,7 @@
 
 #### Improvements
 
- - Significant (~35%) performance improvements for write speed with less memory footprint. #330
+ - Significant (~35%) performance improvements for write speed with less memory footprint. [PR #330](https://github.com/influxdata/influxdb-java/pull/330)
 
 ## v2.6 [2017.06-08]
 
@@ -15,19 +15,19 @@
  - Switch to Java 1.8
  - Support chunking
  - Add a databaseExists method to InfluxDB interface
- - [Issue #289] (https://github.com/influxdata/influxdb-java/issues/289) Batching enhancements: Pending asynchronous writes can be explicitly flushed via `InfluxDB.flush()`.
- - Add a listener to notify asynchronous errors during batch flushes (https://github.com/influxdata/influxdb-java/pull/318).
+ - [Issue #289](https://github.com/influxdata/influxdb-java/issues/289) Batching enhancements: Pending asynchronous writes can be explicitly flushed via `InfluxDB.flush()`.
+ - Add a listener to notify asynchronous errors during batch flushes [PR #318](https://github.com/influxdata/influxdb-java/pull/318).
 
 #### Fixes
 
- - [Issue #263] (https://github.com/influxdata/influxdb-java/issues/263) Add databaseExists method to InfluxDB interface.
+ - [Issue #263](https://github.com/influxdata/influxdb-java/issues/263) Add databaseExists method to InfluxDB interface.
 
 #### Improvements
 
  - Update retrofit from 2.1 to 2.2
  - Update slf4j from 1.7.22 to 1.7.24
  - Update okhttp3 from 3.5 to 3.6
- - automatically adjust batch processor capacity [PR #282]
+ - automatically adjust batch processor capacity [PR #282](https://github.com/influxdata/influxdb-java/pull/282)
 
 ## v2.5 [2016-12-05]
 
@@ -40,8 +40,8 @@
 
 #### Fixes
 
- - [Issue #162] (https://github.com/influxdb/influxdb-java/issues/162) Write point using async batch mode with different rp will use same rp.
- - [Issue #214] (https://github.com/influxdb/influxdb-java/issues/214) Send multiple queries in one query statement will get only one result.  
+ - [Issue #162](https://github.com/influxdb/influxdb-java/issues/162) Write point using async batch mode with different rp will use same rp.
+ - [Issue #214](https://github.com/influxdb/influxdb-java/issues/214) Send multiple queries in one query statement will get only one result.  
  - Write can't be always async if batch is enabled.
 
 #### Improvements
@@ -114,14 +114,14 @@ No major functional changes or improvements. Mainly library updates and code str
 
 #### Features
 
-- [Issue #2] (https://github.com/influxdb/influxdb-java/issues/2) Implement the last missing api calls ( interfaces, sync, forceCompaction, servers, shards)
+- [Issue #2](https://github.com/influxdb/influxdb-java/issues/2) Implement the last missing api calls ( interfaces, sync, forceCompaction, servers, shards)
 - use (http://square.github.io/okhttp/, okhttp) instead of java builtin httpconnection to get failover for the http endpoint.
 
 #### Tasks
 
-- [Issue #8] (https://github.com/influxdb/influxdb-java/issues/8) Use com.github.docker-java which replaces com.kpelykh for Integration tests.
-- [Issue #6] (https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0
-- [Issue #7] (https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0
+- [Issue #8](https://github.com/influxdb/influxdb-java/issues/8) Use com.github.docker-java which replaces com.kpelykh for Integration tests.
+- [Issue #6](https://github.com/influxdb/influxdb-java/issues/6) Update Retrofit to 1.6.0
+- [Issue #7](https://github.com/influxdb/influxdb-java/issues/7) Update Guava to 17.0
 - fix dependency to guava.
 
 ## v1.1 [2014-05-31]
@@ -129,7 +129,7 @@ No major functional changes or improvements. Mainly library updates and code str
 #### Features
 
 - Add InfluxDB#version() to get the InfluxDB Server version information.
-- Changed InfluxDB#createDatabase() to match (https://github.com/influxdb/influxdb/issues/489) without replicationFactor.
+- Changed InfluxDB#createDatabase() to match [Issue #489](https://github.com/influxdb/influxdb/issues/489) without replicationFactor.
 - Updated Retrofit from 1.5.0 -> 1.5.1
 
 ## v1.0 [2014-05-6]
