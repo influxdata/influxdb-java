@@ -1,3 +1,13 @@
+## v2.7 [unreleased]
+
+#### Features
+
+#### Fixes
+
+#### Improvements
+
+ - Significant (~35%) performance improvements for write speed with less memory footprint. [#330]
+
 ## v2.6 [2017.06-08]
 
 #### Features
