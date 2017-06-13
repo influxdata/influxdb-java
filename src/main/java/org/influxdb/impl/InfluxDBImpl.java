@@ -10,6 +10,8 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBException;
+import org.influxdb.InfluxDBIOException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
@@ -105,7 +107,7 @@ public class InfluxDBImpl implements InfluxDB {
       try {
           return InetAddress.getByName(httpUrl.host());
       } catch (UnknownHostException e) {
-          throw new RuntimeException(e);
+          throw new InfluxDBIOException(e);
       }
   }
 
@@ -227,7 +229,7 @@ public class InfluxDBImpl implements InfluxDB {
       pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
       return pong;
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new InfluxDBIOException(e);
     }
   }
 
@@ -310,7 +312,7 @@ public class InfluxDBImpl implements InfluxDB {
     try {
         datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
     } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new InfluxDBIOException(e);
     }
   }
 
@@ -321,7 +323,7 @@ public class InfluxDBImpl implements InfluxDB {
                 try {
                     datagramSocket = new DatagramSocket();
                 } catch (SocketException e) {
-                    throw new RuntimeException(e);
+                    throw new InfluxDBIOException(e);
                 }
             }
         }
@@ -360,7 +362,7 @@ public class InfluxDBImpl implements InfluxDB {
     public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
 
         if (version().startsWith("0.") || version().startsWith("1.0")) {
-            throw new RuntimeException("chunking not supported");
+            throw new UnsupportedOperationException("chunking not supported");
         }
 
         Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
@@ -380,20 +382,20 @@ public class InfluxDBImpl implements InfluxDB {
                         }
                     }
                     try (ResponseBody errorBody = response.errorBody()) {
-                        throw new RuntimeException(errorBody.string());
+                        throw new InfluxDBException(errorBody.string());
                     }
                 } catch (EOFException e) {
                     QueryResult queryResult = new QueryResult();
                     queryResult.setError("DONE");
                     consumer.accept(queryResult);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InfluxDBIOException(e);
                 }
             }
 
             @Override
             public void onFailure(final Call<ResponseBody> call, final Throwable t) {
-                throw new RuntimeException(t);
+                throw new InfluxDBException(t);
             }
         });
   }
@@ -469,10 +471,10 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        throw new RuntimeException(errorBody.string());
+        throw new InfluxDBException(errorBody.string());
       }
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new InfluxDBIOException(e);
     }
   }
 
