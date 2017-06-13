@@ -98,7 +98,8 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   public InfluxDBImpl(final String url, final String username, final String password,
-            final OkHttpClient.Builder client, final String database, final String retentionPolicy, final ConsistencyLevel consistency) {
+                      final OkHttpClient.Builder client, final String database,
+                      final String retentionPolicy, final ConsistencyLevel consistency) {
     this(url, username, password, client);
 
     setConsistency(consistency);
@@ -248,17 +249,17 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   @Override
-  public void write(Point point) {
+  public void write(final Point point) {
     write(database, retentionPolicy, point);
   }
 
   @Override
-  public void write(String records) {
+  public void write(final String records) {
     write(database, retentionPolicy, consistency, records);
   }
 
   @Override
-  public void write(List<String> records) {
+  public void write(final List<String> records) {
     write(database, retentionPolicy, consistency, records);
   }
 
@@ -526,22 +527,19 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   @Override
-  public InfluxDB setConsistency(ConsistencyLevel consistency) {
-
+  public InfluxDB setConsistency(final ConsistencyLevel consistency) {
     this.consistency = consistency;
     return this;
   }
 
   @Override
-  public InfluxDB setDatabase(String database) {
-
+  public InfluxDB setDatabase(final String database) {
     this.database = database;
     return this;
   }
 
   @Override
-  public InfluxDB setRetentionPolicy(String retentionPolicy) {
-
+  public InfluxDB setRetentionPolicy(final String retentionPolicy) {
     this.retentionPolicy = retentionPolicy;
     return this;
   }
