@@ -105,7 +105,7 @@ public class Query {
     try {
       return URLEncoder.encode(command, StandardCharsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException("Every JRE must support UTF-8", e);
     }
   }
 }

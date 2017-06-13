@@ -10,6 +10,8 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBException;
+import org.influxdb.InfluxDBIOException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
@@ -46,7 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -67,9 +69,9 @@ public class InfluxDBImpl implements InfluxDB {
   private final InfluxDBService influxDBService;
   private BatchProcessor batchProcessor;
   private final AtomicBoolean batchEnabled = new AtomicBoolean(false);
-  private final AtomicLong writeCount = new AtomicLong();
-  private final AtomicLong unBatchedCount = new AtomicLong();
-  private final AtomicLong batchedCount = new AtomicLong();
+  private final LongAdder writeCount = new LongAdder();
+  private final LongAdder unBatchedCount = new LongAdder();
+  private final LongAdder batchedCount = new LongAdder();
   private volatile DatagramSocket datagramSocket;
   private final HttpLoggingInterceptor loggingInterceptor;
   private final GzipRequestInterceptor gzipRequestInterceptor;
@@ -96,10 +98,16 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   private InetAddress parseHostAddress(final String url) {
+      HttpUrl httpUrl = HttpUrl.parse(url);
+
+      if (httpUrl == null) {
+          throw new IllegalArgumentException("Unable to parse url: " + url);
+      }
+
       try {
-          return InetAddress.getByName(HttpUrl.parse(url).host());
+          return InetAddress.getByName(httpUrl.host());
       } catch (UnknownHostException e) {
-          throw new RuntimeException(e);
+          throw new InfluxDBIOException(e);
       }
   }
 
@@ -190,8 +198,8 @@ public class InfluxDBImpl implements InfluxDB {
       this.batchProcessor.flushAndShutdown();
       if (this.logLevel != LogLevel.NONE) {
         System.out.println(
-            "total writes:" + this.writeCount.get()
-            + " unbatched:" + this.unBatchedCount.get()
+            "total writes:" + this.writeCount
+            + " unbatched:" + this.unBatchedCount
             + " batchPoints:" + this.batchedCount);
       }
     }
@@ -221,7 +229,7 @@ public class InfluxDBImpl implements InfluxDB {
       pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
       return pong;
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new InfluxDBIOException(e);
     }
   }
 
@@ -240,9 +248,9 @@ public class InfluxDBImpl implements InfluxDB {
                                            .retentionPolicy(retentionPolicy).build();
       batchPoints.point(point);
       this.write(batchPoints);
-      this.unBatchedCount.incrementAndGet();
+      this.unBatchedCount.increment();
     }
-    this.writeCount.incrementAndGet();
+    this.writeCount.increment();
   }
 
   /**
@@ -255,14 +263,14 @@ public class InfluxDBImpl implements InfluxDB {
       this.batchProcessor.put(batchEntry);
     } else {
       this.write(udpPort, point.lineProtocol());
-      this.unBatchedCount.incrementAndGet();
+      this.unBatchedCount.increment();
     }
-    this.writeCount.incrementAndGet();
+    this.writeCount.increment();
   }
 
   @Override
   public void write(final BatchPoints batchPoints) {
-    this.batchedCount.addAndGet(batchPoints.getPoints().size());
+    this.batchedCount.add(batchPoints.getPoints().size());
     RequestBody lineProtocol = RequestBody.create(MEDIA_TYPE_STRING, batchPoints.lineProtocol());
     execute(this.influxDBService.writePoints(
         this.username,
@@ -319,7 +327,7 @@ public class InfluxDBImpl implements InfluxDB {
     try {
         datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
     } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new InfluxDBIOException(e);
     }
   }
 
@@ -330,7 +338,7 @@ public class InfluxDBImpl implements InfluxDB {
                 try {
                     datagramSocket = new DatagramSocket();
                 } catch (SocketException e) {
-                    throw new RuntimeException(e);
+                    throw new InfluxDBIOException(e);
                 }
             }
         }
@@ -369,7 +377,7 @@ public class InfluxDBImpl implements InfluxDB {
     public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
 
         if (version().startsWith("0.") || version().startsWith("1.0")) {
-            throw new RuntimeException("chunking not supported");
+            throw new UnsupportedOperationException("chunking not supported");
         }
 
         Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
@@ -389,20 +397,20 @@ public class InfluxDBImpl implements InfluxDB {
                         }
                     }
                     try (ResponseBody errorBody = response.errorBody()) {
-                        throw new RuntimeException(errorBody.string());
+                        throw new InfluxDBException(errorBody.string());
                     }
                 } catch (EOFException e) {
                     QueryResult queryResult = new QueryResult();
                     queryResult.setError("DONE");
                     consumer.accept(queryResult);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InfluxDBIOException(e);
                 }
             }
 
             @Override
             public void onFailure(final Call<ResponseBody> call, final Throwable t) {
-                throw new RuntimeException(t);
+                throw new InfluxDBException(t);
             }
         });
   }
@@ -478,10 +486,10 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        throw new RuntimeException(errorBody.string());
+        throw new InfluxDBException(errorBody.string());
       }
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new InfluxDBIOException(e);
     }
   }
 

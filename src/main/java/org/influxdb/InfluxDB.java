@@ -104,10 +104,10 @@ public interface InfluxDB {
 
   /**
    * Enable batching of single Point writes as
-   * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer<Iterable<Point>, Throwable>)}
+   * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer)}
    * using with a exceptionHandler that does nothing.
    *
-   * @see #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer<Iterable<Point>, Throwable>)
+   * @see #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer)
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory);
@@ -179,9 +179,9 @@ public interface InfluxDB {
   public void write(final int udpPort, final Point point);
 
   /**
-   * Write a set of Points to the influxdb database with the new (>= 0.9.0rc32) lineprotocol.
+   * Write a set of Points to the influxdb database with the new (&gt;= 0.9.0rc32) lineprotocol.
    *
-   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
    * @param batchPoints
    */
@@ -190,7 +190,7 @@ public interface InfluxDB {
   /**
    * Write a set of Points to the influxdb database with the string records.
    *
-   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
    * @param records
    */
@@ -210,7 +210,7 @@ public interface InfluxDB {
   /**
    * Write a set of Points to the influxdb database with the list of string records.
    *
-   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
    * @param records
    */

@@ -12,7 +12,7 @@ To connect to InfluxDB 0.8.x you need to use influxdb-java version 1.6.
 This implementation is meant as a Java rewrite of the influxdb-go package.
 All low level REST Api calls are available.
 
-## Usages 
+## Usages
 
 ### Basic Usages:
 
@@ -80,7 +80,7 @@ Note that the batching functionality creates an internal thread pool that needs 
 Also note that any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
 
 If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:
- 
+
 ```java
 // Flush every 2000 Points, at least every 100ms
 influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, Executors.defaultThreadFactory(), (failedPoints, throwable) -> { /* custom error handling here */ });
@@ -90,7 +90,7 @@ influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, Executors.defaultThreadFa
 
 #### Gzip's support (version 2.5+ required):
 
-influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfer data's size , you can call: 
+influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfer data's size , you can call:
 ```java
 influxDB.enableGzip()
 ```
@@ -125,8 +125,12 @@ The latest version for maven dependence:
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.5</version>
+  <version>2.6</version>
 </dependency>
+```
+Or when using with gradle:
+```groovy
+compile 'org.influxdb:influxdb-java:2.6'
 ```
 For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
 

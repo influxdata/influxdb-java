@@ -38,4 +38,9 @@ public class InfluxDBFactoryTest {
 		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), new OkHttpClient.Builder());
 		verifyInfluxDBInstance(influxDB);
 	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void shouldThrowIllegalArgumentWithInvalidUrl() {
+		InfluxDBFactory.connect("invalidUrl");
+	}
 }
