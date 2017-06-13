@@ -2,6 +2,8 @@
 
 #### Features
 
+ - Simplify write() methods for use cases writing all points to same database and retention policy [PR #327](https://github.com/influxdata/influxdb-java/pull/327)
+
 #### Fixes
 
  - Replace RuntimeException with InfluxDBException [Issue #323](https://github.com/influxdata/influxdb-java/issues/323)
