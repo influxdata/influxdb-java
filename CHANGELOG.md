@@ -4,7 +4,7 @@
 
 #### Fixes
 
- - Replace RuntimeException with InfluxDBException [Issue #323](#323)
+ - Replace RuntimeException with InfluxDBException [Issue #323](https://github.com/influxdata/influxdb-java/issues/323)
 
 #### Improvements
 
