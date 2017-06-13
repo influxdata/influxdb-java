@@ -4,6 +4,8 @@
 
 #### Fixes
 
+ - Replace RuntimeException with InfluxDBException [Issue #323](#323)
+
 #### Improvements
 
  - Significant (~35%) performance improvements for write speed with less memory footprint. [PR #330](https://github.com/influxdata/influxdb-java/pull/330)
