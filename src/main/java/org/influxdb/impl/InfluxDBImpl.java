@@ -54,6 +54,7 @@ import java.util.function.Consumer;
  * @author stefan.majer [at] gmail.com
  */
 public class InfluxDBImpl implements InfluxDB {
+
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
@@ -73,6 +74,9 @@ public class InfluxDBImpl implements InfluxDB {
   private final GzipRequestInterceptor gzipRequestInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
   private JsonAdapter<QueryResult> adapter;
+  private String database;
+  private String retentionPolicy = "autogen";
+  private ConsistencyLevel consistency = ConsistencyLevel.ONE;
 
   public InfluxDBImpl(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
@@ -91,6 +95,15 @@ public class InfluxDBImpl implements InfluxDB {
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
     this.adapter = moshi.adapter(QueryResult.class);
+  }
+
+  public InfluxDBImpl(final String url, final String username, final String password,
+            final OkHttpClient.Builder client, final String database, final String retentionPolicy, final ConsistencyLevel consistency) {
+    this(url, username, password, client);
+
+    setConsistency(consistency);
+    setDatabase(database);
+    setRetentionPolicy(retentionPolicy);
   }
 
   private InetAddress parseHostAddress(final String url) {
@@ -232,6 +245,21 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public String version() {
     return ping().getVersion();
+  }
+
+  @Override
+  public void write(Point point) {
+    write(database, retentionPolicy, point);
+  }
+
+  @Override
+  public void write(String records) {
+    write(database, retentionPolicy, consistency, records);
+  }
+
+  @Override
+  public void write(List<String> records) {
+    write(database, retentionPolicy, consistency, records);
   }
 
   @Override
@@ -497,4 +525,24 @@ public class InfluxDBImpl implements InfluxDB {
     }
   }
 
+  @Override
+  public InfluxDB setConsistency(ConsistencyLevel consistency) {
+
+    this.consistency = consistency;
+    return this;
+  }
+
+  @Override
+  public InfluxDB setDatabase(String database) {
+
+    this.database = database;
+    return this;
+  }
+
+  @Override
+  public InfluxDB setRetentionPolicy(String retentionPolicy) {
+
+    this.retentionPolicy = retentionPolicy;
+    return this;
+  }
 }

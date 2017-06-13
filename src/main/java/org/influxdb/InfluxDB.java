@@ -157,6 +157,28 @@ public interface InfluxDB {
   public String version();
 
   /**
+   * Write a single Point to the default database.
+   *
+   * @param point
+   *            The point to write
+   */
+  public void write(final Point point);
+
+  /**
+   * Write a set of Points to the default database with the string records.
+   *
+   * @param records
+   */
+  public void write(final String records);
+
+  /**
+   * Write a set of Points to the default database with the list of string records.
+   *
+   * @param records
+   */
+  public void write(final List<String> records);
+
+  /**
    * Write a single Point to the database.
    *
    * @param database
@@ -300,4 +322,30 @@ public interface InfluxDB {
    */
   public void close();
 
+  /**
+   * Set the consistency level which is used for writing points.
+   *
+   * @param consistency
+   *            the consistency level to set.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB setConsistency(final ConsistencyLevel consistency);
+
+  /**
+   * Set the database which is used for writing points.
+   *
+   * @param database
+   *            the database to set.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB setDatabase(final String database);
+
+  /**
+   * Set the retention policy which is used for writing points.
+   *
+   * @param retentionPolicy
+   *            the retention policy to set.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB setRetentionPolicy(final String retentionPolicy);
 }
