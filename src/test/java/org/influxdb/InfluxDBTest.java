@@ -560,6 +560,7 @@ public class InfluxDBTest {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
+	/**
 	 * Test writing multiple separate records to the database using string protocol with simpler interface.
 	 */
 	@Test
