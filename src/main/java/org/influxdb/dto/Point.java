@@ -346,11 +346,14 @@ public class Point {
      * @return the String without newLine
      */
     public String lineProtocol(final TimeUnit precision) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(KEY_ESCAPER.escape(this.measurement));
-        sb.append(concatenatedTags());
-        sb.append(concatenateFields());
-        sb.append(formatedTime(precision));
+      final StringBuilder sb = CACHED_STRINGBUILDERS
+              .get()
+              .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
+              .resetForUse();
+
+        concatenatedTags(sb);
+        concatenatedFields(sb);
+        formatedTime(sb, precision);
         return sb.toString();
     }
 
@@ -399,8 +402,7 @@ public class Point {
     sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
   }
 
-  private StringBuilder formatedTime(final TimeUnit precision) {
-    final StringBuilder sb = new StringBuilder();
+  private StringBuilder formatedTime(final StringBuilder sb, final TimeUnit precision) {
     sb.append(" ").append(precision.convert(this.time, this.precision));
     return sb;
   }
