@@ -46,7 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -67,9 +67,9 @@ public class InfluxDBImpl implements InfluxDB {
   private final InfluxDBService influxDBService;
   private BatchProcessor batchProcessor;
   private final AtomicBoolean batchEnabled = new AtomicBoolean(false);
-  private final AtomicLong writeCount = new AtomicLong();
-  private final AtomicLong unBatchedCount = new AtomicLong();
-  private final AtomicLong batchedCount = new AtomicLong();
+  private final LongAdder writeCount = new LongAdder();
+  private final LongAdder unBatchedCount = new LongAdder();
+  private final LongAdder batchedCount = new LongAdder();
   private volatile DatagramSocket datagramSocket;
   private final HttpLoggingInterceptor loggingInterceptor;
   private final GzipRequestInterceptor gzipRequestInterceptor;
@@ -196,8 +196,8 @@ public class InfluxDBImpl implements InfluxDB {
       this.batchProcessor.flushAndShutdown();
       if (this.logLevel != LogLevel.NONE) {
         System.out.println(
-            "total writes:" + this.writeCount.get()
-            + " unbatched:" + this.unBatchedCount.get()
+            "total writes:" + this.writeCount
+            + " unbatched:" + this.unBatchedCount
             + " batchPoints:" + this.batchedCount);
       }
     }
@@ -246,9 +246,9 @@ public class InfluxDBImpl implements InfluxDB {
                                            .retentionPolicy(retentionPolicy).build();
       batchPoints.point(point);
       this.write(batchPoints);
-      this.unBatchedCount.incrementAndGet();
+      this.unBatchedCount.increment();
     }
-    this.writeCount.incrementAndGet();
+    this.writeCount.increment();
   }
 
   /**
@@ -261,14 +261,14 @@ public class InfluxDBImpl implements InfluxDB {
       this.batchProcessor.put(batchEntry);
     } else {
       this.write(udpPort, point.lineProtocol());
-      this.unBatchedCount.incrementAndGet();
+      this.unBatchedCount.increment();
     }
-    this.writeCount.incrementAndGet();
+    this.writeCount.increment();
   }
 
   @Override
   public void write(final BatchPoints batchPoints) {
-    this.batchedCount.addAndGet(batchPoints.getPoints().size());
+    this.batchedCount.add(batchPoints.getPoints().size());
     RequestBody lineProtocol = RequestBody.create(MEDIA_TYPE_STRING, batchPoints.lineProtocol());
     execute(this.influxDBService.writePoints(
         this.username,
