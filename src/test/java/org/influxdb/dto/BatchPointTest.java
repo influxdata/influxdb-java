@@ -2,6 +2,8 @@ package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -9,22 +11,20 @@ import java.util.concurrent.TimeUnit;
 import org.influxdb.InfluxDB;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 public class BatchPointTest {
 
     @Test
     public void testEquals() throws Exception {
         // GIVEN two batchpoint objects with the same values
-        Map<String, String> tags = Maps.newHashMap();
+        Map<String, String> tags = new HashMap<>();
         tags.put("key", "value");
 
         InfluxDB.ConsistencyLevel consistencyLevel = InfluxDB.ConsistencyLevel.ANY;
 
         String db = "my database";
 
-        List<Point> points = Lists.newArrayList();
+        List<Point> points = new ArrayList<>();
         Point p = new Point();
         p.setPrecision(TimeUnit.MILLISECONDS);
         p.setMeasurement("my measurements");
@@ -56,10 +56,10 @@ public class BatchPointTest {
     @Test
     public void testUnEquals() throws Exception {
         // GIVEN two batchpoint objects with different values
-        Map<String, String> tags1 = Maps.newHashMap();
+        Map<String, String> tags1 = new HashMap<>();
         tags1.put("key", "value1");
 
-        Map<String, String> tags2 = Maps.newHashMap();
+        Map<String, String> tags2 = new HashMap<>();
         tags2.put("key", "value2");
 
         InfluxDB.ConsistencyLevel consistencyLevel1 = InfluxDB.ConsistencyLevel.ANY;
@@ -68,7 +68,7 @@ public class BatchPointTest {
         String db1 = "my database 1";
         String db2 = "my database 2";
 
-        List<Point> points = Lists.newArrayList();
+        List<Point> points = new ArrayList<>();
         Point p = new Point();
         p.setPrecision(TimeUnit.MILLISECONDS);
         p.setMeasurement("my measurements");
