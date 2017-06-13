@@ -1,11 +1,6 @@
 package org.influxdb.impl;
 
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
@@ -43,6 +38,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -58,6 +54,7 @@ import java.util.function.Consumer;
  * @author stefan.majer [at] gmail.com
  */
 public class InfluxDBImpl implements InfluxDB {
+
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
@@ -77,6 +74,9 @@ public class InfluxDBImpl implements InfluxDB {
   private final GzipRequestInterceptor gzipRequestInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
   private JsonAdapter<QueryResult> adapter;
+  private String database;
+  private String retentionPolicy = "autogen";
+  private ConsistencyLevel consistency = ConsistencyLevel.ONE;
 
   public InfluxDBImpl(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
@@ -95,6 +95,16 @@ public class InfluxDBImpl implements InfluxDB {
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
     this.adapter = moshi.adapter(QueryResult.class);
+  }
+
+  public InfluxDBImpl(final String url, final String username, final String password,
+                      final OkHttpClient.Builder client, final String database,
+                      final String retentionPolicy, final ConsistencyLevel consistency) {
+    this(url, username, password, client);
+
+    setConsistency(consistency);
+    setDatabase(database);
+    setRetentionPolicy(retentionPolicy);
   }
 
   private InetAddress parseHostAddress(final String url) {
@@ -212,7 +222,7 @@ public class InfluxDBImpl implements InfluxDB {
 
   @Override
   public Pong ping() {
-    Stopwatch watch = Stopwatch.createStarted();
+    final long started = System.currentTimeMillis();
     Call<ResponseBody> call = this.influxDBService.ping();
     try {
       Response<ResponseBody> response = call.execute();
@@ -226,7 +236,7 @@ public class InfluxDBImpl implements InfluxDB {
       }
       Pong pong = new Pong();
       pong.setVersion(version);
-      pong.setResponseTime(watch.elapsed(TimeUnit.MILLISECONDS));
+      pong.setResponseTime(System.currentTimeMillis() - started);
       return pong;
     } catch (IOException e) {
       throw new InfluxDBIOException(e);
@@ -236,6 +246,21 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public String version() {
     return ping().getVersion();
+  }
+
+  @Override
+  public void write(final Point point) {
+    write(database, retentionPolicy, point);
+  }
+
+  @Override
+  public void write(final String records) {
+    write(database, retentionPolicy, consistency, records);
+  }
+
+  @Override
+  public void write(final List<String> records) {
+    write(database, retentionPolicy, consistency, records);
   }
 
   @Override
@@ -312,8 +337,7 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
           final TimeUnit precision, final List<String> records) {
-    final String joinedRecords = Joiner.on("\n").join(records);
-    write(database, retentionPolicy, consistency, precision, joinedRecords);
+    write(database, retentionPolicy, consistency, precision, String.join("\n", records));
   }
 
 
@@ -350,8 +374,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void write(final int udpPort, final List<String> records) {
-    final String joinedRecords = Joiner.on("\n").join(records);
-    write(udpPort, joinedRecords);
+    write(udpPort, String.join("\n", records));
   }
 
   /**
@@ -429,7 +452,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void createDatabase(final String name) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Database name may not be null or empty");
+    Preconditions.checkNonEmptyString(name, "name");
     String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
     if (this.version().startsWith("0.")) {
       createDatabaseQueryString = String.format("CREATE DATABASE IF NOT EXISTS \"%s\"", name);
@@ -456,7 +479,7 @@ public class InfluxDBImpl implements InfluxDB {
     // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
     // Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
     List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();
-    List<String> databases = Lists.newArrayList();
+    List<String> databases = new ArrayList<>();
     if (databaseNames != null) {
       for (List<Object> database : databaseNames) {
         databases.add(database.get(0).toString());
@@ -518,4 +541,21 @@ public class InfluxDBImpl implements InfluxDB {
     }
   }
 
+  @Override
+  public InfluxDB setConsistency(final ConsistencyLevel consistency) {
+    this.consistency = consistency;
+    return this;
+  }
+
+  @Override
+  public InfluxDB setDatabase(final String database) {
+    this.database = database;
+    return this;
+  }
+
+  @Override
+  public InfluxDB setRetentionPolicy(final String retentionPolicy) {
+    this.retentionPolicy = retentionPolicy;
+    return this;
+  }
 }

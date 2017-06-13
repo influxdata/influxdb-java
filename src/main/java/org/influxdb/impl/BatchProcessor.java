@@ -1,9 +1,11 @@
 package org.influxdb.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -17,9 +19,6 @@ import java.util.logging.Logger;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
 /**
  * A BatchProcessor can be attached to a InfluxDB Instance to collect single point writes and
@@ -114,12 +113,12 @@ public class BatchProcessor {
      * @return the BatchProcessor instance.
      */
     public BatchProcessor build() {
-      Preconditions.checkNotNull(this.influxDB, "influxDB may not be null");
-      Preconditions.checkArgument(this.actions > 0, "actions should > 0");
-      Preconditions.checkArgument(this.flushInterval > 0, "flushInterval should > 0");
-      Preconditions.checkNotNull(this.flushIntervalUnit, "flushIntervalUnit may not be null");
-      Preconditions.checkNotNull(this.threadFactory, "threadFactory may not be null");
-      Preconditions.checkNotNull(this.exceptionHandler, "exceptionHandler may not be null");
+      Objects.requireNonNull(this.influxDB, "influxDB");
+      Preconditions.checkPositiveNumber(this.actions, "actions");
+      Preconditions.checkPositiveNumber(this.flushInterval, "flushInterval");
+      Objects.requireNonNull(this.flushIntervalUnit, "flushIntervalUnit");
+      Objects.requireNonNull(this.threadFactory, "threadFactory");
+      Objects.requireNonNull(this.exceptionHandler, "exceptionHandler");
       return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
                                 this.flushInterval, exceptionHandler);
     }
@@ -212,9 +211,9 @@ public class BatchProcessor {
         return;
       }
       //for batch on HTTP.
-      Map<String, BatchPoints> batchKeyToBatchPoints = Maps.newHashMap();
+      Map<String, BatchPoints> batchKeyToBatchPoints = new HashMap<>();
       //for batch on UDP.
-      Map<Integer, List<String>> udpPortToBatchPoints = Maps.newHashMap();
+      Map<Integer, List<String>> udpPortToBatchPoints = new HashMap<>();
       List<AbstractBatchEntry> batchEntries = new ArrayList<>(this.queue.size());
       this.queue.drainTo(batchEntries);
       currentBatch = new ArrayList<>(batchEntries.size());

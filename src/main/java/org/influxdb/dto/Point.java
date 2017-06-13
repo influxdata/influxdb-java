@@ -10,11 +10,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.escape.Escaper;
-import com.google.common.escape.Escapers;
+import org.influxdb.impl.Preconditions;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -29,16 +27,10 @@ public class Point {
   private TimeUnit precision = TimeUnit.NANOSECONDS;
   private Map<String, Object> fields;
 
-  private static final Escaper FIELD_ESCAPER = Escapers.builder()
-                                                      .addEscape('\\', "\\\\")
-                                                      .addEscape('"', "\\\"")
-                                                      .build();
-  private static final Escaper KEY_ESCAPER = Escapers.builder()
-                                                     .addEscape(' ', "\\ ")
-                                                     .addEscape(',', "\\,")
-                                                     .addEscape('=', "\\=")
-                                                     .build();
-
+  private static final Function<String, String> FIELD_ESCAPER = s ->
+      s.replace("\\", "\\\\").replace("\"", "\\\"");
+  private static final Function<String, String> KEY_ESCAPER = s ->
+      s.replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=");
   private static final int MAX_FRACTION_DIGITS = 340;
   private static final ThreadLocal<NumberFormat> NUMBER_FORMATTER =
           ThreadLocal.withInitial(() -> {
@@ -97,8 +89,8 @@ public class Point {
      * @return the Builder instance.
      */
     public Builder tag(final String tagName, final String value) {
-      Preconditions.checkArgument(tagName != null);
-      Preconditions.checkArgument(value != null);
+      Objects.requireNonNull(tagName, "tagName");
+      Objects.requireNonNull(value, "value");
       if (!tagName.isEmpty() && !value.isEmpty()) {
         tags.put(tagName, value);
       }
@@ -169,9 +161,7 @@ public class Point {
     }
 
     public Builder addField(final String field, final String value) {
-      if (value == null) {
-        throw new IllegalArgumentException("Field value cannot be null");
-      }
+      Objects.requireNonNull(value, "value");
 
       fields.put(field, value);
       return this;
@@ -197,7 +187,7 @@ public class Point {
      * @return the Builder instance.
      */
     public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
-      Preconditions.checkNotNull(precisionToSet, "Precision must be not null!");
+      Objects.requireNonNull(precisionToSet, "precisionToSet");
       this.time = timeToSet;
       this.precision = precisionToSet;
       return this;
@@ -209,12 +199,8 @@ public class Point {
      * @return the newly created Point.
      */
     public Point build() {
-      Preconditions
-          .checkArgument(!Strings.isNullOrEmpty(this.measurement),
-          "Point name must not be null or empty.");
-      Preconditions
-          .checkArgument(this.fields.size() > 0,
-          "Point must have at least one field specified.");
+      Preconditions.checkNonEmptyString(this.measurement, "measurement");
+      Preconditions.checkPositiveNumber(this.fields.size(), "fields size");
       Point point = new Point();
       point.setFields(this.fields);
       point.setMeasurement(this.measurement);
@@ -360,9 +346,9 @@ public class Point {
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
       sb.append(',')
-        .append(KEY_ESCAPER.escape(tag.getKey()))
+        .append(KEY_ESCAPER.apply(tag.getKey()))
         .append('=')
-        .append(KEY_ESCAPER.escape(tag.getValue()));
+        .append(KEY_ESCAPER.apply(tag.getValue()));
     }
     sb.append(' ');
   }
@@ -374,7 +360,7 @@ public class Point {
         continue;
       }
 
-      sb.append(KEY_ESCAPER.escape(field.getKey())).append('=');
+      sb.append(KEY_ESCAPER.apply(field.getKey())).append('=');
       if (value instanceof Number) {
         if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
           sb.append(NUMBER_FORMATTER.get().format(value));
@@ -383,7 +369,7 @@ public class Point {
         }
       } else if (value instanceof String) {
         String stringValue = (String) value;
-        sb.append('"').append(FIELD_ESCAPER.escape(stringValue)).append('"');
+        sb.append('"').append(FIELD_ESCAPER.apply(stringValue)).append('"');
       } else {
         sb.append(value);
       }
@@ -412,7 +398,7 @@ public class Point {
     private final int length;
 
     MeasurementStringBuilder(final String measurement) {
-      this.sb.append(KEY_ESCAPER.escape(measurement));
+      this.sb.append(KEY_ESCAPER.apply(measurement));
       this.length = sb.length();
     }
 

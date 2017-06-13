@@ -1,0 +1,38 @@
+package org.influxdb.impl;
+
+/**
+ * Functions for parameter validation.
+ *
+ * @author Simon Legner
+ */
+public final class Preconditions {
+
+  private Preconditions() {
+  }
+
+  /**
+   * Enforces that the string is {@linkplain String#isEmpty() not empty}.
+   * @param string the string to test
+   * @param name variable name for reporting
+   * @return {@code string}
+   * @throws IllegalArgumentException if the string is empty
+   */
+  public static String checkNonEmptyString(final String string, final String name) throws IllegalArgumentException {
+    if (string == null || string.isEmpty()) {
+      throw new IllegalArgumentException("Expecting a non-empty string for " + name);
+    }
+    return string;
+  }
+
+  /**
+   * Enforces that the number is larger than 0.
+   * @param number the number to test
+   * @param name variable name for reporting
+   * @throws IllegalArgumentException if the number is less or equal to 0
+   */
+  public static void checkPositiveNumber(final Number number, final String name) throws IllegalArgumentException {
+    if (number == null || number.doubleValue() <= 0) {
+      throw new IllegalArgumentException("Expecting a positive number for " + name);
+    }
+  }
+}

@@ -2,6 +2,8 @@
 
 #### Features
 
+ - Simplify write() methods for use cases writing all points to same database and retention policy [PR #327](https://github.com/influxdata/influxdb-java/pull/327)
+
 #### Fixes
 
  - Replace RuntimeException with InfluxDBException [Issue #323](https://github.com/influxdata/influxdb-java/issues/323)
@@ -9,6 +11,7 @@
 #### Improvements
 
  - Significant (~35%) performance improvements for write speed with less memory footprint. [PR #330](https://github.com/influxdata/influxdb-java/pull/330)
+ - Drop guava runtime dependency which reduces jar size from 1MB -> 49KB [PR #322](https://github.com/influxdata/influxdb-java/pull/322)
 
 ## v2.6 [2017.06-08]
 

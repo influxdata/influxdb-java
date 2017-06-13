@@ -5,15 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
-
-import com.google.common.collect.Maps;
 
 /**
  * Test for the Point DTO.
@@ -197,31 +196,31 @@ public class PointTest {
 	/**
 	 * Tests for issue #110
 	 */
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = NullPointerException.class)
 	public void testAddingTagsWithNullNameThrowsAnError() {
 		Point.measurement("dontcare").tag(null, "DontCare");
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = NullPointerException.class)
 	public void testAddingTagsWithNullValueThrowsAnError() {
 		Point.measurement("dontcare").tag("DontCare", null);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = NullPointerException.class)
 	public void testAddingMapOfTagsWithNullNameThrowsAnError() {
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		map.put(null, "DontCare");
 		Point.measurement("dontcare").tag(map);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = NullPointerException.class)
 	public void testAddingMapOfTagsWithNullValueThrowsAnError() {
-		Map<String, String> map = Maps.newHashMap();
+		Map<String, String> map = new HashMap<>();
 		map.put("DontCare", null);
 		Point.measurement("dontcare").tag(map);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = RuntimeException.class)
 	public void testNullValueThrowsExceptionViaAddField() {
 		Point.measurement("dontcare").addField("field", (String) null);
 	}
@@ -234,10 +233,10 @@ public class PointTest {
 		point = Point.measurement("dontcare").tag("","value").addField("dontcare", true).build();
 		assertThat(point.getTags().size()).isEqualTo(0);
 
-		point = Point.measurement("dontcare").tag(ImmutableMap.of("key","")).addField("dontcare", true).build();
+		point = Point.measurement("dontcare").tag(Collections.singletonMap("key", "")).addField("dontcare", true).build();
 		assertThat(point.getTags().size()).isEqualTo(0);
 
-		point = Point.measurement("dontcare").tag(ImmutableMap.of("","value")).addField("dontcare", true).build();
+		point = Point.measurement("dontcare").tag(Collections.singletonMap("", "value")).addField("dontcare", true).build();
 		assertThat(point.getTags().size()).isEqualTo(0);
 	}
 
@@ -247,14 +246,14 @@ public class PointTest {
 	@Test
 	public void testEquals() throws Exception {
 		// GIVEN two point objects with identical data
-		Map<String, Object> fields = Maps.newHashMap();
+		Map<String, Object> fields = new HashMap<>();
 		fields.put("foo", "bar");
 
 		String measurement = "measurement";
 
 		TimeUnit precision = TimeUnit.NANOSECONDS;
 
-		Map<String, String> tags = Maps.newHashMap();
+		Map<String, String> tags = new HashMap<>();
 		tags.put("bar", "baz");
 
 		Long time = System.currentTimeMillis();
@@ -283,17 +282,17 @@ public class PointTest {
 	@Test
 	public void testUnEquals() throws Exception {
 		// GIVEN two point objects with different data
-		Map<String, Object> fields1 = Maps.newHashMap();
+		Map<String, Object> fields1 = new HashMap<>();
 		fields1.put("foo", "bar");
 
-		Map<String, Object> fields2 = Maps.newHashMap();
+		Map<String, Object> fields2 = new HashMap<>();
 		fields2.put("foo", "baz");
 
 		String measurement = "measurement";
 
 		TimeUnit precision = TimeUnit.NANOSECONDS;
 
-		Map<String, String> tags = Maps.newHashMap();
+		Map<String, String> tags = new HashMap<>();
 		tags.put("bar", "baz");
 
 		Long time = System.currentTimeMillis();

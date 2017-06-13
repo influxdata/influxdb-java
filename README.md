@@ -77,6 +77,36 @@ influxDB.deleteDatabase(dbName);
 ```
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 
+If all of your points are written to the same database and retention policy, the simpler write() methods can be used.
+
+```java
+InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+String dbName = "aTimeSeries";
+influxDB.createDatabase(dbName);
+influxDB.setDatabase(dbName);
+influxDB.setRetentionPolicy("autogen");
+
+// Flush every 2000 Points, at least every 100ms
+influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
+
+influxDB.write(Point.measurement("cpu")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.addField("idle", 90L)
+	.addField("user", 9L)
+	.addField("system", 1L)
+	.build());
+
+influxDB.write(Point.measurement("disk")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.addField("used", 80L)
+	.addField("free", 1L)
+	.build());
+
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query);
+influxDB.deleteDatabase(dbName);
+```
+
 Also note that any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
 
 If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:

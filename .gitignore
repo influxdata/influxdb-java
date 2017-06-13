@@ -8,3 +8,4 @@ target/
 test-output/
 .idea/
 *iml
+.m2/
