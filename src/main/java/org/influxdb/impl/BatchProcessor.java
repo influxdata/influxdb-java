@@ -52,6 +52,7 @@ public class BatchProcessor {
     /**
      * @param threadFactory
      *            is optional.
+     * @return this Builder to use it fluent
      */
     public Builder threadFactory(final ThreadFactory threadFactory) {
       this.threadFactory = threadFactory;

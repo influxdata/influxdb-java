@@ -61,7 +61,7 @@ public class BatchPoints {
     /**
      * The retentionPolicy to use.
      *
-     * @param policy
+     * @param policy the retentionPolicy to use
      * @return the Builder instance
      */
     public Builder retentionPolicy(final String policy) {
@@ -86,7 +86,7 @@ public class BatchPoints {
     /**
      * Add a Point to this set of points.
      *
-     * @param pointToAdd
+     * @param pointToAdd the Point to add
      * @return the Builder instance
      */
     public Builder point(final Point pointToAdd) {
@@ -97,7 +97,7 @@ public class BatchPoints {
     /**
      * Add a set of Points to this set of points.
      *
-     * @param pointsToAdd
+     * @param pointsToAdd the List if Points to add
      * @return the Builder instance
      */
     public Builder points(final Point... pointsToAdd) {
@@ -108,7 +108,7 @@ public class BatchPoints {
     /**
      * Set the ConsistencyLevel to use. If not given it defaults to {@link ConsistencyLevel#ONE}
      *
-     * @param consistencyLevel
+     * @param consistencyLevel the ConsistencyLevel
      * @return the Builder instance
      */
     public Builder consistency(final ConsistencyLevel consistencyLevel) {
@@ -187,7 +187,7 @@ public class BatchPoints {
   /**
    * Add a single Point to these batches.
    *
-   * @param point
+   * @param point the Point to add
    * @return this Instance to be able to daisy chain calls.
    */
   public BatchPoints point(final Point point) {

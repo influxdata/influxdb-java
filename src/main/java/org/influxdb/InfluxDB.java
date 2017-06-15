@@ -81,16 +81,19 @@ public interface InfluxDB {
 
   /**
    * Enable Gzip compress for http request body.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableGzip();
 
   /**
    * Disable Gzip compress for http request body.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB disableGzip();
 
   /**
    * Returns whether Gzip compress for http request body is enabled.
+   * @return true if gzip is enabled.
    */
   public boolean isGzipEnabled();
 
@@ -98,7 +101,16 @@ public interface InfluxDB {
    * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
    * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
    *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
+   *
    * @see #enableBatch(int, int, TimeUnit, ThreadFactory)
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
 
@@ -107,7 +119,18 @@ public interface InfluxDB {
    * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer)}
    * using with a exceptionHandler that does nothing.
    *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
+   * @param threadFactory
+   *            a ThreadFactory instance to be used.
+   *
    * @see #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer)
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory);
@@ -123,7 +146,9 @@ public interface InfluxDB {
    * @param flushDuration
    *            the time to wait at most.
    * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
    * @param threadFactory
+   *            a ThreadFactory instance to be used.
    * @param exceptionHandler
    *            a consumer function to handle asynchronous errors
    * @return the InfluxDB instance to be able to use it in a fluent manner.
@@ -139,6 +164,7 @@ public interface InfluxDB {
 
   /**
    * Returns whether Batching is enabled.
+   * @return true if batch is enabled.
    */
   public boolean isBatchEnabled();
 
@@ -168,6 +194,7 @@ public interface InfluxDB {
    * Write a set of Points to the default database with the string records.
    *
    * @param records
+   *            the points in the correct lineprotocol.
    */
   public void write(final String records);
 
@@ -175,6 +202,7 @@ public interface InfluxDB {
    * Write a set of Points to the default database with the list of string records.
    *
    * @param records
+   *            the List of points in the correct lineprotocol.
    */
   public void write(final List<String> records);
 
@@ -206,6 +234,7 @@ public interface InfluxDB {
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
    * @param batchPoints
+   *            the points to write in BatchPoints.
    */
   public void write(final BatchPoints batchPoints);
 
@@ -214,7 +243,14 @@ public interface InfluxDB {
    *
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
    * @param records
+   *            the points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
                     final ConsistencyLevel consistency, final String records);
@@ -224,7 +260,14 @@ public interface InfluxDB {
    *
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
    * @param records
+   *          the List of points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
                     final ConsistencyLevel consistency, final List<String> records);
@@ -233,7 +276,9 @@ public interface InfluxDB {
    * Write a set of Points to the influxdb database with the string records through UDP.
    *
    * @param udpPort
-   * @param records the content will be encoded by UTF-8 before sent.
+  *           the udpPort where influxdb is listening
+   * @param records
+   *          the content will be encoded by UTF-8 before sent.
    */
   public void write(final int udpPort, final String records);
 
@@ -241,7 +286,9 @@ public interface InfluxDB {
    * Write a set of Points to the influxdb database with the list of string records through UDP.
    *
    * @param udpPort
-   * @param records list of record, the content will be encoded by UTF-8 before sent.
+   *           the udpPort where influxdb is listening
+   * @param records
+   *           list of record, the content will be encoded by UTF-8 before sent.
    */
   public void write(final int udpPort, final List<String> records);
 

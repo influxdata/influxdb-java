@@ -17,16 +17,16 @@ public class Query {
   private final boolean requiresPost;
 
   /**
-   * @param command
-   * @param database
+   * @param command the query command
+   * @param database the database to query
    */
   public Query(final String command, final String database) {
     this(command, database, false);
   }
 
    /**
-   * @param command
-   * @param database
+   * @param command the query command
+   * @param database the database to query
    * @param requiresPost true if the command requires a POST instead of GET to influxdb
    */
    public Query(final String command, final String database, final boolean requiresPost) {
