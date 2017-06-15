@@ -78,6 +78,7 @@ influxDB.deleteDatabase(dbName);
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 
 If all of your points are written to the same database and retention policy, the simpler write() methods can be used.
+This requires influxdb-java v2.7 or newer.
 
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
