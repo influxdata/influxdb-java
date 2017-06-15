@@ -412,7 +412,9 @@ public class InfluxDBImpl implements InfluxDB {
                     queryResult.setError("DONE");
                     consumer.accept(queryResult);
                 } catch (IOException e) {
-                    throw new InfluxDBIOException(e);
+                    QueryResult queryResult = new QueryResult();
+                    queryResult.setError(e.toString());
+                    consumer.accept(queryResult);
                 }
             }
 
