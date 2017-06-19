@@ -206,12 +206,6 @@ public class InfluxDBImpl implements InfluxDB {
     this.batchEnabled.set(false);
     if (this.batchProcessor != null) {
       this.batchProcessor.flushAndShutdown();
-      if (this.logLevel != LogLevel.NONE) {
-        System.out.println(
-            "total writes:" + this.writeCount
-            + " unbatched:" + this.unBatchedCount
-            + " batchPoints:" + this.batchedCount);
-      }
     }
   }
 
