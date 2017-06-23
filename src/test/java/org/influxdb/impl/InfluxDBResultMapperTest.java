@@ -18,7 +18,7 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.influxdb.pojomapper;
+package org.influxdb.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -31,10 +31,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.pojomapper.annotation.Column;
-import org.influxdb.pojomapper.annotation.Measurement;
-import org.influxdb.pojomapper.exception.InfluxDBMapperException;
+import org.influxdb.impl.InfluxDBMapperException;
+import org.influxdb.impl.InfluxDBResultMapper;
 import org.junit.Test;
 
 /**

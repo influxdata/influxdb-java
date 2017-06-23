@@ -18,7 +18,7 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.influxdb.pojomapper;
+package org.influxdb.impl;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -31,10 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.pojomapper.annotation.Column;
-import org.influxdb.pojomapper.annotation.Measurement;
-import org.influxdb.pojomapper.exception.InfluxDBMapperException;
 
 /**
  * Main class responsible for mapping a QueryResult to POJO.
