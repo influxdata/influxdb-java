@@ -137,13 +137,81 @@ public void write(final int udpPort, final Point point);
 note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
 
-#### chunking support (version 2.6+ required, unreleased):
+#### Chunking support (version 2.6+ required):
 
 influxdb-java client now supports influxdb chunking. The following example uses a chunkSize of 20 and invokes the specified Consumer (e.g. System.out.println) for each received QueryResult
 ```java
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
+
+
+#### QueryResult mapper to POJO (version 2.7+ required, unreleased):
+
+An alternative way to handle the QueryResult object is now available.
+Supposing that you have a measurement _CPU_:
+```
+> INSERT cpu,host=serverA,region=us_west idle=0.64,happydevop=false,uptimesecs=123456789i
+>
+> select * from cpu
+name: cpu
+time                           happydevop host    idle region  uptimesecs
+----                           ---------- ----    ---- ------  ----------
+2017-06-20T15:32:46.202829088Z false      serverA 0.64 us_west 123456789
+```
+And the following tag keys:
+```
+> show tag keys from cpu
+name: cpu
+tagKey
+------
+host
+region
+```
+
+1. Create a POJO to represent your measurement. For example:
+```Java
+public class Cpu {
+    private Instant time;
+    private String hostname;
+    private String region;
+    private Double idle;
+    private Boolean happydevop;
+    private Long uptimeSecs;
+    // getters (and setters if you need)
+}
+```
+2. Add @Measurement and @Column annotations:
+```Java
+@Measurement(name = "cpu")
+public class Cpu {
+    @Column(name = "time")
+    private Instant time;
+    @Column(name = "host", tag = true)
+    private String hostname;
+    @Column(name = "region", tag = true)
+    private String region;
+    @Column(name = "idle")
+    private Double idle;
+    @Column(name = "happydevop")
+    private Boolean happydevop;
+    @Column(name = "uptimesecs")
+    private Long uptimeSecs;
+    // getters (and setters if you need)
+}
+```
+3. Call _InfluxDBResultMapper.toPOJO(...)_ to map the QueryResult to your POJO:
+```
+InfluxDB influxDB = InfluxDBFactory.connect("http://localhost:8086", "root", "root");
+String dbName = "myTimeseries";
+QueryResult queryResult = influxDB.query(new Query("SELECT * FROM cpu", dbName));
+
+InfluxResultMapper resultMapper = new InfluxResultMapper(); // thread-safe - can be reused
+List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
+```
+**QueryResult mapper limitations**
+- If your InfluxDB query contains multiple SELECT clauses, you will have to call InfluxResultMapper#toPOJO() multiple times to map every measurement returned by QueryResult to the respective POJO;
+- If your InfluxDB query contains multiple SELECT clauses **for the same measurement**, InfluxResultMapper will process all results because there is no way to distinguish which one should be mapped to your POJO. It may result in an invalid collection being returned;
 
 
 ### Other Usages:
