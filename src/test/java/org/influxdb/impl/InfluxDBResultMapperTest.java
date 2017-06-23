@@ -31,10 +31,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.InfluxDBMapperException;
 import org.influxdb.impl.InfluxDBResultMapper;
 import org.junit.Test;
 
