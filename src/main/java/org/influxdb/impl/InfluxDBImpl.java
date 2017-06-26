@@ -97,6 +97,24 @@ public class InfluxDBImpl implements InfluxDB {
     this.adapter = moshi.adapter(QueryResult.class);
   }
 
+    InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
+            final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
+        super();
+        this.hostAddress = parseHostAddress(url);
+        this.username = username;
+        this.password = password;
+        this.loggingInterceptor = new HttpLoggingInterceptor();
+        this.loggingInterceptor.setLevel(Level.NONE);
+        this.gzipRequestInterceptor = new GzipRequestInterceptor();
+        this.retrofit = new Retrofit.Builder()
+                .baseUrl(url)
+                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build();
+        this.influxDBService = influxDBService;
+        this.adapter = adapter;
+    }
+
   public InfluxDBImpl(final String url, final String username, final String password,
                       final OkHttpClient.Builder client, final String database,
                       final String retentionPolicy, final ConsistencyLevel consistency) {
