@@ -65,8 +65,9 @@ public class ChunkingExceptionTest {
             }
         };
 
+        String dbName = "write_unittest_" + System.currentTimeMillis();
         final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
-        Query query = new Query("SELECT * FROM disk", "xxx");
+        Query query = new Query("SELECT * FROM disk", dbName);
         influxDB.query(query, 2, new Consumer<QueryResult>() {
             @Override
             public void accept(QueryResult result) {
@@ -84,6 +85,7 @@ public class ChunkingExceptionTest {
         Assert.assertNotNull(result);
         Assert.assertEquals(message, result.getError());
 
+        influxDB.deleteDatabase(dbName);
     }
 
 }
