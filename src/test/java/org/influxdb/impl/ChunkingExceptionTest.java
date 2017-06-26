@@ -84,8 +84,6 @@ public class ChunkingExceptionTest {
         QueryResult result = queue.poll(20, TimeUnit.SECONDS);
         Assert.assertNotNull(result);
         Assert.assertEquals(message, result.getError());
-
-        influxDB.deleteDatabase(dbName);
     }
 
 }
