@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
 
 /**
- * Main class responsible for mapping a QueryResult to POJO.
+ * Main class responsible for mapping a QueryResult to a POJO.
  *
  * @author fmachado
  */
@@ -79,6 +80,9 @@ public class InfluxDBResultMapper {
    *         possible to define the values of your POJO (e.g. due to an unsupported field type).
    */
   public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz) throws InfluxDBMapperException {
+    Objects.requireNonNull(queryResult, "queryResult");
+    Objects.requireNonNull(clazz, "clazz");
+
     throwExceptionIfMissingAnnotation(clazz);
     throwExceptionIfResultWithError(queryResult);
     cacheMeasurementClass(clazz);
@@ -86,8 +90,9 @@ public class InfluxDBResultMapper {
     List<T> result = new LinkedList<T>();
     String measurementName = getMeasurementName(clazz);
     queryResult.getResults().stream()
-      .forEach(singleResult -> {
-        singleResult.getSeries().stream()
+      .filter(internalResult -> Objects.nonNull(internalResult) && Objects.nonNull(internalResult.getSeries()))
+      .forEach(internalResult -> {
+        internalResult.getSeries().stream()
           .filter(series -> series.getName().equals(measurementName))
           .forEachOrdered(series -> {
             parseSeriesAs(series, clazz, result);

@@ -175,10 +175,10 @@ public class InfluxDBResultMapperTest {
 		assertTrue("field 'integerPrimitive' does not match",
 			Integer.compare(asDouble(seriesResult.get(7)).intValue(), myObject.integerPrimitive) == 0);
 
-		assertEquals("booleanObject 'time' does not match",
+		assertEquals("field 'booleanObject' does not match",
 			Boolean.valueOf(String.valueOf(seriesResult.get(8))), myObject.booleanObject);
 
-		assertEquals("booleanPrimitive 'uuid' does not match",
+		assertEquals("field 'booleanPrimitive' does not match",
 			Boolean.valueOf(String.valueOf(seriesResult.get(9))).booleanValue(), myObject.booleanPrimitive);
 	}
 
@@ -223,6 +223,27 @@ public class InfluxDBResultMapperTest {
 		mapper.parseSeriesAs(series, MyPojoWithUnsupportedField.class, result);
 	}
 
+	/**
+	 * https://github.com/influxdata/influxdb/issues/7596 for more information.
+	 */
+  @Test
+  public void testToPOJO_SeriesFromQueryResultIsNull() {
+    // Given...
+    mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+    QueryResult.Result internalResult = new QueryResult.Result();
+    internalResult.setSeries(null);
+
+    QueryResult queryResult = new QueryResult();
+    queryResult.setResults(Arrays.asList(internalResult));
+
+    // When...
+    List<MyCustomMeasurement> myList = mapper.toPOJO(queryResult, MyCustomMeasurement.class);
+
+    // Then...
+    assertTrue("there must NO entry in the result list", myList.isEmpty());
+  }
+	
 	@Measurement(name = "CustomMeasurement")
 	static class MyCustomMeasurement {
 
