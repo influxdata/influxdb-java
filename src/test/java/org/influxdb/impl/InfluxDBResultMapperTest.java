@@ -26,8 +26,10 @@ import static org.junit.Assert.assertTrue;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -243,7 +245,61 @@ public class InfluxDBResultMapperTest {
     // Then...
     assertTrue("there must NO entry in the result list", myList.isEmpty());
   }
-	
+
+  @Test
+  public void testToPOJO_QueryResultCreatedByGroupByClause() {
+    // Given...
+    mapper.cacheMeasurementClass(GroupByCarrierDeviceOS.class);
+
+    List<String> columnList = Arrays.asList("time", "median", "min", "max");
+
+    // InfluxDB client returns the time representation as Double.
+    Double now = Long.valueOf(System.currentTimeMillis()).doubleValue();
+
+    List<Object> firstSeriesResult = Arrays.asList(now, new Double("233.8"), new Double("0.0"),
+      new Double("3090744.0"));
+    // When the "GROUP BY" clause is used, "tags" are returned as Map<String,String>
+    Map<String, String> firstSeriesTagMap = new HashMap<>();
+    firstSeriesTagMap.put("CARRIER", "000/00");
+    firstSeriesTagMap.put("DEVICE_OS_VERSION", "4.4.2");
+
+    List<Object> secondSeriesResult = Arrays.asList(now, new Double("552.0"), new Double("135.0"),
+      new Double("267705.0"));
+    Map<String, String> secondSeriesTagMap = new HashMap<>();
+    secondSeriesTagMap.put("CARRIER", "000/01");
+    secondSeriesTagMap.put("DEVICE_OS_VERSION", "9.3.5");
+
+    QueryResult.Series firstSeries = new QueryResult.Series();
+    firstSeries.setColumns(columnList);
+    firstSeries.setValues(Arrays.asList(firstSeriesResult));
+    firstSeries.setTags(firstSeriesTagMap);
+    firstSeries.setName("tb_network");
+
+    QueryResult.Series secondSeries = new QueryResult.Series();
+    secondSeries.setColumns(columnList);
+    secondSeries.setValues(Arrays.asList(secondSeriesResult));
+    secondSeries.setTags(secondSeriesTagMap);
+    secondSeries.setName("tb_network");
+
+    QueryResult.Result internalResult = new QueryResult.Result();
+    internalResult.setSeries(Arrays.asList(firstSeries, secondSeries));
+
+    QueryResult queryResult = new QueryResult();
+    queryResult.setResults(Arrays.asList(internalResult));
+
+    // When...
+    List<GroupByCarrierDeviceOS> myList = mapper.toPOJO(queryResult, GroupByCarrierDeviceOS.class);
+
+    // Then...
+    GroupByCarrierDeviceOS firstGroupByEntry = myList.get(0);
+    assertEquals("field 'carrier' does not match", "000/00", firstGroupByEntry.carrier);
+    assertEquals("field 'deviceOsVersion' does not match", "4.4.2", firstGroupByEntry.deviceOsVersion);
+
+    GroupByCarrierDeviceOS secondGroupByEntry = myList.get(1);
+    assertEquals("field 'carrier' does not match", "000/01", secondGroupByEntry.carrier);
+    assertEquals("field 'deviceOsVersion' does not match", "9.3.5", secondGroupByEntry.deviceOsVersion);
+  }
+
 	@Measurement(name = "CustomMeasurement")
 	static class MyCustomMeasurement {
 
@@ -297,4 +353,35 @@ public class InfluxDBResultMapperTest {
 		@Column(name = "bar")
 		private Date myDate;
 	}
+
+  /**
+   * Class created based on example from https://github.com/influxdata/influxdb-java/issues/343
+   */
+  @Measurement(name = "tb_network")
+  static class GroupByCarrierDeviceOS {
+
+    @Column(name = "time")
+    private Instant time;
+
+    @Column(name = "CARRIER", tag = true)
+    private String carrier;
+
+    @Column(name = "DEVICE_OS_VERSION", tag = true)
+    private String deviceOsVersion;
+
+    @Column(name = "median")
+    private Double median;
+
+    @Column(name = "min")
+    private Double min;
+
+    @Column(name = "max")
+    private Double max;
+
+    @Override
+    public String toString() {
+      return "GroupByCarrierDeviceOS [time=" + time + ", carrier=" + carrier + ", deviceOsVersion=" + deviceOsVersion
+        + ", median=" + median + ", min=" + min + ", max=" + max + "]";
+    }
+  }
 }
