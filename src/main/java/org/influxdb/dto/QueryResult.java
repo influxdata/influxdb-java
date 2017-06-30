@@ -1,5 +1,7 @@
 package org.influxdb.dto;
 
+import com.squareup.moshi.Json;
+
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +71,9 @@ public class QueryResult {
   }
 
   public static class Result {
+    @Json(name = "statement_id") private long statementId = 0;
+    private boolean partial = false;
+
     private List<Series> series;
     private String error;
 
@@ -112,6 +117,23 @@ public class QueryResult {
       this.error = error;
     }
 
+
+    public long getStatementId() {
+      return statementId;
+    }
+
+    public void setStatementId(final long statementId) {
+      this.statementId = statementId;
+    }
+
+    public boolean isPartial() {
+      return partial;
+    }
+
+    public void setPartial(final boolean partial) {
+      this.partial = partial;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -130,6 +152,8 @@ public class QueryResult {
 
   public static class Series {
     private String name;
+    private boolean partial;
+
     private Map<String, String> tags;
     private List<String> columns;
     private List<List<Object>> values;
@@ -192,6 +216,15 @@ public class QueryResult {
      */
     public void setValues(final List<List<Object>> values) {
       this.values = values;
+    }
+
+
+    public boolean isPartial() {
+      return partial;
+    }
+
+    public void setPartial(final boolean partial) {
+      this.partial = partial;
     }
 
     /**
