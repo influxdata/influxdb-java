@@ -69,7 +69,7 @@ public class Point {
     private final String measurement;
     private final Map<String, String> tags = new TreeMap<>();
     private Long time;
-    private TimeUnit precision = TimeUnit.NANOSECONDS;
+    private TimeUnit precision;
     private final Map<String, Object> fields = new TreeMap<>();
 
     /**
@@ -207,9 +207,6 @@ public class Point {
       if (this.time != null) {
           point.setTime(this.time);
           point.setPrecision(this.precision);
-      } else {
-          point.setTime(System.currentTimeMillis());
-          point.setPrecision(TimeUnit.MILLISECONDS);
       }
       point.setTags(this.tags);
       return point;
@@ -292,12 +289,16 @@ public class Point {
     StringBuilder builder = new StringBuilder();
     builder.append("Point [name=");
     builder.append(this.measurement);
-    builder.append(", time=");
-    builder.append(this.time);
+    if (this.time != null) {
+      builder.append(", time=");
+      builder.append(this.time);
+    }
     builder.append(", tags=");
     builder.append(this.tags);
-    builder.append(", precision=");
-    builder.append(this.precision);
+    if (this.precision != null) {
+      builder.append(", precision=");
+      builder.append(this.precision);
+    }
     builder.append(", fields=");
     builder.append(this.fields);
     builder.append("]");
@@ -368,6 +369,9 @@ public class Point {
   }
 
   private void formatedTime(final StringBuilder sb) {
+    if (this.time == null || this.precision == null) {
+      return;
+    }
     sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
   }
 
