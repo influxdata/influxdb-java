@@ -1,8 +1,10 @@
-## 2.8 [unreleased]
+## 2.8 [2017-07-05]
 
 #### Fixes
 
  - InfluxDBResultMapper now is able to process QueryResult created when a GROUP BY clause was used [PR #345](https://github.com/influxdata/influxdb-java/pull/345)
+ - InfluxDB will now handle the timestamp on its own if none is provided [PR#350](https://github.com/influxdata/influxdb-java/pull/350)
+
 
 ## v2.7 [2017-06-26]
 
