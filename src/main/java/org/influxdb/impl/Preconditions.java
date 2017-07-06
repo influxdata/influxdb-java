@@ -35,4 +35,17 @@ public final class Preconditions {
       throw new IllegalArgumentException("Expecting a positive number for " + name);
     }
   }
+
+  /**
+   * Enforces that the duration is a valid influxDB duration.
+   * @param duration the duration to test
+   * @param name variable name for reporting
+   * @throws IllegalArgumentException
+   */
+  public static void checkDuration(final String duration, final String name) throws IllegalArgumentException {
+    if (!duration.matches("(\\d+[wdmhs])+")) {
+      throw new IllegalArgumentException("Invalid InfluxDB duration: " + duration
+         + "for " + name);
+    }
+  }
 }

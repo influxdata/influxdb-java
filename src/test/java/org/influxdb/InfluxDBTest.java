@@ -715,4 +715,34 @@ public class InfluxDBTest {
         this.influxDB.flush();
     }
 
+	/**
+	 * Test creation and deletion of retention policies
+	 */
+	@Test
+	public void testCreateDropRetentionPolicies() {
+		String dbName = "rpTest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		this.influxDB.createRetentionPolicy("testRP1", dbName, "30h", 2, false);
+		this.influxDB.createRetentionPolicy("testRP2", dbName, "10d", "20m", 2, false);
+		this.influxDB.createRetentionPolicy("testRP3", dbName, "2d4w", "20m", 2);
+
+		Query query = new Query("SHOW RETENTION POLICIES", dbName);
+		QueryResult result = this.influxDB.query(query);
+		Assert.assertNull(result.getError());
+		List<List<Object>> retentionPolicies = result.getResults().get(0).getSeries().get(0).getValues();
+		Assert.assertTrue(retentionPolicies.get(1).contains("testRP1"));
+		Assert.assertTrue(retentionPolicies.get(2).contains("testRP2"));
+		Assert.assertTrue(retentionPolicies.get(3).contains("testRP3"));
+
+		this.influxDB.dropRetentionPolicy("testRP1", dbName);
+		this.influxDB.dropRetentionPolicy("testRP2", dbName);
+		this.influxDB.dropRetentionPolicy("testRP3", dbName);
+
+		result = this.influxDB.query(query);
+		Assert.assertNull(result.getError());
+		retentionPolicies = result.getResults().get(0).getSeries().get(0).getValues();
+		Assert.assertTrue(retentionPolicies.size() == 1);
+	}
+
 }
