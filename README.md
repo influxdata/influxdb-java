@@ -146,7 +146,7 @@ influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
 
 
-#### QueryResult mapper to POJO (version 2.7+ required, unreleased):
+#### QueryResult mapper to POJO (version 2.7+ required):
 
 An alternative way to handle the QueryResult object is now available.
 Supposing that you have a measurement _CPU_:
@@ -206,13 +206,14 @@ InfluxDB influxDB = InfluxDBFactory.connect("http://localhost:8086", "root", "ro
 String dbName = "myTimeseries";
 QueryResult queryResult = influxDB.query(new Query("SELECT * FROM cpu", dbName));
 
-InfluxResultMapper resultMapper = new InfluxResultMapper(); // thread-safe - can be reused
+InfluxDBResultMapper resultMapper = new InfluxDBResultMapper(); // thread-safe - can be reused
 List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 ```
 **QueryResult mapper limitations**
 - If your InfluxDB query contains multiple SELECT clauses, you will have to call InfluxResultMapper#toPOJO() multiple times to map every measurement returned by QueryResult to the respective POJO;
 - If your InfluxDB query contains multiple SELECT clauses **for the same measurement**, InfluxResultMapper will process all results because there is no way to distinguish which one should be mapped to your POJO. It may result in an invalid collection being returned;
-
+- A Class field annotated with _@Column(..., tag = true)_ (i.e. a [InfluxDB Tag](https://docs.influxdata.com/influxdb/v1.2/concepts/glossary/#tag-value)) must be declared as _String_.
+-- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
 
 ### Other Usages:
 For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
@@ -224,12 +225,12 @@ The latest version for maven dependence:
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.6</version>
+  <version>2.7</version>
 </dependency>
 ```
 Or when using with gradle:
 ```groovy
-compile 'org.influxdb:influxdb-java:2.6'
+compile 'org.influxdb:influxdb-java:2.7'
 ```
 For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
 

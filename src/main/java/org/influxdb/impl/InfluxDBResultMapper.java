@@ -28,6 +28,7 @@ import java.time.temporal.ChronoField;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -147,17 +148,30 @@ public class InfluxDBResultMapper {
 
   <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
     int columnSize = series.getColumns().size();
+    ConcurrentMap<String, Field> colNameAndFieldMap = CLASS_FIELD_CACHE.get(clazz.getName());
     try {
       T object = null;
       for (List<Object> row : series.getValues()) {
         for (int i = 0; i < columnSize; i++) {
-          String resultColumnName = series.getColumns().get(i);
-          Field correspondingField = CLASS_FIELD_CACHE.get(clazz.getName()).get(resultColumnName);
+          Field correspondingField = colNameAndFieldMap.get(series.getColumns().get(i)/*InfluxDB columnName*/);
           if (correspondingField != null) {
             if (object == null) {
               object = clazz.newInstance();
             }
             setFieldValue(object, correspondingField, row.get(i));
+          }
+        }
+        // When the "GROUP BY" clause is used, "tags" are returned as Map<String,String> and
+        // accordingly with InfluxDB documentation
+        // https://docs.influxdata.com/influxdb/v1.2/concepts/glossary/#tag-value
+        // "tag" values are always String.
+        if (series.getTags() != null && !series.getTags().isEmpty()) {
+          for (Entry<String, String> entry : series.getTags().entrySet()) {
+            Field correspondingField = colNameAndFieldMap.get(entry.getKey()/*InfluxDB columnName*/);
+            if (correspondingField != null) {
+              // I don't think it is possible to reach here without a valid "object"
+              setFieldValue(object, correspondingField, entry.getValue());
+            }
           }
         }
         if (object != null) {
@@ -233,8 +247,7 @@ public class InfluxDBResultMapper {
   }
 
   <T> boolean fieldValueForPrimitivesModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value)
-    throws IllegalArgumentException, IllegalAccessException {
+    final Object value) throws IllegalArgumentException, IllegalAccessException {
     if (double.class.isAssignableFrom(fieldType)) {
       field.setDouble(object, ((Double) value).doubleValue());
       return true;
@@ -255,8 +268,7 @@ public class InfluxDBResultMapper {
   }
 
   <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value)
-    throws IllegalArgumentException, IllegalAccessException {
+    final Object value) throws IllegalArgumentException, IllegalAccessException {
     if (Double.class.isAssignableFrom(fieldType)) {
       field.set(object, value);
       return true;

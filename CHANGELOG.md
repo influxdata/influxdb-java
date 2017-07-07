@@ -1,8 +1,17 @@
-## v2.7 [unreleased]
+## 2.8 [unreleased]
+
+#### Fixes
+
+ - InfluxDBResultMapper now is able to process QueryResult created when a GROUP BY clause was used [PR #345](https://github.com/influxdata/influxdb-java/pull/345)
+ - InfluxDB will now handle the timestamp on its own if none is provided [PR#350](https://github.com/influxdata/influxdb-java/pull/350)
+
+
+## v2.7 [2017-06-26]
 
 #### Features
 
  - Simplify write() methods for use cases writing all points to same database and retention policy [PR #327](https://github.com/influxdata/influxdb-java/pull/327)
+ - QueryResult to Object mapper added [PR #341](https://github.com/influxdata/influxdb-java/pull/341)
 
 #### Fixes
 
@@ -13,7 +22,7 @@
  - Significant (~35%) performance improvements for write speed with less memory footprint. [PR #330](https://github.com/influxdata/influxdb-java/pull/330)
  - Drop guava runtime dependency which reduces jar size from 1MB -> 49KB [PR #322](https://github.com/influxdata/influxdb-java/pull/322)
 
-## v2.6 [2017.06-08]
+## v2.6 [2017-06-08]
 
 #### Features
 
