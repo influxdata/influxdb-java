@@ -5,6 +5,9 @@
  - InfluxDBResultMapper now is able to process QueryResult created when a GROUP BY clause was used [PR #345](https://github.com/influxdata/influxdb-java/pull/345)
  - InfluxDB will now handle the timestamp on its own if none is provided [PR#350](https://github.com/influxdata/influxdb-java/pull/350)
 
+#### Features
+
+ - API: add InfluxDB#createRetentionPolicy and InfluxDB#dropRetentionPolicy to be able to create and drop Retention Policies [PR #351](https://github.com/influxdata/influxdb-java/pull/351)
 
 ## v2.7 [2017-06-26]
 

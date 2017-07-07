@@ -395,4 +395,44 @@ public interface InfluxDB {
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB setRetentionPolicy(final String retentionPolicy);
+
+  /**
+   * Creates a retentionPolicy.
+   * @param rpName the name of the retentionPolicy(rp)
+   * @param database the name of the database
+   * @param duration the duration of the rp
+   * @param shardDuration the shardDuration
+   * @param replicationFactor the replicationFactor of the rp
+   * @param isDefault if the rp is the default rp for the database or not
+   */
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor, final boolean isDefault);
+
+  /**
+   * Creates a retentionPolicy. (optional shardDuration)
+   * @param rpName the name of the retentionPolicy(rp)
+   * @param database the name of the database
+   * @param duration the duration of the rp
+   * @param replicationFactor the replicationFactor of the rp
+   * @param isDefault if the rp is the default rp for the database or not
+   */
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final int replicationFactor, final boolean isDefault);
+
+  /**
+   * Creates a retentionPolicy. (optional shardDuration and isDefault)
+   * @param rpName the name of the retentionPolicy(rp)
+   * @param database the name of the database
+   * @param duration the duration of the rp
+   * @param replicationFactor the replicationFactor of the rp
+   */
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor);
+
+  /**
+   * Drops a retentionPolicy in a database.
+   * @param rpName the name of the retentionPolicy
+   * @param database the name of the database
+   */
+  public void dropRetentionPolicy(final String rpName, final String database);
 }

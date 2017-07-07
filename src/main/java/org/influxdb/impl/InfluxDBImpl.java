@@ -557,4 +557,73 @@ public class InfluxDBImpl implements InfluxDB {
     this.retentionPolicy = retentionPolicy;
     return this;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor, final boolean isDefault) {
+    Preconditions.checkNonEmptyString(rpName, "retentionPolicyName");
+    Preconditions.checkNonEmptyString(database, "database");
+    Preconditions.checkNonEmptyString(duration, "retentionDuration");
+    Preconditions.checkDuration(duration, "retentionDuration");
+    if (shardDuration != null && !shardDuration.isEmpty()) {
+      Preconditions.checkDuration(shardDuration, "shardDuration");
+    }
+    Preconditions.checkPositiveNumber(replicationFactor, "replicationFactor");
+
+    StringBuilder queryBuilder = new StringBuilder("CREATE RETENTION POLICY \"");
+    queryBuilder.append(rpName)
+        .append("\" ON \"")
+        .append(database)
+        .append("\" DURATION ")
+        .append(duration)
+        .append(" REPLICATION ")
+        .append(replicationFactor);
+    if (shardDuration != null && !shardDuration.isEmpty()) {
+      queryBuilder.append(" SHARD DURATION ");
+      queryBuilder.append(shardDuration);
+    }
+    if (isDefault) {
+      queryBuilder.append(" DEFAULT");
+    }
+    execute(this.influxDBService.postQuery(this.username, this.password, Query.encode(queryBuilder.toString())));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final int replicationFactor, final boolean isDefault) {
+    createRetentionPolicy(rpName, database, duration, null, replicationFactor, isDefault);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor) {
+    createRetentionPolicy(rpName, database, duration, null, replicationFactor, false);
+  }
+
+  /**
+   * {@inheritDoc}
+   * @param rpName the name of the retentionPolicy
+   * @param database the name of the database
+   */
+  @Override
+  public void dropRetentionPolicy(final String rpName, final String database) {
+    Preconditions.checkNonEmptyString(rpName, "retentionPolicyName");
+    Preconditions.checkNonEmptyString(database, "database");
+    StringBuilder queryBuilder = new StringBuilder("DROP RETENTION POLICY \"");
+    queryBuilder.append(rpName)
+        .append("\" ON \"")
+        .append(database)
+        .append("\"");
+    execute(this.influxDBService.postQuery(this.username, this.password,
+        Query.encode(queryBuilder.toString())));
+  }
 }

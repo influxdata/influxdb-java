@@ -20,11 +20,13 @@ All low level REST Api calls are available.
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
 influxDB.createDatabase(dbName);
+String rpName = "aRetentionPolicy";
+influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
 
 BatchPoints batchPoints = BatchPoints
 				.database(dbName)
 				.tag("async", "true")
-				.retentionPolicy("autogen")
+				.retentionPolicy(rpName)
 				.consistency(ConsistencyLevel.ALL)
 				.build();
 Point point1 = Point.measurement("cpu")
@@ -43,9 +45,13 @@ batchPoints.point(point2);
 influxDB.write(batchPoints);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
+influxDB.dropRetentionPolicy(rpName, dbName);
 influxDB.deleteDatabase(dbName);
 ```
-Note : If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
+Note:
+* APIs to create and drop retention policies are supported only in versions > 2.7
+* If you are using influxdb < 2.8, you should use retention policy: 'autogen'
+* If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
 
 If your application produces only single Points, you can enable the batching functionality of influxdb-java:
 
@@ -53,6 +59,8 @@ If your application produces only single Points, you can enable the batching fun
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
 influxDB.createDatabase(dbName);
+String rpName = "aRetentionPolicy";
+influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
 
 // Flush every 2000 Points, at least every 100ms
 influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
@@ -69,10 +77,11 @@ Point point2 = Point.measurement("disk")
 					.addField("free", 1L)
 					.build();
 
-influxDB.write(dbName, "autogen", point1);
-influxDB.write(dbName, "autogen", point2);
+influxDB.write(dbName, rpName, point1);
+influxDB.write(dbName, rpName, point2);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
+influxDB.dropRetentionPolicy(rpName, dbName);
 influxDB.deleteDatabase(dbName);
 ```
 Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
@@ -85,7 +94,9 @@ InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "r
 String dbName = "aTimeSeries";
 influxDB.createDatabase(dbName);
 influxDB.setDatabase(dbName);
-influxDB.setRetentionPolicy("autogen");
+String rpName = "aRetentionPolicy";
+influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+influxDB.setRetentionPolicy(rpName);
 
 // Flush every 2000 Points, at least every 100ms
 influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
@@ -105,6 +116,7 @@ influxDB.write(Point.measurement("disk")
 
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
+influxDB.dropRetentionPolicy(rpName, dbName);
 influxDB.deleteDatabase(dbName);
 ```
 
