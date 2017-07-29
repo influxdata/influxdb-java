@@ -9,6 +9,10 @@
 
  - API: add InfluxDB#createRetentionPolicy and InfluxDB#dropRetentionPolicy to be able to create and drop Retention Policies [PR #351](https://github.com/influxdata/influxdb-java/pull/351)
 
+#### Improvements
+
+ - Build: all unit and integration test are now running with jdk8 and jdk9.
+
 ## v2.7 [2017-06-26]
 
 #### Features

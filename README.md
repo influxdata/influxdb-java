@@ -249,8 +249,8 @@ For version change history have a look at [ChangeLog](https://github.com/influxd
 
 ### Build Requirements
 
-* Java 1.8+
-* Maven 3.0+
+* Java 1.8+ (tested with jdk8 and jdk9)
+* Maven 3.0+ (tested with maven 3.5.0)
 * Docker daemon running
 
 Then you can build influxdb-java with all tests with:
