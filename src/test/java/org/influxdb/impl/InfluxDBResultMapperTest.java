@@ -300,6 +300,27 @@ public class InfluxDBResultMapperTest {
     assertEquals("field 'deviceOsVersion' does not match", "9.3.5", secondGroupByEntry.deviceOsVersion);
   }
 
+  @Test
+  public void testToPOJO_ticket363() {
+    // Given...
+    mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+    List<String> columnList = Arrays.asList("time");
+    List<Object> firstSeriesResult = Arrays.asList("2000-01-01T00:00:00.000000001Z");
+
+    QueryResult.Series series = new QueryResult.Series();
+    series.setColumns(columnList);
+    series.setValues(Arrays.asList(firstSeriesResult));
+
+    // When...
+    List<MyCustomMeasurement> result = new LinkedList<>();
+    mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
+
+    // Then...
+    assertEquals("incorrect number of elemets", 1, result.size());
+    assertEquals("incorrect value for the nanoseconds field", 1, result.get(0).time.getNano());
+  }
+
 	@Measurement(name = "CustomMeasurement")
 	static class MyCustomMeasurement {
 
