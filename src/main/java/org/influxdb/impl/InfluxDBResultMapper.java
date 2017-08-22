@@ -52,7 +52,7 @@ public class InfluxDBResultMapper {
     ConcurrentMap<String, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<>();
 
   private static final int FRACTION_MIN_WIDTH = 0;
-  private static final int FRACTION_MAX_WIDTH = 6;
+  private static final int FRACTION_MAX_WIDTH = 9;
   private static final boolean ADD_DECIMAL_POINT = true;
 
   /**
@@ -61,7 +61,7 @@ public class InfluxDBResultMapper {
    */
   private static final DateTimeFormatter ISO8601_FORMATTER = new DateTimeFormatterBuilder()
     .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
-    .appendFraction(ChronoField.MICRO_OF_SECOND, FRACTION_MIN_WIDTH, FRACTION_MAX_WIDTH, ADD_DECIMAL_POINT)
+    .appendFraction(ChronoField.NANO_OF_SECOND, FRACTION_MIN_WIDTH, FRACTION_MAX_WIDTH, ADD_DECIMAL_POINT)
     .appendPattern("X")
     .toFormatter();
 
