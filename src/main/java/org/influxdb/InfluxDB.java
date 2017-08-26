@@ -302,6 +302,20 @@ public interface InfluxDB {
   public QueryResult query(final Query query);
 
   /**
+   * Execute a query against a database.
+   *
+   * One of the consumers will be executed.
+   *
+   * @param query
+   *            the query to execute.
+   * @param onSuccess
+   *            the consumer to invoke when result is received
+   * @param onFailure
+   *            the consumer to invoke when error is thrown
+   */
+  public void query(final Query query, final Consumer<QueryResult> onSuccess, final Consumer<Throwable> onFailure);
+
+  /**
    * Execute a streaming query against a database.
    *
    * @param query
@@ -311,7 +325,7 @@ public interface InfluxDB {
    * @param consumer
    *            the consumer to invoke for each received QueryResult
    */
-    public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
+  public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
 
   /**
    * Execute a query against a database.

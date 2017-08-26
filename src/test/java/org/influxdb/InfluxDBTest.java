@@ -108,6 +108,25 @@ public class InfluxDBTest {
 	}
 
 	/**
+	 * Tests for callback query.
+	 */
+	@Test
+	public void testCallbackQuery() throws Throwable {
+		final AsyncResult<QueryResult> result = new AsyncResult<>();
+		final Consumer<QueryResult> firstQueryConsumer  = new Consumer<QueryResult>() {
+			@Override
+			public void accept(QueryResult queryResult) {
+				influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
+			}
+		};
+
+		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"), firstQueryConsumer, result.errorConsumer);
+
+		// Will throw exception in case of error.
+		result.result();
+	}
+
+	/**
 	 * Test that describe Databases works.
 	 */
 	@Test
