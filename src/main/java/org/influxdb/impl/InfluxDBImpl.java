@@ -379,15 +379,26 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public QueryResult query(final Query query) {
-    Call<QueryResult> call;
-    if (query.requiresPost()) {
-      call = this.influxDBService.postQuery(this.username,
-                                            this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
-    } else {
-      call = this.influxDBService.query(this.username,
-                                        this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
-    }
-    return execute(call);
+    return execute(callQuery(query));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final Consumer<QueryResult> onSuccess, final Consumer<Throwable> onFailure) {
+    final Call<QueryResult> call = callQuery(query);
+    call.enqueue(new Callback<QueryResult>() {
+      @Override
+      public void onResponse(final Call<QueryResult> call, final Response<QueryResult> response) {
+        onSuccess.accept(response.body());
+      }
+
+      @Override
+      public void onFailure(final Call<QueryResult> call, final Throwable throwable) {
+        onFailure.accept(throwable);
+      }
+    });
   }
 
   /**
@@ -500,6 +511,22 @@ public class InfluxDBImpl implements InfluxDB {
     }
     return false;
   }
+
+  /**
+   * Calls the influxDBService for the query.
+   */
+  private Call<QueryResult> callQuery(final Query query) {
+    Call<QueryResult> call;
+    if (query.requiresPost()) {
+      call = this.influxDBService.postQuery(this.username,
+              this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+    } else {
+      call = this.influxDBService.query(this.username,
+              this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+    }
+    return call;
+  }
+
 
   private <T> T execute(final Call<T> call) {
     try {
