@@ -227,6 +227,19 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 - A Class field annotated with _@Column(..., tag = true)_ (i.e. a [InfluxDB Tag](https://docs.influxdata.com/influxdb/v1.2/concepts/glossary/#tag-value)) must be declared as _String_.
 -- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
 
+#### Query using Callbacks (version 2.8+ required)
+
+influxdb-java now supports returning results of a query via callbacks. Only one
+of the following consumers are going to be called once :
+
+```java
+this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
+    // Do something with the result...
+}, throwable -> {
+    // Do something with the error...
+});
+```
+
 ### Other Usages:
 For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 

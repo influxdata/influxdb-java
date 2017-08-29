@@ -8,6 +8,7 @@
 #### Features
 
  - API: add InfluxDB#createRetentionPolicy and InfluxDB#dropRetentionPolicy to be able to create and drop Retention Policies [PR #351](https://github.com/influxdata/influxdb-java/pull/351)
+ - API: add InfluxDB#query that uses callbacks
 
 #### Improvements
 
