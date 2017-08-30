@@ -40,7 +40,7 @@ public final class Preconditions {
    * Enforces that the duration is a valid influxDB duration.
    * @param duration the duration to test
    * @param name variable name for reporting
-   * @throws IllegalArgumentException
+   * @throws IllegalArgumentException if the given duration is not valid.
    */
   public static void checkDuration(final String duration, final String name) throws IllegalArgumentException {
     if (!duration.matches("(\\d+[wdmhs])+")) {

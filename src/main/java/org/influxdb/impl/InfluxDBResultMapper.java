@@ -74,6 +74,7 @@ public class InfluxDBResultMapper {
    *
    * @param queryResult the InfluxDB result object
    * @param clazz the Class that will be used to hold your measurement data
+   * @param <T> the target type
    * @return a {@link List} of objects from the same Class passed as parameter and sorted on the
    *         same order as received from InfluxDB.
    * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,

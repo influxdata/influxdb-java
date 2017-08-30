@@ -438,6 +438,7 @@ public interface InfluxDB {
    * @param rpName the name of the retentionPolicy(rp)
    * @param database the name of the database
    * @param duration the duration of the rp
+   * @param shardDuration the shardDuration
    * @param replicationFactor the replicationFactor of the rp
    */
   public void createRetentionPolicy(final String rpName, final String database, final String duration,
