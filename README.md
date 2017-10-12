@@ -140,7 +140,7 @@ influxDB.enableGzip()
 
 #### UDP's support (version 2.5+ required):
 
-influxdb-java client support udp protocol now. you can call followed methods directly to write through UDP.
+influxdb-java client support udp protocol now. you can call following methods directly to write through UDP.
 ```java
 public void write(final int udpPort, final String records);
 public void write(final int udpPort, final List<String> records);
