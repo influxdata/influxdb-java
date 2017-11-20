@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 public class BatchPointTest {

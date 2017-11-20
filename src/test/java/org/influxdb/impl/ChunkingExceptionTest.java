@@ -18,8 +18,8 @@ import org.influxdb.InfluxDB;
 import org.influxdb.TestUtils;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import com.squareup.moshi.JsonAdapter;
@@ -82,8 +82,8 @@ public class ChunkingExceptionTest {
         callback.onResponse(call, Response.success(responseBody));
 
         QueryResult result = queue.poll(20, TimeUnit.SECONDS);
-        Assert.assertNotNull(result);
-        Assert.assertEquals(message, result.getError());
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(message, result.getError());
     }
 
 }
