@@ -3,7 +3,10 @@ package org.influxdb.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
+@RunWith(JUnitPlatform.class)
 public class TimeUtilTest {
     @Test
     public void testToInfluxDBTimeFormatTest() throws Exception {

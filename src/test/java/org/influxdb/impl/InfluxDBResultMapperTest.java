@@ -37,10 +37,13 @@ import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.InfluxDBResultMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 /**
  * @author fmachado
  */
+@RunWith(JUnitPlatform.class)
 public class InfluxDBResultMapperTest {
 
   InfluxDBResultMapper mapper = new InfluxDBResultMapper();

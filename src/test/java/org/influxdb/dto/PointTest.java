@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 /**
  * Test for the Point DTO.
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Assertions;
  * @author stefan.majer [at] gmail.com
  *
  */
+@RunWith(JUnitPlatform.class)
 public class PointTest {
 
 	/**

@@ -20,6 +20,8 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
 import com.squareup.moshi.JsonAdapter;
@@ -32,6 +34,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+@RunWith(JUnitPlatform.class)
 public class ChunkingExceptionTest {
 
     @Test
