@@ -306,9 +306,9 @@ public class InfluxDBTest {
         QueryResult result = this.influxDB.query(query);
 
         Assertions.assertEquals(3, result.getResults().get(0).getSeries().size());
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
     }
 
     /**
@@ -327,9 +327,9 @@ public class InfluxDBTest {
         QueryResult result = this.influxDB.query(query);
 
         Assertions.assertEquals(3, result.getResults().get(0).getSeries().size());
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
     }
 
     /**
@@ -373,9 +373,9 @@ public class InfluxDBTest {
         QueryResult result = this.influxDB.query(query);
 
         Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         this.influxDB.deleteDatabase(dbName);
     }
 
@@ -395,9 +395,9 @@ public class InfluxDBTest {
 		QueryResult result = this.influxDB.query(query);
 
 		Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-		Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-		Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-		Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+		Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+		Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+		Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -419,9 +419,9 @@ public class InfluxDBTest {
         QueryResult result = this.influxDB.query(query);
 
         Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         this.influxDB.deleteDatabase(dbName);
     }
 
@@ -445,9 +445,9 @@ public class InfluxDBTest {
 		QueryResult result = this.influxDB.query(query);
 
 		Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-		Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-		Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-		Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+		Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+		Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+		Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -596,9 +596,9 @@ public class InfluxDBTest {
             QueryResult result = influxDBForTestGzip.query(query);
 
             Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-            Assertions.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-            Assertions.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-            Assertions.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+            Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+            Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+            Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         } finally {
             influxDBForTestGzip.deleteDatabase(dbName);
             influxDBForTestGzip.close();
