@@ -151,6 +151,7 @@ public class BatchProcessorTest {
         assertNull(batchProcessor.getConsistencyLevel());
     }
 
+    @Test
     public void testConsistencyLevelUpdated() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
