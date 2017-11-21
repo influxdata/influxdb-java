@@ -120,8 +120,8 @@ public class BatchProcessorTest {
     public void testActionsIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            BatchProcessor.builder(mockInfluxDB).actions(0)
-            .interval(1, TimeUnit.NANOSECONDS).build();
+          BatchProcessor.builder(mockInfluxDB).actions(0)
+              .interval(1, TimeUnit.NANOSECONDS).build();
         });
     }
 
@@ -129,8 +129,8 @@ public class BatchProcessorTest {
     public void testIntervalIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            BatchProcessor.builder(mockInfluxDB).actions(1)
-            .interval(0, TimeUnit.NANOSECONDS).build();
+          BatchProcessor.builder(mockInfluxDB).actions(1)
+              .interval(0, TimeUnit.NANOSECONDS).build();
         });
     }
 
@@ -138,8 +138,8 @@ public class BatchProcessorTest {
     public void testInfluxDBIsNull() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = null;
         Assertions.assertThrows(NullPointerException.class, () -> {
-            BatchProcessor.builder(mockInfluxDB).actions(1)
-            .interval(1, TimeUnit.NANOSECONDS).build();
+          BatchProcessor.builder(mockInfluxDB).actions(1)
+              .interval(1, TimeUnit.NANOSECONDS).build();
         });
     }
 
