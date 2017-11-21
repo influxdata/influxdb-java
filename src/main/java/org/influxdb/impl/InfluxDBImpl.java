@@ -204,6 +204,16 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory,
+                              final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                              final ConsistencyLevel consistency) {
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, threadFactory, exceptionHandler)
+        .setConsistency(consistency);
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ThreadFactory threadFactory,
                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
@@ -214,6 +224,7 @@ public class InfluxDBImpl implements InfluxDB {
             .exceptionHandler(exceptionHandler)
             .interval(flushDuration, flushDurationTimeUnit)
             .threadFactory(threadFactory)
+            .consistencyLevel(consistency)
             .build();
     this.batchEnabled.set(true);
     return this;

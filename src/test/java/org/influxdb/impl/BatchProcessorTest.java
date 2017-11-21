@@ -21,6 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
+import static org.junit.Assert.assertNull;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
+
+
 @RunWith(JUnitPlatform.class)
 public class BatchProcessorTest {
 
@@ -136,5 +141,21 @@ public class BatchProcessorTest {
             BatchProcessor.builder(mockInfluxDB).actions(1)
             .interval(1, TimeUnit.NANOSECONDS).build();
         });
+    }
+
+    @Test
+    public void testConsistencyLevelNull() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).build();
+        assertNull(batchProcessor.getConsistencyLevel());
+    }
+
+    @Test
+    public void testConsistencyLevelUpdated() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).consistencyLevel(InfluxDB.ConsistencyLevel.ANY).build();
+        assertThat(batchProcessor.getConsistencyLevel(), is(equalTo(InfluxDB.ConsistencyLevel.ANY)));
     }
 }
