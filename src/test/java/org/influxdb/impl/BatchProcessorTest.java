@@ -1,6 +1,5 @@
 package org.influxdb.impl;
 
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -8,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
+import org.hamcrest.Matchers;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -16,8 +16,12 @@ import java.util.function.BiConsumer;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
+@RunWith(JUnitPlatform.class)
 public class BatchProcessorTest {
 
     @Test
@@ -60,7 +64,7 @@ public class BatchProcessorTest {
     batchProcessor.put(batchEntry1);
     Thread.sleep(200); // wait for scheduler
 
-    verify(mockHandler, times(1)).accept(argThat(hasItems(point, point)), any(RuntimeException.class));
+    verify(mockHandler, times(1)).accept(argThat(Matchers.hasItems(point, point)), any(RuntimeException.class));
   }
 
     @Test
@@ -107,24 +111,30 @@ public class BatchProcessorTest {
         verifyNoMoreInteractions(mockInfluxDB);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testActionsIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
-        BatchProcessor.builder(mockInfluxDB).actions(0)
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            BatchProcessor.builder(mockInfluxDB).actions(0)
             .interval(1, TimeUnit.NANOSECONDS).build();
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testIntervalIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
-        BatchProcessor.builder(mockInfluxDB).actions(1)
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            BatchProcessor.builder(mockInfluxDB).actions(1)
             .interval(0, TimeUnit.NANOSECONDS).build();
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testInfluxDBIsNull() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = null;
-        BatchProcessor.builder(mockInfluxDB).actions(1)
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            BatchProcessor.builder(mockInfluxDB).actions(1)
             .interval(1, TimeUnit.NANOSECONDS).build();
+        });
     }
 }

@@ -11,7 +11,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 /**
  * Test for the Point DTO.
@@ -19,6 +22,7 @@ import org.junit.Test;
  * @author stefan.majer [at] gmail.com
  *
  */
+@RunWith(JUnitPlatform.class)
 public class PointTest {
 
 	/**
@@ -28,7 +32,7 @@ public class PointTest {
 	 *
 	 */
 	@Test
-	public void lineProtocol() {
+	public void testLineProtocol() {
 		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1");
 
@@ -195,33 +199,43 @@ public class PointTest {
 	/**
 	 * Tests for issue #110
 	 */
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testAddingTagsWithNullNameThrowsAnError() {
-		Point.measurement("dontcare").tag(null, "DontCare");
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			Point.measurement("dontcare").tag(null, "DontCare");
+		});
 	}
 	
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testAddingTagsWithNullValueThrowsAnError() {
-		Point.measurement("dontcare").tag("DontCare", null);
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			Point.measurement("dontcare").tag("DontCare", null);
+		});
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testAddingMapOfTagsWithNullNameThrowsAnError() {
 		Map<String, String> map = new HashMap<>();
 		map.put(null, "DontCare");
-		Point.measurement("dontcare").tag(map);
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			Point.measurement("dontcare").tag(map);
+		});
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testAddingMapOfTagsWithNullValueThrowsAnError() {
 		Map<String, String> map = new HashMap<>();
 		map.put("DontCare", null);
-		Point.measurement("dontcare").tag(map);
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			Point.measurement("dontcare").tag(map);
+		});
 	}
 	
-	@Test(expected = RuntimeException.class)
+	@Test
 	public void testNullValueThrowsExceptionViaAddField() {
-		Point.measurement("dontcare").addField("field", (String) null);
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			Point.measurement("dontcare").addField("field", (String) null);
+		});
 	}
 
 	@Test

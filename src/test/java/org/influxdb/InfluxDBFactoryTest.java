@@ -1,8 +1,10 @@
 package org.influxdb;
 
 import org.influxdb.dto.Pong;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import okhttp3.OkHttpClient;
 
@@ -12,8 +14,9 @@ import okhttp3.OkHttpClient;
  * @author fujian1115 [at] gmail.com
  *
  */
+@RunWith(JUnitPlatform.class)
 public class InfluxDBFactoryTest {
-	
+
 	/**
 	 * Test for a {@link InfluxDBFactory #connect(String)}.
 	 */
@@ -24,10 +27,10 @@ public class InfluxDBFactoryTest {
 	}
 
 	private void verifyInfluxDBInstance(InfluxDB influxDB) {
-		Assert.assertNotNull(influxDB);
+		Assertions.assertNotNull(influxDB);
 		Pong pong = influxDB.ping();
-		Assert.assertNotNull(pong);
-		Assert.assertNotEquals(pong.getVersion(), "unknown");
+		Assertions.assertNotNull(pong);
+		Assertions.assertNotEquals(pong.getVersion(), "unknown");
 	}
 
 	/**
@@ -39,8 +42,10 @@ public class InfluxDBFactoryTest {
 		verifyInfluxDBInstance(influxDB);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void shouldThrowIllegalArgumentWithInvalidUrl() {
-		InfluxDBFactory.connect("invalidUrl");
+	@Test
+	public void testShouldThrowIllegalArgumentWithInvalidUrl() {
+		Assertions.assertThrows(IllegalArgumentException.class,() -> {
+			 InfluxDBFactory.connect("invalidUrl");
+		});
 	}
 }

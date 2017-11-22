@@ -2,7 +2,9 @@ package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -15,6 +17,7 @@ import java.nio.charset.StandardCharsets;
  * @author jord [at] moz.com
  *
  */
+@RunWith(JUnitPlatform.class)
 public class QueryTest {
 
 	/**

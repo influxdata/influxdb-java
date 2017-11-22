@@ -4,16 +4,19 @@ import com.google.common.base.Stopwatch;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@RunWith(JUnitPlatform.class)
 public class PerformanceTests {
 	private InfluxDB influxDB;
 	private final static int COUNT = 1;
@@ -23,7 +26,7 @@ public class PerformanceTests {
 	private final static int UDP_PORT = 8089;
 	private final static String UDP_DATABASE = "udp";
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
 		this.influxDB.setLogLevel(LogLevel.NONE);
@@ -33,13 +36,13 @@ public class PerformanceTests {
 	/**
 	 * delete UDP database after all tests end.
 	 */
-	@After
-	public void clearup(){
+	@AfterEach
+	public void cleanup(){
 		this.influxDB.deleteDatabase(UDP_DATABASE);
 	}
 
 	@Test
-	public void writeSinglePointPerformance() {
+	public void testWriteSinglePointPerformance() {
 		String dbName = "write_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
@@ -57,9 +60,9 @@ public class PerformanceTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
-	@Ignore
+	@Disabled
 	@Test
-	public void writePerformance() {
+	public void testWritePerformance() {
 		String dbName = "writepoints_" + System.currentTimeMillis();
 		this.influxDB.createDatabase(dbName);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
@@ -89,7 +92,7 @@ public class PerformanceTests {
 	}
 
 	@Test
-	public void maxWritePointsPerformance() {
+	public void testMaxWritePointsPerformance() {
 		String dbName = "d";
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
@@ -105,7 +108,7 @@ public class PerformanceTests {
 	}
 
 	@Test
-	public void writeCompareUDPPerformanceForBatchWithSinglePoints() {
+	public void testWriteCompareUDPPerformanceForBatchWithSinglePoints() {
 		//prepare data
 		List<String> lineProtocols = new ArrayList<String>();
 		for (int i = 0; i < 1000; i++) {
@@ -128,7 +131,7 @@ public class PerformanceTests {
 		long elapsedForSingleWrite = watch.elapsed(TimeUnit.MILLISECONDS);
 		System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
 
-		Assert.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
+		Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
 	}
 
 }
