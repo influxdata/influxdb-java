@@ -116,6 +116,10 @@ public class PerformanceTests {
 		    lineProtocols.add(point.lineProtocol());
 		}
 
+		String dbName = "write_compare_udp_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
+
 		//write batch of 1000 single string.
 		Stopwatch watch = Stopwatch.createStarted();
 		this.influxDB.write(UDP_PORT, lineProtocols);
@@ -127,6 +131,7 @@ public class PerformanceTests {
 		for (String lineProtocol: lineProtocols){
 		    this.influxDB.write(UDP_PORT, lineProtocol);
 		}
+		this.influxDB.deleteDatabase(dbName);
 
 		long elapsedForSingleWrite = watch.elapsed(TimeUnit.MILLISECONDS);
 		System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
