@@ -1,6 +1,5 @@
 package org.influxdb;
 
-import com.google.common.base.Stopwatch;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -47,7 +46,7 @@ public class PerformanceTests {
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
-		Stopwatch watch = Stopwatch.createStarted();
+		long start = System.currentTimeMillis();
 		for (int j = 0; j < SINGLE_POINT_COUNT; j++) {
 			Point point = Point.measurement("cpu")
 					.addField("idle", (double) j)
@@ -56,7 +55,7 @@ public class PerformanceTests {
 			this.influxDB.write(dbName, rp, point);
 		}
 		this.influxDB.disableBatch();
-		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of Points took:" + watch);
+		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of Points took:" + (System.currentTimeMillis() - start));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -67,7 +66,7 @@ public class PerformanceTests {
 		this.influxDB.createDatabase(dbName);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
-		Stopwatch watch = Stopwatch.createStarted();
+		long start = System.currentTimeMillis();
 		for (int i = 0; i < COUNT; i++) {
 
 			BatchPoints batchPoints = BatchPoints
@@ -87,7 +86,7 @@ public class PerformanceTests {
 
 			this.influxDB.write(batchPoints);
 		}
-		System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + watch);
+		System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + (System.currentTimeMillis() - start));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -98,12 +97,12 @@ public class PerformanceTests {
 		this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
-		Stopwatch watch = Stopwatch.createStarted();
+		long start = System.currentTimeMillis();
 		for (int i = 0; i < 2000000; i++) {
 			Point point = Point.measurement("s").addField("v", 1.0).build();
 			this.influxDB.write(dbName, rp, point);
 		}
-		System.out.println("5Mio points:" + watch);
+		System.out.println("5Mio points:" + (System.currentTimeMillis() - start));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -121,19 +120,19 @@ public class PerformanceTests {
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 
 		//write batch of 1000 single string.
-		Stopwatch watch = Stopwatch.createStarted();
+		long start = System.currentTimeMillis();
 		this.influxDB.write(UDP_PORT, lineProtocols);
-		long elapsedForBatchWrite = watch.elapsed(TimeUnit.MILLISECONDS);
+		long elapsedForBatchWrite = System.currentTimeMillis() - start;
 		System.out.println("performance(ms):write udp with batch of 1000 string:" + elapsedForBatchWrite);
 
 		//write 1000 single string by udp.
-		watch = Stopwatch.createStarted();
+		start = System.currentTimeMillis();
 		for (String lineProtocol: lineProtocols){
 		    this.influxDB.write(UDP_PORT, lineProtocol);
 		}
 		this.influxDB.deleteDatabase(dbName);
 
-		long elapsedForSingleWrite = watch.elapsed(TimeUnit.MILLISECONDS);
+		long elapsedForSingleWrite = System.currentTimeMillis() - start;
 		System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
 
 		Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);

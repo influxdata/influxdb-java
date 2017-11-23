@@ -26,8 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
-import com.google.common.util.concurrent.Uninterruptibles;
-
 /**
  * Test the InfluxDB API.
  *
@@ -195,12 +193,12 @@ public class InfluxDBTest {
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s sync support.
 	 */
 	@Test
-	public void testSyncWritePointThroughUDP() {
+	public void testSyncWritePointThroughUDP() throws InterruptedException {
 		this.influxDB.disableBatch();
 		String measurement = TestUtils.getRandomMeasurement();
 		Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 		this.influxDB.write(UDP_PORT, point);
-		Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+		Thread.sleep(2000);
 		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
 		QueryResult result = this.influxDB.query(query);
 		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
@@ -210,14 +208,14 @@ public class InfluxDBTest {
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
 	 */
 	@Test
-	public void testAsyncWritePointThroughUDP() {
+	public void testAsyncWritePointThroughUDP() throws InterruptedException {
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 		try{
 			Assertions.assertTrue(this.influxDB.isBatchEnabled());
 			String measurement = TestUtils.getRandomMeasurement();
 			Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 			this.influxDB.write(UDP_PORT, point);
-			Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+			Thread.sleep(2000);
 			Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
 			QueryResult result = this.influxDB.query(query);
 			Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
@@ -282,11 +280,11 @@ public class InfluxDBTest {
      * Test writing to the database using string protocol through UDP.
      */
     @Test
-    public void testWriteStringDataThroughUDP() {
+    public void testWriteStringDataThroughUDP() throws InterruptedException {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, measurement + ",atag=test idle=90,usertime=9,system=1");
         //write with UDP may be executed on server after query with HTTP. so sleep 2s to handle this case
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
         Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
@@ -296,12 +294,12 @@ public class InfluxDBTest {
      * Test writing multiple records to the database using string protocol through UDP.
      */
     @Test
-    public void testWriteMultipleStringDataThroughUDP() {
+    public void testWriteMultipleStringDataThroughUDP() throws InterruptedException {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, measurement + ",atag=test1 idle=100,usertime=10,system=1\n" +
                                       measurement + ",atag=test2 idle=200,usertime=20,system=2\n" +
                                       measurement + ",atag=test3 idle=300,usertime=30,system=3");
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
 
@@ -315,14 +313,14 @@ public class InfluxDBTest {
      * Test writing multiple separate records to the database using string protocol through UDP.
      */
     @Test
-    public void testWriteMultipleStringDataLinesThroughUDP() {
+    public void testWriteMultipleStringDataLinesThroughUDP() throws InterruptedException {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, Arrays.asList(
                 measurement + ",atag=test1 idle=100,usertime=10,system=1",
                 measurement + ",atag=test2 idle=200,usertime=20,system=2",
                 measurement + ",atag=test3 idle=300,usertime=30,system=3"
         ));
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
 
@@ -646,7 +644,7 @@ public class InfluxDBTest {
         batchPoints.point(point3);
         this.influxDB.write(batchPoints);
 
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
         Query query = new Query("SELECT * FROM disk", dbName);
         this.influxDB.query(query, 2, new Consumer<QueryResult>() {
@@ -655,7 +653,7 @@ public class InfluxDBTest {
                 queue.add(result);
             }});
 
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         this.influxDB.deleteDatabase(dbName);
 
         QueryResult result = queue.poll(20, TimeUnit.SECONDS);
