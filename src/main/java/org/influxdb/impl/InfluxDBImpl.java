@@ -76,7 +76,7 @@ public class InfluxDBImpl implements InfluxDB {
   private JsonAdapter<QueryResult> adapter;
   private String database;
   private String retentionPolicy = "autogen";
-  private ConsistencyLevel consistency = ConsistencyLevel.ONE;
+  private ConsistencyLevel consistency = ConsistencyLevel.ANY;
 
   public InfluxDBImpl(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
