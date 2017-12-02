@@ -135,7 +135,7 @@ public class BatchPoints {
       batchPoints.setRetentionPolicy(this.retentionPolicy);
       batchPoints.setTags(this.tags);
       if (null == this.consistency) {
-        this.consistency = ConsistencyLevel.ONE;
+        this.consistency = ConsistencyLevel.ANY;
       }
       batchPoints.setConsistency(this.consistency);
       return batchPoints;
