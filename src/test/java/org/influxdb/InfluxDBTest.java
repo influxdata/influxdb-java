@@ -279,10 +279,10 @@ public class InfluxDBTest {
     public void testWriteMultipleStringDataLinesThroughUDP() {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, Arrays.asList(
-						measurement + ",atag=test1 idle=100,usertime=10,system=1",
-						measurement + ",atag=test2 idle=200,usertime=20,system=2",
-						measurement + ",atag=test3 idle=300,usertime=30,system=3"
-				));
+                measurement + ",atag=test1 idle=100,usertime=10,system=1",
+                measurement + ",atag=test2 idle=200,usertime=20,system=2",
+                measurement + ",atag=test3 idle=300,usertime=30,system=3"
+        ));
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
