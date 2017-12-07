@@ -250,7 +250,7 @@ The latest version for maven dependence:
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.7</version>
+  <version>2.8</version>
 </dependency>
 ```
 Or when using with gradle:

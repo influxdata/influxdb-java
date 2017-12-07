@@ -1,6 +1,9 @@
 # Changelog
 
-## 2.8 [unreleased]
+## 2.9 [unreleased]
+
+
+## 2.8 [2017-12-06]
 
 ### Fixes
 
