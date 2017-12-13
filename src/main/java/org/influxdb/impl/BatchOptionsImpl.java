@@ -7,13 +7,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.BiConsumer;
 
-public class BatchOptionsImpl implements BatchOptions, Cloneable {
+public final class BatchOptionsImpl implements BatchOptions, Cloneable {
 
-  public static BatchOptions DEFAULTS = new BatchOptionsImpl();
+  public static final BatchOptions DEFAULTS = new BatchOptionsImpl();
 
   // default values here are consistent with Telegraf
-  int actions = 1000;
-  int flushDuration = 10000;
+  public static final int DEFAULT_BATCH_ACTIONS_LIMIT = 1000;
+  public static final int DEFAULT_BATCH_INTERVAL_DURATION = 1000;
+  public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
+
+  int actions = DEFAULT_BATCH_ACTIONS_LIMIT;
+  int flushDuration = DEFAULT_BATCH_INTERVAL_DURATION;
+  int jitterDuration = DEFAULT_JITTER_INTERVAL_DURATION;
+
   ThreadFactory threadFactory = Executors.defaultThreadFactory();
   BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {
   };
@@ -30,6 +36,12 @@ public class BatchOptionsImpl implements BatchOptions, Cloneable {
   public BatchOptions flushDuration(final int flushDuration) {
     BatchOptionsImpl clone = getClone();
     clone.flushDuration = flushDuration;
+    return clone;
+  }
+
+  public BatchOptions jitterDuration(final int jitterDuration) {
+    BatchOptionsImpl clone = getClone();
+    clone.jitterDuration = jitterDuration;
     return clone;
   }
 
@@ -59,6 +71,10 @@ public class BatchOptionsImpl implements BatchOptions, Cloneable {
 
   public int getFlushDuration() {
     return flushDuration;
+  }
+
+  public int getJitterDuration() {
+    return jitterDuration;
   }
 
   public ThreadFactory getThreadFactory() {

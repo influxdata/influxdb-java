@@ -193,11 +193,12 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   @Override
-  public InfluxDB enableBatch(BatchOptions batchOptions) {
+  public InfluxDB enableBatch(final BatchOptions batchOptions) {
     enableBatch(batchOptions.getActions(),
             batchOptions.getFlushDuration(),
-            TimeUnit.MILLISECONDS,batchOptions.getThreadFactory(),
-            batchOptions.getExceptionHandler() );
+            batchOptions.getJitterDuration(),
+            TimeUnit.MILLISECONDS, batchOptions.getThreadFactory(),
+            batchOptions.getExceptionHandler());
     return this;
   }
 
@@ -229,6 +230,13 @@ public class InfluxDBImpl implements InfluxDB {
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory,
                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
+    enableBatch(actions, flushDuration, 0, flushDurationTimeUnit, threadFactory, exceptionHandler);
+    return this;
+  }
+
+  private InfluxDB enableBatch(final int actions, final int flushDuration, final int jitterDuration,
+                               final TimeUnit durationTimeUnit, final ThreadFactory threadFactory,
+                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
@@ -236,7 +244,7 @@ public class InfluxDBImpl implements InfluxDB {
             .builder(this)
             .actions(actions)
             .exceptionHandler(exceptionHandler)
-            .interval(flushDuration, flushDurationTimeUnit)
+            .interval(flushDuration, jitterDuration, durationTimeUnit)
             .threadFactory(threadFactory)
             .consistencyLevel(consistency)
             .build();

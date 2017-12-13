@@ -27,6 +27,16 @@ public interface BatchOptions {
   BatchOptions flushDuration(final int flushDuration);
 
   /**
+   * Jitters the batch flush interval by a random amount. This is primarily to avoid
+   * large write spikes for users running a large number of client instances.
+   * ie, a jitter of 5s and flush duration 10s means flushes will happen every 10-15s.
+   *
+   * @param jitterDuration (milliseconds)
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
+   */
+  BatchOptions jitterDuration(final int jitterDuration);
+
+  /**
    * @param threadFactory a ThreadFactory instance to be used
    * @return the BatchOptions instance to be able to use it in a fluent manner.
    */
@@ -47,6 +57,11 @@ public interface BatchOptions {
    * @return flushDuration the time to wait at most (milliseconds).
    */
   int getFlushDuration();
+
+  /**
+   * @return batch flush interval jitter value (milliseconds)
+   */
+  int getJitterDuration();
 
   /**
    * @return a ThreadFactory instance to be used

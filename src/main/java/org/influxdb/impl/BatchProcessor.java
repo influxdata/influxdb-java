@@ -39,6 +39,7 @@ public final class BatchProcessor {
   private final TimeUnit flushIntervalUnit;
   private final int flushInterval;
   private final ConsistencyLevel consistencyLevel;
+  private final int jitterInterval;
 
   /**
    * The Builder to create a BatchProcessor instance.
@@ -49,6 +50,7 @@ public final class BatchProcessor {
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
+    private int jitterInterval;
     private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> { };
     private ConsistencyLevel consistencyLevel;
 
@@ -99,6 +101,25 @@ public final class BatchProcessor {
     }
 
     /**
+     * The interval at which at least should issued a write.
+     *
+     * @param flushInterval
+     *            the flush interval
+     * @param jitterInterval
+     *            the flush jitter interval
+     * @param unit
+     *            the TimeUnit of the interval
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder interval(final int flushInterval, final int jitterInterval, final TimeUnit unit) {
+      this.flushInterval = flushInterval;
+      this.jitterInterval = jitterInterval;
+      this.flushIntervalUnit = unit;
+      return this;
+    }
+
+    /**
      * A callback to be used when an error occurs during a batchwrite.
      *
      * @param handler
@@ -135,9 +156,8 @@ public final class BatchProcessor {
       Objects.requireNonNull(this.flushIntervalUnit, "flushIntervalUnit");
       Objects.requireNonNull(this.threadFactory, "threadFactory");
       Objects.requireNonNull(this.exceptionHandler, "exceptionHandler");
-      return new BatchProcessor(this.influxDB, this.threadFactory,
-          this.actions, this.flushIntervalUnit,
-          this.flushInterval, exceptionHandler, this.consistencyLevel);
+      return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
+                                this.flushInterval, this.jitterInterval, exceptionHandler, this.consistencyLevel);
     }
   }
 
@@ -196,15 +216,16 @@ public final class BatchProcessor {
     return new Builder(influxDB);
   }
 
-  private BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
-                         final TimeUnit flushIntervalUnit, final int flushInterval,
-                         final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
-                         final ConsistencyLevel consistencyLevel) {
+  BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
+                 final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
+                 final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                 final ConsistencyLevel consistencyLevel) {
     super();
     this.influxDB = influxDB;
     this.actions = actions;
     this.flushIntervalUnit = flushIntervalUnit;
     this.flushInterval = flushInterval;
+    this.jitterInterval = jitterInterval;
     this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
     this.exceptionHandler = exceptionHandler;
     this.consistencyLevel = consistencyLevel;
@@ -213,14 +234,21 @@ public final class BatchProcessor {
     } else {
         this.queue = new LinkedBlockingQueue<>();
     }
-    // Flush at specified Rate
-    this.scheduler.scheduleAtFixedRate(new Runnable() {
+
+    Runnable flushRunnable = new Runnable() {
       @Override
       public void run() {
+        // write doesn't throw any exceptions
         write();
+        int jitterInterval = (int) (Math.random() * BatchProcessor.this.jitterInterval);
+        BatchProcessor.this.scheduler.schedule(this,
+                BatchProcessor.this.flushInterval + jitterInterval, BatchProcessor.this.flushIntervalUnit);
       }
-    }, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
-
+    };
+    // Flush at specified Rate
+    this.scheduler.schedule(flushRunnable,
+            this.flushInterval + (int) (Math.random() * BatchProcessor.this.jitterInterval),
+            this.flushIntervalUnit);
   }
 
   void write() {
