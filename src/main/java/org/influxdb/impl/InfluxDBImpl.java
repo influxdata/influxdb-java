@@ -12,6 +12,7 @@ import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okio.BufferedSource;
+import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
 import org.influxdb.InfluxDBIOException;
@@ -183,6 +184,21 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public boolean isGzipEnabled() {
     return this.gzipRequestInterceptor.isEnabled();
+  }
+
+  @Override
+  public InfluxDB enableBatch() {
+    enableBatch(BatchOptions.DEFAULTS);
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(BatchOptions batchOptions) {
+    enableBatch(batchOptions.getActions(),
+            batchOptions.getFlushDuration(),
+            TimeUnit.MILLISECONDS,batchOptions.getThreadFactory(),
+            batchOptions.getExceptionHandler() );
+    return this;
   }
 
   @Override

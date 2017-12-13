@@ -98,6 +98,23 @@ public interface InfluxDB {
   public boolean isGzipEnabled();
 
   /**
+   * Enable batching of single Point writes to speed up writes significantly. This is the same as calling
+   * InfluxDB.enableBatch(BatchingOptions.DEFAULTS)
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch();
+
+  /**
+   * Enable batching of single Point writes to speed up writes significantly. If either number of points written or
+   * flushDuration time limit is reached, a batch write is issued.
+   * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch().
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch(final BatchOptions batchOptions);
+
+  /**
    * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
    * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
    *
