@@ -56,9 +56,9 @@ public interface BatchOptions {
   BatchOptions setConsistency(final InfluxDB.ConsistencyLevel consistency);
 
 
-    /**
-     * @return actions the number of actions to collect
-     */
+  /**
+   * @return actions the number of actions to collect
+   */
   int getActions();
 
   /**

@@ -66,5 +66,4 @@ public class BatchOptionsTest {
       this.influxDB.deleteDatabase(dbName);
     }
   }
-
 }
