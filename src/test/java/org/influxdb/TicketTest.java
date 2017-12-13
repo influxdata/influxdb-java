@@ -34,25 +34,7 @@ public class TicketTest {
 	 */
 	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
-		boolean influxDBstarted = false;
-		do {
-			Pong response;
-			try {
-				response = this.influxDB.ping();
-				if (response.isGood()) {
-					influxDBstarted = true;
-				}
-			} catch (Exception e) {
-				// NOOP intentional
-				e.printStackTrace();
-			}
-			Thread.sleep(100L);
-		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.NONE);
-		System.out.println("##################################################################################");
-		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
-		System.out.println("##################################################################################");
+		this.influxDB = TestUtils.connectToInfluxDB();
 	}
 
 	/**

@@ -1,5 +1,8 @@
 package org.influxdb;
 
+import org.influxdb.dto.Pong;
+
+import java.io.IOException;
 import java.util.Map;
 
 public class TestUtils {
@@ -44,4 +47,26 @@ public class TestUtils {
 		}
 	}
 
+	public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
+    InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+    boolean influxDBstarted = false;
+    do {
+      Pong response;
+      try {
+        response = influxDB.ping();
+        if (response.isGood()) {
+          influxDBstarted = true;
+        }
+      } catch (Exception e) {
+        // NOOP intentional
+        e.printStackTrace();
+      }
+      Thread.sleep(100L);
+    } while (!influxDBstarted);
+    influxDB.setLogLevel(InfluxDB.LogLevel.NONE);
+    System.out.println("##################################################################################");
+    System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
+    System.out.println("##################################################################################");
+    return influxDB;
+  }
 }
