@@ -1,9 +1,8 @@
 package org.influxdb.impl;
 
-import org.influxdb.dto.QueryResult;
-
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import org.influxdb.dto.QueryResult;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -37,34 +36,34 @@ interface InfluxDBService {
    * @param consistency optional The write consistency level required for the write to succeed.
    *                             Can be one of one, any, all, quorum. Defaults to all.
    */
-  @POST("/write")
+  @POST("write")
   public Call<ResponseBody> writePoints(@Query(U) String username,
       @Query(P) String password, @Query(DB) String database,
       @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
       @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
 
-  @GET("/query")
+  @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
       @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
 
-  @GET("/query")
+  @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
       @Query(value = Q, encoded = true) String query);
 
-  @POST("/query")
+  @POST("query")
   public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
       @Query(value = Q, encoded = true) String query);
 
-  @GET("/query")
+  @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password,
       @Query(value = Q, encoded = true) String query);
 
-  @POST("/query")
+  @POST("query")
   public Call<QueryResult> postQuery(@Query(U) String username,
       @Query(P) String password, @Query(value = Q, encoded = true) String query);
 
   @Streaming
-  @GET("/query?chunked=true")
+  @GET("query?chunked=true")
   public Call<ResponseBody> query(@Query(U) String username,
       @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
       @Query(CHUNK_SIZE) int chunkSize);
