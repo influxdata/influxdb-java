@@ -4,7 +4,6 @@ package org.influxdb;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -34,7 +33,7 @@ public class TicketTest {
 	 */
 	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+		this.influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;

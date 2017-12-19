@@ -1,19 +1,18 @@
 package org.influxdb;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnitPlatform.class)
 public class PerformanceTests {
@@ -27,7 +26,7 @@ public class PerformanceTests {
 
 	@BeforeEach
 	public void setUp() {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
+		this.influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "root", "root");
 		this.influxDB.setLogLevel(LogLevel.NONE);
 		this.influxDB.createDatabase(UDP_DATABASE);
 	}

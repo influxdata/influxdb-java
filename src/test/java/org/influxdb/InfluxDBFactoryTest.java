@@ -1,12 +1,11 @@
 package org.influxdb;
 
+import okhttp3.OkHttpClient;
 import org.influxdb.dto.Pong;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-
-import okhttp3.OkHttpClient;
 
 /**
  * Test the InfluxDB Factory API.
@@ -22,7 +21,7 @@ public class InfluxDBFactoryTest {
 	 */
 	@Test
 	public void testCreateInfluxDBInstanceWithoutUserNameAndPassword() {
-		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true));
+		InfluxDB influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL());
 		verifyInfluxDBInstance(influxDB);
 	}
 
@@ -38,7 +37,7 @@ public class InfluxDBFactoryTest {
 	 */
 	@Test
 	public void testCreateInfluxDBInstanceWithClientAndWithoutUserNameAndPassword() {
-		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), new OkHttpClient.Builder());
+		InfluxDB influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), new OkHttpClient.Builder());
 		verifyInfluxDBInstance(influxDB);
 	}
 

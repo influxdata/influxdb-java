@@ -11,7 +11,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -19,8 +18,8 @@ import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.InfluxDBImpl;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -47,7 +46,7 @@ public class InfluxDBTest {
 	 */
 	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+		this.influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
 		boolean influxDBstarted = false;
 		do {
 			Pong response;
@@ -544,7 +543,7 @@ public class InfluxDBTest {
 	public void testWrongHostForInfluxdb(){
 		String errorHost = "10.224.2.122_error_host";
 		Assertions.assertThrows(RuntimeException.class, () -> {
-			InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
+			InfluxDBFactory.connect(TestUtils.getInfluxURL());
 		});
 	}
 
@@ -565,7 +564,7 @@ public class InfluxDBTest {
 	 */
 	@Test
 	public void testCloseInfluxDBClient() {
-		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+		InfluxDB influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
 		influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 		Assertions.assertTrue(influxDB.isBatchEnabled());
 		influxDB.close();
@@ -577,7 +576,7 @@ public class InfluxDBTest {
      */
     @Test
     public void testWriteEnableGzip() {
-        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
         String dbName = "write_unittest_" + System.currentTimeMillis();
         try {
             influxDBForTestGzip.setLogLevel(LogLevel.NONE);
@@ -609,7 +608,7 @@ public class InfluxDBTest {
      */
     @Test
     public void testWriteEnableGzipAndDisableGzip() {
-        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
         try {
             //test default: gzip is disable
             Assertions.assertFalse(influxDBForTestGzip.isGzipEnabled());
