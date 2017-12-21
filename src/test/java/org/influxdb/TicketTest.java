@@ -40,7 +40,7 @@ public class TicketTest {
 			Pong response;
 			try {
 				response = this.influxDB.ping();
-				if (!response.getVersion().equalsIgnoreCase("unknown")) {
+				if (response.isGood()) {
 					influxDBstarted = true;
 				}
 			} catch (Exception e) {

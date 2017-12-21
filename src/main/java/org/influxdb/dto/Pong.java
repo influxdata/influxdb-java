@@ -26,6 +26,13 @@ public class Pong {
   }
 
   /**
+   * Good or bad connection status.
+   */
+  public boolean isGood() {
+    return !"unknown".equalsIgnoreCase(version);
+  }
+
+  /**
    * @return the responseTime
    */
   public long getResponseTime() {
