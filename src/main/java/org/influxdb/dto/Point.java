@@ -4,8 +4,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.impl.StringUtil;
+
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.escape.Escaper;
@@ -135,7 +136,7 @@ public class Point {
          */
         public Point build() {
             Preconditions
-                    .checkArgument(!Strings.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
+                    .checkArgument(!StringUtil.isNullOrEmpty(this.measurement), "Point name must not be null or empty.");
             Preconditions.checkArgument(this.fields.size() > 0, "Point must have at least one field specified.");
             Point point = new Point();
             point.setFields(this.fields);
