@@ -379,6 +379,7 @@ public interface InfluxDB {
    * @deprecated (since 2.9) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
    *             <strong>SHOW DATABASES</strong> query and inspect the result.
    */
+  @Deprecated
   public boolean databaseExists(final String name);
 
   /**
