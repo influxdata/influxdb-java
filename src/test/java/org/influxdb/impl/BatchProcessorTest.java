@@ -21,6 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
+import static org.junit.Assert.assertNull;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
+
+
 @RunWith(JUnitPlatform.class)
 public class BatchProcessorTest {
 
@@ -115,8 +120,8 @@ public class BatchProcessorTest {
     public void testActionsIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            BatchProcessor.builder(mockInfluxDB).actions(0)
-            .interval(1, TimeUnit.NANOSECONDS).build();
+          BatchProcessor.builder(mockInfluxDB).actions(0)
+              .interval(1, TimeUnit.NANOSECONDS).build();
         });
     }
 
@@ -124,8 +129,8 @@ public class BatchProcessorTest {
     public void testIntervalIsZero() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            BatchProcessor.builder(mockInfluxDB).actions(1)
-            .interval(0, TimeUnit.NANOSECONDS).build();
+          BatchProcessor.builder(mockInfluxDB).actions(1)
+              .interval(0, TimeUnit.NANOSECONDS).build();
         });
     }
 
@@ -133,8 +138,25 @@ public class BatchProcessorTest {
     public void testInfluxDBIsNull() throws InterruptedException, IOException {
         InfluxDB mockInfluxDB = null;
         Assertions.assertThrows(NullPointerException.class, () -> {
-            BatchProcessor.builder(mockInfluxDB).actions(1)
-            .interval(1, TimeUnit.NANOSECONDS).build();
+          BatchProcessor.builder(mockInfluxDB).actions(1)
+              .interval(1, TimeUnit.NANOSECONDS).build();
         });
     }
+
+    @Test
+    public void testConsistencyLevelNull() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).build();
+        assertNull(batchProcessor.getConsistencyLevel());
+    }
+
+    @Test
+    public void testConsistencyLevelUpdated() throws InterruptedException, IOException {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).consistencyLevel(InfluxDB.ConsistencyLevel.ANY).build();
+        assertThat(batchProcessor.getConsistencyLevel(), is(equalTo(InfluxDB.ConsistencyLevel.ANY)));
+    }
+
 }

@@ -134,6 +134,30 @@ public interface InfluxDB {
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory);
+  /**
+   * Enable batching of single Point writes with consistency set for an entire batch
+   * flushDurations is reached first, a batch write is issued.
+   * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch(). Default consistency is ONE.
+   *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
+   * @param threadFactory
+   *            a ThreadFactory instance to be used.
+   * @param exceptionHandler
+   *            a consumer function to handle asynchronous errors
+   * @param consistency
+   *            a consistency setting for batch writes.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+
+  InfluxDB enableBatch(int actions, int flushDuration, TimeUnit flushDurationTimeUnit,
+                       ThreadFactory threadFactory, BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                       ConsistencyLevel consistency);
 
   /**
    * Enable batching of single Point writes to speed up writes significant. If either actions or
