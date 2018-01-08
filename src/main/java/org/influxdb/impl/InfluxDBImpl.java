@@ -197,11 +197,19 @@ public class InfluxDBImpl implements InfluxDB {
 
   @Override
   public InfluxDB enableBatch(final BatchOptions batchOptions) {
-    enableBatch(batchOptions.getActions(),
-            batchOptions.getFlushDuration(),
-            batchOptions.getJitterDuration(),
-            TimeUnit.MILLISECONDS, batchOptions.getThreadFactory(),
-            batchOptions.getExceptionHandler());
+
+    if (this.batchEnabled.get()) {
+      throw new IllegalStateException("BatchProcessing is already enabled.");
+    }
+    this.batchProcessor = BatchProcessor
+            .builder(this)
+            .actions(batchOptions.getActions())
+            .exceptionHandler(batchOptions.getExceptionHandler())
+            .interval(batchOptions.getFlushDuration(), batchOptions.getJitterDuration(), TimeUnit.MILLISECONDS)
+            .threadFactory(batchOptions.getThreadFactory())
+            .bufferLimit(batchOptions.getBufferLimit())
+            .build();
+    this.batchEnabled.set(true);
     return this;
   }
 
@@ -572,13 +580,13 @@ public class InfluxDBImpl implements InfluxDB {
       }
       try (ResponseBody errorBody = response.errorBody()) {
         try {
-          JSONObject body=new JSONObject(errorBody.string());
-          Object error=body.getString("error");
-          if(error!=null && error instanceof String) {
+          JSONObject body = new JSONObject(errorBody.string());
+          Object error = body.getString("error");
+          if (error != null && error instanceof String) {
             throw InfluxDBException.buildExceptionForErrorState((String) error);
           }
+        } catch (JSONException e) {
         }
-        catch(JSONException e) {}
         throw new InfluxDBException(errorBody.string());
       }
     } catch (IOException e) {

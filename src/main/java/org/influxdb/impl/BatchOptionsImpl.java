@@ -16,10 +16,12 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
   public static final int DEFAULT_BATCH_ACTIONS_LIMIT = 1000;
   public static final int DEFAULT_BATCH_INTERVAL_DURATION = 1000;
   public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
+  public static final int DEFAULT_BUFFER_LIMIT = 10000;
 
-  int actions = DEFAULT_BATCH_ACTIONS_LIMIT;
-  int flushDuration = DEFAULT_BATCH_INTERVAL_DURATION;
-  int jitterDuration = DEFAULT_JITTER_INTERVAL_DURATION;
+  private int actions = DEFAULT_BATCH_ACTIONS_LIMIT;
+  private int flushDuration = DEFAULT_BATCH_INTERVAL_DURATION;
+  private int jitterDuration = DEFAULT_JITTER_INTERVAL_DURATION;
+  private int bufferLimit = DEFAULT_BUFFER_LIMIT;
 
   ThreadFactory threadFactory = Executors.defaultThreadFactory();
   BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {
@@ -44,6 +46,12 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
   public BatchOptions jitterDuration(final int jitterDuration) {
     BatchOptionsImpl clone = getClone();
     clone.jitterDuration = jitterDuration;
+    return clone;
+  }
+
+  public BatchOptions bufferLimit(final int bufferLimit) {
+    BatchOptionsImpl clone = getClone();
+    clone.bufferLimit = bufferLimit;
     return clone;
   }
 
@@ -95,5 +103,10 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
 
   public BiConsumer<Iterable<Point>, Throwable> getExceptionHandler() {
     return exceptionHandler;
+  }
+
+  @Override
+  public int getBufferLimit() {
+    return bufferLimit;
   }
 }

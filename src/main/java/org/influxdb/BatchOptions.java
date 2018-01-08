@@ -37,6 +37,18 @@ public interface BatchOptions {
   BatchOptions jitterDuration(final int jitterDuration);
 
   /**
+   * The client maintains a buffer for failed writes so that the writes will be retried later on. This may
+   * help to overcome temporary network problems or InfluxDB load spikes.
+   * When the buffer is full and new points are written, oldest entries in the buffer are lost.
+   *
+   * To disable this feature set buffer limit to a value smaller than {@link BatchOptions#getActions}
+   *
+   * @param bufferLimit maximum number of points stored in the retry buffer
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
+   */
+  BatchOptions bufferLimit(final int bufferLimit);
+
+  /**
    * @param threadFactory a ThreadFactory instance to be used
    * @return the BatchOptions instance to be able to use it in a fluent manner.
    */
@@ -70,6 +82,11 @@ public interface BatchOptions {
    * @return batch flush interval jitter value (milliseconds)
    */
   int getJitterDuration();
+
+  /**
+   * @return Maximum number of points stored in the retry buffer, see {@link BatchOptions#bufferLimit(int)}
+   */
+  int getBufferLimit();
 
   /**
    * @return a ThreadFactory instance to be used
