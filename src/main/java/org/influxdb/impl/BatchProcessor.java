@@ -21,11 +21,6 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-
-
 /**
  * A BatchProcessor can be attached to a InfluxDB Instance to collect single point writes and
  * aggregates them to BatchPoints to get a better write performance.
@@ -244,8 +239,8 @@ public final class BatchProcessor {
     return new Builder(influxDB);
   }
 
-  BatchProcessor(final InfluxDBImpl influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory, final int actions,
-                 final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
+  BatchProcessor(final InfluxDBImpl influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
+                 final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
                  final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
                  final ConsistencyLevel consistencyLevel) {
     super();
