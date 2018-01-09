@@ -208,6 +208,7 @@ public class InfluxDBImpl implements InfluxDB {
             .interval(batchOptions.getFlushDuration(), batchOptions.getJitterDuration(), TimeUnit.MILLISECONDS)
             .threadFactory(batchOptions.getThreadFactory())
             .bufferLimit(batchOptions.getBufferLimit())
+            .consistencyLevel(batchOptions.getConsistency())
             .build();
     this.batchEnabled.set(true);
     return this;
