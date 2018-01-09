@@ -1,6 +1,7 @@
 package org.influxdb.impl;
 
 import org.influxdb.BatchOptions;
+import org.influxdb.InfluxDB;
 import org.influxdb.dto.Point;
 
 import java.util.concurrent.Executors;
@@ -23,6 +24,7 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
   ThreadFactory threadFactory = Executors.defaultThreadFactory();
   BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {
   };
+  InfluxDB.ConsistencyLevel consistency = InfluxDB.ConsistencyLevel.ONE;
 
   private BatchOptionsImpl() {
   }
@@ -57,6 +59,12 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
     return clone;
   }
 
+  public BatchOptions setConsistency(final InfluxDB.ConsistencyLevel consistency) {
+    BatchOptionsImpl clone = getClone();
+    clone.consistency = consistency;
+    return clone;
+  }
+
   private BatchOptionsImpl getClone() {
     try {
       return (BatchOptionsImpl) this.clone();
@@ -75,6 +83,10 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
 
   public int getJitterDuration() {
     return jitterDuration;
+  }
+
+  public InfluxDB.ConsistencyLevel getConsistency() {
+    return consistency;
   }
 
   public ThreadFactory getThreadFactory() {

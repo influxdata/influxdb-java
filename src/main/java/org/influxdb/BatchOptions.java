@@ -49,8 +49,16 @@ public interface BatchOptions {
   BatchOptions exceptionHandler(final BiConsumer<Iterable<Point>, Throwable> exceptionHandler);
 
   /**
-   * @return actions the number of actions to collect
+   * @param consistency cluster consistency setting (how many nodes have to store data points
+   * to treat a write as a success)
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
    */
+  BatchOptions setConsistency(final InfluxDB.ConsistencyLevel consistency);
+
+
+    /**
+     * @return actions the number of actions to collect
+     */
   int getActions();
 
   /**
@@ -72,4 +80,11 @@ public interface BatchOptions {
    * @return a consumer function to handle asynchronous errors
    */
   BiConsumer<Iterable<Point>, Throwable> getExceptionHandler();
+
+  /**
+   * @return cluster consistency setting (how many nodes have to store data points
+   * to treat a write as a success)
+   */
+  InfluxDB.ConsistencyLevel getConsistency();
+
 }
