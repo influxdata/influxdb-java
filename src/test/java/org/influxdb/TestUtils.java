@@ -65,7 +65,7 @@ public class TestUtils {
     } while (!influxDBstarted);
     influxDB.setLogLevel(InfluxDB.LogLevel.NONE);
     System.out.println("##################################################################################");
-    System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
+    System.out.println("#  Connected to InfluxDB Version: " + influxDB.version() + " #");
     System.out.println("##################################################################################");
     return influxDB;
   }
