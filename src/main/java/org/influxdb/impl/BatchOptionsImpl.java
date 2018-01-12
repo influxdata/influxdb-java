@@ -67,7 +67,7 @@ public final class BatchOptionsImpl implements BatchOptions, Cloneable {
     return clone;
   }
 
-  public BatchOptions setConsistency(final InfluxDB.ConsistencyLevel consistency) {
+  public BatchOptions consistency(final InfluxDB.ConsistencyLevel consistency) {
     BatchOptionsImpl clone = getClone();
     clone.consistency = consistency;
     return clone;
