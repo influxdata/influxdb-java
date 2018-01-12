@@ -10,8 +10,10 @@ import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 @RunWith(JUnitPlatform.class)
 public class BatchOptionsTest {
@@ -37,6 +39,31 @@ public class BatchOptionsTest {
     }
   }
 
+  @Test
+  public void testParametersSet() {
+    BatchOptions options = BatchOptions.DEFAULTS.actions(3);
+    Assertions.assertEquals(3, options.getActions());
+    options=options.consistency(InfluxDB.ConsistencyLevel.ANY);
+    Assertions.assertEquals(InfluxDB.ConsistencyLevel.ANY, options.getConsistency());
+    options=options.flushDuration(1001);
+    Assertions.assertEquals(1001, options.getFlushDuration());
+    options=options.bufferLimit(7070);
+    Assertions.assertEquals(7070, options.getBufferLimit());
+    options=options.jitterDuration(104);
+    Assertions.assertEquals(104, options.getJitterDuration());
+    BiConsumer<Iterable<Point>, Throwable> handler=new BiConsumer<Iterable<Point>, Throwable>() {
+      @Override
+      public void accept(Iterable<Point> points, Throwable throwable) {
+
+      }
+    };
+    options=options.exceptionHandler(handler);
+    Assertions.assertEquals(handler, options.getExceptionHandler());
+    ThreadFactory tf=Executors.defaultThreadFactory();
+    options=options.threadFactory(tf);
+    Assertions.assertEquals(tf, options.getThreadFactory());
+  }
+
   /**
    * Test the implementation of {@link BatchOptions#actions(int)} }.
    */
@@ -45,7 +72,7 @@ public class BatchOptionsTest {
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
       BatchOptions options = BatchOptions.DEFAULTS.actions(3);
-      Assertions.assertEquals(3, options.getActions());
+
       this.influxDB.enableBatch(options);
       this.influxDB.createDatabase(dbName);
       this.influxDB.setDatabase(dbName);
