@@ -6,6 +6,7 @@ import org.influxdb.dto.QueryResult;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
@@ -28,7 +29,7 @@ public class BatchOptionsTest {
   /**
    * Test the implementation of {@link InfluxDB#enableBatch(int, int, TimeUnit, ThreadFactory)}.
    */
-  @Test
+  //@Test
   public void testBatchEnabledWithDefaultSettings() {
     try {
       this.influxDB.enableBatch();
@@ -39,7 +40,7 @@ public class BatchOptionsTest {
     }
   }
 
-  @Test
+  //@Test
   public void testParametersSet() {
     BatchOptions options = BatchOptions.DEFAULTS.actions(3);
     Assertions.assertEquals(3, options.getActions());
@@ -67,7 +68,7 @@ public class BatchOptionsTest {
   /**
    * Test the implementation of {@link BatchOptions#actions(int)} }.
    */
-  @Test
+  //@Test
   public void testActionsSetting() throws InterruptedException {
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
@@ -94,4 +95,151 @@ public class BatchOptionsTest {
     }
   }
 
+  /**
+   * Test the implementation of {@link BatchOptions#flushDuration(int)} }.
+   * @throws InterruptedException 
+   */
+  //@Test
+  public void testFlushDuration() throws InterruptedException {
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    try {
+      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(10000);
+
+      this.influxDB.createDatabase(dbName);
+      this.influxDB.setDatabase(dbName);
+      this.influxDB.enableBatch(options);
+      for (int j = 0; j < 20; j++) {
+        Point point = Point.measurement("weather")
+                .time(j,TimeUnit.HOURS)
+                .addField("temperature", (double) j)
+                .addField("humidity", (double) (j) * 1.1)
+                .addField("uv_index", "moderate").build();
+        this.influxDB.write(point);
+      }
+      
+      QueryResult result = influxDB.query(new Query("select * from weather", dbName));
+      Assertions.assertNull(result.getResults().get(0).getSeries());
+      Assertions.assertNull(result.getResults().get(0).getError());
+      
+      Thread.sleep(12000);
+      result = influxDB.query(new Query("select * from weather", dbName));
+      Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
+    }
+    finally {
+      this.influxDB.disableBatch();
+      this.influxDB.deleteDatabase(dbName);
+    }
+  }
+  
+  /**
+   * Test the implementation of {@link BatchOptions#jitterDuration(int)} }.
+   * @throws InterruptedException 
+   */
+  //@Test
+  public void testJitterDuration() throws InterruptedException {
+    
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    try {
+      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(1000).jitterDuration(125);
+
+      this.influxDB.createDatabase(dbName);
+      this.influxDB.setDatabase(dbName);
+      this.influxDB.enableBatch(options);
+      for (int j = 0; j < 20; j++) {
+        Point point = Point.measurement("weather")
+                .time(j,TimeUnit.HOURS)
+                .addField("temperature", (double) j)
+                .addField("humidity", (double) (j) * 1.1)
+                .addField("uv_index", "moderate").build();
+        this.influxDB.write(point);
+      }
+      
+      QueryResult result = influxDB.query(new Query("select * from weather", dbName));
+      Assertions.assertNull(result.getResults().get(0).getSeries());
+      Assertions.assertNull(result.getResults().get(0).getError());
+      
+      Thread.sleep(1125);
+      result = influxDB.query(new Query("select * from weather", dbName));
+      Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
+    }
+    finally {
+      this.influxDB.disableBatch();
+      this.influxDB.deleteDatabase(dbName);
+    }
+    
+    
+  }
+  
+  /**
+   * Test the implementation of {@link BatchOptions#jitterDuration(int)} }.
+   */
+  //@Test
+  public void testNegativeJitterDuration() {
+    
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      BatchOptions options = BatchOptions.DEFAULTS.jitterDuration(-10);
+      influxDB.enableBatch(options);
+      
+      influxDB.disableBatch();
+      options = BatchOptions.DEFAULTS.jitterDuration(0);
+      influxDB.enableBatch();
+      influxDB.disableBatch();
+    });
+  }
+  
+  /**
+   * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
+   */
+  @Test
+  public void testBufferLimit() throws InterruptedException {
+    
+    int[][] bufferLimit2Actions = {{10, 4}, {3, 4}};  
+    
+    for (int[] bufferLimit2Action : bufferLimit2Actions) {
+      String dbName = "write_unittest_" + System.currentTimeMillis();
+      try {
+        BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(bufferLimit2Action[0]).actions(bufferLimit2Action[1]);
+
+        this.influxDB.createDatabase(dbName);
+        this.influxDB.setDatabase(dbName);
+        this.influxDB.enableBatch(options);
+        for (int j = 0; j < 10; j++) {
+          Point point = Point.measurement("weather")
+                  .time(j,TimeUnit.HOURS)
+                  .addField("temperature", (double) j)
+                  .addField("humidity", (double) (j) * 1.1)
+                  .addField("uv_index", "moderate").build();
+          this.influxDB.write(point);
+        }
+        
+        QueryResult result = influxDB.query(new Query("select * from weather", dbName));
+        Assertions.assertEquals(8, result.getResults().get(0).getSeries().get(0).getValues().size());      
+        Thread.sleep(1000);
+        result = influxDB.query(new Query("select * from weather", dbName));
+        Assertions.assertEquals(10, result.getResults().get(0).getSeries().get(0).getValues().size());
+      }
+      finally {
+        this.influxDB.disableBatch();
+        this.influxDB.deleteDatabase(dbName);
+      }
+    }
+    
+  }
+  
+  /**
+   * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
+   */
+  //@Test
+  public void testNegativeBufferLimit() {
+    
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(-10);
+      influxDB.enableBatch(options);
+      
+      influxDB.disableBatch();
+      options = BatchOptions.DEFAULTS.bufferLimit(0);
+      influxDB.enableBatch();
+      influxDB.disableBatch();
+    });
+  }
 }
