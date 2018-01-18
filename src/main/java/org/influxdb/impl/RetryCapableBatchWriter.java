@@ -72,8 +72,9 @@ class RetryCapableBatchWriter implements BatchWriter {
         iterator.remove();
         usedRetryBufferCapacity -= entry.getPoints().size();
         // we are throwing out data, notify the client
-        if (result.outcome == WriteResultOutcome.FAILED_RETRY_IMPOSSIBLE)
+        if (result.outcome == WriteResultOutcome.FAILED_RETRY_IMPOSSIBLE) {
           exceptionHandler.accept(entry.getPoints(), result.throwable);
+        }
       } else {
         // we cannot send more data otherwise we would write them in different
         // order than in which were submitted
