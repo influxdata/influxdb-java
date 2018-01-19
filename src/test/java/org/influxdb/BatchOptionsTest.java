@@ -11,11 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -308,16 +309,17 @@ public class BatchOptionsTest {
     
     String dbName = "write_unittest_" + System.currentTimeMillis();
     InfluxDB spy = spy(influxDB);
-    final Map<String, Boolean> map = new HashMap<>(1);
-    map.put("firstCall", true);
-    doAnswer((invocation) -> {
-      if (map.get("firstCall")) {
-        map.put("firstCall", false);
-        throw new InfluxDBException("error");
-      } else {
-        return invocation.callRealMethod();
+    doAnswer(new Answer<Object>() {
+      boolean firstCall = true;
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        if (firstCall) {
+          firstCall = false;
+          throw new InfluxDBException("error");
+        } else {
+          return invocation.callRealMethod();
+        }
       }
-
     }).when(spy).write(any(BatchPoints.class));
     
     try {
@@ -332,6 +334,8 @@ public class BatchOptionsTest {
       
       Thread.sleep(5000);
       verify(mockHandler, never()).accept(any(), any());
+      
+      verify(spy, times(2)).write(any(BatchPoints.class));
       
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertNotNull(result.getResults().get(0).getSeries());
