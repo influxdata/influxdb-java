@@ -86,6 +86,8 @@ class RetryCapableBatchWriter implements BatchWriter {
     WriteResult result = tryToWrite(batchPoints);
     if (result.outcome == WriteResultOutcome.FAILED_RETRY_POSSIBLE) {
       addToBatchQueue(batchPoints);
+    } else {
+      exceptionHandler.accept(batchPoints.getPoints(), result.throwable);
     }
   }
 

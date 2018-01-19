@@ -170,6 +170,8 @@ public final class BatchProcessor {
       Objects.requireNonNull(this.influxDB, "influxDB");
       Preconditions.checkPositiveNumber(this.actions, "actions");
       Preconditions.checkPositiveNumber(this.flushInterval, "flushInterval");
+      Preconditions.checkNotNegativeNumber(jitterInterval, "jitterInterval");
+      Preconditions.checkNotNegativeNumber(bufferLimit, "bufferLimit");
       Objects.requireNonNull(this.flushIntervalUnit, "flushIntervalUnit");
       Objects.requireNonNull(this.threadFactory, "threadFactory");
       Objects.requireNonNull(this.exceptionHandler, "exceptionHandler");
