@@ -3,6 +3,8 @@ package org.influxdb.impl;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 
+import java.util.Collection;
+
 /**
  * Batch writer that tries to write BatchPoints exactly once.
  */
@@ -15,7 +17,9 @@ class OneShotBatchWriter implements BatchWriter {
   }
 
   @Override
-  public void write(final BatchPoints batchPoints) {
-    influxDB.write(batchPoints);
+  public void write(final Collection<BatchPoints> batchPointsCollection) {
+    for (BatchPoints batchPoints : batchPointsCollection) {
+      influxDB.write(batchPoints);
+    }
   }
 }

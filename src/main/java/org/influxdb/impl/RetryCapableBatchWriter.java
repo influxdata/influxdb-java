@@ -5,6 +5,8 @@ import org.influxdb.InfluxDBException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -34,23 +36,23 @@ class RetryCapableBatchWriter implements BatchWriter {
 
   private enum WriteResultOutcome { WRITTEN, FAILED_RETRY_POSSIBLE, FAILED_RETRY_IMPOSSIBLE }
 
-  private static class WriteResult {
+  private static final class WriteResult {
 
     static final WriteResult WRITTEN = new WriteResult(WriteResultOutcome.WRITTEN);
 
     WriteResultOutcome outcome;
     Throwable throwable;
 
-    public WriteResult(final WriteResultOutcome outcome) {
+    private WriteResult(final WriteResultOutcome outcome) {
       this.outcome = outcome;
     }
 
-    public WriteResult(final WriteResultOutcome outcome, final Throwable throwable) {
+    private WriteResult(final WriteResultOutcome outcome, final Throwable throwable) {
       this.outcome = outcome;
       this.throwable = throwable;
     }
 
-    public WriteResult(final InfluxDBException e) {
+    private WriteResult(final InfluxDBException e) {
       this.throwable = e;
       if (e.isRetryWorth()) {
         this.outcome = WriteResultOutcome.FAILED_RETRY_POSSIBLE;
@@ -61,15 +63,15 @@ class RetryCapableBatchWriter implements BatchWriter {
   }
 
   @Override
-  public void write(final BatchPoints batchPoints) {
+  public void write(final Collection<BatchPoints> collection) {
     // empty the cached data first
-    ListIterator<BatchPoints> iterator = batchQueue.listIterator();
-    while (iterator.hasNext()) {
-      BatchPoints entry = iterator.next();
+    ListIterator<BatchPoints> batchQueueIterator = batchQueue.listIterator();
+    while (batchQueueIterator.hasNext()) {
+      BatchPoints entry = batchQueueIterator.next();
       WriteResult result = tryToWrite(entry);
       if (result.outcome == WriteResultOutcome.WRITTEN
               || result.outcome == WriteResultOutcome.FAILED_RETRY_IMPOSSIBLE) {
-        iterator.remove();
+        batchQueueIterator.remove();
         usedRetryBufferCapacity -= entry.getPoints().size();
         // we are throwing out data, notify the client
         if (result.outcome == WriteResultOutcome.FAILED_RETRY_IMPOSSIBLE) {
@@ -78,16 +80,30 @@ class RetryCapableBatchWriter implements BatchWriter {
       } else {
         // we cannot send more data otherwise we would write them in different
         // order than in which were submitted
-        addToBatchQueue(batchPoints);
+        for (BatchPoints batchPoints : collection) {
+          addToBatchQueue(batchPoints);
+        }
         return;
       }
     }
     // write the last given batch last so that duplicate data points get overwritten correctly
-    WriteResult result = tryToWrite(batchPoints);
-    if (result.outcome == WriteResultOutcome.FAILED_RETRY_POSSIBLE) {
-      addToBatchQueue(batchPoints);
-    } else {
-      exceptionHandler.accept(batchPoints.getPoints(), result.throwable);
+    Iterator<BatchPoints> collectionIterator = collection.iterator();
+    while (collectionIterator.hasNext()) {
+      BatchPoints batchPoints = collectionIterator.next();
+      WriteResult result = tryToWrite(batchPoints);
+      switch (result.outcome) {
+        case FAILED_RETRY_POSSIBLE:
+          addToBatchQueue(batchPoints);
+          while (collectionIterator.hasNext()) {
+            addToBatchQueue(collectionIterator.next());
+          }
+          break;
+        case FAILED_RETRY_IMPOSSIBLE:
+          exceptionHandler.accept(batchPoints.getPoints(), result.throwable);
+          break;
+        default:
+
+      }
     }
   }
 

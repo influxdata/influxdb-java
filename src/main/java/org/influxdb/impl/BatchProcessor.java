@@ -6,6 +6,7 @@ import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -281,6 +282,7 @@ public final class BatchProcessor {
     List<Point> currentBatch = null;
     try {
       if (this.queue.isEmpty()) {
+        BatchProcessor.this.batchWriter.write(Collections.emptyList());
         return;
       }
       //for batch on HTTP.
@@ -316,9 +318,8 @@ public final class BatchProcessor {
         }
       }
 
-      for (BatchPoints batchPoints : batchKeyToBatchPoints.values()) {
-          BatchProcessor.this.batchWriter.write(batchPoints);
-      }
+      BatchProcessor.this.batchWriter.write(batchKeyToBatchPoints.values());
+
       for (Entry<Integer, List<String>> entry : udpPortToBatchPoints.entrySet()) {
           for (String lineprotocolStr : entry.getValue()) {
               BatchProcessor.this.influxDB.write(entry.getKey(), lineprotocolStr);

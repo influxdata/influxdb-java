@@ -2,14 +2,16 @@ package org.influxdb.impl;
 
 import org.influxdb.dto.BatchPoints;
 
+import java.util.Collection;
+
 /**
  * Write individual batches to InfluxDB.
  */
 interface BatchWriter {
   /**
    * Write the given batch into InfluxDB.
-   * @param batchPoints to write
+   * @param batchPointsCollection to write
    */
-  void write(BatchPoints batchPoints);
+  void write(Collection<BatchPoints> batchPointsCollection);
 }
 

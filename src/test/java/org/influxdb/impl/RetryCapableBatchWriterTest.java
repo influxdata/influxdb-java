@@ -11,6 +11,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -47,13 +49,13 @@ public class RetryCapableBatchWriterTest {
     Mockito.doThrow(recoverable).when(mockInfluxDB).write(bp2);
     Mockito.doThrow(recoverable).when(mockInfluxDB).write(bp3);
     // first one will fail with non-recoverable error
-    rw.write(bp0);
+    rw.write(Collections.singletonList(bp0));
     // second one will fail with recoverable error
-    rw.write(bp1);
+    rw.write(Collections.singletonList(bp1));
     // will fail with recoverable error again, will remove data due to buffer limit
-    rw.write(bp2);
+    rw.write(Collections.singletonList(bp2));
     // will write fail with recoverable error
-    rw.write(bp3);
+    rw.write(Collections.singletonList(bp3));
 
     ArgumentCaptor<BatchPoints> captor = ArgumentCaptor.forClass(BatchPoints.class);
     verify(mockInfluxDB, times(4)).write(captor.capture());
@@ -67,11 +69,12 @@ public class RetryCapableBatchWriterTest {
     Assert.assertEquals(capturedArgument1.get(2).getPoints().size(), 90);
     Assert.assertEquals(capturedArgument1.get(3).getPoints().size(), 98);
 
-    verify(errorHandler, times(1)).accept(any(),any());
+    // error handler called twice; once for first unrecoverable write, se
+    verify(errorHandler, times(2)).accept(any(),any());
 
     // will write data that previously were not sent, will send additional data
     Mockito.reset(mockInfluxDB);
-    rw.write(bp4);
+    rw.write(Collections.singletonList(bp4));
 
     ArgumentCaptor<BatchPoints> captor2 = ArgumentCaptor.forClass(BatchPoints.class);
     verify(mockInfluxDB, times(2)).write(captor2.capture());
