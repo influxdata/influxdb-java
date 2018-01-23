@@ -287,7 +287,7 @@ public class BatchOptionsTest {
       
       writeSomePoints(spy, 1);
       
-      Thread.sleep(1000);
+      Thread.sleep(3000);
       verify(mockHandler, times(1)).accept(any(), any());
       
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
