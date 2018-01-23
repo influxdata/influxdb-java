@@ -74,6 +74,8 @@ public class BatchOptionsTest {
 
   /**
    * Test the implementation of {@link BatchOptions#actions(int)} }.
+   * TODO: try to make this run faster, set lower flush duration (eg. 100)
+   * TODO: you have to test that the points are not in the DB before flush duration as well
    */
   @Test
   public void testActionsSetting() throws InterruptedException {
@@ -104,7 +106,8 @@ public class BatchOptionsTest {
 
   /**
    * Test the implementation of {@link BatchOptions#flushDuration(int)} }.
-   * @throws InterruptedException 
+   * @throws InterruptedException
+   * TODO: Remove this completely it doesn't test anything new compared to testActionSetting
    */
   @Test
   public void testFlushDuration() throws InterruptedException {
@@ -132,7 +135,9 @@ public class BatchOptionsTest {
   
   /**
    * Test the implementation of {@link BatchOptions#jitterDuration(int)} }.
-   * @throws InterruptedException 
+   * @throws InterruptedException
+   * TODO: Make this run faster, set flush duration to 100. Set jitter interval to 500.
+   * TODO: Test that after 100ms the points are not in the DB yet.
    */
   @Test
   public void testJitterDuration() throws InterruptedException {
@@ -171,7 +176,8 @@ public class BatchOptionsTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       BatchOptions options = BatchOptions.DEFAULTS.jitterDuration(-10);
       influxDB.enableBatch(options);
-      
+      // TODO: the lines below has no function, remove it
+      // TODO: you should use dedicated influxDB object so that other tests are not influenced
       influxDB.disableBatch();
       options = BatchOptions.DEFAULTS.jitterDuration(0);
       influxDB.enableBatch();
@@ -204,6 +210,8 @@ public class BatchOptionsTest {
   
   /**
    * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
+   * TODO: Name the test functions as it is clear what is it testing
+   * TODO: Remove this test until the test scenario is clear
    */
   @Test
   public void testBufferLimit1() throws InterruptedException {
@@ -214,6 +222,8 @@ public class BatchOptionsTest {
 
   /**
    * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
+   * TODO: Name the test functions as it is clear what is it testing
+   * TODO: Remove this test until the test scenario is clear
    */
   @Test
   public void testBufferLimit2() throws InterruptedException {
@@ -230,7 +240,8 @@ public class BatchOptionsTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(-10);
       influxDB.enableBatch(options);
-      
+      // TODO: the lines below has no function, remove it
+      // TODO: you should use dedicated influxDB object so that other tests are not influenced
       influxDB.disableBatch();
       options = BatchOptions.DEFAULTS.bufferLimit(0);
       influxDB.enableBatch();
@@ -240,7 +251,9 @@ public class BatchOptionsTest {
   
   /**
    * Test the implementation of {@link BatchOptions#threadFactory(ThreadFactory)} }.
-   * @throws InterruptedException 
+   * @throws InterruptedException
+   * TODO: there is no assertion testing that the thread factory is used
+   * TODO: make this test run faster eg. 100ms
    */
   @Test
   public void testThreadFactory() throws InterruptedException {
@@ -268,7 +281,8 @@ public class BatchOptionsTest {
   
   /**
    * Test the implementation of {@link BatchOptions#exceptionHandler(BiConsumer)} }.
-   * @throws InterruptedException 
+   * @throws InterruptedException
+   * TODO: make this test run faster eg. 100ms
    */
   @Test
   public void testHandlerOnRetryImpossible() throws InterruptedException {
@@ -302,7 +316,8 @@ public class BatchOptionsTest {
   
   /**
    * Test the implementation of {@link BatchOptions#exceptionHandler(BiConsumer)} }.
-   * @throws InterruptedException 
+   * @throws InterruptedException
+   * TODO: make this test run faster eg. 100ms
    */
   @Test
   public void testHandlerOnRetryPossible() throws InterruptedException {
@@ -351,6 +366,8 @@ public class BatchOptionsTest {
   /**
    * Test the implementation of {@link BatchOptions#consistency(InfluxDB.ConsistencyLevel)} }.
    * @throws InterruptedException 
+   * TODO: there is no assertion testing that the consistency value set is propagated to InfluxDB
+   * TODO: make this test run faster eg. 100ms
    */
   @Test
   public void testConsistency() throws InterruptedException {
