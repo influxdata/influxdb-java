@@ -12,9 +12,103 @@ To connect to InfluxDB 0.8.x you need to use influxdb-java version 1.6.
 This implementation is meant as a Java rewrite of the influxdb-go package.
 All low level REST Api calls are available.
 
-## Usages
+## Usage
 
-### Basic Usages:
+### Basic Usage:
+ 
+This is a recommended approach to write data points into InfluxDB. The influxdb-java 
+client is storing your writes into an internal buffer and flushes them asynchronously 
+to InfluxDB at a fixed flush interval to achieve good performance on both client and 
+server side. This requires influxdb-java v2.7 or newer.
+
+If you want to write data points immediately into InfluxDB and synchronously process
+resulting errors see [this section.](#synchronous-writes)
+
+```java
+InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+String dbName = "aTimeSeries";
+influxDB.createDatabase(dbName);
+influxDB.setDatabase(dbName);
+String rpName = "aRetentionPolicy";
+influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+influxDB.setRetentionPolicy(rpName);
+
+influxDB.enableBatch(BatchOptions.DEFAULTS);
+
+influxDB.write(Point.measurement("cpu")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.addField("idle", 90L)
+	.addField("user", 9L)
+	.addField("system", 1L)
+	.build());
+
+influxDB.write(Point.measurement("disk")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.addField("used", 80L)
+	.addField("free", 1L)
+	.build());
+
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query);
+influxDB.dropRetentionPolicy(rpName, dbName);
+influxDB.deleteDatabase(dbName);
+influxDB.close();
+```
+
+
+Any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
+If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:
+
+```java
+influxDB.enableBatch(BatchOptions.DEFAULTS.exceptionHandler(
+        (failedPoints, throwable) -> { /* custom error handling here */ })
+);
+```
+
+Note:
+* Batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
+* `InfluxDB.enableBatch(BatchOptions)` is available since version 2.9. Prior versions use `InfluxDB.enableBatch(actions, flushInterval, timeUnit)` or similar based on the configuration parameters you want to set. 
+* APIs to create and drop retention policies are supported only in versions > 2.7
+* If you are using influxdb < 2.8, you should use retention policy: 'autogen'
+* If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
+
+
+If your points are written into different databases and retention policies, the more complex InfluxDB.write() methods can be used:
+
+```java
+InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+String dbName = "aTimeSeries";
+influxDB.createDatabase(dbName);
+String rpName = "aRetentionPolicy";
+influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+
+// Flush every 2000 Points, at least every 100ms
+influxDB.enableBatch(BatchOptions.DEFAULTS.actions(2000).flushDuration(100));
+
+Point point1 = Point.measurement("cpu")
+					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+					.addField("idle", 90L)
+					.addField("user", 9L)
+					.addField("system", 1L)
+					.build();
+Point point2 = Point.measurement("disk")
+					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+					.addField("used", 80L)
+					.addField("free", 1L)
+					.build();
+
+influxDB.write(dbName, rpName, point1);
+influxDB.write(dbName, rpName, point2);
+Query query = new Query("SELECT idle FROM cpu", dbName);
+influxDB.query(query);
+influxDB.dropRetentionPolicy(rpName, dbName);
+influxDB.deleteDatabase(dbName);
+influxDB.close();
+```
+
+#### Synchronous writes
+
+If you want to write the data points immediately to InfluxDB (and handle the errors as well) without any delays see the following example: 
 
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
@@ -48,88 +142,8 @@ influxDB.query(query);
 influxDB.dropRetentionPolicy(rpName, dbName);
 influxDB.deleteDatabase(dbName);
 ```
-Note:
-* APIs to create and drop retention policies are supported only in versions > 2.7
-* If you are using influxdb < 2.8, you should use retention policy: 'autogen'
-* If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
 
-If your application produces only single Points, you can enable the batching functionality of influxdb-java:
-
-```java
-InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
-String dbName = "aTimeSeries";
-influxDB.createDatabase(dbName);
-String rpName = "aRetentionPolicy";
-influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
-
-// Flush every 2000 Points, at least every 100ms
-influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
-
-Point point1 = Point.measurement("cpu")
-					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-					.addField("idle", 90L)
-					.addField("user", 9L)
-					.addField("system", 1L)
-					.build();
-Point point2 = Point.measurement("disk")
-					.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-					.addField("used", 80L)
-					.addField("free", 1L)
-					.build();
-
-influxDB.write(dbName, rpName, point1);
-influxDB.write(dbName, rpName, point2);
-Query query = new Query("SELECT idle FROM cpu", dbName);
-influxDB.query(query);
-influxDB.dropRetentionPolicy(rpName, dbName);
-influxDB.deleteDatabase(dbName);
-```
-Note that the batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
-
-If all of your points are written to the same database and retention policy, the simpler write() methods can be used.
-This requires influxdb-java v2.7 or newer.
-
-```java
-InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
-String dbName = "aTimeSeries";
-influxDB.createDatabase(dbName);
-influxDB.setDatabase(dbName);
-String rpName = "aRetentionPolicy";
-influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
-influxDB.setRetentionPolicy(rpName);
-
-// Flush every 2000 Points, at least every 100ms
-influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
-
-influxDB.write(Point.measurement("cpu")
-	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-	.addField("idle", 90L)
-	.addField("user", 9L)
-	.addField("system", 1L)
-	.build());
-
-influxDB.write(Point.measurement("disk")
-	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-	.addField("used", 80L)
-	.addField("free", 1L)
-	.build());
-
-Query query = new Query("SELECT idle FROM cpu", dbName);
-influxDB.query(query);
-influxDB.dropRetentionPolicy(rpName, dbName);
-influxDB.deleteDatabase(dbName);
-```
-
-Also note that any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
-
-If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:
-
-```java
-// Flush every 2000 Points, at least every 100ms
-influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, Executors.defaultThreadFactory(), (failedPoints, throwable) -> { /* custom error handling here */ });
-```
-
-### Advanced Usages:
+### Advanced Usage:
 
 #### Gzip's support (version 2.5+ required):
 
@@ -156,7 +170,6 @@ influxdb-java client now supports influxdb chunking. The following example uses 
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
-
 
 #### QueryResult mapper to POJO (version 2.7+ required):
 
@@ -238,6 +251,20 @@ this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
 }, throwable -> {
     // Do something with the error...
 });
+```
+
+#### Batch flush interval jittering (version 2.9+ required)
+
+When using large number of influxdb-java clients against a single server it may happen that all the clients 
+will submit their buffered points at the same time and possibly overloading the server. This is usually happening
+when all the clients are started at once - for instance as members of cloud hosted large cluster networks.  
+If all the clients have the same flushDuration set this situation will repeat periodically.
+
+To solve this situation the influxdb-java offers an option to offset the flushDuration by a random interval so that 
+the clients will flush their buffers in different intervals:    
+
+```java
+influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500);
 ```
 
 ### Other Usages:
