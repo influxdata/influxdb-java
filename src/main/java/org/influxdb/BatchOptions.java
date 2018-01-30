@@ -95,7 +95,7 @@ public final class BatchOptions implements Cloneable {
    *                    to treat a write as a success)
    * @return the BatchOptions instance to be able to use it in a fluent manner.
    */
-  public BatchOptions setConsistency(final InfluxDB.ConsistencyLevel consistency) {
+  public BatchOptions consistency(final InfluxDB.ConsistencyLevel consistency) {
     BatchOptions clone = getClone();
     clone.consistency = consistency;
     return clone;
