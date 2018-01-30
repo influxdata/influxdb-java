@@ -13,5 +13,10 @@ interface BatchWriter {
    * @param batchPointsCollection to write
    */
   void write(Collection<BatchPoints> batchPointsCollection);
+
+  /**
+   * FLush all cached writes into InfluxDB. The application is about to exit.
+   */
+  void close();
 }
 

@@ -107,6 +107,17 @@ class RetryCapableBatchWriter implements BatchWriter {
     }
   }
 
+  @Override
+  public void close() {
+    // try to write everything queued / buffered
+    for (BatchPoints points : batchQueue) {
+      WriteResult result = tryToWrite(points);
+      if (result.outcome != WriteResultOutcome.WRITTEN) {
+        exceptionHandler.accept(points.getPoints(), result.throwable);
+      }
+    }
+  }
+
   private WriteResult tryToWrite(final BatchPoints batchPoints) {
     try {
       influxDB.write(batchPoints);

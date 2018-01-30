@@ -362,6 +362,7 @@ public final class BatchProcessor {
   void flushAndShutdown() {
     this.write();
     this.scheduler.shutdown();
+    this.batchWriter.close();
   }
 
   /**

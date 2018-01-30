@@ -22,4 +22,9 @@ class OneShotBatchWriter implements BatchWriter {
       influxDB.write(batchPoints);
     }
   }
+
+  @Override
+  public void close() {
+
+  }
 }
