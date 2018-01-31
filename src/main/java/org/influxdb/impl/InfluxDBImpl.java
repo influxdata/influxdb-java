@@ -53,7 +53,7 @@ import java.util.function.Consumer;
  */
 public class InfluxDBImpl implements InfluxDB {
 
-  static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
+  static final MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
 
@@ -86,9 +86,13 @@ public class InfluxDBImpl implements InfluxDB {
     this.loggingInterceptor = new HttpLoggingInterceptor();
     this.loggingInterceptor.setLevel(Level.NONE);
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
+
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .client(client.addInterceptor(loggingInterceptor)
+                .addInterceptor(gzipRequestInterceptor)
+                .authenticator(new RequestAuthenticator(username, password))
+                .build())
         .addConverterFactory(MoshiConverterFactory.create())
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
@@ -96,7 +100,7 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
     InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
-            final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
+                 final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
         super();
         this.hostAddress = parseHostAddress(url);
         this.username = username;
@@ -106,7 +110,10 @@ public class InfluxDBImpl implements InfluxDB {
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
         this.retrofit = new Retrofit.Builder()
                 .baseUrl(url)
-                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+                .client(client.addInterceptor(loggingInterceptor)
+                        .addInterceptor(gzipRequestInterceptor)
+                        .authenticator(new RequestAuthenticator(username, password))
+                        .build())
                 .addConverterFactory(MoshiConverterFactory.create())
                 .build();
         this.influxDBService = influxDBService;
@@ -429,11 +436,10 @@ public class InfluxDBImpl implements InfluxDB {
                 try {
                     if (response.isSuccessful()) {
                         BufferedSource source = response.body().source();
-                        while (true) {
-                            QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
-                            if (result != null) {
-                                consumer.accept(result);
-                            }
+                        QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
+                        while (result != null) {
+                          consumer.accept(result);
+                          result = InfluxDBImpl.this.adapter.fromJson(source);
                         }
                     }
                     try (ResponseBody errorBody = response.errorBody()) {
