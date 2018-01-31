@@ -62,8 +62,10 @@ class RetryCapableBatchWriter implements BatchWriter {
     }
   }
 
+  /* This method is synchronized to avoid parallel execution when the user invokes flush/close
+   * of the client in the middle of scheduled write execution (buffer flush / action limit overrun) */
   @Override
-  public void write(final Collection<BatchPoints> collection) {
+  public synchronized void write(final Collection<BatchPoints> collection) {
     // empty the cached data first
     ListIterator<BatchPoints> batchQueueIterator = batchQueue.listIterator();
     while (batchQueueIterator.hasNext()) {
@@ -107,8 +109,10 @@ class RetryCapableBatchWriter implements BatchWriter {
     }
   }
 
+  /* This method is synchronized to avoid parallel execution when the BatchProcessor scheduler
+   * has been shutdown but there are jobs still being executed (using RetryCapableBatchWriter.write).*/
   @Override
-  public void close() {
+  public synchronized void close() {
     // try to write everything queued / buffered
     for (BatchPoints points : batchQueue) {
       WriteResult result = tryToWrite(points);

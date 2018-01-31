@@ -24,8 +24,6 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
 import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
-import org.json.JSONException;
-import org.json.JSONObject;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -572,6 +570,9 @@ public class InfluxDBImpl implements InfluxDB {
     return call;
   }
 
+  static class ErrorMessage {
+    public String error;
+  }
 
   private <T> T execute(final Call<T> call) {
     try {
@@ -580,15 +581,7 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        try {
-          JSONObject body = new JSONObject(errorBody.string());
-          Object error = body.getString("error");
-          if (error != null && error instanceof String) {
-            throw InfluxDBException.buildExceptionForErrorState((String) error);
-          }
-        } catch (JSONException e) {
-        }
-        throw new InfluxDBException(errorBody.string());
+        throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
       }
     } catch (IOException e) {
       throw new InfluxDBIOException(e);

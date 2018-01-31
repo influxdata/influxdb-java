@@ -42,8 +42,8 @@ public class RetryCapableBatchWriterTest {
     BatchPoints bp3 = getBP(8);
     BatchPoints bp4 = getBP(100);
 
-    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState("database not found: cvfdgf");
-    Exception recoverable = InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400");
+    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"database not found: cvfdgf\" }");
+    Exception recoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
     Mockito.doThrow(nonRecoverable).when(mockInfluxDB).write(bp0);
     Mockito.doThrow(recoverable).when(mockInfluxDB).write(bp1);
     Mockito.doThrow(recoverable).when(mockInfluxDB).write(bp2);
