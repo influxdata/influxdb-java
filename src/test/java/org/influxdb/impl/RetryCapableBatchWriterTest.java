@@ -2,16 +2,20 @@ package org.influxdb.impl;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
+import org.influxdb.TestAnswer;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 
-import java.util.Collection;
+import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -85,5 +89,89 @@ public class RetryCapableBatchWriterTest {
     Assert.assertEquals(capturedArgument2.get(0).getPoints().size(), 98);
     Assert.assertEquals(capturedArgument2.get(1).getPoints().size(), 100);
 
+  }
+  
+  @Test
+  public void testAllNonRecoverableExceptions() {
+    
+    InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+    BiConsumer errorHandler = mock(BiConsumer.class);
+    RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
+            150, 100);
+
+    InfluxDBException nonRecoverable1 = InfluxDBException.buildExceptionForErrorState(createErrorBody("database not found: cvfdgf"));
+    InfluxDBException nonRecoverable2 = InfluxDBException.buildExceptionForErrorState(createErrorBody("points beyond retention policy 'abc'"));
+    InfluxDBException nonRecoverable3 = InfluxDBException.buildExceptionForErrorState(createErrorBody("unable to parse 'abc'"));
+    InfluxDBException nonRecoverable4 = InfluxDBException.buildExceptionForErrorState(createErrorBody("hinted handoff queue not empty service='abc'"));
+    InfluxDBException nonRecoverable5 = InfluxDBException.buildExceptionForErrorState(createErrorBody("field type conflict 'abc'"));
+    InfluxDBException nonRecoverable6 = new InfluxDBException.RetryBufferOverrunException(createErrorBody("Retry BufferOverrun Exception"));
+    InfluxDBException nonRecoverable7 = InfluxDBException.buildExceptionForErrorState(createErrorBody("user is not authorized to write to database"));
+    
+    List<InfluxDBException> exceptions = Arrays.asList(nonRecoverable1, nonRecoverable2, nonRecoverable3,
+        nonRecoverable4, nonRecoverable5, nonRecoverable6, nonRecoverable7);
+    int size = exceptions.size();
+    doAnswer(new TestAnswer() {
+      int i = 0;
+      @Override
+      protected void check(InvocationOnMock invocation) {
+        if (i < size) {
+          throw exceptions.get(i++);
+        }
+      }
+    }).when(mockInfluxDB).write(any(BatchPoints.class));
+    
+    BatchPoints bp = getBP(8);
+    for (int i = 0; i < size; i++) {
+      rw.write(Collections.singletonList(bp));
+    }
+    verify(errorHandler, times(size)).accept(any(), any());;
+  }
+  
+  @Test
+  public void testClosingWriter() {
+    InfluxDB mockInfluxDB = mock(InfluxDB.class);
+    BiConsumer<Iterable<Point>, Throwable> errorHandler = mock(BiConsumer.class);
+
+    BatchPoints bp5 = getBP(5);
+    BatchPoints bp6 = getBP(6);
+    BatchPoints bp90 = getBP(90);
+    
+    doAnswer(new TestAnswer() {
+      int i = 0;
+      @Override
+      protected void check(InvocationOnMock invocation) {
+        //first 4 calls
+        if (i++ < 4) {
+          throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400"); 
+        }
+        return;
+      }
+    }).when(mockInfluxDB).write(any(BatchPoints.class));
+    
+    RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
+        150, 100);
+    
+    rw.write(Collections.singletonList(bp5));
+    rw.write(Collections.singletonList(bp6));
+    rw.write(Collections.singletonList(bp90));
+    //recoverable exception -> never errorHandler
+    verify(errorHandler, never()).accept(any(), any());
+    verify(mockInfluxDB, times(3)).write(any(BatchPoints.class));
+    
+    rw.close();
+    
+    ArgumentCaptor<BatchPoints> captor4Write = ArgumentCaptor.forClass(BatchPoints.class);
+    ArgumentCaptor<List<Point>> captor4Accept = ArgumentCaptor.forClass(List.class);
+    verify(errorHandler, times(1)).accept(captor4Accept.capture(), any());
+    verify(mockInfluxDB, times(5)).write(captor4Write.capture());
+    
+    //bp5 and bp6 were merged and writing of the merged batch points on closing should be failed
+    Assertions.assertEquals(11, captor4Accept.getValue().size());
+    //bp90 was written because no more exception thrown
+    Assertions.assertEquals(90, captor4Write.getAllValues().get(4).getPoints().size());
+  }
+  
+  private static String createErrorBody(String errorMessage) {
+    return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
 }
