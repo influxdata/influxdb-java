@@ -18,6 +18,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import static org.mockito.Mockito.mock;
@@ -171,6 +172,60 @@ public class RetryCapableBatchWriterTest {
     Assertions.assertEquals(90, captor4Write.getAllValues().get(4).getPoints().size());
   }
   
+  @Test
+  public void testRetryingKeepChronologicalOrder() {
+    
+    BatchPoints.Builder b = BatchPoints.database("d1");
+    for (int i = 0; i < 200; i++) {
+      b.point(Point.measurement("x1").time(1,TimeUnit.HOURS).
+          addField("x", 1).
+          tag("t", "v1").build()).build();
+    }
+    
+    BatchPoints bp1 = b.build();
+    
+    b = BatchPoints.database("d1");
+    
+    b.point(Point.measurement("x1").time(1,TimeUnit.HOURS).
+        addField("x", 2).
+        tag("t", "v2").build()).build();
+    
+    for (int i = 0; i < 199; i++) {
+      b.point(Point.measurement("x1").time(2,TimeUnit.HOURS).
+          addField("x", 2).
+          tag("t", "v2").build()).build();
+    }
+    BatchPoints bp2 = b.build();
+    
+    InfluxDB mockInfluxDB = mock(InfluxDB.class);
+    BiConsumer<Iterable<Point>, Throwable> errorHandler = mock(BiConsumer.class);
+    RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
+        450, 150);
+    doAnswer(new TestAnswer() {
+      int i = 0;
+      @Override
+      protected void check(InvocationOnMock invocation) {
+        if (i++ < 1) {
+          throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400"); 
+        }
+        return;
+      }
+    }).when(mockInfluxDB).write(any(BatchPoints.class));
+    
+    rw.write(Collections.singletonList(bp1));
+    rw.write(Collections.singletonList(bp2));
+    
+    ArgumentCaptor<BatchPoints> captor4Write = ArgumentCaptor.forClass(BatchPoints.class);
+    verify(mockInfluxDB, times(3)).write(captor4Write.capture());
+    
+    //bp1 written but failed because of recoverable cache-max-memory-size error
+    Assertions.assertEquals(bp1, captor4Write.getAllValues().get(0));
+    //bp1 rewritten on writing of bp2 
+    Assertions.assertEquals(bp1, captor4Write.getAllValues().get(1));
+    //bp2 written
+    Assertions.assertEquals(bp2, captor4Write.getAllValues().get(2));
+    
+  }
   private static String createErrorBody(String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
