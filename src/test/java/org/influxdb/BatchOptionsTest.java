@@ -108,15 +108,26 @@ public class BatchOptionsTest {
       write20Points(influxDB);
 
       Thread.sleep(100);
+      System.out.println("Jitter duration test wrote points");
 
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertNull(result.getResults().get(0).getSeries());
       Assertions.assertNull(result.getResults().get(0).getError());
 
-      //wait for at least one flush
+      System.out.println("Waiting for jitter to expire");
       Thread.sleep(500);
-      result = influxDB.query(new Query("select * from weather", dbName));
-      Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+      //wait for at least one flush
+      for(int i=0;i<10;i++) {
+        if(i==9) throw new RuntimeException("waited for too long");
+        result = influxDB.query(new Query("select * from weather", dbName));
+        if(result.getResults().get(0).getSeries()!=null) {
+          System.out.println("Jitter duration result series "+i+"/"+result.getResults().get(0).getSeries());
+          Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
+          break;
+        }
+        Thread.sleep(100);
+      }
     }
     finally {
       influxDB.disableBatch();
