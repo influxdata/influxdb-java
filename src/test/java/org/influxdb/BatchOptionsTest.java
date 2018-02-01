@@ -92,4 +92,50 @@ public class BatchOptionsTest {
     }
   }
 
+  /**
+   * Test the implementation of {@link BatchOptions#jitterDuration(int)} }.
+   * @throws InterruptedException
+   */
+  @Test
+  public void testJitterDuration() throws InterruptedException {
+
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    try {
+      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(100).jitterDuration(500);
+      influxDB.createDatabase(dbName);
+      influxDB.setDatabase(dbName);
+      influxDB.enableBatch(options);
+      write20Points(influxDB);
+
+      Thread.sleep(100);
+
+      QueryResult result = influxDB.query(new Query("select * from weather", dbName));
+      Assertions.assertNull(result.getResults().get(0).getSeries());
+      Assertions.assertNull(result.getResults().get(0).getError());
+
+      //wait for at least one flush
+      Thread.sleep(500);
+      result = influxDB.query(new Query("select * from weather", dbName));
+      Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
+    }
+    finally {
+      influxDB.disableBatch();
+      influxDB.deleteDatabase(dbName);
+    }
+  }
+
+  private void writeSomePoints(InfluxDB influxDB, int firstIndex, int lastIndex) {
+    for (int i = firstIndex; i <= lastIndex; i++) {
+      Point point = Point.measurement("weather")
+              .time(i,TimeUnit.HOURS)
+              .addField("temperature", (double) i)
+              .addField("humidity", (double) (i) * 1.1)
+              .addField("uv_index", "moderate").build();
+      influxDB.write(point);
+    }
+  }
+
+  private void write20Points(InfluxDB influxDB) {
+    writeSomePoints(influxDB, 0, 19);
+  }
 }
