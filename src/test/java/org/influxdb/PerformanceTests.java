@@ -106,36 +106,43 @@ public class PerformanceTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
+	/**
+   * states that String.join("\n", records)*/
 	@Test
 	public void testWriteCompareUDPPerformanceForBatchWithSinglePoints() {
-		//prepare data
-		List<String> lineProtocols = new ArrayList<String>();
-		for (int i = 0; i < 1000; i++) {
-		    Point point = Point.measurement("udp_single_poit").addField("v", i).build();
-		    lineProtocols.add(point.lineProtocol());
-		}
+    //prepare data
+    List<String> lineProtocols = new ArrayList<String>();
+    for (int i = 0; i < 2000; i++) {
+      Point point = Point.measurement("udp_single_poit").addField("v", i).build();
+      lineProtocols.add(point.lineProtocol());
+    }
 
-		String dbName = "write_compare_udp_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
+    String dbName = "write_compare_udp_" + System.currentTimeMillis();
+    this.influxDB.createDatabase(dbName);
+    this.influxDB.enableBatch(10000, 100, TimeUnit.MILLISECONDS);
 
-		//write batch of 1000 single string.
-		long start = System.currentTimeMillis();
-		this.influxDB.write(UDP_PORT, lineProtocols);
-		long elapsedForBatchWrite = System.currentTimeMillis() - start;
-		System.out.println("performance(ms):write udp with batch of 1000 string:" + elapsedForBatchWrite);
+    int repetitions = 15;
+    long start = System.currentTimeMillis();
+    for (int i = 0; i < repetitions; i++) {
+      //write batch of 2000 single string.
+      this.influxDB.write(UDP_PORT, lineProtocols);
+    }
+    long elapsedForBatchWrite = System.currentTimeMillis() - start;
+    System.out.println("performance(ms):write udp with batch of 1000 string:" + elapsedForBatchWrite);
 
-		//write 1000 single string by udp.
-		start = System.currentTimeMillis();
-		for (String lineProtocol: lineProtocols){
-		    this.influxDB.write(UDP_PORT, lineProtocol);
-		}
-		this.influxDB.deleteDatabase(dbName);
+    // write 2000 single string by udp.
+    start = System.currentTimeMillis();
+    for (int i = 0; i < repetitions; i++) {
+      for (String lineProtocol : lineProtocols) {
+        this.influxDB.write(UDP_PORT, lineProtocol);
+      }
+    }
 
-		long elapsedForSingleWrite = System.currentTimeMillis() - start;
-		System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
+    long elapsedForSingleWrite = System.currentTimeMillis() - start;
+    System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
 
-		Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
-	}
+    this.influxDB.deleteDatabase(dbName);
+    Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
+  }
 
 }
