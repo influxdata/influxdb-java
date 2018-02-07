@@ -28,6 +28,8 @@ public class Pong {
 
   /**
    * Good or bad connection status.
+   *
+   * @return true if the version of influxdb is not unknown.
    */
   public boolean isGood() {
     return !UNKNOWN_VERSION.equalsIgnoreCase(version);
