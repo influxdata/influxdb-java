@@ -2,6 +2,10 @@
 
 ## 2.9 [unreleased]
 
+### Features
+
+- New extensible API to configure batching properties.  [PR #409] 
+- New configuration property 'jitter interval' to avoid multiple clients hit the server periodically at the same time. [PR #409] 
 
 ## 2.8 [2017-12-06]
 
