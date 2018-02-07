@@ -168,7 +168,7 @@ public class BatchOptionsTest {
       Assertions.assertNull(result.getResults().get(0).getError());
       
       //wait for at least one flush
-      Thread.sleep(500);
+      Thread.sleep(1000);
       result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
     }
