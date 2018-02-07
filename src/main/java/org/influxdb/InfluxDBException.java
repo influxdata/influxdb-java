@@ -46,8 +46,8 @@ public class InfluxDBException extends RuntimeException {
   static final String AUTHORIZATION_FAILED_ERROR = "authorization failed";
   static final String USERNAME_REQUIRED_ERROR = "username required";
 
-  public static final class DatabaseNotFoundError extends InfluxDBException {
-    private DatabaseNotFoundError(final String message) {
+  public static final class DatabaseNotFoundException extends InfluxDBException {
+    private DatabaseNotFoundException(final String message) {
       super(message);
     }
 
@@ -128,7 +128,7 @@ public class InfluxDBException extends RuntimeException {
 
   private static InfluxDBException buildExceptionFromErrorMessage(final String errorMessage) {
     if (errorMessage.contains(DATABASE_NOT_FOUND_ERROR)) {
-      return new DatabaseNotFoundError(errorMessage);
+      return new DatabaseNotFoundException(errorMessage);
     }
     if (errorMessage.contains(POINTS_BEYOND_RETENTION_POLICY_ERROR)) {
       return new PointsBeyondRetentionPolicyException(errorMessage);

@@ -1,7 +1,7 @@
 package org.influxdb;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
-import org.influxdb.InfluxDBException.DatabaseNotFoundError;
+import org.influxdb.InfluxDBException.DatabaseNotFoundException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
@@ -366,7 +366,7 @@ public class BatchOptionsTest {
     
     String dbName = "write_unittest_" + System.currentTimeMillis();
     InfluxDB spy = spy(influxDB);
-    doThrow(DatabaseNotFoundError.class).when(spy).write(any(BatchPoints.class));
+    doThrow(DatabaseNotFoundException.class).when(spy).write(any(BatchPoints.class));
     
     try {
       BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
