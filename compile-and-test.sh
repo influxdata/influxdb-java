@@ -17,6 +17,9 @@ do
   echo "Tesing againts influxdb ${version}"
   docker kill influxdb || true
   docker rm influxdb || true
+  docker kill nginx || true
+  docker rm nginx || true
+
   docker pull influxdb:${version}-alpine || true
   docker run \
             --detach \
@@ -26,14 +29,25 @@ do
             --volume ${PWD}/influxdb.conf:/etc/influxdb/influxdb.conf \
         influxdb:${version}-alpine
 
+  docker run  \
+            --detach \
+            --name nginx\
+             --volume ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
+             --publish 80:80 \
+             --link=influxdb \
+             nginx
+
   docker run -it --rm  \
         --volume $PWD:/usr/src/mymaven \
         --volume $PWD/.m2:/root/.m2 \
         --workdir /usr/src/mymaven \
         --link=influxdb \
+        --link=nginx \
         --env INFLUXDB_IP=influxdb \
+        --env PROXY_IP=nginx \
          maven:${java_version} mvn clean install
 
   docker kill influxdb || true
+  docker kill nginx || true
 done
 done
