@@ -20,20 +20,11 @@ public class RequestAuthenticator implements Authenticator {
 
     @Override
     public Request authenticate(final Route route, final Response response) throws IOException {
-        final int i = 3;
-        if (responseCount(response) >= i || userName == null || password == null) {
+        if (userName == null || password == null) {
             return null; // If we've failed 3 times, give up. - in real life, never give up!!
         }
         String credential = Credentials.basic(userName, password);
         return response.request().newBuilder().header("Authorization", credential).build();
     }
 
-    private int responseCount(final Response response) {
-        int result = 1;
-        Response parentResponse;
-        while ((parentResponse = response.priorResponse()) != null) {
-            result++;
-        }
-        return result;
-    }
 }

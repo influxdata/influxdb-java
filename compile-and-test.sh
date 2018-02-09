@@ -33,6 +33,7 @@ do
             --detach \
             --name nginx\
              --volume ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
+             --volume ${PWD}/.htpasswd:/etc/nginx/.htpasswd:ro \
              --publish 80:80 \
              --link=influxdb \
              nginx
