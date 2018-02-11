@@ -438,6 +438,27 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
+  public void query(final Query query, final TimeUnit timeUnit,
+                    final Consumer<QueryResult> onSuccess, final Consumer<Throwable> onFailure) {
+
+    final Call<QueryResult> call = callQuery(query, timeUnit);
+    call.enqueue(new Callback<QueryResult>() {
+      @Override
+      public void onResponse(final Call<QueryResult> call, final Response<QueryResult> response) {
+        onSuccess.accept(response.body());
+      }
+
+      @Override
+      public void onFailure(final Call<QueryResult> call, final Throwable throwable) {
+        onFailure.accept(throwable);
+      }
+    });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
     public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
 
         if (version().startsWith("0.") || version().startsWith("1.0")) {
@@ -560,6 +581,20 @@ public class InfluxDBImpl implements InfluxDB {
     return call;
   }
 
+  /**
+   * Calls the influxDBService for the query.
+   */
+  private Call<QueryResult> callQuery(final Query query, final TimeUnit timeUnit) {
+    Call<QueryResult> call;
+    if (query.requiresPost()) {
+      call = this.influxDBService.postQuery(this.username,
+              this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+    } else {
+      call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+              TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+    }
+    return call;
+  }
 
   private <T> T execute(final Call<T> call) {
     try {
