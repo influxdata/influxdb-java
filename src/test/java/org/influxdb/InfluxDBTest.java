@@ -27,6 +27,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static org.junit.Assert.*;
+
 /**
  * Test the InfluxDB API.
  *
@@ -106,6 +108,104 @@ public class InfluxDBTest {
 
 		// Will throw exception in case of error.
 		result.result();
+	}
+
+	/**
+	 * Tests for callback query variant with TimeUnit.
+	 */
+	@Test
+	public void testCallbackQueryWithTimeUnit() throws Throwable {
+
+		// first write some data
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy(rp).build();
+		Point point1 = Point
+				.measurement("cpu")
+				.addField("idle", 90L)
+				.time(1_000_000, TimeUnit.MICROSECONDS)
+				.build();
+		batchPoints.point(point1);
+		this.influxDB.write(batchPoints);
+
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+
+		final Consumer<QueryResult> onSuccess  = queryResult -> {
+            final QueryResult.Series series = queryResult.getResults().get(0).getSeries().get(0);
+            final Object time = series.getValues().get(0).get(0);
+            // time should be a number 1000000
+            assertFalse(time instanceof String);
+            assertEquals(time, 1000000.0);
+            influxDB.deleteDatabase(dbName);
+            countDownLatch.countDown();
+        };
+
+		this.influxDB.query(query, TimeUnit.MICROSECONDS, onSuccess, throwable -> {
+			influxDB.deleteDatabase(dbName);
+			fail("The query has failed");
+		});
+		Assertions.assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+	}
+
+	/**
+	 * Tests for query variant with TimeUnit.
+	 */
+	@Test
+	public void testQueryWithTimeUnit() throws Throwable {
+
+		// first write some data
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy(rp).build();
+		Point point1 = Point
+				.measurement("cpu")
+				.addField("idle", 90L)
+				.time(1_000_000, TimeUnit.MICROSECONDS)
+				.build();
+		batchPoints.point(point1);
+		this.influxDB.write(batchPoints);
+
+		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+		final QueryResult result = this.influxDB.query(query, TimeUnit.MICROSECONDS);
+		final QueryResult.Series series = result.getResults().get(0).getSeries().get(0);
+		final Object time = series.getValues().get(0).get(0);
+		// time should be a number 1000000
+		assertFalse(time instanceof String);
+		assertEquals(time, 1000000.0);
+		influxDB.deleteDatabase(dbName);
+	}
+
+	/**
+	 * Tests for query variant without TimeUnit. This shoudl return timestamp as a string in RFC3339
+	 */
+	@Test
+	public void testQueryWithoutTimeUnit() throws Throwable {
+
+		// first write some data
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy(rp).build();
+		Point point1 = Point
+				.measurement("cpu")
+				.addField("idle", 90L)
+				.time(1_000_000, TimeUnit.MICROSECONDS)
+				.build();
+		batchPoints.point(point1);
+		this.influxDB.write(batchPoints);
+
+		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+		final QueryResult result = this.influxDB.query(query);
+		final QueryResult.Series series = result.getResults().get(0).getSeries().get(0);
+		final Object time = series.getValues().get(0).get(0);
+		// time should be a string
+		assertTrue(time instanceof String);
+		// 1_000_000 microseconds is 1 second, so the timestamp = epoch+1sec
+		assertEquals(time, "1970-01-01T00:00:01Z");
+		influxDB.deleteDatabase(dbName);
 	}
 
 	/**
