@@ -65,13 +65,22 @@ influxDB.enableBatch(BatchOptions.DEFAULTS.exceptionHandler(
 );
 ```
 
+With batching enabled the client provides two strategies how to deal with errors thrown by the InfluxDB server. 
+
+   1. 'One shot' write - on failed write request to InfluxDB server an error is reported to the client using the means mentioned above.        
+   2. 'Retry on error' write (used by default) - on failed write the request by the client is repeated after batchInterval elapses 
+       (if there is a chance the write will succeed - the error was caused by overloading the server, a network error etc.) 
+       When new data points are written before the previous (failed) points are successfully written, those are queued inside the client 
+       and wait until older data points are successfully written. 
+       Size of this queue is limited and configured by `BatchOptions.bufferLimit` property. When the limit is reached, the oldest points
+       in the queue are dropped. 'Retry on error' strategy is used when individual write batch size defined by `BatchOptions.actions` is lower than `BatchOptions.bufferLimit`.
+
 Note:
 * Batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 * `InfluxDB.enableBatch(BatchOptions)` is available since version 2.9. Prior versions use `InfluxDB.enableBatch(actions, flushInterval, timeUnit)` or similar based on the configuration parameters you want to set. 
 * APIs to create and drop retention policies are supported only in versions > 2.7
 * If you are using influxdb < 2.8, you should use retention policy: 'autogen'
 * If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
-
 
 If your points are written into different databases and retention policies, the more complex InfluxDB.write() methods can be used:
 
@@ -105,6 +114,7 @@ influxDB.dropRetentionPolicy(rpName, dbName);
 influxDB.deleteDatabase(dbName);
 influxDB.close();
 ```
+ 
 
 #### Synchronous writes
 

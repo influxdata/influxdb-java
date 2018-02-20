@@ -12,6 +12,7 @@ import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okio.BufferedSource;
+
 import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
@@ -194,11 +195,20 @@ public class InfluxDBImpl implements InfluxDB {
 
   @Override
   public InfluxDB enableBatch(final BatchOptions batchOptions) {
-    enableBatch(batchOptions.getActions(),
-            batchOptions.getFlushDuration(),
-            batchOptions.getJitterDuration(),
-            TimeUnit.MILLISECONDS, batchOptions.getThreadFactory(),
-            batchOptions.getExceptionHandler());
+
+    if (this.batchEnabled.get()) {
+      throw new IllegalStateException("BatchProcessing is already enabled.");
+    }
+    this.batchProcessor = BatchProcessor
+            .builder(this)
+            .actions(batchOptions.getActions())
+            .exceptionHandler(batchOptions.getExceptionHandler())
+            .interval(batchOptions.getFlushDuration(), batchOptions.getJitterDuration(), TimeUnit.MILLISECONDS)
+            .threadFactory(batchOptions.getThreadFactory())
+            .bufferLimit(batchOptions.getBufferLimit())
+            .consistencyLevel(batchOptions.getConsistency())
+            .build();
+    this.batchEnabled.set(true);
     return this;
   }
 
@@ -560,6 +570,9 @@ public class InfluxDBImpl implements InfluxDB {
     return call;
   }
 
+  static class ErrorMessage {
+    public String error;
+  }
 
   private <T> T execute(final Call<T> call) {
     try {
@@ -568,7 +581,7 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        throw new InfluxDBException(errorBody.string());
+        throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
       }
     } catch (IOException e) {
       throw new InfluxDBIOException(e);

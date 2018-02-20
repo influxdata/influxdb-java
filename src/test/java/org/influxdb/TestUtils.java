@@ -1,5 +1,6 @@
 package org.influxdb;
 
+import okhttp3.OkHttpClient;
 import org.influxdb.dto.Pong;
 
 import java.io.IOException;
@@ -47,8 +48,20 @@ public class TestUtils {
 		}
 	}
 
-	public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
-    InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+  public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
+    return connectToInfluxDB(null);
+  }
+
+	public static InfluxDB connectToInfluxDB( final OkHttpClient.Builder client) throws InterruptedException, IOException {
+    OkHttpClient.Builder clientToUse;
+    if (client == null) {
+      clientToUse = new OkHttpClient.Builder();
+    } else {
+      clientToUse = client;
+    }
+    InfluxDB influxDB = InfluxDBFactory.connect(
+            "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true),
+            "admin", "admin", clientToUse);
     boolean influxDBstarted = false;
     do {
       Pong response;

@@ -280,4 +280,31 @@ public class BatchPoints {
     }
     return sb.toString();
   }
+
+  /**
+   * Test whether is possible to merge two BatchPoints objects.
+   *
+   * @param that batch point to merge in
+   * @return true if the batch points can be sent in a single HTTP request write
+   */
+  public boolean isMergeAbleWith(final BatchPoints that) {
+    return Objects.equals(database, that.database)
+            && Objects.equals(retentionPolicy, that.retentionPolicy)
+            && Objects.equals(tags, that.tags)
+            && consistency == that.consistency;
+  }
+
+  /**
+   * Merge two BatchPoints objects.
+   *
+   * @param that batch point to merge in
+   * @return true if the batch points have been merged into this BatchPoints instance. Return false otherwise.
+   */
+  public boolean mergeIn(final BatchPoints that) {
+    boolean mergeAble = isMergeAbleWith(that);
+    if (mergeAble) {
+      this.points.addAll(that.points);
+    }
+    return mergeAble;
+  }
 }

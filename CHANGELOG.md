@@ -6,6 +6,8 @@
 
 - New extensible API to configure batching properties.  [PR #409] 
 - New configuration property 'jitter interval' to avoid multiple clients hit the server periodically at the same time. [PR #409] 
+- New strategy on handling errors, client performs retries writes when server gets overloaded [PR #410]
+- New exceptions give the client user easier way to classify errors reported by the server. [PR #410] 
 
 ## 2.8 [2017-12-06]
 

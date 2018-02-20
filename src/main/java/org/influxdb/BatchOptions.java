@@ -23,10 +23,12 @@ public final class BatchOptions implements Cloneable {
   public static final int DEFAULT_BATCH_ACTIONS_LIMIT = 1000;
   public static final int DEFAULT_BATCH_INTERVAL_DURATION = 1000;
   public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
+  public static final int DEFAULT_BUFFER_LIMIT = 10000;
 
   private int actions = DEFAULT_BATCH_ACTIONS_LIMIT;
   private int flushDuration = DEFAULT_BATCH_INTERVAL_DURATION;
   private int jitterDuration = DEFAULT_JITTER_INTERVAL_DURATION;
+  private int bufferLimit = DEFAULT_BUFFER_LIMIT;
 
   private ThreadFactory threadFactory = Executors.defaultThreadFactory();
   BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {
@@ -67,6 +69,22 @@ public final class BatchOptions implements Cloneable {
   public BatchOptions jitterDuration(final int jitterDuration) {
     BatchOptions clone = getClone();
     clone.jitterDuration = jitterDuration;
+    return clone;
+  }
+
+  /**
+   * The client maintains a buffer for failed writes so that the writes will be retried later on. This may
+   * help to overcome temporary network problems or InfluxDB load spikes.
+   * When the buffer is full and new points are written, oldest entries in the buffer are lost.
+   *
+   * To disable this feature set buffer limit to a value smaller than {@link BatchOptions#getActions}
+   *
+   * @param bufferLimit maximum number of points stored in the retry buffer
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
+   */
+  public BatchOptions bufferLimit(final int bufferLimit) {
+    BatchOptions clone = getClone();
+    clone.bufferLimit = bufferLimit;
     return clone;
   }
 
@@ -120,6 +138,13 @@ public final class BatchOptions implements Cloneable {
    */
   public int getJitterDuration() {
     return jitterDuration;
+  }
+
+  /**
+   * @return Maximum number of points stored in the retry buffer, see {@link BatchOptions#bufferLimit(int)}
+   */
+  public int getBufferLimit() {
+    return bufferLimit;
   }
 
   /**
