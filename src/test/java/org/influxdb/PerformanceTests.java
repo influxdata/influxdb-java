@@ -3,6 +3,8 @@ package org.influxdb;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -10,7 +12,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 
+import static org.mockito.Mockito.*;
+
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -143,6 +149,62 @@ public class PerformanceTests {
 
     this.influxDB.deleteDatabase(dbName);
     Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
+  }
+	
+  @Test
+  public void testRetryWritePointsInBatch() throws InterruptedException {
+    String dbName = "d";
+    
+    InfluxDB spy = spy(influxDB);
+    TestAnswer answer = new TestAnswer() {
+      boolean started = false;
+      InfluxDBException influxDBException = new InfluxDBException(new SocketTimeoutException());
+      @Override
+      protected void check(InvocationOnMock invocation) {
+        if (started || System.currentTimeMillis() >= (Long) params.get("startTime")) {
+          System.out.println("call real");
+          started = true;
+        } else {
+          System.out.println("throw");
+          throw influxDBException;
+        }
+      }
+    };
+    
+    answer.params.put("startTime", System.currentTimeMillis() + 80000);
+    doAnswer(answer).when(spy).write(any(BatchPoints.class));
+    
+    spy.createDatabase(dbName);
+    BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(100000).flushDuration(20000).bufferLimit(3000000).exceptionHandler((points, throwable) -> {
+      System.out.println("+++++++++++ exceptionHandler +++++++++++");
+      System.out.println(throwable);
+      System.out.println("++++++++++++++++++++++++++++++++++++++++");
+    });
+    
+    //this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
+    spy.enableBatch(batchOptions);
+    String rp = TestUtils.defaultRetentionPolicy(spy.version());
+
+    for (long i = 0; i < 400000; i++) {
+      Point point = Point.measurement("s").time(i, TimeUnit.MILLISECONDS).addField("v", 1.0).build();
+      spy.write(dbName, rp, point);
+    }
+    
+    System.out.println("sleep");
+    Thread.sleep(120000);
+    try {
+      QueryResult result = spy.query(new Query("select count(v) from s", dbName));
+      double d = Double.parseDouble(result.getResults().get(0).getSeries().get(0).getValues().get(0).get(1).toString());
+      Assertions.assertEquals(400000, d);
+    } catch (Exception e) {
+      System.out.println("+++++++++++++++++count() +++++++++++++++++++++");
+      System.out.println(e);
+      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++");
+      
+    }
+
+    spy.disableBatch();
+    spy.deleteDatabase(dbName);
   }
 
 }
