@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.9 [2017-02-27]
+## 2.9 [unreleased]
 
 ### Features
 
