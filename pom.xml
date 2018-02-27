@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
   <packaging>jar</packaging>
-  <version>2.9-SNAPSHOT</version>
+  <version>2.9</version>
   <name>influxdb java bindings</name>
   <description>Java API to access the InfluxDB REST API</description>
   <url>http://www.influxdb.org</url>
@@ -29,6 +28,7 @@
     <connection>scm:git:git@github.com:influxdata/influxdb-java.git</connection>
     <developerConnection>scm:git:git@github.com:influxdata/influxdb-java.git</developerConnection>
     <url>git@github.com:influxdata/influxdb-java.git</url>
+    <tag>influxdb-java-2.9</tag>
   </scm>
 
   <developers>
