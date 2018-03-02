@@ -110,6 +110,8 @@ public class InfluxDBResultMapper {
    */
   public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz, final String measurementName)
       throws InfluxDBMapperException {
+
+    Objects.requireNonNull(measurementName, "measurementName");
     Objects.requireNonNull(queryResult, "queryResult");
     Objects.requireNonNull(clazz, "clazz");
 
@@ -118,19 +120,14 @@ public class InfluxDBResultMapper {
 
     List<T> result = new LinkedList<T>();
 
-    if (measurementName == null || measurementName.isEmpty())
-    {
-      throw new IllegalArgumentException("measurementName must not be null or empty");
-    }
-
     queryResult.getResults().stream()
-        .filter(internalResult -> Objects.nonNull(internalResult) && Objects.nonNull(internalResult.getSeries()))
-        .forEach(internalResult -> {
-          internalResult.getSeries().stream()
-              .filter(series -> series.getName().equals(measurementName))
-              .forEachOrdered(series -> {
-                parseSeriesAs(series, clazz, result);
-              });
+      .filter(internalResult -> Objects.nonNull(internalResult) && Objects.nonNull(internalResult.getSeries()))
+      .forEach(internalResult -> {
+        internalResult.getSeries().stream()
+          .filter(series -> series.getName().equals(measurementName))
+          .forEachOrdered(series -> {
+            parseSeriesAs(series, clazz, result);
+          });
         });
 
     return result;
