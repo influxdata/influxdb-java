@@ -364,7 +364,7 @@ public class Point {
     }
   }
 
-  static void escapeKey(StringBuilder sb, String key) {
+  static void escapeKey(final StringBuilder sb, final String key) {
     for (int i = 0; i < key.length(); i++) {
       switch (key.charAt(i)) {
         case ' ':
@@ -377,7 +377,7 @@ public class Point {
     }
   }
 
-  static void escapeField(StringBuilder sb, String field) {
+  static void escapeField(final StringBuilder sb, final String field) {
     for (int i = 0; i < field.length(); i++) {
       switch (field.charAt(i)) {
         case '\\':
