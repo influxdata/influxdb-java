@@ -4,7 +4,7 @@
 #
 set -e
 
-INFLUXDB_VERSIONS="1.4 1.3 1.2 1.1"
+INFLUXDB_VERSIONS="1.5 1.4 1.3 1.2 1.1"
 
 JAVA_VERSIONS="3-jdk-8-alpine 3-jdk-9-slim"
 
