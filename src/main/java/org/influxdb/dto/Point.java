@@ -176,7 +176,7 @@ public class Point {
     /**
      * Add a time to this point.
      *
-     * @param timeToSet      the time for this point
+     * @param timeToSet the time for this point
      * @param precisionToSet the TimeUnit
      * @return the Builder instance.
      */
@@ -199,8 +199,8 @@ public class Point {
       point.setFields(this.fields);
       point.setMeasurement(this.measurement);
       if (this.time != null) {
-        point.setTime(this.time);
-        point.setPrecision(this.precision);
+          point.setTime(this.time);
+          point.setPrecision(this.precision);
       }
       point.setTags(this.tags);
       return point;
