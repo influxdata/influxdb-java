@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.influxdb.impl.Preconditions;
 
@@ -26,11 +25,6 @@ public class Point {
   private Long time;
   private TimeUnit precision = TimeUnit.NANOSECONDS;
   private Map<String, Object> fields;
-
-  private static final Function<String, String> FIELD_ESCAPER = s ->
-      s.replace("\\", "\\\\").replace("\"", "\\\"");
-  private static final Function<String, String> KEY_ESCAPER = s ->
-      s.replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=");
   private static final int MAX_FRACTION_DIGITS = 340;
   private static final ThreadLocal<NumberFormat> NUMBER_FORMATTER =
           ThreadLocal.withInitial(() -> {
@@ -329,10 +323,10 @@ public class Point {
 
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
-      sb.append(',')
-        .append(KEY_ESCAPER.apply(tag.getKey()))
-        .append('=')
-        .append(KEY_ESCAPER.apply(tag.getValue()));
+      sb.append(',');
+      escapeKey(sb, tag.getKey());
+      sb.append('=');
+      escapeKey(sb, tag.getValue());
     }
     sb.append(' ');
   }
@@ -343,8 +337,8 @@ public class Point {
       if (value == null) {
         continue;
       }
-
-      sb.append(KEY_ESCAPER.apply(field.getKey())).append('=');
+      escapeKey(sb, field.getKey());
+      sb.append('=');
       if (value instanceof Number) {
         if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
           sb.append(NUMBER_FORMATTER.get().format(value));
@@ -353,7 +347,9 @@ public class Point {
         }
       } else if (value instanceof String) {
         String stringValue = (String) value;
-        sb.append('"').append(FIELD_ESCAPER.apply(stringValue)).append('"');
+        sb.append('"');
+        escapeField(sb, stringValue);
+        sb.append('"');
       } else {
         sb.append(value);
       }
@@ -365,6 +361,31 @@ public class Point {
     int lengthMinusOne = sb.length() - 1;
     if (sb.charAt(lengthMinusOne) == ',') {
       sb.setLength(lengthMinusOne);
+    }
+  }
+
+  static void escapeKey(final StringBuilder sb, final String key) {
+    for (int i = 0; i < key.length(); i++) {
+      switch (key.charAt(i)) {
+        case ' ':
+        case ',':
+        case '=':
+          sb.append('\\');
+        default:
+          sb.append(key.charAt(i));
+      }
+    }
+  }
+
+  static void escapeField(final StringBuilder sb, final String field) {
+    for (int i = 0; i < field.length(); i++) {
+      switch (field.charAt(i)) {
+        case '\\':
+        case '\"':
+          sb.append('\\');
+        default:
+          sb.append(field.charAt(i));
+      }
     }
   }
 
@@ -380,7 +401,7 @@ public class Point {
     private final int length;
 
     MeasurementStringBuilder(final String measurement) {
-      this.sb.append(KEY_ESCAPER.apply(measurement));
+      escapeKey(this.sb, measurement);
       this.length = sb.length();
     }
 
