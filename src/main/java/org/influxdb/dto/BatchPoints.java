@@ -253,17 +253,17 @@ public class BatchPoints {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("BatchPoints [database=");
-    builder.append(this.database);
-    builder.append(", retentionPolicy=");
-    builder.append(this.retentionPolicy);
-    builder.append(", consistency=");
-    builder.append(this.consistency);
-    builder.append(", tags=");
-    builder.append(this.tags);
-    builder.append(", points=");
-    builder.append(this.points);
-    builder.append("]");
+    builder.append("BatchPoints [database=")
+           .append(this.database)
+           .append(", retentionPolicy=")
+           .append(this.retentionPolicy)
+           .append(", consistency=")
+           .append(this.consistency)
+           .append(", tags=")
+           .append(this.tags)
+           .append(", points=")
+           .append(this.points)
+           .append("]");
     return builder.toString();
   }
 
