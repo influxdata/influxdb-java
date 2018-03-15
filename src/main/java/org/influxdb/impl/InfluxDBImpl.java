@@ -18,6 +18,7 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
 import org.influxdb.InfluxDBIOException;
 import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.BoundParameterQuery;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
@@ -454,8 +455,16 @@ public class InfluxDBImpl implements InfluxDB {
             throw new UnsupportedOperationException("chunking not supported");
         }
 
-        Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
-                query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+        Call<ResponseBody> call = null;
+        if (query instanceof BoundParameterQuery) {
+            BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+            call = this.influxDBService.query(this.username, this.password,
+                    query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+                    boundParameterQuery.getParameterJsonWithUrlEncoded());
+        } else {
+            call = this.influxDBService.query(this.username, this.password,
+                    query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+        }
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -496,8 +505,17 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public QueryResult query(final Query query, final TimeUnit timeUnit) {
-    return execute(this.influxDBService.query(this.username, this.password, query.getDatabase(),
-        TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded()));
+    Call<QueryResult> call = null;
+    if (query instanceof BoundParameterQuery) {
+        BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+        call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+                TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(),
+                boundParameterQuery.getParameterJsonWithUrlEncoded());
+    } else {
+        call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+                TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+    }
+    return execute(call);
   }
 
   /**
@@ -560,12 +578,19 @@ public class InfluxDBImpl implements InfluxDB {
    */
   private Call<QueryResult> callQuery(final Query query) {
     Call<QueryResult> call;
-    if (query.requiresPost()) {
-      call = this.influxDBService.postQuery(this.username,
-              this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+    if (query instanceof BoundParameterQuery) {
+        BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+        call = this.influxDBService.postQuery(this.username,
+                this.password, query.getDatabase(), query.getCommandWithUrlEncoded(),
+                boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
-      call = this.influxDBService.query(this.username,
-              this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+        if (query.requiresPost()) {
+          call = this.influxDBService.postQuery(this.username,
+                  this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+        } else {
+          call = this.influxDBService.query(this.username,
+                  this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+        }
     }
     return call;
   }
