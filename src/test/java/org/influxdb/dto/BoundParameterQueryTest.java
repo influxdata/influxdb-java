@@ -64,6 +64,24 @@ public class BoundParameterQueryTest {
     }
 
     @Test
+    public void testDifferentTypePlaceHolderParsing() throws IOException {
+        BoundParameterQuery query = QueryBuilder.newQuery("SELECT * FROM abc WHERE number > $number"
+                + " AND bool = $bool AND string = $string AND other = $object")
+                .forDatabase("foobar")
+                .bind("number", 0)
+                .bind("bool", true)
+                .bind("string", "test")
+                .bind("object", new Object())
+                .create();
+        Map<String, Object> params = readObject(decode(query.getParameterJsonWithUrlEncoded()));
+        Assert.assertEquals(4, params.size());
+        Assert.assertEquals(params.get("number"), 0.0);
+        Assert.assertEquals(params.get("bool"), true);
+        Assert.assertEquals(params.get("string"), "test");
+        Assert.assertTrue(((String)params.get("object")).matches("java.lang.Object@[a-z0-9]+"));
+    }
+
+    @Test
     public void testIgnoreInvalidPlaceholders() throws UnsupportedEncodingException {
         BoundParameterQuery query = QueryBuilder.newQuery("SELECT * FROM abc WHERE a > $")
                 .forDatabase("foobar")
