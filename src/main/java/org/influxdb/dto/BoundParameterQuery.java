@@ -20,11 +20,6 @@ public class BoundParameterQuery extends Query {
         super(command, database, true);
     }
 
-    public BoundParameterQuery bind(String placeholder, Object value) {
-        params.put(placeholder, value);
-        return this;
-    }
-
     public String getParameterJsonWithUrlEncoded() {
         try {
             List<String> placeholders = parsePlaceHolders(getCommand());
