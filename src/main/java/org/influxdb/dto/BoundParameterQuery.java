@@ -12,111 +12,114 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import okio.Buffer;
 
-public class BoundParameterQuery extends Query {
+public final class BoundParameterQuery extends Query {
 
-    private final Map<String, Object> params = new HashMap<>();
+  private final Map<String, Object> params = new HashMap<>();
 
-    private BoundParameterQuery(final String command, final String database) {
-        super(command, database, true);
+  private BoundParameterQuery(final String command, final String database) {
+    super(command, database, true);
+  }
+
+  public String getParameterJsonWithUrlEncoded() {
+    try {
+      List<String> placeholders = parsePlaceHolders(getCommand());
+      assurePlaceholdersAreBound(placeholders, params);
+      String jsonParameterObject = createJsonObject(params);
+      String urlEncodedJsonParameterObject = encode(jsonParameterObject);
+      return urlEncodedJsonParameterObject;
+    } catch (IOException e) {
+      throw new RuntimeException("Couldn't create parameter JSON object", e);
+    }
+  }
+
+  private void assurePlaceholdersAreBound(final List<String> placeholders, final Map<String, Object> params) {
+    if (placeholders.size() != params.size()) {
+      throw new RuntimeException("Unbalanced amount of placeholders and parameters");
     }
 
-    public String getParameterJsonWithUrlEncoded() {
-        try {
-            List<String> placeholders = parsePlaceHolders(getCommand());
-            assurePlaceholdersAreBound(placeholders, params);
-            String jsonParameterObject = createJsonObject(params);
-            String urlEncodedJsonParameterObject = encode(jsonParameterObject);
-            return urlEncodedJsonParameterObject;
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't create parameter JSON object", e);
-        }
+    for (String placeholder : placeholders) {
+      if (params.get(placeholder) == null) {
+        throw new RuntimeException("Placeholder $" + placeholder + " is not bound");
+      }
+    }
+  }
+
+  private String createJsonObject(final Map<String, Object> parameterMap) throws IOException {
+    Buffer b = new Buffer();
+    JsonWriter writer = JsonWriter.of(b);
+    writer.beginObject();
+    for (Entry<String, Object> pair : parameterMap.entrySet()) {
+      String name = pair.getKey();
+      Object value = pair.getValue();
+      if (value instanceof Number) {
+        writer.name(name).value((Number) value);
+      } else if (value instanceof String) {
+        writer.name(name).value((String) value);
+      } else if (value instanceof Boolean) {
+        writer.name(name).value((Boolean) value);
+      } else {
+        writer.name(name).value(value.toString());
+      }
+    }
+    writer.endObject();
+    return b.readString(Charset.forName("utf-8"));
+  }
+
+  private List<String> parsePlaceHolders(final String command) {
+    List<String> placeHolders = new ArrayList<>();
+    Pattern p = Pattern.compile("\\s+\\$(\\w+?)(?:\\s|$)");
+    Matcher m = p.matcher(getCommand());
+    while (m.find()) {
+      placeHolders.add(m.group(1));
+    }
+    return placeHolders;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + params.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!super.equals(obj)) {
+      return false;
+    }
+    BoundParameterQuery other = (BoundParameterQuery) obj;
+    if (!params.equals(other.params)) {
+      return false;
+    }
+    return true;
+  }
+
+  public static class QueryBuilder {
+    private BoundParameterQuery query;
+    private String influxQL;
+
+    public static QueryBuilder newQuery(final String influxQL) {
+      QueryBuilder instance = new QueryBuilder();
+      instance.influxQL = influxQL;
+      return instance;
     }
 
-    private void assurePlaceholdersAreBound(List<String> placeholders, Map<String, Object> params) {
-        if (placeholders.size() != params.size()) {
-            throw new RuntimeException("Unbalanced amount of placeholders and parameters");
-        }
-
-        for (String placeholder : placeholders) {
-            if (params.get(placeholder) == null) {
-                throw new RuntimeException("Placeholder $" + placeholder + " is not bound");
-            }
-        }
+    public QueryBuilder forDatabase(final String database) {
+      query = new BoundParameterQuery(influxQL, database);
+      return this;
     }
 
-    private String createJsonObject(final Map<String, Object> parameterMap) throws IOException {
-        Buffer b = new Buffer();
-        JsonWriter writer = JsonWriter.of(b);
-        writer.beginObject();
-        for (Entry<String, Object> pair : parameterMap.entrySet()) {
-            String name = pair.getKey();
-            Object value = pair.getValue();
-            if (value instanceof Number) {
-                writer.name(name).value((Number) value);
-            } else if (value instanceof String) {
-                writer.name(name).value((String) value);
-            } else if (value instanceof Boolean) {
-                writer.name(name).value((Boolean) value);
-            } else {
-                writer.name(name).value(value.toString());
-            }
-        }
-        writer.endObject();
-        return b.readString(Charset.forName("utf-8"));
+    public QueryBuilder bind(final String placeholder, final Object value) {
+      query.params.put(placeholder, value);
+      return this;
     }
 
-    private List<String> parsePlaceHolders(final String command) {
-        List<String> placeHolders = new ArrayList<>();
-        Pattern p = Pattern.compile("\\s+\\$(\\w+?)(?:\\s|$)");
-        Matcher m = p.matcher(getCommand());
-        while (m.find()) {
-            placeHolders.add(m.group(1));
-        }
-        return placeHolders;
+    public BoundParameterQuery create() {
+      return query;
     }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + params.hashCode();
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        BoundParameterQuery other = (BoundParameterQuery) obj;
-        if (!params.equals(other.params))
-            return false;
-        return true;
-    }
-
-    public static class QueryBuilder {
-        private BoundParameterQuery query;
-        private String influxQL;
-
-        public static QueryBuilder newQuery(String influxQL) {
-            QueryBuilder instance = new QueryBuilder();
-            instance.influxQL = influxQL;
-            return instance;
-        }
-
-        public QueryBuilder forDatabase(String database) {
-            query = new BoundParameterQuery(influxQL, database);
-            return this;
-        }
-
-        public QueryBuilder bind(String placeholder, Object value) {
-            query.params.put(placeholder, value);
-            return this;
-        }
-
-        public BoundParameterQuery create() {
-            return query;
-        }
-    }
+  }
 }
