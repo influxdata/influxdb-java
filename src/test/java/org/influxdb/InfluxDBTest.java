@@ -92,7 +92,7 @@ public class InfluxDBTest {
 	}
 
   @Test
-  public void testBoundParameterQuery() {
+  public void testBoundParameterQuery() throws InterruptedException {
     // set up
     Point point = Point
         .measurement("cpu")
@@ -118,6 +118,20 @@ public class InfluxDBTest {
     Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
     series = result.getResults().get(0).getSeries().get(0);
     Assertions.assertTrue(series.getValues().size() == 1);
+
+    Object waitForTestresults = new Object();
+    Consumer<QueryResult> check = (queryResult) -> {
+      Assertions.assertTrue(queryResult.getResults().get(0).getSeries().size() == 1);
+      Series s = queryResult.getResults().get(0).getSeries().get(0);
+      Assertions.assertTrue(s.getValues().size() == 1);
+      synchronized (waitForTestresults) {
+        waitForTestresults.notifyAll();
+      }
+    };
+    this.influxDB.query(query, 10, check);
+    synchronized (waitForTestresults) {
+      waitForTestresults.wait(2000);
+    }
   }
 
 	/**

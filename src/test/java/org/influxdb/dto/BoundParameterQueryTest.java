@@ -120,6 +120,18 @@ public class BoundParameterQueryTest {
     } catch (RuntimeException rte) {
       // expected
     }
+
+    // unbound placeholder
+    try {
+      BoundParameterQuery query = QueryBuilder.newQuery("SELECT * FROM abc WHERE a > $abc")
+          .forDatabase("foobar")
+          .bind("bcd", 10)
+          .create();
+      query.getParameterJsonWithUrlEncoded();
+      Assert.fail("Expected RuntimeException because of unbound placeholder");
+    } catch (RuntimeException rte) {
+      // expected
+    }
   }
 
   @Test
@@ -136,6 +148,10 @@ public class BoundParameterQueryTest {
         .forDatabase(stringA1)
         .bind("a", 0)
         .create();
+    Query queryA2 = QueryBuilder.newQuery(stringA1)
+        .forDatabase(stringA1)
+        .bind("a", 10)
+        .create();
     Query queryB0 = QueryBuilder.newQuery(stringB0)
         .forDatabase(stringB0)
         .bind("b", 10)
@@ -143,6 +159,7 @@ public class BoundParameterQueryTest {
 
     assertThat(queryA0).isEqualTo(queryA0);
     assertThat(queryA0).isEqualTo(queryA1);
+    assertThat(queryA0).isNotEqualTo(queryA2);
     assertThat(queryA0).isNotEqualTo(queryB0);
     assertThat(queryA0).isNotEqualTo("foobar");
 
