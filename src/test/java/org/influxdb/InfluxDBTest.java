@@ -2,10 +2,12 @@ package org.influxdb;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.QueryResult.Series;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -88,6 +90,35 @@ public class InfluxDBTest {
 		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"));
 		this.influxDB.query(new Query("DROP DATABASE mydb2", "mydb"));
 	}
+
+  @Test
+  public void testBoundParameterQuery() {
+    // set up
+    Point point = Point
+        .measurement("cpu")
+        .tag("atag", "test")
+        .addField("idle", 90L)
+        .addField("usertime", 9L)
+        .addField("system", 1L)
+        .build();
+    this.influxDB.setDatabase(UDP_DATABASE);
+    this.influxDB.write(point);
+
+    // test
+    Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE atag = $atag")
+        .forDatabase(UDP_DATABASE)
+        .bind("atag", "test")
+        .create();
+    QueryResult result = this.influxDB.query(query);
+    Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
+    Series series = result.getResults().get(0).getSeries().get(0);
+    Assertions.assertTrue(series.getValues().size() == 1);
+
+    result = this.influxDB.query(query, TimeUnit.SECONDS);
+    Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
+    series = result.getResults().get(0).getSeries().get(0);
+    Assertions.assertTrue(series.getValues().size() == 1);
+  }
 
 	/**
 	 * Tests for callback query.
