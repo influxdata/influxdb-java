@@ -203,9 +203,10 @@ public class InfluxDBResultMapper {
       return;
     }
     Class<?> fieldType = field.getType();
-    boolean oldAccessibleState = field.isAccessible();
     try {
-      field.setAccessible(true);
+      if (!field.isAccessible()) {
+        field.setAccessible(true);
+      }
       if (fieldValueModified(fieldType, field, object, value)
         || fieldValueForPrimitivesModified(fieldType, field, object, value)
         || fieldValueForPrimitiveWrappersModified(fieldType, field, object, value)) {
@@ -219,8 +220,6 @@ public class InfluxDBResultMapper {
         + "The correct type is '%s' (current field value: '%s').";
       throw new InfluxDBMapperException(
         String.format(msg, object.getClass().getName(), field.getName(), value.getClass().getName(), value));
-    } finally {
-      field.setAccessible(oldAccessibleState);
     }
   }
 
