@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.10 [unreleased]
+
+### Features
+
+- Support for parameter binding in queries ("prepared statements") [PR #429](https://github.com/influxdata/influxdb-java/pull/429)
+
 ## 2.9 [2018-02-27]
 
 ### Features
