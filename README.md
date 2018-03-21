@@ -263,6 +263,22 @@ this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
 });
 ```
 
+#### Query using parameter binding ("prepared statements", version 2.10+ required)
+
+If your Query is based on user input, it is good practice to use parameter binding to avoid [injection attacks](https://en.wikipedia.org/wiki/SQL_injection).
+You can create queries with parameter binding with the help of the QueryBuilder:
+
+```java
+Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE idle > $idle AND system > $system") 
+        .forDatabase(dbName)
+        .bind("idle", 90)
+        .bind("system", 5)
+        .create();
+QueryResult results = influxDB.query(query);
+```
+
+The values of the bind() calls are bound to the placeholders in the query ($idle, $system). 
+
 #### Batch flush interval jittering (version 2.9+ required)
 
 When using large number of influxdb-java clients against a single server it may happen that all the clients 
