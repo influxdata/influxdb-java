@@ -188,6 +188,15 @@ public class Point {
     }
 
     /**
+     * Does this builder contain any fields?
+     *
+     * @return true, if the builder contains any fields, false otherwise.
+     */
+    public boolean hasFields() {
+      return !fields.isEmpty();
+    }
+
+    /**
      * Create a new Point.
      *
      * @return the newly created Point.
