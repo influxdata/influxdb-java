@@ -171,11 +171,11 @@ public class PerformanceTests {
       }
     };
     
-    answer.params.put("startTime", System.currentTimeMillis() + 80000);
+    answer.params.put("startTime", System.currentTimeMillis() + 8000);
     doAnswer(answer).when(spy).write(any(BatchPoints.class));
     
     spy.createDatabase(dbName);
-    BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(100000).flushDuration(20000).bufferLimit(3000000).exceptionHandler((points, throwable) -> {
+    BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(10000).flushDuration(2000).bufferLimit(300000).exceptionHandler((points, throwable) -> {
       System.out.println("+++++++++++ exceptionHandler +++++++++++");
       System.out.println(throwable);
       System.out.println("++++++++++++++++++++++++++++++++++++++++");
@@ -185,17 +185,17 @@ public class PerformanceTests {
     spy.enableBatch(batchOptions);
     String rp = TestUtils.defaultRetentionPolicy(spy.version());
 
-    for (long i = 0; i < 400000; i++) {
+    for (long i = 0; i < 40000; i++) {
       Point point = Point.measurement("s").time(i, TimeUnit.MILLISECONDS).addField("v", 1.0).build();
       spy.write(dbName, rp, point);
     }
     
     System.out.println("sleep");
-    Thread.sleep(120000);
+    Thread.sleep(12000);
     try {
       QueryResult result = spy.query(new Query("select count(v) from s", dbName));
       double d = Double.parseDouble(result.getResults().get(0).getSeries().get(0).getValues().get(0).get(1).toString());
-      Assertions.assertEquals(400000, d);
+      Assertions.assertEquals(40000, d);
     } catch (Exception e) {
       System.out.println("+++++++++++++++++count() +++++++++++++++++++++");
       System.out.println(e);
