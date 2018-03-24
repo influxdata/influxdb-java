@@ -1,16 +1,20 @@
-language: java
 sudo: required
-
-jdk:
-  - oraclejdk8
-
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer # Updates JDK 8 to the latest available.
 
 services:
   - docker
+
+env:
+  - MAVEN_JAVA_VERSION=3-jdk-8-slim INFLUXDB_VERSION=1.5
+  - MAVEN_JAVA_VERSION=3-jdk-8-slim INFLUXDB_VERSION=1.4
+  - MAVEN_JAVA_VERSION=3-jdk-8-slim INFLUXDB_VERSION=1.3
+  - MAVEN_JAVA_VERSION=3-jdk-8-slim INFLUXDB_VERSION=1.2
+  - MAVEN_JAVA_VERSION=3-jdk-8-slim INFLUXDB_VERSION=1.1
+  - MAVEN_JAVA_VERSION=3-jdk-10-slim INFLUXDB_VERSION=1.5
+  - MAVEN_JAVA_VERSION=3-jdk-10-slim INFLUXDB_VERSION=1.4
+  - MAVEN_JAVA_VERSION=3-jdk-10-slim INFLUXDB_VERSION=1.3
+  - MAVEN_JAVA_VERSION=3-jdk-10-slim INFLUXDB_VERSION=1.2
+  - MAVEN_JAVA_VERSION=3-jdk-10-slim INFLUXDB_VERSION=1.1
+
 script: ./compile-and-test.sh
 
 after_success:
