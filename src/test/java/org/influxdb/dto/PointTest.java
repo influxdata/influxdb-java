@@ -330,4 +330,13 @@ public class PointTest {
 		// THEN equals returns true
 		assertThat(equals).isEqualTo(false);
 	}
+
+	@Test
+	public void testBuilderHasFields() {
+		Point.Builder pointBuilder = Point.measurement("nulltest").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar");
+		assertThat(pointBuilder.hasFields()).isFalse();
+
+		pointBuilder.addField("testfield", 256);
+		assertThat(pointBuilder.hasFields()).isTrue();
+	}
 }
