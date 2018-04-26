@@ -272,7 +272,7 @@
     <profile>
       <id>release</id>
       <properties>
-        <image>influxdb:latest</image>
+        <image>influxdb:alpine</image>
       </properties>
       <build>
         <plugins>
