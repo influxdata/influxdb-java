@@ -64,7 +64,7 @@ public class BatchPoints {
     /**
      * The retentionPolicy to use.
      *
-     * @param policy
+     * @param policy the retentionPolicy to use
      * @return the Builder instance
      */
     public Builder retentionPolicy(final String policy) {
@@ -89,7 +89,7 @@ public class BatchPoints {
     /**
      * Add a Point to this set of points.
      *
-     * @param pointToAdd
+     * @param pointToAdd the Point to add
      * @return the Builder instance
      */
     public Builder point(final Point pointToAdd) {
@@ -100,7 +100,7 @@ public class BatchPoints {
     /**
      * Add a set of Points to this set of points.
      *
-     * @param pointsToAdd
+     * @param pointsToAdd the List if Points to add
      * @return the Builder instance
      */
     public Builder points(final Point... pointsToAdd) {
@@ -111,7 +111,7 @@ public class BatchPoints {
     /**
      * Set the ConsistencyLevel to use. If not given it defaults to {@link ConsistencyLevel#ONE}
      *
-     * @param consistencyLevel
+     * @param consistencyLevel the ConsistencyLevel
      * @return the Builder instance
      */
     public Builder consistency(final ConsistencyLevel consistencyLevel) {
@@ -218,7 +218,7 @@ public class BatchPoints {
   /**
    * Add a single Point to these batches.
    *
-   * @param point
+   * @param point the Point to add
    * @return this Instance to be able to daisy chain calls.
    */
   public BatchPoints point(final Point point) {
@@ -285,19 +285,19 @@ public class BatchPoints {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("BatchPoints [database=");
-    builder.append(this.database);
-    builder.append(", retentionPolicy=");
-    builder.append(this.retentionPolicy);
-    builder.append(", consistency=");
-    builder.append(this.consistency);
-    builder.append(", tags=");
-    builder.append(this.tags);
-    builder.append(", precision=");
-    builder.append(this.precision);
-    builder.append(", points=");
-    builder.append(this.points);
-    builder.append("]");
+    builder.append("BatchPoints [database=")
+           .append(this.database)
+           .append(", retentionPolicy=")
+           .append(this.retentionPolicy)
+           .append(", consistency=")
+           .append(this.consistency)
+           .append(", tags=")
+           .append(this.tags)
+           .append(", precision=")
+           .append(this.precision)
+           .append(", points=")
+           .append(this.points)
+           .append("]");
     return builder.toString();
   }
 
@@ -314,5 +314,32 @@ public class BatchPoints {
       sb.append(point.lineProtocol(this.precision)).append("\n");
     }
     return sb.toString();
+  }
+
+  /**
+   * Test whether is possible to merge two BatchPoints objects.
+   *
+   * @param that batch point to merge in
+   * @return true if the batch points can be sent in a single HTTP request write
+   */
+  public boolean isMergeAbleWith(final BatchPoints that) {
+    return Objects.equals(database, that.database)
+            && Objects.equals(retentionPolicy, that.retentionPolicy)
+            && Objects.equals(tags, that.tags)
+            && consistency == that.consistency;
+  }
+
+  /**
+   * Merge two BatchPoints objects.
+   *
+   * @param that batch point to merge in
+   * @return true if the batch points have been merged into this BatchPoints instance. Return false otherwise.
+   */
+  public boolean mergeIn(final BatchPoints that) {
+    boolean mergeAble = isMergeAbleWith(that);
+    if (mergeAble) {
+      this.points.addAll(that.points);
+    }
+    return mergeAble;
   }
 }

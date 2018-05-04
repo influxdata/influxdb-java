@@ -81,24 +81,53 @@ public interface InfluxDB {
 
   /**
    * Enable Gzip compress for http request body.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableGzip();
 
   /**
    * Disable Gzip compress for http request body.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB disableGzip();
 
   /**
    * Returns whether Gzip compress for http request body is enabled.
+   * @return true if gzip is enabled.
    */
   public boolean isGzipEnabled();
+
+  /**
+   * Enable batching of single Point writes to speed up writes significantly. This is the same as calling
+   * InfluxDB.enableBatch(BatchingOptions.DEFAULTS)
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch();
+
+  /**
+   * Enable batching of single Point writes to speed up writes significantly. If either number of points written or
+   * flushDuration time limit is reached, a batch write is issued.
+   * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch().
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch(final BatchOptions batchOptions);
 
   /**
    * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
    * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
    *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
+   *
    * @see #enableBatch(int, int, TimeUnit, ThreadFactory)
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit);
 
@@ -107,10 +136,45 @@ public interface InfluxDB {
    * {@link #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer)}
    * using with a exceptionHandler that does nothing.
    *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
+   * @param threadFactory
+   *            a ThreadFactory instance to be used.
+   *
    * @see #enableBatch(int, int, TimeUnit, ThreadFactory, BiConsumer)
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory);
+  /**
+   * Enable batching of single Point writes with consistency set for an entire batch
+   * flushDurations is reached first, a batch write is issued.
+   * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch(). Default consistency is ONE.
+   *
+   * @param actions
+   *            the number of actions to collect
+   * @param flushDuration
+   *            the time to wait at most.
+   * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
+   * @param threadFactory
+   *            a ThreadFactory instance to be used.
+   * @param exceptionHandler
+   *            a consumer function to handle asynchronous errors
+   * @param consistency
+   *            a consistency setting for batch writes.
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+
+  InfluxDB enableBatch(int actions, int flushDuration, TimeUnit flushDurationTimeUnit,
+                       ThreadFactory threadFactory, BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                       ConsistencyLevel consistency);
 
   /**
    * Enable batching of single Point writes to speed up writes significant. If either actions or
@@ -123,7 +187,9 @@ public interface InfluxDB {
    * @param flushDuration
    *            the time to wait at most.
    * @param flushDurationTimeUnit
+   *            the TimeUnit for the given flushDuration.
    * @param threadFactory
+   *            a ThreadFactory instance to be used.
    * @param exceptionHandler
    *            a consumer function to handle asynchronous errors
    * @return the InfluxDB instance to be able to use it in a fluent manner.
@@ -139,6 +205,7 @@ public interface InfluxDB {
 
   /**
    * Returns whether Batching is enabled.
+   * @return true if batch is enabled.
    */
   public boolean isBatchEnabled();
 
@@ -168,6 +235,7 @@ public interface InfluxDB {
    * Write a set of Points to the default database with the string records.
    *
    * @param records
+   *            the points in the correct lineprotocol.
    */
   public void write(final String records);
 
@@ -175,6 +243,7 @@ public interface InfluxDB {
    * Write a set of Points to the default database with the list of string records.
    *
    * @param records
+   *            the List of points in the correct lineprotocol.
    */
   public void write(final List<String> records);
 
@@ -206,6 +275,7 @@ public interface InfluxDB {
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
    * @param batchPoints
+   *            the points to write in BatchPoints.
    */
   public void write(final BatchPoints batchPoints);
 
@@ -214,7 +284,14 @@ public interface InfluxDB {
    *
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
    * @param records
+   *            the points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
                     final ConsistencyLevel consistency, final String records);
@@ -234,7 +311,14 @@ public interface InfluxDB {
    *
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
    * @param records
+   *          the List of points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
                     final ConsistencyLevel consistency, final List<String> records);
@@ -253,7 +337,9 @@ public interface InfluxDB {
    * Write a set of Points to the influxdb database with the string records through UDP.
    *
    * @param udpPort
-   * @param records the content will be encoded by UTF-8 before sent.
+  *           the udpPort where influxdb is listening
+   * @param records
+   *          the content will be encoded by UTF-8 before sent.
    */
   public void write(final int udpPort, final String records);
 
@@ -261,7 +347,9 @@ public interface InfluxDB {
    * Write a set of Points to the influxdb database with the list of string records through UDP.
    *
    * @param udpPort
-   * @param records list of record, the content will be encoded by UTF-8 before sent.
+   *           the udpPort where influxdb is listening
+   * @param records
+   *           list of record, the content will be encoded by UTF-8 before sent.
    */
   public void write(final int udpPort, final List<String> records);
 
@@ -275,6 +363,20 @@ public interface InfluxDB {
   public QueryResult query(final Query query);
 
   /**
+   * Execute a query against a database.
+   *
+   * One of the consumers will be executed.
+   *
+   * @param query
+   *            the query to execute.
+   * @param onSuccess
+   *            the consumer to invoke when result is received
+   * @param onFailure
+   *            the consumer to invoke when error is thrown
+   */
+  public void query(final Query query, final Consumer<QueryResult> onSuccess, final Consumer<Throwable> onFailure);
+
+  /**
    * Execute a streaming query against a database.
    *
    * @param query
@@ -284,7 +386,7 @@ public interface InfluxDB {
    * @param consumer
    *            the consumer to invoke for each received QueryResult
    */
-    public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
+  public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
 
   /**
    * Execute a query against a database.
@@ -301,7 +403,10 @@ public interface InfluxDB {
    *
    * @param name
    *            the name of the new database.
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
+   *             <strong>CREATE DATABASE</strong> query.
    */
+  @Deprecated
   public void createDatabase(final String name);
 
   /**
@@ -309,14 +414,20 @@ public interface InfluxDB {
    *
    * @param name
    *            the name of the database to delete.
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
+   *             <strong>DROP DATABASE</strong> query.
    */
+  @Deprecated
   public void deleteDatabase(final String name);
 
   /**
    * Describe all available databases.
    *
    * @return a List of all Database names.
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
+   *             <strong>SHOW DATABASES</strong> query.
    */
+  @Deprecated
   public List<String> describeDatabases();
 
   /**
@@ -326,7 +437,10 @@ public interface InfluxDB {
    *            the name of the database to search.
    *
    * @return true if the database exists or false if it doesn't exist
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
+   *             <strong>SHOW DATABASES</strong> query and inspect the result.
    */
+  @Deprecated
   public boolean databaseExists(final String name);
 
   /**
@@ -368,4 +482,57 @@ public interface InfluxDB {
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB setRetentionPolicy(final String retentionPolicy);
+
+  /**
+   * Creates a retentionPolicy.
+   * @param rpName the name of the retentionPolicy(rp)
+   * @param database the name of the database
+   * @param duration the duration of the rp
+   * @param shardDuration the shardDuration
+   * @param replicationFactor the replicationFactor of the rp
+   * @param isDefault if the rp is the default rp for the database or not
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
+   *             <strong>CREATE RETENTION POLICY</strong> query.
+   */
+  @Deprecated
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor, final boolean isDefault);
+
+  /**
+   * Creates a retentionPolicy. (optional shardDuration)
+   * @param rpName the name of the retentionPolicy(rp)
+   * @param database the name of the database
+   * @param duration the duration of the rp
+   * @param replicationFactor the replicationFactor of the rp
+   * @param isDefault if the rp is the default rp for the database or not
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
+   *             <strong>CREATE RETENTION POLICY</strong> query.
+   */
+  @Deprecated
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final int replicationFactor, final boolean isDefault);
+
+  /**
+   * Creates a retentionPolicy. (optional shardDuration and isDefault)
+   * @param rpName the name of the retentionPolicy(rp)
+   * @param database the name of the database
+   * @param duration the duration of the rp
+   * @param shardDuration the shardDuration
+   * @param replicationFactor the replicationFactor of the rp
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
+   *             <strong>CREATE RETENTION POLICY</strong> query.
+   */
+  @Deprecated
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor);
+
+  /**
+   * Drops a retentionPolicy in a database.
+   * @param rpName the name of the retentionPolicy
+   * @param database the name of the database
+   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
+   *             <strong>DROP RETENTION POLICY</strong> query.
+   */
+  @Deprecated
+  public void dropRetentionPolicy(final String rpName, final String database);
 }

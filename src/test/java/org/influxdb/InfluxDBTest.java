@@ -1,6 +1,20 @@
 package org.influxdb;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.influxdb.InfluxDB.LogLevel;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
+import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.QueryResult.Series;
+import org.influxdb.impl.InfluxDBImpl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -12,27 +26,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import org.influxdb.InfluxDB.LogLevel;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.InfluxDBImpl;
-import org.influxdb.impl.TimeUtil;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 /**
  * Test the InfluxDB API.
@@ -40,48 +38,30 @@ import com.google.common.util.concurrent.Uninterruptibles;
  * @author stefan.majer [at] gmail.com
  *
  */
+@RunWith(JUnitPlatform.class)
 public class InfluxDBTest {
 
 	private InfluxDB influxDB;
 	private final static int UDP_PORT = 8089;
 	private final static String UDP_DATABASE = "udp";
 
-    @Rule public final ExpectedException exception = ExpectedException.none();
 	/**
 	 * Create a influxDB connection before all tests start.
 	 *
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
-		boolean influxDBstarted = false;
-		do {
-			Pong response;
-			try {
-				response = this.influxDB.ping();
-				if (!response.getVersion().equalsIgnoreCase("unknown")) {
-					influxDBstarted = true;
-				}
-			} catch (Exception e) {
-				// NOOP intentional
-				e.printStackTrace();
-			}
-			Thread.sleep(100L);
-		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.NONE);
+		this.influxDB = TestUtils.connectToInfluxDB();
 		this.influxDB.createDatabase(UDP_DATABASE);
-        System.out.println("################################################################################## ");
-		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
-		System.out.println("##################################################################################");
 	}
 
 	/**
 	 * delete UDP database after all tests end.
 	 */
-	//@After
-	public void clearup(){
+	@AfterEach
+	public void cleanup(){
 		this.influxDB.deleteDatabase(UDP_DATABASE);
 	}
 
@@ -91,8 +71,8 @@ public class InfluxDBTest {
 	@Test
 	public void testPing() {
 		Pong result = this.influxDB.ping();
-		Assert.assertNotNull(result);
-		Assert.assertNotEquals(result.getVersion(), "unknown");
+		Assertions.assertNotNull(result);
+		Assertions.assertNotEquals(result.getVersion(), "unknown");
 	}
 
 	/**
@@ -101,8 +81,8 @@ public class InfluxDBTest {
 	@Test
 	public void testVersion() {
 		String version = this.influxDB.version();
-		Assert.assertNotNull(version);
-		Assert.assertFalse(version.contains("unknown"));
+		Assertions.assertNotNull(version);
+		Assertions.assertFalse(version.contains("unknown"));
 	}
 
 	/**
@@ -114,6 +94,68 @@ public class InfluxDBTest {
 		this.influxDB.query(new Query("DROP DATABASE mydb2", "mydb"));
 	}
 
+  @Test
+  public void testBoundParameterQuery() throws InterruptedException {
+    // set up
+    Point point = Point
+        .measurement("cpu")
+        .tag("atag", "test")
+        .addField("idle", 90L)
+        .addField("usertime", 9L)
+        .addField("system", 1L)
+        .build();
+    this.influxDB.setDatabase(UDP_DATABASE);
+    this.influxDB.write(point);
+
+    // test
+    Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE atag = $atag")
+        .forDatabase(UDP_DATABASE)
+        .bind("atag", "test")
+        .create();
+    QueryResult result = this.influxDB.query(query);
+    Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
+    Series series = result.getResults().get(0).getSeries().get(0);
+    Assertions.assertTrue(series.getValues().size() == 1);
+
+    result = this.influxDB.query(query, TimeUnit.SECONDS);
+    Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
+    series = result.getResults().get(0).getSeries().get(0);
+    Assertions.assertTrue(series.getValues().size() == 1);
+
+    Object waitForTestresults = new Object();
+    Consumer<QueryResult> check = (queryResult) -> {
+      Assertions.assertTrue(queryResult.getResults().get(0).getSeries().size() == 1);
+      Series s = queryResult.getResults().get(0).getSeries().get(0);
+      Assertions.assertTrue(s.getValues().size() == 1);
+      synchronized (waitForTestresults) {
+        waitForTestresults.notifyAll();
+      }
+    };
+    this.influxDB.query(query, 10, check);
+    synchronized (waitForTestresults) {
+      waitForTestresults.wait(2000);
+    }
+  }
+
+	/**
+	 * Tests for callback query.
+	 */
+	@Test
+	public void testCallbackQuery() throws Throwable {
+		final AsyncResult<QueryResult> result = new AsyncResult<>();
+		final Consumer<QueryResult> firstQueryConsumer  = new Consumer<QueryResult>() {
+			@Override
+			public void accept(QueryResult queryResult) {
+				influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
+			}
+		};
+
+		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"), firstQueryConsumer, result.errorConsumer);
+
+		// Will throw exception in case of error.
+		result.result();
+	}
+
 	/**
 	 * Test that describe Databases works.
 	 */
@@ -123,8 +165,8 @@ public class InfluxDBTest {
 		this.influxDB.createDatabase(dbName);
 		this.influxDB.describeDatabases();
 		List<String> result = this.influxDB.describeDatabases();
-		Assert.assertNotNull(result);
-		Assert.assertTrue(result.size() > 0);
+		Assertions.assertNotNull(result);
+		Assertions.assertTrue(result.size() > 0);
 		boolean found = false;
 		for (String database : result) {
 			if (database.equals(dbName)) {
@@ -133,7 +175,7 @@ public class InfluxDBTest {
 			}
 
 		}
-		Assert.assertTrue("It is expected that describeDataBases contents the newly create database.", found);
+		Assertions.assertTrue(found, "It is expected that describeDataBases contents the newly create database.");
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -146,9 +188,9 @@ public class InfluxDBTest {
 		String notExistentdbName = "unittest_2";
 		this.influxDB.createDatabase(existentdbName);
 		boolean checkDbExistence = this.influxDB.databaseExists(existentdbName);
-		Assert.assertTrue("It is expected that databaseExists return true for " + existentdbName + " database", checkDbExistence);
+		Assertions.assertTrue(checkDbExistence, "It is expected that databaseExists return true for " + existentdbName + " database");
 		checkDbExistence = this.influxDB.databaseExists(notExistentdbName);
-		Assert.assertFalse("It is expected that databaseExists return false for " + notExistentdbName + " database", checkDbExistence);
+		Assertions.assertFalse(checkDbExistence, "It is expected that databaseExists return false for " + notExistentdbName + " database");
 		this.influxDB.deleteDatabase(existentdbName);
 	}
 
@@ -174,7 +216,7 @@ public class InfluxDBTest {
 		this.influxDB.write(batchPoints);
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
-		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -182,32 +224,32 @@ public class InfluxDBTest {
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s sync support.
 	 */
 	@Test
-	public void testSyncWritePointThroughUDP() {
+	public void testSyncWritePointThroughUDP() throws InterruptedException {
 		this.influxDB.disableBatch();
 		String measurement = TestUtils.getRandomMeasurement();
 		Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 		this.influxDB.write(UDP_PORT, point);
-		Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+		Thread.sleep(2000);
 		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
 		QueryResult result = this.influxDB.query(query);
-		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 	}
 
 	/**
 	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
 	 */
 	@Test
-	public void testAsyncWritePointThroughUDP() {
+	public void testAsyncWritePointThroughUDP() throws InterruptedException {
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 		try{
-			Assert.assertTrue(this.influxDB.isBatchEnabled());
+			Assertions.assertTrue(this.influxDB.isBatchEnabled());
 			String measurement = TestUtils.getRandomMeasurement();
 			Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
 			this.influxDB.write(UDP_PORT, point);
-			Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+			Thread.sleep(2000);
 			Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
 			QueryResult result = this.influxDB.query(query);
-			Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+			Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		}finally{
 			this.influxDB.disableBatch();
 		}
@@ -217,15 +259,17 @@ public class InfluxDBTest {
     /**
      *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
      */
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testAsyncWritePointThroughUDPFail() {
         this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
         try{
-            Assert.assertTrue(this.influxDB.isBatchEnabled());
+            Assertions.assertTrue(this.influxDB.isBatchEnabled());
             String measurement = TestUtils.getRandomMeasurement();
             Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
             Thread.currentThread().interrupt();
-            this.influxDB.write(UDP_PORT, point);
+            Assertions.assertThrows(RuntimeException.class, () -> {
+				this.influxDB.write(UDP_PORT, point);
+			});
         }finally{
             this.influxDB.disableBatch();
         }
@@ -242,7 +286,7 @@ public class InfluxDBTest {
         this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test idle=90,usertime=9,system=1");
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
-        Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+        Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
         this.influxDB.deleteDatabase(dbName);
     }
 
@@ -259,7 +303,7 @@ public class InfluxDBTest {
 		this.influxDB.write("cpu,atag=test idle=90,usertime=9,system=1");
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
-		Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -267,54 +311,54 @@ public class InfluxDBTest {
      * Test writing to the database using string protocol through UDP.
      */
     @Test
-    public void testWriteStringDataThroughUDP() {
+    public void testWriteStringDataThroughUDP() throws InterruptedException {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, measurement + ",atag=test idle=90,usertime=9,system=1");
         //write with UDP may be executed on server after query with HTTP. so sleep 2s to handle this case
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
-        Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+        Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
     }
 
     /**
      * Test writing multiple records to the database using string protocol through UDP.
      */
     @Test
-    public void testWriteMultipleStringDataThroughUDP() {
+    public void testWriteMultipleStringDataThroughUDP() throws InterruptedException {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, measurement + ",atag=test1 idle=100,usertime=10,system=1\n" +
                                       measurement + ",atag=test2 idle=200,usertime=20,system=2\n" +
                                       measurement + ",atag=test3 idle=300,usertime=30,system=3");
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
 
-        Assert.assertEquals(3, result.getResults().get(0).getSeries().size());
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals(3, result.getResults().get(0).getSeries().size());
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
     }
 
     /**
      * Test writing multiple separate records to the database using string protocol through UDP.
      */
     @Test
-    public void testWriteMultipleStringDataLinesThroughUDP() {
+    public void testWriteMultipleStringDataLinesThroughUDP() throws InterruptedException {
         String measurement = TestUtils.getRandomMeasurement();
         this.influxDB.write(UDP_PORT, Arrays.asList(
                 measurement + ",atag=test1 idle=100,usertime=10,system=1",
                 measurement + ",atag=test2 idle=200,usertime=20,system=2",
                 measurement + ",atag=test3 idle=300,usertime=30,system=3"
         ));
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
         QueryResult result = this.influxDB.query(query);
 
-        Assert.assertEquals(3, result.getResults().get(0).getSeries().size());
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals(3, result.getResults().get(0).getSeries().size());
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
     }
 
     /**
@@ -323,8 +367,8 @@ public class InfluxDBTest {
      * The message is larger than the maximum supported by the underlying transport: Datagram send failed
      * @throws Exception
      */
-    @Test(expected = RuntimeException.class)
-    public void writeMultipleStringDataLinesOverUDPLimit() throws Exception {
+    @Test
+    public void testWriteMultipleStringDataLinesOverUDPLimit() throws Exception {
         //prepare data
         List<String> lineProtocols = new ArrayList<String>();
         int i = 0;
@@ -339,7 +383,9 @@ public class InfluxDBTest {
             }
         }
         //write batch of string which size is over 64K
-        this.influxDB.write(UDP_PORT, lineProtocols);
+        Assertions.assertThrows(RuntimeException.class, () -> {
+			this.influxDB.write(UDP_PORT, lineProtocols);
+		});
     }
 
     /**
@@ -355,10 +401,10 @@ public class InfluxDBTest {
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
 
-        Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         this.influxDB.deleteDatabase(dbName);
     }
 
@@ -377,10 +423,10 @@ public class InfluxDBTest {
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 
-		Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-		Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-		Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-		Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+		Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+		Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+		Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+		Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -401,10 +447,10 @@ public class InfluxDBTest {
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
 
-        Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-        Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+        Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         this.influxDB.deleteDatabase(dbName);
     }
 
@@ -462,10 +508,10 @@ public class InfluxDBTest {
 
 		// THEN the measure points have a timestamp with second precision
 		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0)).isEqualTo(timeP3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
 
 		this.influxDB.deleteDatabase(dbName);
 	}
@@ -516,10 +562,10 @@ public class InfluxDBTest {
 
 		// THEN the measure points have a timestamp with second precision
 		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0)).isEqualTo(timeP3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
 
 		this.influxDB.deleteDatabase(dbName);
 	}
@@ -538,7 +584,7 @@ public class InfluxDBTest {
 		DateTimeFormatter formatter = DateTimeFormatter
 				.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 				.withZone(ZoneId.of("UTC"));
-		List<String> records = Lists.newArrayList();
+		List<String> records = new ArrayList<>();
 		records.add(measurement + ",atag=test1 idle=100,usertime=10,system=1 1485273600");
 		String timeP1 = formatter.format(Instant.ofEpochSecond(1485273600));
 
@@ -553,10 +599,10 @@ public class InfluxDBTest {
 
 		// THEN the measure points have a timestamp with second precision
 		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().size()).isEqualTo(3);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0)).isEqualTo(timeP1);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0)).isEqualTo(timeP2);
-		assertThat(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0)).isEqualTo(timeP3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -579,11 +625,10 @@ public class InfluxDBTest {
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 
-		Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-		Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-		Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-		Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
-
+		Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+		Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+		Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+		Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
 		this.influxDB.deleteDatabase(dbName);
 	}
 
@@ -596,17 +641,19 @@ public class InfluxDBTest {
 
 		this.influxDB.createDatabase(numericDbName);
 		List<String> result = this.influxDB.describeDatabases();
-		Assert.assertTrue(result.contains(numericDbName));
+		Assertions.assertTrue(result.contains(numericDbName));
 		this.influxDB.deleteDatabase(numericDbName);
 	}
 
     /**
      * Test that creating database which name is empty will throw expected exception
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateEmptyNamedDatabase() {
         String emptyName = "";
-        this.influxDB.createDatabase(emptyName);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+			this.influxDB.createDatabase(emptyName);
+		});
     }
 
     /**
@@ -618,7 +665,7 @@ public class InfluxDBTest {
         this.influxDB.createDatabase(databaseName);
         try {
             List<String> result = this.influxDB.describeDatabases();
-            Assert.assertTrue(result.contains(databaseName));
+            Assertions.assertTrue(result.contains(databaseName));
         } finally {
             this.influxDB.deleteDatabase(databaseName);
         }
@@ -629,13 +676,13 @@ public class InfluxDBTest {
 	 */
 	@Test
 	public void testIsBatchEnabled() {
-		Assert.assertFalse(this.influxDB.isBatchEnabled());
+		Assertions.assertFalse(this.influxDB.isBatchEnabled());
 
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-		Assert.assertTrue(this.influxDB.isBatchEnabled());
+		Assertions.assertTrue(this.influxDB.isBatchEnabled());
 
 		this.influxDB.disableBatch();
-		Assert.assertFalse(this.influxDB.isBatchEnabled());
+		Assertions.assertFalse(this.influxDB.isBatchEnabled());
 	}
 
 	/**
@@ -662,29 +709,35 @@ public class InfluxDBTest {
 			}
 
 		}
-		Assert.assertTrue(existThreadWithSettedName);
+		Assertions.assertTrue(existThreadWithSettedName);
 		this.influxDB.disableBatch();
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testBatchEnabledWithThreadFactoryIsNull() {
-		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, null);
+		Assertions.assertThrows(NullPointerException.class, () -> {
+			this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, null);
+		});
 	}
 
 	/**
 	 * Test the implementation of {@link InfluxDBImpl#InfluxDBImpl(String, String, String, okhttp3.OkHttpClient.Builder)}.
 	 */
-	@Test(expected = RuntimeException.class)
+	@Test
 	public void testWrongHostForInfluxdb(){
 		String errorHost = "10.224.2.122_error_host";
-		InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
+		Assertions.assertThrows(RuntimeException.class, () -> {
+			InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
+		});
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void testBatchEnabledTwice() {
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 		try{
-			this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+			Assertions.assertThrows(IllegalStateException.class, () -> {
+				this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
+			});
 		} finally {
 			this.influxDB.disableBatch();
 		}
@@ -697,9 +750,9 @@ public class InfluxDBTest {
 	public void testCloseInfluxDBClient() {
 		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
 		influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-		Assert.assertTrue(influxDB.isBatchEnabled());
+		Assertions.assertTrue(influxDB.isBatchEnabled());
 		influxDB.close();
-		Assert.assertFalse(influxDB.isBatchEnabled());
+		Assertions.assertFalse(influxDB.isBatchEnabled());
 	}
 
     /**
@@ -723,10 +776,10 @@ public class InfluxDBTest {
             Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
             QueryResult result = influxDBForTestGzip.query(query);
 
-            Assert.assertEquals(result.getResults().get(0).getSeries().size(), 3);
-            Assert.assertEquals(result.getResults().get(0).getSeries().get(0).getTags().get("atag"), "test1");
-            Assert.assertEquals(result.getResults().get(0).getSeries().get(1).getTags().get("atag"), "test2");
-            Assert.assertEquals(result.getResults().get(0).getSeries().get(2).getTags().get("atag"), "test3");
+            Assertions.assertEquals(result.getResults().get(0).getSeries().size(), 3);
+            Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
+            Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
+            Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         } finally {
             influxDBForTestGzip.deleteDatabase(dbName);
             influxDBForTestGzip.close();
@@ -742,11 +795,11 @@ public class InfluxDBTest {
         InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         try {
             //test default: gzip is disable
-            Assert.assertFalse(influxDBForTestGzip.isGzipEnabled());
+            Assertions.assertFalse(influxDBForTestGzip.isGzipEnabled());
             influxDBForTestGzip.enableGzip();
-            Assert.assertTrue(influxDBForTestGzip.isGzipEnabled());
+            Assertions.assertTrue(influxDBForTestGzip.isGzipEnabled());
             influxDBForTestGzip.disableGzip();
-            Assert.assertFalse(influxDBForTestGzip.isGzipEnabled());
+            Assertions.assertFalse(influxDBForTestGzip.isGzipEnabled());
         } finally {
             influxDBForTestGzip.close();
         }
@@ -774,7 +827,7 @@ public class InfluxDBTest {
         batchPoints.point(point3);
         this.influxDB.write(batchPoints);
 
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
         Query query = new Query("SELECT * FROM disk", dbName);
         this.influxDB.query(query, 2, new Consumer<QueryResult>() {
@@ -783,23 +836,23 @@ public class InfluxDBTest {
                 queue.add(result);
             }});
 
-        Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
+        Thread.sleep(2000);
         this.influxDB.deleteDatabase(dbName);
 
         QueryResult result = queue.poll(20, TimeUnit.SECONDS);
-        Assert.assertNotNull(result);
+        Assertions.assertNotNull(result);
         System.out.println(result);
-        Assert.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
+        Assertions.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
 
         result = queue.poll(20, TimeUnit.SECONDS);
-        Assert.assertNotNull(result);
+        Assertions.assertNotNull(result);
         System.out.println(result);
-        Assert.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+        Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
 
         result = queue.poll(20, TimeUnit.SECONDS);
-        Assert.assertNotNull(result);
+        Assertions.assertNotNull(result);
         System.out.println(result);
-        Assert.assertEquals("DONE", result.getError());
+        Assertions.assertEquals("DONE", result.getError());
     }
 
     /**
@@ -823,7 +876,7 @@ public class InfluxDBTest {
             }
         });
         this.influxDB.deleteDatabase(dbName);
-        Assert.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
+        Assertions.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
     }
 
     /**
@@ -835,14 +888,15 @@ public class InfluxDBTest {
 
         if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
 
-            this.exception.expect(RuntimeException.class);
+            Assertions.assertThrows(RuntimeException.class, () -> {
             String dbName = "write_unittest_" + System.currentTimeMillis();
             Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
             this.influxDB.query(query, 10, new Consumer<QueryResult>() {
                 @Override
                 public void accept(QueryResult result) {
                 }
-            });
+			});
+		});
         }
     }
 
@@ -862,17 +916,60 @@ public class InfluxDBTest {
 
             Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", dbName);
             QueryResult result = this.influxDB.query(query);
-            Assert.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+            Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
         } finally {
             this.influxDB.deleteDatabase(dbName);
             this.influxDB.disableBatch();
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testFlushThrowsIfBatchingIsNotEnabled() {
-        Assert.assertFalse(this.influxDB.isBatchEnabled());
-        this.influxDB.flush();
+        Assertions.assertFalse(this.influxDB.isBatchEnabled());
+        Assertions.assertThrows(IllegalStateException.class, () -> {
+			this.influxDB.flush();
+		});
     }
 
+	/**
+	 * Test creation and deletion of retention policies
+	 */
+	@Test
+	public void testCreateDropRetentionPolicies() {
+		String dbName = "rpTest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+
+		this.influxDB.createRetentionPolicy("testRP1", dbName, "30h", 2, false);
+		this.influxDB.createRetentionPolicy("testRP2", dbName, "10d", "20m", 2, false);
+		this.influxDB.createRetentionPolicy("testRP3", dbName, "2d4w", "20m", 2);
+
+		Query query = new Query("SHOW RETENTION POLICIES", dbName);
+		QueryResult result = this.influxDB.query(query);
+		Assertions.assertNull(result.getError());
+		List<List<Object>> retentionPolicies = result.getResults().get(0).getSeries().get(0).getValues();
+		Assertions.assertTrue(retentionPolicies.get(1).contains("testRP1"));
+		Assertions.assertTrue(retentionPolicies.get(2).contains("testRP2"));
+		Assertions.assertTrue(retentionPolicies.get(3).contains("testRP3"));
+
+		this.influxDB.dropRetentionPolicy("testRP1", dbName);
+		this.influxDB.dropRetentionPolicy("testRP2", dbName);
+		this.influxDB.dropRetentionPolicy("testRP3", dbName);
+
+		result = this.influxDB.query(query);
+		Assertions.assertNull(result.getError());
+		retentionPolicies = result.getResults().get(0).getSeries().get(0).getValues();
+		Assertions.assertTrue(retentionPolicies.size() == 1);
+	}
+
+	/**
+	 * Test the implementation of {@link InfluxDB#isBatchEnabled() with consistency}.
+	 */
+	@Test
+	public void testIsBatchEnabledWithConsistency() {
+		Assertions.assertFalse(this.influxDB.isBatchEnabled());
+		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, Executors.defaultThreadFactory(),
+				(a, b) -> {
+				}, InfluxDB.ConsistencyLevel.ALL);
+		Assertions.assertTrue(this.influxDB.isBatchEnabled());
+	}
 }

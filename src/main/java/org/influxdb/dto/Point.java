@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.influxdb.impl.Preconditions;
 
@@ -26,11 +25,6 @@ public class Point {
   private Long time;
   private TimeUnit precision = TimeUnit.NANOSECONDS;
   private Map<String, Object> fields;
-
-  private static final Function<String, String> FIELD_ESCAPER = s ->
-      s.replace("\\", "\\\\").replace("\"", "\\\"");
-  private static final Function<String, String> KEY_ESCAPER = s ->
-      s.replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=");
   private static final int MAX_FRACTION_DIGITS = 340;
   private static final ThreadLocal<NumberFormat> NUMBER_FORMATTER =
           ThreadLocal.withInitial(() -> {
@@ -69,7 +63,7 @@ public class Point {
     private final String measurement;
     private final Map<String, String> tags = new TreeMap<>();
     private Long time;
-    private TimeUnit precision = TimeUnit.NANOSECONDS;
+    private TimeUnit precision;
     private final Map<String, Object> fields = new TreeMap<>();
 
     /**
@@ -182,8 +176,8 @@ public class Point {
     /**
      * Add a time to this point.
      *
-     * @param precisionToSet
-     * @param timeToSet
+     * @param timeToSet the time for this point
+     * @param precisionToSet the TimeUnit
      * @return the Builder instance.
      */
     public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
@@ -191,6 +185,15 @@ public class Point {
       this.time = timeToSet;
       this.precision = precisionToSet;
       return this;
+    }
+
+    /**
+     * Does this builder contain any fields?
+     *
+     * @return true, if the builder contains any fields, false otherwise.
+     */
+    public boolean hasFields() {
+      return !fields.isEmpty();
     }
 
     /**
@@ -207,9 +210,6 @@ public class Point {
       if (this.time != null) {
           point.setTime(this.time);
           point.setPrecision(this.precision);
-      } else {
-          point.setTime(System.currentTimeMillis());
-          point.setPrecision(TimeUnit.MILLISECONDS);
       }
       point.setTags(this.tags);
       return point;
@@ -292,12 +292,16 @@ public class Point {
     StringBuilder builder = new StringBuilder();
     builder.append("Point [name=");
     builder.append(this.measurement);
-    builder.append(", time=");
-    builder.append(this.time);
+    if (this.time != null) {
+      builder.append(", time=");
+      builder.append(this.time);
+    }
     builder.append(", tags=");
     builder.append(this.tags);
-    builder.append(", precision=");
-    builder.append(this.precision);
+    if (this.precision != null) {
+      builder.append(", precision=");
+      builder.append(this.precision);
+    }
     builder.append(", fields=");
     builder.append(this.fields);
     builder.append("]");
@@ -345,10 +349,10 @@ public class Point {
 
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
-      sb.append(',')
-        .append(KEY_ESCAPER.apply(tag.getKey()))
-        .append('=')
-        .append(KEY_ESCAPER.apply(tag.getValue()));
+      sb.append(',');
+      escapeKey(sb, tag.getKey());
+      sb.append('=');
+      escapeKey(sb, tag.getValue());
     }
     sb.append(' ');
   }
@@ -359,8 +363,8 @@ public class Point {
       if (value == null) {
         continue;
       }
-
-      sb.append(KEY_ESCAPER.apply(field.getKey())).append('=');
+      escapeKey(sb, field.getKey());
+      sb.append('=');
       if (value instanceof Number) {
         if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
           sb.append(NUMBER_FORMATTER.get().format(value));
@@ -369,7 +373,9 @@ public class Point {
         }
       } else if (value instanceof String) {
         String stringValue = (String) value;
-        sb.append('"').append(FIELD_ESCAPER.apply(stringValue)).append('"');
+        sb.append('"');
+        escapeField(sb, stringValue);
+        sb.append('"');
       } else {
         sb.append(value);
       }
@@ -384,7 +390,35 @@ public class Point {
     }
   }
 
+  static void escapeKey(final StringBuilder sb, final String key) {
+    for (int i = 0; i < key.length(); i++) {
+      switch (key.charAt(i)) {
+        case ' ':
+        case ',':
+        case '=':
+          sb.append('\\');
+        default:
+          sb.append(key.charAt(i));
+      }
+    }
+  }
+
+  static void escapeField(final StringBuilder sb, final String field) {
+    for (int i = 0; i < field.length(); i++) {
+      switch (field.charAt(i)) {
+        case '\\':
+        case '\"':
+          sb.append('\\');
+        default:
+          sb.append(field.charAt(i));
+      }
+    }
+  }
+
   private void formatedTime(final StringBuilder sb) {
+    if (this.time == null || this.precision == null) {
+      return;
+    }
     sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
   }
 
@@ -398,7 +432,7 @@ public class Point {
     private final int length;
 
     MeasurementStringBuilder(final String measurement) {
-      this.sb.append(KEY_ESCAPER.apply(measurement));
+      escapeKey(this.sb, measurement);
       this.length = sb.length();
     }
 

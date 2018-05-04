@@ -3,18 +3,6 @@ package org.influxdb.impl;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
-
-import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDBException;
-import org.influxdb.InfluxDBIOException;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
-import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
-
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -24,6 +12,19 @@ import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okio.BufferedSource;
+
+import org.influxdb.BatchOptions;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBException;
+import org.influxdb.InfluxDBIOException;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.BoundParameterQuery;
+import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
+import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
+import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -96,6 +97,24 @@ public class InfluxDBImpl implements InfluxDB {
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
     this.adapter = moshi.adapter(QueryResult.class);
   }
+
+    InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
+            final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
+        super();
+        this.hostAddress = parseHostAddress(url);
+        this.username = username;
+        this.password = password;
+        this.loggingInterceptor = new HttpLoggingInterceptor();
+        this.loggingInterceptor.setLevel(Level.NONE);
+        this.gzipRequestInterceptor = new GzipRequestInterceptor();
+        this.retrofit = new Retrofit.Builder()
+                .baseUrl(url)
+                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build();
+        this.influxDBService = influxDBService;
+        this.adapter = adapter;
+    }
 
   public InfluxDBImpl(final String url, final String username, final String password,
                       final OkHttpClient.Builder client, final String database,
@@ -170,6 +189,31 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   @Override
+  public InfluxDB enableBatch() {
+    enableBatch(BatchOptions.DEFAULTS);
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(final BatchOptions batchOptions) {
+
+    if (this.batchEnabled.get()) {
+      throw new IllegalStateException("BatchProcessing is already enabled.");
+    }
+    this.batchProcessor = BatchProcessor
+            .builder(this)
+            .actions(batchOptions.getActions())
+            .exceptionHandler(batchOptions.getExceptionHandler())
+            .interval(batchOptions.getFlushDuration(), batchOptions.getJitterDuration(), TimeUnit.MILLISECONDS)
+            .threadFactory(batchOptions.getThreadFactory())
+            .bufferLimit(batchOptions.getBufferLimit())
+            .consistencyLevel(batchOptions.getConsistency())
+            .build();
+    this.batchEnabled.set(true);
+    return this;
+  }
+
+  @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration,
                               final TimeUnit flushDurationTimeUnit) {
     enableBatch(actions, flushDuration, flushDurationTimeUnit, Executors.defaultThreadFactory());
@@ -186,7 +230,24 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory,
+                              final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                              final ConsistencyLevel consistency) {
+    enableBatch(actions, flushDuration, flushDurationTimeUnit, threadFactory, exceptionHandler)
+        .setConsistency(consistency);
+    return this;
+  }
+
+  @Override
+  public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
+                              final ThreadFactory threadFactory,
                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
+    enableBatch(actions, flushDuration, 0, flushDurationTimeUnit, threadFactory, exceptionHandler);
+    return this;
+  }
+
+  private InfluxDB enableBatch(final int actions, final int flushDuration, final int jitterDuration,
+                               final TimeUnit durationTimeUnit, final ThreadFactory threadFactory,
+                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
@@ -194,8 +255,9 @@ public class InfluxDBImpl implements InfluxDB {
             .builder(this)
             .actions(actions)
             .exceptionHandler(exceptionHandler)
-            .interval(flushDuration, flushDurationTimeUnit)
+            .interval(flushDuration, jitterDuration, durationTimeUnit)
             .threadFactory(threadFactory)
+            .consistencyLevel(consistency)
             .build();
     this.batchEnabled.set(true);
     return this;
@@ -206,12 +268,6 @@ public class InfluxDBImpl implements InfluxDB {
     this.batchEnabled.set(false);
     if (this.batchProcessor != null) {
       this.batchProcessor.flushAndShutdown();
-      if (this.logLevel != LogLevel.NONE) {
-        System.out.println(
-            "total writes:" + this.writeCount
-            + " unbatched:" + this.unBatchedCount
-            + " batchPoints:" + this.batchedCount);
-      }
     }
   }
 
@@ -382,15 +438,26 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public QueryResult query(final Query query) {
-    Call<QueryResult> call;
-    if (query.requiresPost()) {
-      call = this.influxDBService.postQuery(this.username,
-                                            this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
-    } else {
-      call = this.influxDBService.query(this.username,
-                                        this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
-    }
-    return execute(call);
+    return execute(callQuery(query));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final Consumer<QueryResult> onSuccess, final Consumer<Throwable> onFailure) {
+    final Call<QueryResult> call = callQuery(query);
+    call.enqueue(new Callback<QueryResult>() {
+      @Override
+      public void onResponse(final Call<QueryResult> call, final Response<QueryResult> response) {
+        onSuccess.accept(response.body());
+      }
+
+      @Override
+      public void onFailure(final Call<QueryResult> call, final Throwable throwable) {
+        onFailure.accept(throwable);
+      }
+    });
   }
 
   /**
@@ -403,8 +470,16 @@ public class InfluxDBImpl implements InfluxDB {
             throw new UnsupportedOperationException("chunking not supported");
         }
 
-        Call<ResponseBody> call = this.influxDBService.query(this.username, this.password,
-                query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+        Call<ResponseBody> call = null;
+        if (query instanceof BoundParameterQuery) {
+            BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+            call = this.influxDBService.query(this.username, this.password,
+                    query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+                    boundParameterQuery.getParameterJsonWithUrlEncoded());
+        } else {
+            call = this.influxDBService.query(this.username, this.password,
+                    query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+        }
 
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -427,7 +502,9 @@ public class InfluxDBImpl implements InfluxDB {
                     queryResult.setError("DONE");
                     consumer.accept(queryResult);
                 } catch (IOException e) {
-                    throw new InfluxDBIOException(e);
+                    QueryResult queryResult = new QueryResult();
+                    queryResult.setError(e.toString());
+                    consumer.accept(queryResult);
                 }
             }
 
@@ -443,8 +520,17 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public QueryResult query(final Query query, final TimeUnit timeUnit) {
-    return execute(this.influxDBService.query(this.username, this.password, query.getDatabase(),
-        TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded()));
+    Call<QueryResult> call = null;
+    if (query instanceof BoundParameterQuery) {
+        BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+        call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+                TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(),
+                boundParameterQuery.getParameterJsonWithUrlEncoded());
+    } else {
+        call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+                TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+    }
+    return execute(call);
   }
 
   /**
@@ -502,6 +588,32 @@ public class InfluxDBImpl implements InfluxDB {
     return false;
   }
 
+  /**
+   * Calls the influxDBService for the query.
+   */
+  private Call<QueryResult> callQuery(final Query query) {
+    Call<QueryResult> call;
+    if (query instanceof BoundParameterQuery) {
+        BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+        call = this.influxDBService.postQuery(this.username,
+                this.password, query.getDatabase(), query.getCommandWithUrlEncoded(),
+                boundParameterQuery.getParameterJsonWithUrlEncoded());
+    } else {
+        if (query.requiresPost()) {
+          call = this.influxDBService.postQuery(this.username,
+                  this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+        } else {
+          call = this.influxDBService.query(this.username,
+                  this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+        }
+    }
+    return call;
+  }
+
+  static class ErrorMessage {
+    public String error;
+  }
+
   private <T> T execute(final Call<T> call) {
     try {
       Response<T> response = call.execute();
@@ -509,7 +621,7 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        throw new InfluxDBException(errorBody.string());
+        throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
       }
     } catch (IOException e) {
       throw new InfluxDBIOException(e);
@@ -557,5 +669,74 @@ public class InfluxDBImpl implements InfluxDB {
   public InfluxDB setRetentionPolicy(final String retentionPolicy) {
     this.retentionPolicy = retentionPolicy;
     return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor, final boolean isDefault) {
+    Preconditions.checkNonEmptyString(rpName, "retentionPolicyName");
+    Preconditions.checkNonEmptyString(database, "database");
+    Preconditions.checkNonEmptyString(duration, "retentionDuration");
+    Preconditions.checkDuration(duration, "retentionDuration");
+    if (shardDuration != null && !shardDuration.isEmpty()) {
+      Preconditions.checkDuration(shardDuration, "shardDuration");
+    }
+    Preconditions.checkPositiveNumber(replicationFactor, "replicationFactor");
+
+    StringBuilder queryBuilder = new StringBuilder("CREATE RETENTION POLICY \"");
+    queryBuilder.append(rpName)
+        .append("\" ON \"")
+        .append(database)
+        .append("\" DURATION ")
+        .append(duration)
+        .append(" REPLICATION ")
+        .append(replicationFactor);
+    if (shardDuration != null && !shardDuration.isEmpty()) {
+      queryBuilder.append(" SHARD DURATION ");
+      queryBuilder.append(shardDuration);
+    }
+    if (isDefault) {
+      queryBuilder.append(" DEFAULT");
+    }
+    execute(this.influxDBService.postQuery(this.username, this.password, Query.encode(queryBuilder.toString())));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final int replicationFactor, final boolean isDefault) {
+    createRetentionPolicy(rpName, database, duration, null, replicationFactor, isDefault);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void createRetentionPolicy(final String rpName, final String database, final String duration,
+                                    final String shardDuration, final int replicationFactor) {
+    createRetentionPolicy(rpName, database, duration, null, replicationFactor, false);
+  }
+
+  /**
+   * {@inheritDoc}
+   * @param rpName the name of the retentionPolicy
+   * @param database the name of the database
+   */
+  @Override
+  public void dropRetentionPolicy(final String rpName, final String database) {
+    Preconditions.checkNonEmptyString(rpName, "retentionPolicyName");
+    Preconditions.checkNonEmptyString(database, "database");
+    StringBuilder queryBuilder = new StringBuilder("DROP RETENTION POLICY \"");
+    queryBuilder.append(rpName)
+        .append("\" ON \"")
+        .append(database)
+        .append("\"");
+    execute(this.influxDBService.postQuery(this.username, this.password,
+        Query.encode(queryBuilder.toString())));
   }
 }

@@ -9,15 +9,19 @@ import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 /**
  * Test the InfluxDB API.
  *
  * @author stefan.majer [at] gmail.com
  *
  */
+@DisplayName("Test for github issues")
+@RunWith(JUnitPlatform.class)
 public class TicketTest {
 
 	private InfluxDB influxDB;
@@ -28,27 +32,9 @@ public class TicketTest {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
-		boolean influxDBstarted = false;
-		do {
-			Pong response;
-			try {
-				response = this.influxDB.ping();
-				if (!response.getVersion().equalsIgnoreCase("unknown")) {
-					influxDBstarted = true;
-				}
-			} catch (Exception e) {
-				// NOOP intentional
-				e.printStackTrace();
-			}
-			Thread.sleep(100L);
-		} while (!influxDBstarted);
-		this.influxDB.setLogLevel(LogLevel.NONE);
-		System.out.println("##################################################################################");
-		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " #");
-		System.out.println("##################################################################################");
+		this.influxDB = TestUtils.connectToInfluxDB();
 	}
 
 	/**

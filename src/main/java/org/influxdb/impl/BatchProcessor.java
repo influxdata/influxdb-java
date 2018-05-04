@@ -1,6 +1,12 @@
 package org.influxdb.impl;
 
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDB.ConsistencyLevel;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.Point;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +22,6 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.influxdb.InfluxDB;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-
 /**
  * A BatchProcessor can be attached to a InfluxDB Instance to collect single point writes and
  * aggregates them to BatchPoints to get a better write performance.
@@ -27,7 +29,7 @@ import org.influxdb.dto.Point;
  * @author stefan.majer [at] gmail.com
  *
  */
-public class BatchProcessor {
+public final class BatchProcessor {
 
   private static final Logger LOG = Logger.getLogger(BatchProcessor.class.getName());
   protected final BlockingQueue<AbstractBatchEntry> queue;
@@ -37,6 +39,9 @@ public class BatchProcessor {
   final int actions;
   private final TimeUnit flushIntervalUnit;
   private final int flushInterval;
+  private final ConsistencyLevel consistencyLevel;
+  private final int jitterInterval;
+  private final BatchWriter batchWriter;
 
   /**
    * The Builder to create a BatchProcessor instance.
@@ -47,11 +52,18 @@ public class BatchProcessor {
     private int actions;
     private TimeUnit flushIntervalUnit;
     private int flushInterval;
+    private int jitterInterval;
+    // this is a default value if the InfluxDb.enableBatch(BatchOptions) IS NOT used
+    // the reason is backward compatibility
+    private int bufferLimit = 0;
+
     private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> { };
+    private ConsistencyLevel consistencyLevel;
 
     /**
      * @param threadFactory
      *            is optional.
+     * @return this Builder to use it fluent
      */
     public Builder threadFactory(final ThreadFactory threadFactory) {
       this.threadFactory = threadFactory;
@@ -95,6 +107,37 @@ public class BatchProcessor {
     }
 
     /**
+     * The interval at which at least should issued a write.
+     *
+     * @param flushInterval
+     *            the flush interval
+     * @param jitterInterval
+     *            the flush jitter interval
+     * @param unit
+     *            the TimeUnit of the interval
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder interval(final int flushInterval, final int jitterInterval, final TimeUnit unit) {
+      this.flushInterval = flushInterval;
+      this.jitterInterval = jitterInterval;
+      this.flushIntervalUnit = unit;
+      return this;
+    }
+
+    /**
+     * A buffer for failed writes so that the writes will be retried later on. When the buffer is full and
+     * new points are written, oldest entries in the buffer are lost.
+     *
+     * @param bufferLimit maximum number of points stored in the buffer
+     * @return this Builder to use it fluent
+     */
+    public Builder bufferLimit(final int bufferLimit) {
+      this.bufferLimit = bufferLimit;
+      return this;
+    }
+
+    /**
      * A callback to be used when an error occurs during a batchwrite.
      *
      * @param handler
@@ -106,6 +149,18 @@ public class BatchProcessor {
       this.exceptionHandler = handler;
       return this;
     }
+      /**
+       * Consistency level for batch write.
+       *
+       * @param consistencyLevel
+       *            the consistencyLevel
+       *
+       * @return this Builder to use it fluent
+       */
+      public Builder consistencyLevel(final ConsistencyLevel consistencyLevel) {
+          this.consistencyLevel = consistencyLevel;
+          return this;
+      }
 
     /**
      * Create the BatchProcessor.
@@ -116,11 +171,19 @@ public class BatchProcessor {
       Objects.requireNonNull(this.influxDB, "influxDB");
       Preconditions.checkPositiveNumber(this.actions, "actions");
       Preconditions.checkPositiveNumber(this.flushInterval, "flushInterval");
+      Preconditions.checkNotNegativeNumber(jitterInterval, "jitterInterval");
+      Preconditions.checkNotNegativeNumber(bufferLimit, "bufferLimit");
       Objects.requireNonNull(this.flushIntervalUnit, "flushIntervalUnit");
       Objects.requireNonNull(this.threadFactory, "threadFactory");
       Objects.requireNonNull(this.exceptionHandler, "exceptionHandler");
-      return new BatchProcessor(this.influxDB, this.threadFactory, this.actions, this.flushIntervalUnit,
-                                this.flushInterval, exceptionHandler);
+      BatchWriter batchWriter;
+      if (this.bufferLimit > this.actions) {
+        batchWriter = new RetryCapableBatchWriter(this.influxDB, this.exceptionHandler, this.bufferLimit, this.actions);
+      } else {
+        batchWriter = new OneShotBatchWriter(this.influxDB);
+      }
+      return new BatchProcessor(this.influxDB, batchWriter, this.threadFactory, this.actions, this.flushIntervalUnit,
+                                this.flushInterval, this.jitterInterval, exceptionHandler, this.consistencyLevel);
     }
   }
 
@@ -179,35 +242,47 @@ public class BatchProcessor {
     return new Builder(influxDB);
   }
 
-  BatchProcessor(final InfluxDBImpl influxDB, final ThreadFactory threadFactory, final int actions,
-                 final TimeUnit flushIntervalUnit, final int flushInterval,
-                 final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
+  BatchProcessor(final InfluxDBImpl influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
+                 final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
+                 final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                 final ConsistencyLevel consistencyLevel) {
     super();
     this.influxDB = influxDB;
+    this.batchWriter = batchWriter;
     this.actions = actions;
     this.flushIntervalUnit = flushIntervalUnit;
     this.flushInterval = flushInterval;
+    this.jitterInterval = jitterInterval;
     this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
     this.exceptionHandler = exceptionHandler;
+    this.consistencyLevel = consistencyLevel;
     if (actions > 1 && actions < Integer.MAX_VALUE) {
         this.queue = new LinkedBlockingQueue<>(actions);
     } else {
         this.queue = new LinkedBlockingQueue<>();
     }
-    // Flush at specified Rate
-    this.scheduler.scheduleAtFixedRate(new Runnable() {
+
+    Runnable flushRunnable = new Runnable() {
       @Override
       public void run() {
+        // write doesn't throw any exceptions
         write();
+        int jitterInterval = (int) (Math.random() * BatchProcessor.this.jitterInterval);
+        BatchProcessor.this.scheduler.schedule(this,
+                BatchProcessor.this.flushInterval + jitterInterval, BatchProcessor.this.flushIntervalUnit);
       }
-    }, this.flushInterval, this.flushInterval, this.flushIntervalUnit);
-
+    };
+    // Flush at specified Rate
+    this.scheduler.schedule(flushRunnable,
+            this.flushInterval + (int) (Math.random() * BatchProcessor.this.jitterInterval),
+            this.flushIntervalUnit);
   }
 
   void write() {
     List<Point> currentBatch = null;
     try {
       if (this.queue.isEmpty()) {
+        BatchProcessor.this.batchWriter.write(Collections.emptyList());
         return;
       }
       //for batch on HTTP.
@@ -228,7 +303,7 @@ public class BatchProcessor {
             String batchKey = dbName + "_" + rp;
             if (!batchKeyToBatchPoints.containsKey(batchKey)) {
               BatchPoints batchPoints = BatchPoints.database(dbName)
-                                                   .retentionPolicy(rp).build();
+                                                   .retentionPolicy(rp).consistency(getConsistencyLevel()).build();
               batchKeyToBatchPoints.put(batchKey, batchPoints);
             }
             batchKeyToBatchPoints.get(batchKey).point(point);
@@ -243,9 +318,8 @@ public class BatchProcessor {
         }
       }
 
-      for (BatchPoints batchPoints : batchKeyToBatchPoints.values()) {
-          BatchProcessor.this.influxDB.write(batchPoints);
-      }
+      BatchProcessor.this.batchWriter.write(batchKeyToBatchPoints.values());
+
       for (Entry<Integer, List<String>> entry : udpPortToBatchPoints.entrySet()) {
           for (String lineprotocolStr : entry.getValue()) {
               BatchProcessor.this.influxDB.write(entry.getKey(), lineprotocolStr);
@@ -288,6 +362,7 @@ public class BatchProcessor {
   void flushAndShutdown() {
     this.write();
     this.scheduler.shutdown();
+    this.batchWriter.close();
   }
 
   /**
@@ -296,4 +371,9 @@ public class BatchProcessor {
   void flush() {
     this.write();
   }
+
+  public ConsistencyLevel getConsistencyLevel() {
+    return consistencyLevel;
+  }
+
 }

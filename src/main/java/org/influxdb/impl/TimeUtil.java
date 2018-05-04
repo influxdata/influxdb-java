@@ -44,7 +44,7 @@ public enum TimeUtil {
   /**
    * Convert from a TimeUnit to a influxDB timeunit String.
    *
-   * @param t
+   * @param t the TimeUnit
    * @return the String representation.
    */
   public static String toTimePrecision(final TimeUnit t) {

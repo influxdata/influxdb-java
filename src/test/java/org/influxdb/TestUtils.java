@@ -1,5 +1,9 @@
 package org.influxdb;
 
+import okhttp3.OkHttpClient;
+import org.influxdb.dto.Pong;
+
+import java.io.IOException;
 import java.util.Map;
 
 public class TestUtils {
@@ -44,4 +48,38 @@ public class TestUtils {
 		}
 	}
 
+  public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
+    return connectToInfluxDB(null);
+  }
+
+	public static InfluxDB connectToInfluxDB( final OkHttpClient.Builder client) throws InterruptedException, IOException {
+    OkHttpClient.Builder clientToUse;
+    if (client == null) {
+      clientToUse = new OkHttpClient.Builder();
+    } else {
+      clientToUse = client;
+    }
+    InfluxDB influxDB = InfluxDBFactory.connect(
+            "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true),
+            "admin", "admin", clientToUse);
+    boolean influxDBstarted = false;
+    do {
+      Pong response;
+      try {
+        response = influxDB.ping();
+        if (response.isGood()) {
+          influxDBstarted = true;
+        }
+      } catch (Exception e) {
+        // NOOP intentional
+        e.printStackTrace();
+      }
+      Thread.sleep(100L);
+    } while (!influxDBstarted);
+    influxDB.setLogLevel(InfluxDB.LogLevel.NONE);
+    System.out.println("##################################################################################");
+    System.out.println("#  Connected to InfluxDB Version: " + influxDB.version() + " #");
+    System.out.println("##################################################################################");
+    return influxDB;
+  }
 }

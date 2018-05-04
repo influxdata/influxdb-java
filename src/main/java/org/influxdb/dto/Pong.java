@@ -9,6 +9,7 @@ package org.influxdb.dto;
 public class Pong {
   private String version;
   private long responseTime;
+  private static final String UNKNOWN_VERSION = "unknown";
 
   /**
    * @return the status
@@ -23,6 +24,15 @@ public class Pong {
    */
   public void setVersion(final String version) {
     this.version = version;
+  }
+
+  /**
+   * Good or bad connection status.
+   *
+   * @return true if the version of influxdb is not unknown.
+   */
+  public boolean isGood() {
+    return !UNKNOWN_VERSION.equalsIgnoreCase(version);
   }
 
   /**

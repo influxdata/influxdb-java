@@ -35,4 +35,28 @@ public final class Preconditions {
       throw new IllegalArgumentException("Expecting a positive number for " + name);
     }
   }
+
+  /**
+   * Enforces that the number is not negative.
+   * @param number the number to test
+   * @param name variable name for reporting
+   * @throws IllegalArgumentException if the number is less or equal to 0
+   */
+  public static void checkNotNegativeNumber(final Number number, final String name) throws IllegalArgumentException {
+    if (number == null || number.doubleValue() < 0) {
+      throw new IllegalArgumentException("Expecting a positive or zero number for " + name);
+    }
+  }
+  /**
+   * Enforces that the duration is a valid influxDB duration.
+   * @param duration the duration to test
+   * @param name variable name for reporting
+   * @throws IllegalArgumentException if the given duration is not valid.
+   */
+  public static void checkDuration(final String duration, final String name) throws IllegalArgumentException {
+    if (!duration.matches("(\\d+[wdmhs])+")) {
+      throw new IllegalArgumentException("Invalid InfluxDB duration: " + duration
+         + "for " + name);
+    }
+  }
 }
