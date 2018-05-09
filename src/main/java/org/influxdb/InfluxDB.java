@@ -299,9 +299,18 @@ public interface InfluxDB {
   /**
    * Write a set of Points to the influxdb database with the string records.
    *
-   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
+   * @param precision
+   *          the time precision to use
    * @param records
+   *            the points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
           final ConsistencyLevel consistency, final TimeUnit precision, final String records);
@@ -326,9 +335,18 @@ public interface InfluxDB {
   /**
    * Write a set of Points to the influxdb database with the list of string records.
    *
-   * {@linkplain "https://github.com/influxdb/influxdb/pull/2696"}
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
    *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
+   * @param precision
+   *          the time precision to use
    * @param records
+   *          the List of points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
           final ConsistencyLevel consistency, final TimeUnit precision, final List<String> records);

@@ -423,6 +423,9 @@ public class Point {
   }
 
   private StringBuilder formatedTime(final StringBuilder sb, final TimeUnit precision) {
+    if (this.time == null || this.precision == null) {
+      return sb;
+    }
     sb.append(" ").append(precision.convert(this.time, this.precision));
     return sb;
   }
