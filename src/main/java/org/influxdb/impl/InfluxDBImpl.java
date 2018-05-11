@@ -358,29 +358,44 @@ public class InfluxDBImpl implements InfluxDB {
         this.password,
         batchPoints.getDatabase(),
         batchPoints.getRetentionPolicy(),
-        TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+        TimeUtil.toTimePrecision(batchPoints.getPrecision()),
         batchPoints.getConsistency().value(),
         lineProtocol));
   }
 
+
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
-      final String records) {
+          final TimeUnit precision, final String records) {
     execute(this.influxDBService.writePoints(
         this.username,
         this.password,
         database,
         retentionPolicy,
-        TimeUtil.toTimePrecision(TimeUnit.NANOSECONDS),
+        TimeUtil.toTimePrecision(precision),
         consistency.value(),
         RequestBody.create(MEDIA_TYPE_STRING, records)));
   }
 
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
-      final List<String> records) {
-    write(database, retentionPolicy, consistency, String.join("\n", records));
+      final String records) {
+    write(database, retentionPolicy, consistency, TimeUnit.NANOSECONDS, records);
   }
+
+  @Override
+  public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
+      final List<String> records) {
+    write(database, retentionPolicy, consistency, TimeUnit.NANOSECONDS, records);
+  }
+
+
+  @Override
+  public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
+          final TimeUnit precision, final List<String> records) {
+    write(database, retentionPolicy, consistency, precision, String.join("\n", records));
+  }
+
 
   /**
    * {@inheritDoc}

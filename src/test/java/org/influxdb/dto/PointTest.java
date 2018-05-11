@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -339,4 +340,114 @@ public class PointTest {
 		pointBuilder.addField("testfield", 256);
 		assertThat(pointBuilder.hasFields()).isTrue();
 	}
+
+    /**
+     * Tests for #182
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLineProtocolNanosecondPrecision() throws Exception {
+        // GIVEN a point with millisecond precision
+        Date pDate = new Date();
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(pDate.getTime(), TimeUnit.MILLISECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.NANOSECONDS)
+        String nanosTime = p.lineProtocol(TimeUnit.NANOSECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in nanoseconds
+        assertThat(nanosTime).isEqualTo(String.valueOf(pDate.getTime() * 1000000));
+    }
+
+    @Test
+    public void testLineProtocolMicrosecondPrecision() throws Exception {
+        // GIVEN a point with millisecond precision
+        Date pDate = new Date();
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(pDate.getTime(), TimeUnit.MILLISECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.MICROSECONDS)
+        String microsTime = p.lineProtocol(TimeUnit.MICROSECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in microseconds
+        assertThat(microsTime).isEqualTo(String.valueOf(pDate.getTime() * 1000));
+    }
+
+    @Test
+    public void testLineProtocolMillisecondPrecision() throws Exception {
+        // GIVEN a point with millisecond precision
+        Date pDate = new Date();
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(pDate.getTime(), TimeUnit.MILLISECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.MILLISECONDS)
+        String millisTime = p.lineProtocol(TimeUnit.MILLISECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in microseconds
+        assertThat(millisTime).isEqualTo(String.valueOf(pDate.getTime()));
+    }
+
+    @Test
+    public void testLineProtocolSecondPrecision() throws Exception {
+        // GIVEN a point with millisecond precision
+        Date pDate = new Date();
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(pDate.getTime(), TimeUnit.MILLISECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.SECONDS)
+        String secondTime = p.lineProtocol(TimeUnit.SECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in seconds
+        String expectedSecondTimeStamp = String.valueOf(pDate.getTime() / 1000);
+        assertThat(secondTime).isEqualTo(expectedSecondTimeStamp);
+    }
+
+    @Test
+    public void testLineProtocolMinutePrecision() throws Exception {
+        // GIVEN a point with millisecond precision
+        Date pDate = new Date();
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(pDate.getTime(), TimeUnit.MILLISECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.MINUTE)
+        String secondTime = p.lineProtocol(TimeUnit.MINUTES).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in seconds
+        String expectedSecondTimeStamp = String.valueOf(pDate.getTime() / 60000);
+        assertThat(secondTime).isEqualTo(expectedSecondTimeStamp);
+    }
+
+    @Test
+    public void testLineProtocolHourPrecision() throws Exception {
+        // GIVEN a point with millisecond precision
+        Date pDate = new Date();
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(pDate.getTime(), TimeUnit.MILLISECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.NANOSECONDS)
+        String hourTime = p.lineProtocol(TimeUnit.HOURS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in hours
+        String expectedHourTimeStamp = String.valueOf(Math.round(pDate.getTime() / 3600000)); // 1000ms * 60s * 60m
+        assertThat(hourTime).isEqualTo(expectedHourTimeStamp);
+    }
 }

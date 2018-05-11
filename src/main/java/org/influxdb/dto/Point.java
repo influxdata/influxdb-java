@@ -330,6 +330,23 @@ public class Point {
     return sb.toString();
   }
 
+    /**
+     * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
+     * @param precision the time precision unit for this point
+     * @return the String without newLine
+     */
+    public String lineProtocol(final TimeUnit precision) {
+      final StringBuilder sb = CACHED_STRINGBUILDERS
+              .get()
+              .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
+              .resetForUse();
+
+        concatenatedTags(sb);
+        concatenatedFields(sb);
+        formatedTime(sb, precision);
+        return sb.toString();
+    }
+
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
       sb.append(',');
@@ -403,6 +420,14 @@ public class Point {
       return;
     }
     sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
+  }
+
+  private StringBuilder formatedTime(final StringBuilder sb, final TimeUnit precision) {
+    if (this.time == null || this.precision == null) {
+      return sb;
+    }
+    sb.append(" ").append(precision.convert(this.time, this.precision));
+    return sb;
   }
 
   private static class MeasurementStringBuilder {
