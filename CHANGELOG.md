@@ -1,10 +1,25 @@
 # Changelog
 
-## 2.10 [unreleased]
+## 2.11 [unreleased]
+
+- Support dynamic measurement name in InfluxDBResultMapper [PR #423](https://github.com/influxdata/influxdb-java/pull/423)
+
+## 2.10 [2018-04-26]
+
+### Fixes
+- Fix IllegalAccessException on setting value to POJOs, InfluxDBResultMapper is now more thread-safe [PR #432](https://github.com/influxdata/influxdb-java/pull/432)
 
 ### Features
 
 - Support for parameter binding in queries ("prepared statements") [PR #429](https://github.com/influxdata/influxdb-java/pull/429)
+- Allow to figure out whether the Point.Builder has any field or not [PR #434](https://github.com/influxdata/influxdb-java/pull/434)
+
+### Improvements
+
+- Performance: use chained StringBuilder calls instead of single calls [PR #426](https://github.com/influxdata/influxdb-java/pull/426)
+- Performance: Escape fields and keys more efficiently [PR #424](https://github.com/influxdata/influxdb-java/pull/424)
+- Build: Speed up travis build [PR #435](https://github.com/influxdata/influxdb-java/pull/435)
+- Test: Update junit from 5.1.0 to 5.1.1 [PR #441](https://github.com/influxdata/influxdb-java/pull/441)
 
 ## 2.9 [2018-02-27]
 
