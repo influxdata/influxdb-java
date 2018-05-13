@@ -1,8 +1,9 @@
 package org.influxdb.impl;
 
+import org.influxdb.dto.QueryResult;
+
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
-import org.influxdb.dto.QueryResult;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -17,6 +18,7 @@ interface InfluxDBService {
   public static final String Q = "q";
   public static final String DB = "db";
   public static final String RP = "rp";
+  public static final String PARAMS = "params";
   public static final String PRECISION = "precision";
   public static final String CONSISTENCY = "consistency";
   public static final String EPOCH = "epoch";
@@ -25,7 +27,7 @@ interface InfluxDBService {
   @GET("ping")
   public Call<ResponseBody> ping();
 
-   /**
+  /**
    * @param username u: optional The username for authentication
    * @param password p: optional The password for authentication
    * @param database db: required The database to write points
@@ -46,6 +48,11 @@ interface InfluxDBService {
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
                                  @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
 
+  @POST("query")
+  public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+                                 @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
+                                 @Query(value = PARAMS, encoded = true) String params);
+
   @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
                                  @Query(value = Q, encoded = true) String query);
@@ -53,6 +60,11 @@ interface InfluxDBService {
   @POST("query")
   public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
                                      @Query(value = Q, encoded = true) String query);
+
+  @POST("query")
+  public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+                                     @Query(value = Q, encoded = true) String query,
+                                     @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password,
@@ -65,7 +77,15 @@ interface InfluxDBService {
   @Streaming
   @GET("query?chunked=true")
   public Call<ResponseBody> query(@Query(U) String username,
-                                  @Query(P) String password,
-                                  @Query(DB) String db, @Query(value = Q, encoded = true) String query,
+                                  @Query(P) String password, @Query(DB) String db,
+                                  @Query(value = Q, encoded = true) String query,
                                   @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
+  @POST("query?chunked=true")
+  public Call<ResponseBody> query(@Query(U) String username,
+                                  @Query(P) String password, @Query(DB) String db,
+                                  @Query(value = Q, encoded = true) String query,
+                                  @Query(CHUNK_SIZE) int chunkSize,
+                                  @Query(value = PARAMS, encoded = true) String params);
 }
