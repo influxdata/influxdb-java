@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.influxdb.impl.Preconditions;
 
@@ -26,11 +25,6 @@ public class Point {
   private Long time;
   private TimeUnit precision = TimeUnit.NANOSECONDS;
   private Map<String, Object> fields;
-
-  private static final Function<String, String> FIELD_ESCAPER = s ->
-      s.replace("\\", "\\\\").replace("\"", "\\\"");
-  private static final Function<String, String> KEY_ESCAPER = s ->
-      s.replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=");
   private static final int MAX_FRACTION_DIGITS = 340;
   private static final ThreadLocal<NumberFormat> NUMBER_FORMATTER =
           ThreadLocal.withInitial(() -> {
@@ -194,6 +188,15 @@ public class Point {
     }
 
     /**
+     * Does this builder contain any fields?
+     *
+     * @return true, if the builder contains any fields, false otherwise.
+     */
+    public boolean hasFields() {
+      return !fields.isEmpty();
+    }
+
+    /**
      * Create a new Point.
      *
      * @return the newly created Point.
@@ -327,12 +330,29 @@ public class Point {
     return sb.toString();
   }
 
+    /**
+     * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
+     * @param precision the time precision unit for this point
+     * @return the String without newLine
+     */
+    public String lineProtocol(final TimeUnit precision) {
+      final StringBuilder sb = CACHED_STRINGBUILDERS
+              .get()
+              .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
+              .resetForUse();
+
+        concatenatedTags(sb);
+        concatenatedFields(sb);
+        formatedTime(sb, precision);
+        return sb.toString();
+    }
+
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
-      sb.append(',')
-        .append(KEY_ESCAPER.apply(tag.getKey()))
-        .append('=')
-        .append(KEY_ESCAPER.apply(tag.getValue()));
+      sb.append(',');
+      escapeKey(sb, tag.getKey());
+      sb.append('=');
+      escapeKey(sb, tag.getValue());
     }
     sb.append(' ');
   }
@@ -343,8 +363,8 @@ public class Point {
       if (value == null) {
         continue;
       }
-
-      sb.append(KEY_ESCAPER.apply(field.getKey())).append('=');
+      escapeKey(sb, field.getKey());
+      sb.append('=');
       if (value instanceof Number) {
         if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
           sb.append(NUMBER_FORMATTER.get().format(value));
@@ -353,7 +373,9 @@ public class Point {
         }
       } else if (value instanceof String) {
         String stringValue = (String) value;
-        sb.append('"').append(FIELD_ESCAPER.apply(stringValue)).append('"');
+        sb.append('"');
+        escapeField(sb, stringValue);
+        sb.append('"');
       } else {
         sb.append(value);
       }
@@ -368,6 +390,31 @@ public class Point {
     }
   }
 
+  static void escapeKey(final StringBuilder sb, final String key) {
+    for (int i = 0; i < key.length(); i++) {
+      switch (key.charAt(i)) {
+        case ' ':
+        case ',':
+        case '=':
+          sb.append('\\');
+        default:
+          sb.append(key.charAt(i));
+      }
+    }
+  }
+
+  static void escapeField(final StringBuilder sb, final String field) {
+    for (int i = 0; i < field.length(); i++) {
+      switch (field.charAt(i)) {
+        case '\\':
+        case '\"':
+          sb.append('\\');
+        default:
+          sb.append(field.charAt(i));
+      }
+    }
+  }
+
   private void formatedTime(final StringBuilder sb) {
     if (this.time == null || this.precision == null) {
       return;
@@ -375,12 +422,20 @@ public class Point {
     sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
   }
 
+  private StringBuilder formatedTime(final StringBuilder sb, final TimeUnit precision) {
+    if (this.time == null || this.precision == null) {
+      return sb;
+    }
+    sb.append(" ").append(precision.convert(this.time, this.precision));
+    return sb;
+  }
+
   private static class MeasurementStringBuilder {
     private final StringBuilder sb = new StringBuilder(128);
     private final int length;
 
     MeasurementStringBuilder(final String measurement) {
-      this.sb.append(KEY_ESCAPER.apply(measurement));
+      escapeKey(this.sb, measurement);
       this.length = sb.length();
     }
 

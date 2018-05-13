@@ -98,6 +98,23 @@ public interface InfluxDB {
   public boolean isGzipEnabled();
 
   /**
+   * Enable batching of single Point writes to speed up writes significantly. This is the same as calling
+   * InfluxDB.enableBatch(BatchingOptions.DEFAULTS)
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch();
+
+  /**
+   * Enable batching of single Point writes to speed up writes significantly. If either number of points written or
+   * flushDuration time limit is reached, a batch write is issued.
+   * Note that batch processing needs to be explicitly stopped before the application is shutdown.
+   * To do so call disableBatch().
+   *
+   * @return the InfluxDB instance to be able to use it in a fluent manner.
+   */
+  public InfluxDB enableBatch(final BatchOptions batchOptions);
+
+  /**
    * Enable batching of single Point writes as {@link #enableBatch(int, int, TimeUnit, ThreadFactory)}}
    * using {@linkplain java.util.concurrent.Executors#defaultThreadFactory() default thread factory}.
    *
@@ -280,6 +297,25 @@ public interface InfluxDB {
                     final ConsistencyLevel consistency, final String records);
 
   /**
+   * Write a set of Points to the influxdb database with the string records.
+   *
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
+   *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
+   * @param precision
+   *          the time precision to use
+   * @param records
+   *            the points in the correct lineprotocol.
+   */
+  public void write(final String database, final String retentionPolicy,
+          final ConsistencyLevel consistency, final TimeUnit precision, final String records);
+
+  /**
    * Write a set of Points to the influxdb database with the list of string records.
    *
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
@@ -295,6 +331,25 @@ public interface InfluxDB {
    */
   public void write(final String database, final String retentionPolicy,
                     final ConsistencyLevel consistency, final List<String> records);
+
+  /**
+   * Write a set of Points to the influxdb database with the list of string records.
+   *
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
+   *
+   * @param database
+   *          the name of the database to write
+   * @param retentionPolicy
+   *          the retentionPolicy to use
+   * @param consistency
+   *          the ConsistencyLevel to use
+   * @param precision
+   *          the time precision to use
+   * @param records
+   *          the List of points in the correct lineprotocol.
+   */
+  public void write(final String database, final String retentionPolicy,
+          final ConsistencyLevel consistency, final TimeUnit precision, final List<String> records);
 
   /**
    * Write a set of Points to the influxdb database with the string records through UDP.
