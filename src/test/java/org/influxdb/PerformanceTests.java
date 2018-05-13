@@ -3,6 +3,8 @@ package org.influxdb;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -10,7 +12,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 
+import static org.mockito.Mockito.*;
+
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -106,36 +112,99 @@ public class PerformanceTests {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
+	/**
+   * states that String.join("\n", records)*/
 	@Test
 	public void testWriteCompareUDPPerformanceForBatchWithSinglePoints() {
-		//prepare data
-		List<String> lineProtocols = new ArrayList<String>();
-		for (int i = 0; i < 1000; i++) {
-		    Point point = Point.measurement("udp_single_poit").addField("v", i).build();
-		    lineProtocols.add(point.lineProtocol());
-		}
+    //prepare data
+    List<String> lineProtocols = new ArrayList<String>();
+    for (int i = 0; i < 2000; i++) {
+      Point point = Point.measurement("udp_single_poit").addField("v", i).build();
+      lineProtocols.add(point.lineProtocol());
+    }
 
-		String dbName = "write_compare_udp_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
+    String dbName = "write_compare_udp_" + System.currentTimeMillis();
+    this.influxDB.createDatabase(dbName);
+    this.influxDB.enableBatch(10000, 100, TimeUnit.MILLISECONDS);
 
-		//write batch of 1000 single string.
-		long start = System.currentTimeMillis();
-		this.influxDB.write(UDP_PORT, lineProtocols);
-		long elapsedForBatchWrite = System.currentTimeMillis() - start;
-		System.out.println("performance(ms):write udp with batch of 1000 string:" + elapsedForBatchWrite);
+    int repetitions = 15;
+    long start = System.currentTimeMillis();
+    for (int i = 0; i < repetitions; i++) {
+      //write batch of 2000 single string.
+      this.influxDB.write(UDP_PORT, lineProtocols);
+    }
+    long elapsedForBatchWrite = System.currentTimeMillis() - start;
+    System.out.println("performance(ms):write udp with batch of 1000 string:" + elapsedForBatchWrite);
 
-		//write 1000 single string by udp.
-		start = System.currentTimeMillis();
-		for (String lineProtocol: lineProtocols){
-		    this.influxDB.write(UDP_PORT, lineProtocol);
-		}
-		this.influxDB.deleteDatabase(dbName);
+    // write 2000 single string by udp.
+    start = System.currentTimeMillis();
+    for (int i = 0; i < repetitions; i++) {
+      for (String lineProtocol : lineProtocols) {
+        this.influxDB.write(UDP_PORT, lineProtocol);
+      }
+    }
 
-		long elapsedForSingleWrite = System.currentTimeMillis() - start;
-		System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
+    long elapsedForSingleWrite = System.currentTimeMillis() - start;
+    System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
 
-		Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
-	}
+    this.influxDB.deleteDatabase(dbName);
+    Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
+  }
+	
+  @Test
+  public void testRetryWritePointsInBatch() throws InterruptedException {
+    String dbName = "d";
+    
+    InfluxDB spy = spy(influxDB);
+    TestAnswer answer = new TestAnswer() {
+      boolean started = false;
+      InfluxDBException influxDBException = new InfluxDBException(new SocketTimeoutException());
+      @Override
+      protected void check(InvocationOnMock invocation) {
+        if (started || System.currentTimeMillis() >= (Long) params.get("startTime")) {
+          System.out.println("call real");
+          started = true;
+        } else {
+          System.out.println("throw");
+          throw influxDBException;
+        }
+      }
+    };
+    
+    answer.params.put("startTime", System.currentTimeMillis() + 8000);
+    doAnswer(answer).when(spy).write(any(BatchPoints.class));
+    
+    spy.createDatabase(dbName);
+    BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(10000).flushDuration(2000).bufferLimit(300000).exceptionHandler((points, throwable) -> {
+      System.out.println("+++++++++++ exceptionHandler +++++++++++");
+      System.out.println(throwable);
+      System.out.println("++++++++++++++++++++++++++++++++++++++++");
+    });
+    
+    //this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
+    spy.enableBatch(batchOptions);
+    String rp = TestUtils.defaultRetentionPolicy(spy.version());
+
+    for (long i = 0; i < 40000; i++) {
+      Point point = Point.measurement("s").time(i, TimeUnit.MILLISECONDS).addField("v", 1.0).build();
+      spy.write(dbName, rp, point);
+    }
+    
+    System.out.println("sleep");
+    Thread.sleep(12000);
+    try {
+      QueryResult result = spy.query(new Query("select count(v) from s", dbName));
+      double d = Double.parseDouble(result.getResults().get(0).getSeries().get(0).getValues().get(0).get(1).toString());
+      Assertions.assertEquals(40000, d);
+    } catch (Exception e) {
+      System.out.println("+++++++++++++++++count() +++++++++++++++++++++");
+      System.out.println(e);
+      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++");
+      
+    }
+
+    spy.disableBatch();
+    spy.deleteDatabase(dbName);
+  }
 
 }
