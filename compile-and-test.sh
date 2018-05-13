@@ -3,7 +3,7 @@
 # script to start influxdb and compile influxdb-java with all tests.
 #
 set -e
-
+test -t 1 && USE_TTY="-it"
 DEFAULT_INFLUXDB_VERSION="1.5"
 DEFAULT_MAVEN_JAVA_VERSION="3-jdk-9-slim"
 
@@ -34,7 +34,7 @@ docker run  \
          --link=influxdb \
          nginx
 
-docker run -it --rm  \
+docker run ${USE_TTY} --rm  \
       --volume $PWD:/usr/src/mymaven \
       --volume $PWD/.m2:/root/.m2 \
       --workdir /usr/src/mymaven \

@@ -494,12 +494,12 @@ public class InfluxDBImpl implements InfluxDB {
                 try {
                     if (response.isSuccessful()) {
                         BufferedSource source = response.body().source();
-                        QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
-                        while (result != null) {
-                          consumer.accept(result);
-                          result = InfluxDBImpl.this.adapter.fromJson(source);
-                        }
-                    }
+                        while (true) {
+                            QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
+                            if (result != null) {
+                                consumer.accept(result);
+                            }
+                        }                    }
                     try (ResponseBody errorBody = response.errorBody()) {
                         throw new InfluxDBException(errorBody.string());
                     }
