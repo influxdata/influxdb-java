@@ -27,7 +27,7 @@ interface InfluxDBService {
   @GET("ping")
   public Call<ResponseBody> ping();
 
-  /**
+   /**
    * @param username u: optional The username for authentication
    * @param password p: optional The password for authentication
    * @param database db: required The database to write points
@@ -40,52 +40,48 @@ interface InfluxDBService {
    */
   @POST("write")
   public Call<ResponseBody> writePoints(@Query(U) String username,
-                                        @Query(P) String password, @Query(DB) String database,
-                                        @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
-                                        @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
+      @Query(P) String password, @Query(DB) String database,
+      @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
+      @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
 
   @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
-                                 @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
+      @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
 
   @POST("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
-                                 @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
-                                 @Query(value = PARAMS, encoded = true) String params);
+          @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
+          @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
-                                 @Query(value = Q, encoded = true) String query);
+      @Query(value = Q, encoded = true) String query);
 
   @POST("query")
   public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
-                                     @Query(value = Q, encoded = true) String query);
+      @Query(value = Q, encoded = true) String query);
 
   @POST("query")
   public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
-                                     @Query(value = Q, encoded = true) String query,
-                                     @Query(value = PARAMS, encoded = true) String params);
+          @Query(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
   public Call<QueryResult> query(@Query(U) String username, @Query(P) String password,
-                                 @Query(value = Q, encoded = true) String query);
+      @Query(value = Q, encoded = true) String query);
 
   @POST("query")
   public Call<QueryResult> postQuery(@Query(U) String username,
-                                     @Query(P) String password, @Query(value = Q, encoded = true) String query);
+      @Query(P) String password, @Query(value = Q, encoded = true) String query);
 
   @Streaming
   @GET("query?chunked=true")
   public Call<ResponseBody> query(@Query(U) String username,
-                                  @Query(P) String password, @Query(DB) String db,
-                                  @Query(value = Q, encoded = true) String query,
-                                  @Query(CHUNK_SIZE) int chunkSize);
+      @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
+      @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
   @POST("query?chunked=true")
   public Call<ResponseBody> query(@Query(U) String username,
-                                  @Query(P) String password, @Query(DB) String db,
-                                  @Query(value = Q, encoded = true) String query,
-                                  @Query(CHUNK_SIZE) int chunkSize,
-                                  @Query(value = PARAMS, encoded = true) String params);
+          @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
+          @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 }

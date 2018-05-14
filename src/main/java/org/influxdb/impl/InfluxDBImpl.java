@@ -56,7 +56,7 @@ import java.util.function.Consumer;
  */
 public class InfluxDBImpl implements InfluxDB {
 
-  static final MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
+  static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
 
@@ -89,7 +89,6 @@ public class InfluxDBImpl implements InfluxDB {
     this.loggingInterceptor = new HttpLoggingInterceptor();
     this.loggingInterceptor.setLevel(Level.NONE);
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
         .client(client.addInterceptor(loggingInterceptor)
@@ -103,7 +102,7 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
     InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
-                 final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
+            final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
         super();
         this.hostAddress = parseHostAddress(url);
         this.username = username;
@@ -499,7 +498,8 @@ public class InfluxDBImpl implements InfluxDB {
                             if (result != null) {
                                 consumer.accept(result);
                             }
-                        }                    }
+                        }
+                    }
                     try (ResponseBody errorBody = response.errorBody()) {
                         throw new InfluxDBException(errorBody.string());
                     }
