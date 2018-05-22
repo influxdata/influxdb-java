@@ -26,6 +26,12 @@ import java.util.function.Consumer;
  */
 public interface InfluxDB {
 
+  /**
+   * The system property key to set the http logging level across the JVM.
+   * @see LogLevel for available values
+   */
+  public static final String LOG_LEVEL_PROP = "org.influxdb.InfluxDB.logLevel";
+
   /** Controls the level of logging of the REST layer. */
   public enum LogLevel {
     /** No logging. */
