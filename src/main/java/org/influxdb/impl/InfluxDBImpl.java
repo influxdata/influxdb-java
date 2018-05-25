@@ -87,7 +87,7 @@ public class InfluxDBImpl implements InfluxDB {
     this.username = username;
     this.password = password;
     this.loggingInterceptor = new HttpLoggingInterceptor();
-    setLogLevel();
+    initLogLevel();
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
@@ -105,7 +105,7 @@ public class InfluxDBImpl implements InfluxDB {
         this.username = username;
         this.password = password;
         this.loggingInterceptor = new HttpLoggingInterceptor();
-        setLogLevel();
+        initLogLevel();
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
         this.retrofit = new Retrofit.Builder()
                 .baseUrl(url)
@@ -740,13 +740,13 @@ public class InfluxDBImpl implements InfluxDB {
         Query.encode(queryBuilder.toString())));
   }
 
-  private void setLogLevel() {
+  private void initLogLevel() {
     String value = System.getProperty(LOG_LEVEL_PROP);
 
-    if (value == null) {
-      logLevel = LogLevel.NONE;
-    } else {
-      switch (value) {
+    LogLevel logLevel = LogLevel.NONE;
+
+    if (value != null) {
+      switch (value.toUpperCase()) {
       case "BASIC":
         logLevel = LogLevel.BASIC;
         break;
@@ -757,10 +757,8 @@ public class InfluxDBImpl implements InfluxDB {
         logLevel = LogLevel.FULL;
         break;
       default:
-        logLevel = LogLevel.NONE;
       }
     }
-
     setLogLevel(logLevel);
   }
 }
