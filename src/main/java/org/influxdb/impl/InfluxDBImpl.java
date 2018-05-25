@@ -742,21 +742,12 @@ public class InfluxDBImpl implements InfluxDB {
 
   private void initLogLevel() {
     String value = System.getProperty(LOG_LEVEL_PROP);
-
     LogLevel logLevel = LogLevel.NONE;
 
     if (value != null) {
-      switch (value.toUpperCase()) {
-      case "BASIC":
-        logLevel = LogLevel.BASIC;
-        break;
-      case "HEADERS":
-        logLevel = LogLevel.HEADERS;
-        break;
-      case "FULL":
-        logLevel = LogLevel.FULL;
-        break;
-      default:
+      try {
+        logLevel = LogLevel.valueOf(value.toUpperCase());
+      } catch (IllegalArgumentException e) {
       }
     }
     setLogLevel(logLevel);
