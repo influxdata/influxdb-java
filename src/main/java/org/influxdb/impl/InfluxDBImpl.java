@@ -59,6 +59,7 @@ public class InfluxDBImpl implements InfluxDB {
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
+  private static final String DEBUG_MODE_LOG_LEVEL = System.getProperty(LOG_LEVEL_PROPERTY);
 
   private final InetAddress hostAddress;
   private final String username;
@@ -86,8 +87,10 @@ public class InfluxDBImpl implements InfluxDB {
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
+
     this.loggingInterceptor = new HttpLoggingInterceptor();
-    initLogLevel();
+    setLogLevel(LogLevel.parseLogLevel(DEBUG_MODE_LOG_LEVEL));
+
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
@@ -104,8 +107,10 @@ public class InfluxDBImpl implements InfluxDB {
         this.hostAddress = parseHostAddress(url);
         this.username = username;
         this.password = password;
+
         this.loggingInterceptor = new HttpLoggingInterceptor();
-        initLogLevel();
+        setLogLevel(LogLevel.parseLogLevel(DEBUG_MODE_LOG_LEVEL));
+
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
         this.retrofit = new Retrofit.Builder()
                 .baseUrl(url)
@@ -740,16 +745,4 @@ public class InfluxDBImpl implements InfluxDB {
         Query.encode(queryBuilder.toString())));
   }
 
-  private void initLogLevel() {
-    String value = System.getProperty(LOG_LEVEL_PROP);
-    LogLevel logLevel = LogLevel.NONE;
-
-    if (value != null) {
-      try {
-        logLevel = LogLevel.valueOf(value.toUpperCase());
-      } catch (IllegalArgumentException e) {
-      }
-    }
-    setLogLevel(logLevel);
-  }
 }

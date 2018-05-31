@@ -30,7 +30,7 @@ public interface InfluxDB {
    * The system property key to set the http logging level across the JVM.
    * @see LogLevel for available values
    */
-  public static final String LOG_LEVEL_PROP = "org.influxdb.InfluxDB.logLevel";
+  public static final String LOG_LEVEL_PROPERTY = "org.influxdb.InfluxDB.logLevel";
 
   /** Controls the level of logging of the REST layer. */
   public enum LogLevel {
@@ -46,6 +46,24 @@ public interface InfluxDB {
      * Note: This requires that the entire request and response body be buffered in memory!
      */
     FULL;
+    /**
+     * Parses the string argument as a LogLevel constant.
+     * @param value a {@code String} containing the {@code LogLevel constant}
+     *             representation to be parsed
+     * @return the LogLevel constant representation of the param
+     *  or {@code NONE} for null or any invalid String representation.
+     */
+    public static LogLevel parseLogLevel(final String value) {
+      LogLevel logLevel = NONE;
+      if (value != null) {
+        try {
+          logLevel = valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+        }
+      }
+
+      return logLevel;
+    }
   }
 
   /**
