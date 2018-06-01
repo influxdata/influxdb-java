@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.TreeMap;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
@@ -25,6 +26,7 @@ public class BatchPoints {
   private Map<String, String> tags;
   private List<Point> points;
   private ConsistencyLevel consistency;
+  private TimeUnit precision;
 
   BatchPoints() {
     // Only visible in the Builder
@@ -50,6 +52,7 @@ public class BatchPoints {
     private final Map<String, String> tags = new TreeMap<>();
     private final List<Point> points = new ArrayList<>();
     private ConsistencyLevel consistency;
+    private TimeUnit precision;
 
     /**
      * @param database
@@ -117,6 +120,16 @@ public class BatchPoints {
     }
 
     /**
+     * Set the time precision to use for the whole batch. If unspecified, will default to {@link TimeUnit#NANOSECONDS}
+     * @param precision
+     * @return the Builder instance
+     */
+    public Builder precision(final TimeUnit precision) {
+      this.precision = precision;
+      return this;
+    }
+
+    /**
      * Create a new BatchPoints instance.
      *
      * @return the created BatchPoints.
@@ -135,6 +148,10 @@ public class BatchPoints {
         this.consistency = ConsistencyLevel.ONE;
       }
       batchPoints.setConsistency(this.consistency);
+      if (null == this.precision) {
+        this.precision = TimeUnit.NANOSECONDS;
+      }
+      batchPoints.setPrecision(this.precision);
       return batchPoints;
     }
   }
@@ -182,6 +199,20 @@ public class BatchPoints {
    */
   void setPoints(final List<Point> points) {
     this.points = points;
+  }
+
+  /**
+   * @return the time precision unit
+   */
+  public TimeUnit getPrecision() {
+    return precision;
+  }
+
+  /**
+   * @param precision the time precision to set for the batch points
+   */
+  void setPrecision(final TimeUnit precision) {
+    this.precision = precision;
   }
 
   /**
@@ -239,12 +270,13 @@ public class BatchPoints {
             && Objects.equals(retentionPolicy, that.retentionPolicy)
             && Objects.equals(tags, that.tags)
             && Objects.equals(points, that.points)
-            && consistency == that.consistency;
+            && consistency == that.consistency
+            && precision == that.precision;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(database, retentionPolicy, tags, points, consistency);
+    return Objects.hash(database, retentionPolicy, tags, points, consistency, precision);
   }
 
   /**
@@ -253,17 +285,19 @@ public class BatchPoints {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("BatchPoints [database=");
-    builder.append(this.database);
-    builder.append(", retentionPolicy=");
-    builder.append(this.retentionPolicy);
-    builder.append(", consistency=");
-    builder.append(this.consistency);
-    builder.append(", tags=");
-    builder.append(this.tags);
-    builder.append(", points=");
-    builder.append(this.points);
-    builder.append("]");
+    builder.append("BatchPoints [database=")
+           .append(this.database)
+           .append(", retentionPolicy=")
+           .append(this.retentionPolicy)
+           .append(", consistency=")
+           .append(this.consistency)
+           .append(", tags=")
+           .append(this.tags)
+           .append(", precision=")
+           .append(this.precision)
+           .append(", points=")
+           .append(this.points)
+           .append("]");
     return builder.toString();
   }
 
@@ -275,9 +309,37 @@ public class BatchPoints {
    */
   public String lineProtocol() {
     StringBuilder sb = new StringBuilder();
+
     for (Point point : this.points) {
-      sb.append(point.lineProtocol()).append("\n");
+      sb.append(point.lineProtocol(this.precision)).append("\n");
     }
     return sb.toString();
+  }
+
+  /**
+   * Test whether is possible to merge two BatchPoints objects.
+   *
+   * @param that batch point to merge in
+   * @return true if the batch points can be sent in a single HTTP request write
+   */
+  public boolean isMergeAbleWith(final BatchPoints that) {
+    return Objects.equals(database, that.database)
+            && Objects.equals(retentionPolicy, that.retentionPolicy)
+            && Objects.equals(tags, that.tags)
+            && consistency == that.consistency;
+  }
+
+  /**
+   * Merge two BatchPoints objects.
+   *
+   * @param that batch point to merge in
+   * @return true if the batch points have been merged into this BatchPoints instance. Return false otherwise.
+   */
+  public boolean mergeIn(final BatchPoints that) {
+    boolean mergeAble = isMergeAbleWith(that);
+    if (mergeAble) {
+      this.points.addAll(that.points);
+    }
+    return mergeAble;
   }
 }

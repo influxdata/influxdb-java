@@ -1,0 +1,11 @@
+version: '3.1'
+
+services:
+  # Define an InfluxDB service
+  influxdb:
+    image: ${image}
+    volumes:
+      - ${project.basedir}/influxdb.conf:/etc/influxdb/influxdb.conf
+    ports:
+      - "8086:8086"
+      - "8089:8089/udp"

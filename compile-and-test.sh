@@ -18,16 +18,18 @@
 
 set -e
 
+DEFAULT_INFLUXDB_VERSION="1.5"
+DEFAULT_MAVEN_JAVA_VERSION="3-jdk-10-slim"
 
-INFLUXDB_VERSIONS="1.4 1.3 1.2 1.1"
-JAVA_VERSIONS="3-jdk-8-alpine 3-jdk-9-slim"
+INFLUXDB_VERSION="${INFLUXDB_VERSION:-$DEFAULT_INFLUXDB_VERSION}"
+MAVEN_JAVA_VERSION="${MAVEN_JAVA_VERSION:-$DEFAULT_MAVEN_JAVA_VERSION}"
 
 WORKDIR=/usr/src/mymaven
 
 if [ -z "$BUILD_HOME" ] ; then
     BUILD_HOME=$PWD
     if [ -x  /c/Windows/System32/ ] ; then
-	BUILD_HOME=/$PWD
+    BUILD_HOME=/$PWD
     fi
 fi
 
@@ -43,62 +45,52 @@ function run_test {
     
     INFLUXDB_API_URL=http://influxdb:8086
     if [ "$USE_PROXY" == "nginx" ] ; then
-	echo Test with Nginx as proxy
-	INFLUXDB_API_URL=http://nginx:8080/influx-api/
+    echo Test with Nginx as proxy
+    INFLUXDB_API_URL=http://nginx:8080/influx-api/
     fi
 
     
-    for java_version in ${JAVA_VERSIONS}
-    do
-	echo "Run tests with maven:${java_version}"
-	for version in ${INFLUXDB_VERSIONS}
-	do
-	    echo "Tesing againts influxdb ${version}"
-	    docker kill influxdb || true
-	    docker rm influxdb || true
-	    docker pull influxdb:${version}-alpine || true
-	    docker run \
-		   --detach \
-		   --name influxdb \
-		   --publish 8086:8086 \
-		   --publish 8089:8089/udp \
-		   --volume ${BUILD_HOME}/influxdb.conf:/etc/influxdb/influxdb.conf \
-		   influxdb:${version}-alpine
+    echo "Run tests with maven:${MAVEN_JAVA_VERSION} on onfluxdb-${INFLUXDB_VERSION}"
+    docker kill influxdb || true
+    docker rm influxdb || true
+    docker pull influxdb:${version}-alpine || true
+    docker run \
+       --detach \
+       --name influxdb \
+       --publish 8086:8086 \
+       --publish 8089:8089/udp \
+       --volume ${BUILD_HOME}/influxdb.conf:/etc/influxdb/influxdb.conf \
+       influxdb:${INFLUXDB_VERSION}-alpine
 
-	    if [ "$USE_PROXY" == "nginx" ] ; then
-		echo Starting Nginx
-		docker kill nginx || true		
-		docker rm  nginx || true
-		echo ----- STARTING NGINX CONTAINER -----
-		docker run \
-		       --detach \
-		       --name nginx \
-		       --publish 8888:8080 \
-		       --volume ${BUILD_HOME}/src/test/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
-		       --link influxdb:influxdb \
-		       nginx nginx '-g' 'daemon off;'
-		
-		NGINX_LINK=--link=nginx
-		SKIP_TESTS=-DsomeModule.test.excludes="**/*UDPInfluxDBTest*"
-	    fi
-	    
-	    docker run -it --rm  \
-		   --volume $BUILD_HOME:/usr/src/mymaven \
-		   --volume $BUILD_HOME/.m2:/root/.m2 \
-		   --workdir $WORKDIR \
-		   --link=influxdb $NGINX_LINK \
-		   --env INFLUXDB_API_URL=$INFLUXDB_API_URL \
-		   maven:${java_version} mvn clean install $SKIP_TESTS
+    if [ "$USE_PROXY" == "nginx" ] ; then
+    echo Starting Nginx
+    docker kill nginx || true        
+    docker rm  nginx || true
+    echo ----- STARTING NGINX CONTAINER -----
+    docker run \
+           --detach \
+           --name nginx \
+           --publish 8888:8080 \
+           --volume ${BUILD_HOME}/src/test/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
+           --link influxdb:influxdb \
+           nginx nginx '-g' 'daemon off;'
+    
+    NGINX_LINK=--link=nginx
+    SKIP_TESTS=-DsomeModule.test.excludes="**/*UDPInfluxDBTest*"
+    fi
+    
+    docker run -it --rm  \
+       --volume $BUILD_HOME:/usr/src/mymaven \
+       --volume $BUILD_HOME/.m2:/root/.m2 \
+       --workdir $WORKDIR \
+       --link=influxdb $NGINX_LINK \
+       --env INFLUXDB_API_URL=$INFLUXDB_API_URL \
+       maven:${MAVEN_JAVA_VERSION} mvn clean install $SKIP_TESTS
 
-	    docker kill influxdb || true
-	    docker kill nginx || true
-	    docker rm -f nginx || true
-	done
-    done
+    docker kill influxdb || true
+    docker kill nginx || true
+    docker rm -f nginx || true
 }
-
-################################################################################
-################################################################################
 
 run_test
 run_test nginx
