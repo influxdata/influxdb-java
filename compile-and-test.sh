@@ -45,8 +45,8 @@ function run_test {
     
     INFLUXDB_API_URL=http://influxdb:8086
     if [ "$USE_PROXY" == "nginx" ] ; then
-    echo Test with Nginx as proxy
-    INFLUXDB_API_URL=http://nginx:8080/influx-api/
+        echo Test with Nginx as proxy
+        INFLUXDB_API_URL=http://nginx:8080/influx-api/
     fi
 
     
@@ -62,21 +62,22 @@ function run_test {
        --volume ${BUILD_HOME}/influxdb.conf:/etc/influxdb/influxdb.conf \
        influxdb:${INFLUXDB_VERSION}-alpine
 
+    NGINX_LINK=
+    SKIP_TESTS=
     if [ "$USE_PROXY" == "nginx" ] ; then
-    echo Starting Nginx
-    docker kill nginx || true        
-    docker rm  nginx || true
-    echo ----- STARTING NGINX CONTAINER -----
-    docker run \
-           --detach \
-           --name nginx \
-           --publish 8888:8080 \
-           --volume ${BUILD_HOME}/src/test/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
-           --link influxdb:influxdb \
-           nginx nginx '-g' 'daemon off;'
-    
-    NGINX_LINK=--link=nginx
-    SKIP_TESTS=-DsomeModule.test.excludes="**/*UDPInfluxDBTest*"
+        echo Starting Nginx
+        docker kill nginx || true        
+        docker rm  nginx || true
+        echo ----- STARTING NGINX CONTAINER -----
+        docker run \
+               --detach \
+               --name nginx \
+               --publish 8888:8080 \
+               --volume ${BUILD_HOME}/src/test/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
+               --link influxdb:influxdb \
+               nginx nginx '-g' 'daemon off;'
+        NGINX_LINK=--link=nginx
+        SKIP_TESTS=-DsomeModule.test.excludes="**/*UDPInfluxDBTest*"
     fi
     
     docker run -it --rm  \
@@ -88,9 +89,10 @@ function run_test {
        maven:${MAVEN_JAVA_VERSION} mvn clean install $SKIP_TESTS
 
     docker kill influxdb || true
-    docker kill nginx || true
-    docker rm -f nginx || true
+    if [ "$USE_PROXY" == "nginx" ] ; then
+        docker kill nginx || true
+    fi
 }
 
-run_test
 run_test nginx
+run_test
