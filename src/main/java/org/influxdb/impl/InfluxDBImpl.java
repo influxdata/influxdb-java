@@ -59,7 +59,14 @@ public class InfluxDBImpl implements InfluxDB {
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
-  private static final String DEBUG_MODE_LOG_LEVEL = System.getProperty(LOG_LEVEL_PROPERTY);
+
+  /**
+   * This static constant holds the http logging log level expected in DEBUG mode
+   * It is set by System property {@code org.influxdb.InfluxDB.logLevel}.
+   *
+   * @see org.influxdb.impl.LOG_LEVEL_PROPERTY
+   */
+  private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
   private final InetAddress hostAddress;
   private final String username;
@@ -89,7 +96,7 @@ public class InfluxDBImpl implements InfluxDB {
     this.password = password;
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
-    setLogLevel(LogLevel.parseLogLevel(DEBUG_MODE_LOG_LEVEL));
+    setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     this.retrofit = new Retrofit.Builder()
@@ -109,7 +116,7 @@ public class InfluxDBImpl implements InfluxDB {
         this.password = password;
 
         this.loggingInterceptor = new HttpLoggingInterceptor();
-        setLogLevel(LogLevel.parseLogLevel(DEBUG_MODE_LOG_LEVEL));
+        setLogLevel(LOG_LEVEL);
 
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
         this.retrofit = new Retrofit.Builder()
