@@ -60,6 +60,14 @@ public class InfluxDBImpl implements InfluxDB {
 
   private static final String SHOW_DATABASE_COMMAND_ENCODED = Query.encode("SHOW DATABASES");
 
+  /**
+   * This static constant holds the http logging log level expected in DEBUG mode
+   * It is set by System property {@code org.influxdb.InfluxDB.logLevel}.
+   *
+   * @see org.influxdb.impl.LOG_LEVEL_PROPERTY
+   */
+  private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
+
   private final InetAddress hostAddress;
   private final String username;
   private final String password;
@@ -86,8 +94,10 @@ public class InfluxDBImpl implements InfluxDB {
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
+
     this.loggingInterceptor = new HttpLoggingInterceptor();
-    this.loggingInterceptor.setLevel(Level.NONE);
+    setLogLevel(LOG_LEVEL);
+
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
@@ -104,8 +114,10 @@ public class InfluxDBImpl implements InfluxDB {
         this.hostAddress = parseHostAddress(url);
         this.username = username;
         this.password = password;
+
         this.loggingInterceptor = new HttpLoggingInterceptor();
-        this.loggingInterceptor.setLevel(Level.NONE);
+        setLogLevel(LOG_LEVEL);
+
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
         this.retrofit = new Retrofit.Builder()
                 .baseUrl(url)
@@ -739,4 +751,5 @@ public class InfluxDBImpl implements InfluxDB {
     execute(this.influxDBService.postQuery(this.username, this.password,
         Query.encode(queryBuilder.toString())));
   }
+
 }
