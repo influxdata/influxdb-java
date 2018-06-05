@@ -8,48 +8,48 @@ import java.util.Map;
 
 public class TestUtils {
 
-	private static String getEnv(String name, String defaultValue) {
-	  Map<String, String> getenv = System.getenv();
+  private static String getEnv(String name, String defaultValue) {
+    Map<String, String> getenv = System.getenv();
 
-	  if (getenv.containsKey(name)) {
+    if (getenv.containsKey(name)) {
       return getenv.get(name);
     } else {
       return defaultValue;
     }
-	}
+  }
   
   public static String getInfluxIP() {
-		return getEnv("INFLUXDB_IP", "127.0.0.1");
-	}
-	
-	public static String getRandomMeasurement() {
-		return "measurement_" + System.nanoTime();
-	}
-	
-	public static String getInfluxPORT(boolean apiPort) {
-		if(apiPort) {		
-			return getEnv("INFLUXDB_PORT_API", "8086");
-		}
-		else {
-			return getEnv("INFLUXDB_PORT_COLLECTD", "8096");
-		}			
-	}
+    return getEnv("INFLUXDB_IP", "127.0.0.1");
+  }
+  
+  public static String getRandomMeasurement() {
+    return "measurement_" + System.nanoTime();
+  }
+  
+  public static String getInfluxPORT(boolean apiPort) {
+    if(apiPort) {    
+      return getEnv("INFLUXDB_PORT_API", "8086");
+    }
+    else {
+      return getEnv("INFLUXDB_PORT_COLLECTD", "8096");
+    }      
+  }
 
-	public static String getProxyApiUrl() {
+  public static String getProxyApiUrl() {
     return getEnv("PROXY_API_URL", "http://127.0.0.1:8086/");
-	}
+  }
 
-	public static String getProxyUdpPort() {
+  public static String getProxyUdpPort() {
     return getEnv("PROXY_UDP_PORT", "8089");
   }
 
-	public static String defaultRetentionPolicy(String version) {
-		if (version.startsWith("0.") ) {
-			return "default";
-		} else {
-			return "autogen";
-		}
-	}
+  public static String defaultRetentionPolicy(String version) {
+    if (version.startsWith("0.") ) {
+      return "default";
+    } else {
+      return "autogen";
+    }
+  }
 
   public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
     return connectToInfluxDB(null, null);

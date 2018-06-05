@@ -21,13 +21,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnitPlatform.class)
 public class InfluxDBProxyTest {
   private InfluxDB influxDB;
-  private String db = "udp";
+  private static final String TEST_DB = "InfluxDBProxyTest_db";
+  private static final String UDP_DB = "udp";
 
   @BeforeEach
   public void setUp() throws InterruptedException, IOException {
-    this.influxDB = TestUtils.connectToInfluxDB(TestUtils.getProxyApiUrl());
-    this.influxDB.createDatabase(db);
-    influxDB.setDatabase(db);
+    influxDB = TestUtils.connectToInfluxDB(TestUtils.getProxyApiUrl());
   }
 
   /**
@@ -35,11 +34,14 @@ public class InfluxDBProxyTest {
    */
   @AfterEach
   public void cleanup(){
-    this.influxDB.deleteDatabase(db);
+    influxDB.close();
   }
   
   @Test
   public void testWriteSomePointThroughTcpProxy() {
+    influxDB.createDatabase(TEST_DB);
+    influxDB.setDatabase(TEST_DB);
+
     for(int i = 0; i < 20; i++) {
       Point point = Point.measurement("weather")
           .time(i,TimeUnit.HOURS)
@@ -49,14 +51,18 @@ public class InfluxDBProxyTest {
       influxDB.write(point);
     }
 
-    QueryResult result = influxDB.query(new Query("select * from weather", db));
+    QueryResult result = influxDB.query(new Query("select * from weather", TEST_DB));
     //check points written already to DB 
     Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
-    
+
+    influxDB.deleteDatabase(TEST_DB);
   }
   
   @Test
   public void testWriteSomePointThroughUdpProxy() throws InterruptedException {
+    influxDB.createDatabase(UDP_DB);
+    influxDB.setDatabase(UDP_DB);
+
     int proxyUdpPort = Integer.parseInt(TestUtils.getProxyUdpPort());
     for(int i = 0; i < 20; i++) {
       Point point = Point.measurement("weather")
@@ -68,10 +74,11 @@ public class InfluxDBProxyTest {
     }
 
     Thread.sleep(2000);
-    QueryResult result = influxDB.query(new Query("select * from weather", db));
+    QueryResult result = influxDB.query(new Query("select * from weather", UDP_DB));
     //check points written already to DB 
     Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
-    
+
+    influxDB.deleteDatabase(UDP_DB);
   }
 
 }
