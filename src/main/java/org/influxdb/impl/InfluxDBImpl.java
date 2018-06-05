@@ -101,7 +101,10 @@ public class InfluxDBImpl implements InfluxDB {
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .client(client.addInterceptor(loggingInterceptor)
+                .addInterceptor(gzipRequestInterceptor)
+                .authenticator(new RequestAuthenticator(username, password))
+                .build())
         .addConverterFactory(MoshiConverterFactory.create())
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
@@ -121,7 +124,10 @@ public class InfluxDBImpl implements InfluxDB {
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
         this.retrofit = new Retrofit.Builder()
                 .baseUrl(url)
-                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+                .client(client.addInterceptor(loggingInterceptor)
+                        .addInterceptor(gzipRequestInterceptor)
+                        .authenticator(new RequestAuthenticator(username, password))
+                        .build())
                 .addConverterFactory(MoshiConverterFactory.create())
                 .build();
         this.influxDBService = influxDBService;

@@ -2,12 +2,10 @@ package org.influxdb;
 
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.dto.QueryResult.Series;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -17,9 +15,6 @@ import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,11 +34,10 @@ import java.util.function.Consumer;
  *
  */
 @RunWith(JUnitPlatform.class)
-public class InfluxDBTest {
+public class InfluxDBProxyTest {
 
 	private InfluxDB influxDB;
-	private final static int UDP_PORT = 8089;
-	private final static String UDP_DATABASE = "udp";
+	private final static String DATABASE = "testDb";
 
 	/**
 	 * Create a influxDB connection before all tests start.
@@ -53,16 +47,38 @@ public class InfluxDBTest {
 	 */
 	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
-		this.influxDB = TestUtils.connectToInfluxDB();
-		this.influxDB.createDatabase(UDP_DATABASE);
-	}
+		String url = "http://" + TestUtils.getProxyIP() + "/influxdb/";
+		System.out.println("############################################################################################# ");
+		System.out.println("#  Url: "+url);
 
+		this.influxDB = InfluxDBFactory.connect(url, "admin", "admin");
+		boolean influxDBstarted = false;
+		do {
+			Pong response;
+			try {
+				response = this.influxDB.ping();
+				if (response.isGood()) {
+					influxDBstarted = true;
+				}
+			} catch (Exception e) {
+				// NOOP intentional
+				e.printStackTrace();
+			}
+			Thread.sleep(100L);
+		} while (!influxDBstarted);
+		this.influxDB.setLogLevel(LogLevel.NONE);
+		this.influxDB.createDatabase(DATABASE);
+		System.out.println("#  Connected to InfluxDB Version: " + this.influxDB.version() + " using Proxy #");
+		System.out.println("#############################################################################################");
+
+	}
+	
 	/**
 	 * delete UDP database after all tests end.
 	 */
 	@AfterEach
 	public void cleanup(){
-		this.influxDB.deleteDatabase(UDP_DATABASE);
+		this.influxDB.deleteDatabase(DATABASE);
 	}
 
 	/**
@@ -93,53 +109,6 @@ public class InfluxDBTest {
 		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"));
 		this.influxDB.query(new Query("DROP DATABASE mydb2", "mydb"));
 	}
-
-  @Test
-  public void testBoundParameterQuery() throws InterruptedException {
-    // set up
-    Point point = Point
-        .measurement("cpu")
-        .tag("atag", "test")
-        .addField("idle", 90L)
-        .addField("usertime", 9L)
-        .addField("system", 1L)
-        .build();
-    this.influxDB.setDatabase(UDP_DATABASE);
-    this.influxDB.write(point);
-
-    // test
-    Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE atag = $atag")
-        .forDatabase(UDP_DATABASE)
-        .bind("atag", "test")
-        .create();
-    QueryResult result = this.influxDB.query(query);
-    Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
-    Series series = result.getResults().get(0).getSeries().get(0);
-    Assertions.assertTrue(series.getValues().size() == 1);
-
-    result = this.influxDB.query(query, TimeUnit.SECONDS);
-    Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
-    series = result.getResults().get(0).getSeries().get(0);
-    Assertions.assertTrue(series.getValues().size() == 1);
-
-    Object waitForTestresults = new Object();
-    Consumer<QueryResult> check = (queryResult) -> {
-      if(queryResult.getResults() == null){
-		  Assertions.assertTrue(queryResult.getError().contains("DONE"));
-	  } else {
-		  Assertions.assertTrue(queryResult.getResults().get(0).getSeries().size() == 1);
-		  Series s = queryResult.getResults().get(0).getSeries().get(0);
-		  Assertions.assertTrue(s.getValues().size() == 1);
-	  }
-      synchronized (waitForTestresults) {
-        waitForTestresults.notifyAll();
-      }
-    };
-    this.influxDB.query(query, 10, check);
-    synchronized (waitForTestresults) {
-      waitForTestresults.wait(2000);
-    }
-  }
 
 	/**
 	 * Tests for callback query.
@@ -224,60 +193,7 @@ public class InfluxDBTest {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
-	/**
-	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s sync support.
-	 */
-	@Test
-	public void testSyncWritePointThroughUDP() throws InterruptedException {
-		this.influxDB.disableBatch();
-		String measurement = TestUtils.getRandomMeasurement();
-		Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
-		this.influxDB.write(UDP_PORT, point);
-		Thread.sleep(2000);
-		Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-		QueryResult result = this.influxDB.query(query);
-		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-	}
 
-	/**
-	 *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
-	 */
-	@Test
-	public void testAsyncWritePointThroughUDP() throws InterruptedException {
-		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-		try{
-			Assertions.assertTrue(this.influxDB.isBatchEnabled());
-			String measurement = TestUtils.getRandomMeasurement();
-			Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
-			this.influxDB.write(UDP_PORT, point);
-			Thread.sleep(2000);
-			Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-			QueryResult result = this.influxDB.query(query);
-			Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-		}finally{
-			this.influxDB.disableBatch();
-		}
-	}
-
-
-    /**
-     *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
-     */
-    @Test
-    public void testAsyncWritePointThroughUDPFail() {
-        this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-        try{
-            Assertions.assertTrue(this.influxDB.isBatchEnabled());
-            String measurement = TestUtils.getRandomMeasurement();
-            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
-            Thread.currentThread().interrupt();
-            Assertions.assertThrows(RuntimeException.class, () -> {
-				this.influxDB.write(UDP_PORT, point);
-			});
-        }finally{
-            this.influxDB.disableBatch();
-        }
-    }
 
     /**
      * Test writing to the database using string protocol.
@@ -311,86 +227,8 @@ public class InfluxDBTest {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
-    /**
-     * Test writing to the database using string protocol through UDP.
-     */
-    @Test
-    public void testWriteStringDataThroughUDP() throws InterruptedException {
-        String measurement = TestUtils.getRandomMeasurement();
-        this.influxDB.write(UDP_PORT, measurement + ",atag=test idle=90,usertime=9,system=1");
-        //write with UDP may be executed on server after query with HTTP. so sleep 2s to handle this case
-        Thread.sleep(2000);
-        Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-        QueryResult result = this.influxDB.query(query);
-        Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-    }
 
-    /**
-     * Test writing multiple records to the database using string protocol through UDP.
-     */
-    @Test
-    public void testWriteMultipleStringDataThroughUDP() throws InterruptedException {
-        String measurement = TestUtils.getRandomMeasurement();
-        this.influxDB.write(UDP_PORT, measurement + ",atag=test1 idle=100,usertime=10,system=1\n" +
-                                      measurement + ",atag=test2 idle=200,usertime=20,system=2\n" +
-                                      measurement + ",atag=test3 idle=300,usertime=30,system=3");
-        Thread.sleep(2000);
-        Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-        QueryResult result = this.influxDB.query(query);
 
-        Assertions.assertEquals(3, result.getResults().get(0).getSeries().size());
-        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
-        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
-        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
-    }
-
-    /**
-     * Test writing multiple separate records to the database using string protocol through UDP.
-     */
-    @Test
-    public void testWriteMultipleStringDataLinesThroughUDP() throws InterruptedException {
-        String measurement = TestUtils.getRandomMeasurement();
-        this.influxDB.write(UDP_PORT, Arrays.asList(
-                measurement + ",atag=test1 idle=100,usertime=10,system=1",
-                measurement + ",atag=test2 idle=200,usertime=20,system=2",
-                measurement + ",atag=test3 idle=300,usertime=30,system=3"
-        ));
-        Thread.sleep(2000);
-        Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
-        QueryResult result = this.influxDB.query(query);
-
-        Assertions.assertEquals(3, result.getResults().get(0).getSeries().size());
-        Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
-        Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
-        Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
-    }
-
-    /**
-     * When batch of points' size is over UDP limit, the expected exception
-     * is java.lang.RuntimeException: java.net.SocketException:
-     * The message is larger than the maximum supported by the underlying transport: Datagram send failed
-     * @throws Exception
-     */
-    @Test
-    public void testWriteMultipleStringDataLinesOverUDPLimit() throws Exception {
-        //prepare data
-        List<String> lineProtocols = new ArrayList<String>();
-        int i = 0;
-        int length = 0;
-        while ( true ) {
-            Point point = Point.measurement("udp_single_poit").addField("v", i).build();
-            String lineProtocol = point.lineProtocol();
-            length += (lineProtocol.getBytes("utf-8")).length;
-            lineProtocols.add(lineProtocol);
-            if( length > 65535 ){
-                break;
-            }
-        }
-        //write batch of string which size is over 64K
-        Assertions.assertThrows(RuntimeException.class, () -> {
-			this.influxDB.write(UDP_PORT, lineProtocols);
-		});
-    }
 
     /**
      * Test writing multiple records to the database using string protocol.
@@ -457,158 +295,6 @@ public class InfluxDBTest {
         Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         this.influxDB.deleteDatabase(dbName);
     }
-
-	/**
-	 * Tests writing points using the time precision feature
-	 * @throws Exception
-	 */
-	@Test
-	public void testWriteBatchWithPrecision() throws Exception {
-		// GIVEN a database and a measurement
-		String dbName = "precision_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-
-		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
-
-		String measurement = TestUtils.getRandomMeasurement();
-
-		// GIVEN a batch of points using second precision
-		DateTimeFormatter formatter = DateTimeFormatter
-				.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-				.withZone(ZoneId.of("UTC"));
-		int t1 = 1485273600;
-		Point p1 = Point
-				.measurement(measurement)
-				.addField("foo", 1d)
-				.tag("device", "one")
-				.time(t1, TimeUnit.SECONDS).build(); // 2017-01-27T16:00:00
-		String timeP1 = formatter.format(Instant.ofEpochSecond(t1));
-
-		int t2 = 1485277200;
-		Point p2 = Point
-				.measurement(measurement)
-				.addField("foo", 2d)
-				.tag("device", "two")
-				.time(t2, TimeUnit.SECONDS).build(); // 2017-01-27T17:00:00
-		String timeP2 = formatter.format(Instant.ofEpochSecond(t2));
-
-		int t3 = 1485280800;
-		Point p3 = Point
-				.measurement(measurement)
-				.addField("foo", 3d)
-				.tag("device", "three")
-				.time(t3, TimeUnit.SECONDS).build(); // 2017-01-27T18:00:00
-		String timeP3 = formatter.format(Instant.ofEpochSecond(t3));
-
-		BatchPoints batchPoints = BatchPoints
-				.database(dbName)
-				.retentionPolicy(rp)
-				.precision(TimeUnit.SECONDS)
-				.points(p1, p2, p3)
-				.build();
-
-		// WHEN I write the batch
-		this.influxDB.write(batchPoints);
-
-		// THEN the measure points have a timestamp with second precision
-		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
-
-		this.influxDB.deleteDatabase(dbName);
-	}
-
-	@Test
-	public void testWriteBatchWithoutPrecision() throws Exception {
-		// GIVEN a database and a measurement
-		String dbName = "precision_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-
-		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
-
-		String measurement = TestUtils.getRandomMeasurement();
-
-		// GIVEN a batch of points that has no specific precision
-		long t1 = 1485273600000000100L;
-		Point p1 = Point
-				.measurement(measurement)
-				.addField("foo", 1d)
-				.tag("device", "one")
-				.time(t1, TimeUnit.NANOSECONDS).build(); // 2017-01-27T16:00:00.000000100Z
-		Double timeP1 = Double.valueOf(t1);
-
-		long t2 = 1485277200000000200L;
-		Point p2 = Point
-				.measurement(measurement)
-				.addField("foo", 2d)
-				.tag("device", "two")
-				.time(t2, TimeUnit.NANOSECONDS).build(); // 2017-01-27T17:00:00.000000200Z
-		Double timeP2 = Double.valueOf(t2);
-
-		long t3 = 1485280800000000300L;
-		Point p3 = Point
-				.measurement(measurement)
-				.addField("foo", 3d)
-				.tag("device", "three")
-				.time(t3, TimeUnit.NANOSECONDS).build(); // 2017-01-27T18:00:00.000000300Z
-		Double timeP3 = Double.valueOf(t3);
-
-		BatchPoints batchPoints = BatchPoints
-				.database(dbName)
-				.retentionPolicy(rp)
-				.points(p1, p2, p3)
-				.build();
-
-		// WHEN I write the batch
-		this.influxDB.write(batchPoints);
-
-		// THEN the measure points have a timestamp with second precision
-		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
-
-		this.influxDB.deleteDatabase(dbName);
-	}
-
-	@Test
-	public void testWriteRecordsWithPrecision() throws Exception {
-		// GIVEN a database and a measurement
-		String dbName = "precision_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-
-		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
-
-		String measurement = TestUtils.getRandomMeasurement();
-
-		// GIVEN a set of records using second precision
-		DateTimeFormatter formatter = DateTimeFormatter
-				.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-				.withZone(ZoneId.of("UTC"));
-		List<String> records = new ArrayList<>();
-		records.add(measurement + ",atag=test1 idle=100,usertime=10,system=1 1485273600");
-		String timeP1 = formatter.format(Instant.ofEpochSecond(1485273600));
-
-		records.add(measurement + ",atag=test2 idle=200,usertime=20,system=2 1485277200");
-		String timeP2 = formatter.format(Instant.ofEpochSecond(1485277200));
-
-		records.add(measurement + ",atag=test3 idle=300,usertime=30,system=3 1485280800");
-		String timeP3 = formatter.format(Instant.ofEpochSecond(1485280800));
-
-		// WHEN I write the batch
-		this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, TimeUnit.SECONDS, records);
-
-		// THEN the measure points have a timestamp with second precision
-		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
-		this.influxDB.deleteDatabase(dbName);
-	}
 
 	/**
 	 * Test writing multiple separate records to the database using string protocol with simpler interface.

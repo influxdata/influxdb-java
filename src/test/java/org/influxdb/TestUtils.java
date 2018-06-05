@@ -18,7 +18,19 @@ public class TestUtils {
 		
 		return ip;
 	}
-	
+
+	public static String getProxyIP() {
+		String ip = "127.0.0.1";
+
+		Map<String, String> getenv = System.getenv();
+		if (getenv.containsKey("PROXY_IP")) {
+			ip = getenv.get("PROXY_IP");
+		}
+
+		return ip;
+	}
+
+
 	public static String getRandomMeasurement() {
 		return "measurement_" + System.nanoTime();
 	}
