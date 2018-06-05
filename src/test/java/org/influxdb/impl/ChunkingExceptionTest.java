@@ -1,16 +1,19 @@
 package org.influxdb.impl;
 
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.JsonReader;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import okhttp3.OkHttpClient;
-import okhttp3.ResponseBody;
-import okio.Buffer;
+
 import org.influxdb.InfluxDB;
 import org.influxdb.TestUtils;
 import org.influxdb.dto.Query;
@@ -20,12 +23,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.JsonReader;
+
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
+import okio.Buffer;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -56,7 +60,7 @@ public class ChunkingExceptionTest {
         when(responseBody.source()).thenReturn(new Buffer());
         doThrow(ex).when(adapter).fromJson(any(JsonReader.class));
 
-        String url = TestUtils.getInfluxURL();
+        String url = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
         InfluxDB influxDB = new InfluxDBImpl(url, "admin", "admin", new OkHttpClient.Builder(), influxDBService, adapter) {
             @Override
             public String version() {

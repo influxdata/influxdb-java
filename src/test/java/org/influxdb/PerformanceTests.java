@@ -33,7 +33,7 @@ public class PerformanceTests {
 
 	@BeforeEach
 	public void setUp() {
-		this.influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "root", "root");
+		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
 		this.influxDB.setLogLevel(LogLevel.NONE);
 		this.influxDB.createDatabase(UDP_DATABASE);
 	}

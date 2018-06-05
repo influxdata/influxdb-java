@@ -38,7 +38,7 @@ public class UDPInfluxDBTest {
      */
     @BeforeEach
     public void setUp() throws InterruptedException, IOException {
-        this.influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
+        this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         boolean influxDBstarted = false;
         do {
             Pong response;

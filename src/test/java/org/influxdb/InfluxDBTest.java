@@ -658,7 +658,7 @@ public class InfluxDBTest {
 	 */
 	@Test
 	public void testCloseInfluxDBClient() {
-		InfluxDB influxDB = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
+		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
 		influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 		Assertions.assertTrue(influxDB.isBatchEnabled());
 		influxDB.close();
@@ -670,7 +670,7 @@ public class InfluxDBTest {
      */
     @Test
     public void testWriteEnableGzip() {
-        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         String dbName = "write_unittest_" + System.currentTimeMillis();
         try {
             influxDBForTestGzip.setLogLevel(LogLevel.NONE);
@@ -702,7 +702,7 @@ public class InfluxDBTest {
      */
     @Test
     public void testWriteEnableGzipAndDisableGzip() {
-        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect(TestUtils.getInfluxURL(), "admin", "admin");
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         try {
             //test default: gzip is disable
             Assertions.assertFalse(influxDBForTestGzip.isGzipEnabled());
