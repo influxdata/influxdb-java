@@ -34,7 +34,6 @@ import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.InfluxDBResultMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -260,59 +259,104 @@ public class InfluxDBResultMapperTest {
     Assertions.assertTrue( myList.isEmpty(), "there must NO entry in the result list");
   }
 
-  @Test
-  public void testToPOJO_QueryResultCreatedByGroupByClause() {
-    // Given...
-    mapper.cacheMeasurementClass(GroupByCarrierDeviceOS.class);
+  	public QueryResult getTestQueryResult()
+		{
+				// Given...
+				mapper.cacheMeasurementClass(GroupByCarrierDeviceOS.class);
 
-    List<String> columnList = Arrays.asList("time", "median", "min", "max");
+				List<String> columnList = Arrays.asList("time", "median", "min", "max");
 
-    // InfluxDB client returns the time representation as Double.
-    Double now = Long.valueOf(System.currentTimeMillis()).doubleValue();
+				// InfluxDB client returns the time representation as Double.
+				Double now = Long.valueOf(System.currentTimeMillis()).doubleValue();
 
-    List<Object> firstSeriesResult = Arrays.asList(now, new Double("233.8"), new Double("0.0"),
-      new Double("3090744.0"));
-    // When the "GROUP BY" clause is used, "tags" are returned as Map<String,String>
-    Map<String, String> firstSeriesTagMap = new HashMap<>();
-    firstSeriesTagMap.put("CARRIER", "000/00");
-    firstSeriesTagMap.put("DEVICE_OS_VERSION", "4.4.2");
+				List<Object> firstSeriesResult = Arrays.asList(now, new Double("233.8"), new Double("0.0"),
+						new Double("3090744.0"));
+				// When the "GROUP BY" clause is used, "tags" are returned as Map<String,String>
+				Map<String, String> firstSeriesTagMap = new HashMap<>();
+				firstSeriesTagMap.put("CARRIER", "000/00");
+				firstSeriesTagMap.put("DEVICE_OS_VERSION", "4.4.2");
 
-    List<Object> secondSeriesResult = Arrays.asList(now, new Double("552.0"), new Double("135.0"),
-      new Double("267705.0"));
-    Map<String, String> secondSeriesTagMap = new HashMap<>();
-    secondSeriesTagMap.put("CARRIER", "000/01");
-    secondSeriesTagMap.put("DEVICE_OS_VERSION", "9.3.5");
+				List<Object> secondSeriesResult = Arrays.asList(now, new Double("552.0"), new Double("135.0"),
+						new Double("267705.0"));
+				Map<String, String> secondSeriesTagMap = new HashMap<>();
+				secondSeriesTagMap.put("CARRIER", "000/01");
+				secondSeriesTagMap.put("DEVICE_OS_VERSION", "9.3.5");
 
-    QueryResult.Series firstSeries = new QueryResult.Series();
-    firstSeries.setColumns(columnList);
-    firstSeries.setValues(Arrays.asList(firstSeriesResult));
-    firstSeries.setTags(firstSeriesTagMap);
-    firstSeries.setName("tb_network");
+				QueryResult.Series firstSeries = new QueryResult.Series();
+				firstSeries.setColumns(columnList);
+				firstSeries.setValues(Arrays.asList(firstSeriesResult));
+				firstSeries.setTags(firstSeriesTagMap);
+				firstSeries.setName("tb_network");
 
-    QueryResult.Series secondSeries = new QueryResult.Series();
-    secondSeries.setColumns(columnList);
-    secondSeries.setValues(Arrays.asList(secondSeriesResult));
-    secondSeries.setTags(secondSeriesTagMap);
-    secondSeries.setName("tb_network");
+				QueryResult.Series secondSeries = new QueryResult.Series();
+				secondSeries.setColumns(columnList);
+				secondSeries.setValues(Arrays.asList(secondSeriesResult));
+				secondSeries.setTags(secondSeriesTagMap);
+				secondSeries.setName("tb_network");
 
-    QueryResult.Result internalResult = new QueryResult.Result();
-    internalResult.setSeries(Arrays.asList(firstSeries, secondSeries));
+				QueryResult.Result internalResult = new QueryResult.Result();
+				internalResult.setSeries(Arrays.asList(firstSeries, secondSeries));
 
-    QueryResult queryResult = new QueryResult();
-    queryResult.setResults(Arrays.asList(internalResult));
+				QueryResult queryResult = new QueryResult();
+				queryResult.setResults(Arrays.asList(internalResult));
 
-    // When...
-    List<GroupByCarrierDeviceOS> myList = mapper.toPOJO(queryResult, GroupByCarrierDeviceOS.class);
+				return queryResult;
+		}
 
-    // Then...
-    GroupByCarrierDeviceOS firstGroupByEntry = myList.get(0);
-    Assertions.assertEquals("000/00", firstGroupByEntry.carrier, "field 'carrier' does not match");
-    Assertions.assertEquals("4.4.2", firstGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
 
-    GroupByCarrierDeviceOS secondGroupByEntry = myList.get(1);
-    Assertions.assertEquals("000/01", secondGroupByEntry.carrier, "field 'carrier' does not match");
-    Assertions.assertEquals("9.3.5", secondGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
-  }
+		@Test
+		public void testToPOJO_QueryResultCreatedByGroupByClause() {
+
+				// When...
+				List<GroupByCarrierDeviceOS> myList = mapper.toPOJO(getTestQueryResult(), GroupByCarrierDeviceOS.class);
+
+				// Then...
+				GroupByCarrierDeviceOS firstGroupByEntry = myList.get(0);
+				Assertions.assertEquals("000/00", firstGroupByEntry.carrier, "field 'carrier' does not match");
+				Assertions.assertEquals("4.4.2", firstGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+
+				GroupByCarrierDeviceOS secondGroupByEntry = myList.get(1);
+				Assertions.assertEquals("000/01", secondGroupByEntry.carrier, "field 'carrier' does not match");
+				Assertions.assertEquals("9.3.5", secondGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+		}
+
+		@Test
+		public void testToPOJOMap_QueryResultCreatedByGroupByClause() {
+				// When...
+				Map<String,List<GroupByCarrierDeviceOS>> resultMap = mapper.toPOJOMap(getTestQueryResult(), GroupByCarrierDeviceOS.class);
+
+				Assertions.assertEquals(2,resultMap.entrySet().size());
+
+
+				String key = "CARRIER=000/00,DEVICE_OS_VERSION=4.4.2";
+				Assertions.assertTrue(resultMap.containsKey(key),
+						"result map does not contain expected key '" + key + "'");
+
+				key = "CARRIER=000/01,DEVICE_OS_VERSION=9.3.5";
+				Assertions.assertTrue(resultMap.containsKey(key),
+						"result map does not contain expected key '" + key + "'");
+
+
+
+				GroupByCarrierDeviceOS firstGroupByEntry = resultMap.get("CARRIER=000/00,DEVICE_OS_VERSION=4.4.2").get(0);
+				Assertions.assertEquals("000/00", firstGroupByEntry.carrier, "field 'carrier' does not match");
+				Assertions.assertEquals("4.4.2", firstGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+
+				GroupByCarrierDeviceOS secondGroupByEntry = resultMap.get("CARRIER=000/01,DEVICE_OS_VERSION=9.3.5").get(0);
+				Assertions.assertEquals("000/01", secondGroupByEntry.carrier, "field 'carrier' does not match");
+				Assertions.assertEquals("9.3.5", secondGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+
+
+
+				//				// Then...
+//				GroupByCarrierDeviceOS firstGroupByEntry = resultMap.get(0);
+//				Assertions.assertEquals("000/00", firstGroupByEntry.carrier, "field 'carrier' does not match");
+//				Assertions.assertEquals("4.4.2", firstGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+//
+//				GroupByCarrierDeviceOS secondGroupByEntry = resultMap.get(1);
+//				Assertions.assertEquals("000/01", secondGroupByEntry.carrier, "field 'carrier' does not match");
+//				Assertions.assertEquals("9.3.5", secondGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+		}
 
   @Test
   public void testToPOJO_ticket363() {

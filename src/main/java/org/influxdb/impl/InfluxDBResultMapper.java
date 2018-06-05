@@ -27,8 +27,11 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -91,6 +94,33 @@ public class InfluxDBResultMapper {
 
   /**
    * <p>
+   * Process a {@link QueryResult} object of a query containing a GROUP BY statement
+   * returned by the InfluxDB client inspecting the internal
+   * data structure and creating the respective object instances based on the Class passed as
+   * parameter.
+   * </p>
+   *
+   * @param queryResult the InfluxDB result object
+   * @param clazz the model class that will be used to hold your measurement data
+   * @param <T> the target type
+   *
+   * @return a {@link Map} of result lists containing objects of the same class
+   * passed as parameter and grouped by query. The key isa string created from returned tags as
+   * comma separated pairs of tag name and tag value (TAG_NAME=TAG_VALUE).
+   *
+   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
+   * <tt>clazz</tt> parameter is not annotated with &#64;Measurement or it was not
+   * possible to define the values of your POJO (e.g. due to an unsupported field type).
+   */
+  public <T> Map<String, List<T>> toPOJOMap(final QueryResult queryResult, final Class<T> clazz)
+      throws InfluxDBMapperException {
+    throwExceptionIfMissingAnnotation(clazz);
+    String measurementName = getMeasurementName(clazz);
+    return this.toPOJOMap(queryResult, clazz, measurementName);
+  }
+
+  /**
+   * <p>
    * Process a {@link QueryResult} object returned by the InfluxDB client inspecting the internal
    * data structure and creating the respective object instances based on the Class passed as
    * parameter.
@@ -132,6 +162,68 @@ public class InfluxDBResultMapper {
 
     return result;
   }
+
+
+  /**
+   * <p>
+   * Process a {@link QueryResult} object of a query containing a GROUP BY statement
+   * returned by the InfluxDB client inspecting the internal
+   * data structure and creating the respective object instances based on the Class passed as
+   * parameter.
+   * </p>
+   *
+   * @param queryResult the InfluxDB result object
+   * @param clazz the model class that will be used to hold your measurement data
+   * @param <T> the target type
+   * @param measurementName name of measurement
+   *
+   * @return a {@link Map} of result lists containing objects of the same class
+   * passed as parameter and grouped by query. The key isa string created from returned tags as
+   * comma separated pairs of tag name and tag value (TAG_NAME=TAG_VALUE).
+   *
+   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
+   * <tt>clazz</tt> parameter is not annotated with &#64;Measurement or it was not
+   * possible to define the values of your POJO (e.g. due to an unsupported field type).
+   */
+  public <T> Map<String, List<T>> toPOJOMap(final QueryResult queryResult, final Class<T> clazz,
+      final String measurementName)
+      throws InfluxDBMapperException {
+
+    Objects.requireNonNull(measurementName, "measurementName");
+    Objects.requireNonNull(queryResult, "queryResult");
+    Objects.requireNonNull(clazz, "clazz");
+
+    throwExceptionIfResultWithError(queryResult);
+    cacheMeasurementClass(clazz);
+
+    Map<String, List<T>> result = new HashMap<>();
+
+    queryResult.getResults().stream()
+        .filter(internalResult -> Objects.nonNull(internalResult) && Objects.nonNull(internalResult.getSeries()))
+        .forEach(internalResult -> {
+          internalResult.getSeries().stream()
+              .filter(series -> series.getName().equals(measurementName))
+              .forEachOrdered(series -> {
+                List<T> resultList = new ArrayList<>();
+                parseSeriesAs(series, clazz, resultList);
+                result.put(getSeriesNameFromTags(series), resultList);
+              });
+        });
+
+    return result;
+  }
+
+  private String getSeriesNameFromTags(final QueryResult.Series series) {
+    String name = "";
+    for (Entry<String, String> entry : series.getTags().entrySet()) {
+      name += entry.getKey() + "=" + entry.getValue() + ",";
+    }
+    if (name.endsWith(",")) {
+      name = name.substring(0, name.length() - 1);
+    }
+    return name;
+  }
+
 
   void throwExceptionIfMissingAnnotation(final Class<?> clazz) {
     if (!clazz.isAnnotationPresent(Measurement.class)) {
@@ -176,7 +268,7 @@ public class InfluxDBResultMapper {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).name();
   }
 
-  <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
+  public <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
     int columnSize = series.getColumns().size();
     ConcurrentMap<String, Field> colNameAndFieldMap = CLASS_FIELD_CACHE.get(clazz.getName());
     try {
