@@ -7,6 +7,7 @@
 - Allow write precision of TimeUnit other than Nanoseconds [PR #321](https://github.com/influxdata/influxdb-java/pull/321)
 - Support dynamic measurement name in InfluxDBResultMapper [PR #423](https://github.com/influxdata/influxdb-java/pull/423)
 - Debug mode which allows HTTP requests being sent to the database to be logged [PR #450](https://github.com/influxdata/influxdb-java/pull/450)
+- Fix problem of connecting to the influx api with URL which does not points to the url root (e.g. localhots:80/influx-api/) [PR #400] (https://github.com/influxdata/influxdb-java/pull/400)
 
 ## 2.10 [2018-04-26]
 
