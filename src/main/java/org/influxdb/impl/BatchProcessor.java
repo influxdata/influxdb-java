@@ -354,6 +354,22 @@ public final class BatchProcessor {
     }
   }
 
+  void put(final AbstractBatchEntry batchEntry, final long timeout) {
+    try {
+      this.queue.offer(batchEntry, timeout, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    if (this.queue.size() >= this.actions) {
+      this.scheduler.submit(new Runnable() {
+        @Override
+        public void run() {
+          write();
+        }
+      });
+    }
+  }
+
   /**
    * Flush the current open writes to influxdb and end stop the reaper thread. This should only be
    * called if no batch processing is needed anymore.

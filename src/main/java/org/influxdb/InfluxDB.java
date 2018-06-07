@@ -284,6 +284,20 @@ public interface InfluxDB {
   public void write(final String database, final String retentionPolicy, final Point point);
 
   /**
+   * Write a single Point to the database by waiting for specified time for space to become available.
+   *
+   * @param database
+   *            the database to write to.
+   * @param retentionPolicy
+   *            the retentionPolicy to use.
+   * @param point
+   *            The point to write
+   * @param timeout
+   *            How long to wait in seconds
+   */
+  public void write(final String database, final String retentionPolicy, final Point point, final long timeout);
+
+  /**
    * Write a single Point to the database through UDP.
    *
    * @param udpPort
