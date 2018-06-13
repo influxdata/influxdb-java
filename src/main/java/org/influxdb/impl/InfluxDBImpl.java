@@ -1,12 +1,18 @@
 package org.influxdb.impl;
 
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
+
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -25,8 +31,13 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
 import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
+import org.komamitsu.retrofit.converter.msgpack.MessagePackConverterFactory;
+import org.msgpack.jackson.dataformat.ExtensionTypeCustomDeserializers;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
+
 import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Converter.Factory;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
@@ -38,6 +49,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +67,8 @@ import java.util.function.Consumer;
  * @author stefan.majer [at] gmail.com
  */
 public class InfluxDBImpl implements InfluxDB {
+
+  private static final String APPLICATION_MSGPACK = "application/x-msgpack";
 
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
@@ -82,15 +96,26 @@ public class InfluxDBImpl implements InfluxDB {
   private final HttpLoggingInterceptor loggingInterceptor;
   private final GzipRequestInterceptor gzipRequestInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
-  private JsonAdapter<QueryResult> adapter;
   private String database;
   private String retentionPolicy = "autogen";
   private ConsistencyLevel consistency = ConsistencyLevel.ONE;
+  private final ChunkProccesor chunkProccesor;
 
+  /**
+   * Constructs a new {@code InfluxDBImpl}.
+   * @param url
+   *        The InfluxDB server API URL
+   * @param username
+   *        The InfluxDB user name
+   * @param password
+   *        The InfluxDB user password
+   * @param client
+   *        The OkHttp Client Builder
+   * @param useMsgPack
+   *        Accept MessagePack format (TRUE) or JSon (FALSE) for response from InfluxDB server
+   */
   public InfluxDBImpl(final String url, final String username, final String password,
-      final OkHttpClient.Builder client) {
-    super();
-    Moshi moshi = new Moshi.Builder().build();
+      final OkHttpClient.Builder client, final boolean useMsgPack) {
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
@@ -99,34 +124,94 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
+    client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor);
+
+    Factory converterFactory = null;
+    ObjectMapper mapper = null;
+    if (useMsgPack) {
+      client.addInterceptor(chain -> {
+        Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK).build();
+        return chain.proceed(request);
+      });
+
+      MessagePackFactory messagePackFactory = new MessagePackFactory();
+      ExtensionTypeCustomDeserializers extTypeCustomDeserializers = new ExtensionTypeCustomDeserializers();
+      final byte msgPackTimeExtType = (byte) 5;
+      final int timeOffset = 0;
+      final int timeByteArrayLength = 8;
+      extTypeCustomDeserializers.addCustomDeser(msgPackTimeExtType, data -> {
+        return ByteBuffer.wrap(data, timeOffset, timeByteArrayLength).getLong();
+      });
+      messagePackFactory.setExtTypeCustomDesers(extTypeCustomDeserializers);
+
+      mapper = new ObjectMapper(messagePackFactory);
+      //mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      converterFactory = MessagePackConverterFactory.create(mapper);
+    } else {
+      mapper = new ObjectMapper(new MappingJsonFactory());
+      converterFactory = MoshiConverterFactory.create();
+    }
+
+    JavaType javaType = mapper.getTypeFactory().constructType(QueryResult.class);
+    final ObjectReader objectReader =  mapper.readerFor(javaType);
+
+    chunkProccesor = (chunkedBody, consumer) -> {
+        BufferedSource source = chunkedBody.source();
+
+        QueryResult result = null;
+        MappingIterator<QueryResult> results = objectReader.readValues(source.inputStream());
+        while (results.hasNext()) {
+          result = results.nextValue();
+          consumer.accept(result);
+        }
+    };
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
-        .addConverterFactory(MoshiConverterFactory.create())
+        .client(client.build())
+        .addConverterFactory(converterFactory)
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
-    this.adapter = moshi.adapter(QueryResult.class);
+
   }
 
-    InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
-            final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
-        super();
-        this.hostAddress = parseHostAddress(url);
-        this.username = username;
-        this.password = password;
+  public InfluxDBImpl(final String url, final String username, final String password,
+      final OkHttpClient.Builder client) {
+    this(url, username, password, client, false);
 
-        this.loggingInterceptor = new HttpLoggingInterceptor();
-        setLogLevel(LOG_LEVEL);
+  }
 
-        this.gzipRequestInterceptor = new GzipRequestInterceptor();
-        this.retrofit = new Retrofit.Builder()
-                .baseUrl(url)
-                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
-                .addConverterFactory(MoshiConverterFactory.create())
-                .build();
-        this.influxDBService = influxDBService;
-        this.adapter = adapter;
-    }
+  InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
+          final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
+    super();
+    this.hostAddress = parseHostAddress(url);
+    this.username = username;
+    this.password = password;
+
+    this.loggingInterceptor = new HttpLoggingInterceptor();
+    setLogLevel(LOG_LEVEL);
+
+    this.gzipRequestInterceptor = new GzipRequestInterceptor();
+    this.retrofit = new Retrofit.Builder().baseUrl(url)
+        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .addConverterFactory(MoshiConverterFactory.create()).build();
+    this.influxDBService = influxDBService;
+
+    chunkProccesor = (chunkedBody, consumer) -> {
+      try {
+        BufferedSource source = chunkedBody.source();
+        while (true) {
+          QueryResult result = adapter.fromJson(source);
+          if (result != null) {
+            consumer.accept(result);
+          }
+        }
+      } catch (EOFException e) {
+        QueryResult queryResult = new QueryResult();
+        queryResult.setError("DONE");
+        consumer.accept(queryResult);
+      }
+    };
+  }
 
   public InfluxDBImpl(final String url, final String username, final String password,
                       final OkHttpClient.Builder client, final String database,
@@ -498,28 +583,21 @@ public class InfluxDBImpl implements InfluxDB {
             public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
                 try {
                     if (response.isSuccessful()) {
-                        BufferedSource source = response.body().source();
-                        while (true) {
-                            QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
-                            if (result != null) {
-                                consumer.accept(result);
-                            }
-                        }
+                        ResponseBody chunkedBody = response.body();
+                        chunkProccesor.process(chunkedBody, consumer);
+                    } else {
+                      //REVIEW: must be handled consistently with IOException.
+                      ResponseBody errorBody = response.errorBody();
+                      if (errorBody != null) {
+                          throw new InfluxDBException(errorBody.string());
+                      }
                     }
-                    try (ResponseBody errorBody = response.errorBody()) {
-                        throw new InfluxDBException(errorBody.string());
-                    }
-                } catch (EOFException e) {
-                    QueryResult queryResult = new QueryResult();
-                    queryResult.setError("DONE");
-                    consumer.accept(queryResult);
                 } catch (IOException e) {
                     QueryResult queryResult = new QueryResult();
                     queryResult.setError(e.toString());
                     consumer.accept(queryResult);
                 }
             }
-
             @Override
             public void onFailure(final Call<ResponseBody> call, final Throwable t) {
                 throw new InfluxDBException(t);
@@ -752,4 +830,7 @@ public class InfluxDBImpl implements InfluxDB {
         Query.encode(queryBuilder.toString())));
   }
 
+  private interface ChunkProccesor {
+    void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer) throws IOException;
+  }
 }

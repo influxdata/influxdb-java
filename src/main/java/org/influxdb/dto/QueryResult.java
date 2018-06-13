@@ -3,6 +3,8 @@ package org.influxdb.dto;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * {Purpose of This Type}.
  *
@@ -68,9 +70,19 @@ public class QueryResult {
     this.error = error;
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Result {
+    private List<Abc> abc;
     private List<Series> series;
     private String error;
+
+    public List<Abc> getAbc() {
+      return abc;
+    }
+
+    public void setAbc(final List<Abc> abc) {
+      this.abc = abc;
+    }
 
     /**
      * @return the series
@@ -128,6 +140,93 @@ public class QueryResult {
 
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class Abc {
+    private String name;
+    private Map<String, String> tags;
+    private List<String> columns;
+    private List<List<Object>> values;
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+      return this.name;
+    }
+
+    /**
+     * @param name
+     *            the name to set
+     */
+    public void setName(final String name) {
+      this.name = name;
+    }
+
+    /**
+     * @return the tags
+     */
+    public Map<String, String> getTags() {
+      return this.tags;
+    }
+
+    /**
+     * @param tags
+     *            the tags to set
+     */
+    public void setTags(final Map<String, String> tags) {
+      this.tags = tags;
+    }
+
+    /**
+     * @return the columns
+     */
+    public List<String> getColumns() {
+      return this.columns;
+    }
+
+    /**
+     * @param columns
+     *            the columns to set
+     */
+    public void setColumns(final List<String> columns) {
+      this.columns = columns;
+    }
+
+    /**
+     * @return the values
+     */
+    public List<List<Object>> getValues() {
+      return this.values;
+    }
+
+    /**
+     * @param values
+     *            the values to set
+     */
+    public void setValues(final List<List<Object>> values) {
+      this.values = values;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+      StringBuilder builder = new StringBuilder();
+      builder.append("Series [name=");
+      builder.append(this.name);
+      builder.append(", tags=");
+      builder.append(this.tags);
+      builder.append(", columns=");
+      builder.append(this.columns);
+      builder.append(", values=");
+      builder.append(this.values);
+      builder.append("]");
+      return builder.toString();
+    }
+  }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Series {
     private String name;
     private Map<String, String> tags;

@@ -255,6 +255,11 @@
       <artifactId>converter-moshi</artifactId>
       <version>2.4.0</version>
     </dependency>
+    <dependency>
+    <groupId>org.komamitsu</groupId>
+      <artifactId>retrofit-converter-msgpack</artifactId>
+      <version>1.0.0</version>
+    </dependency>
     <!-- If we use okhttp instead of java urlconnection we achieve server failover
             of the influxdb server address resolves to all influxdb server ips. -->
     <dependency>

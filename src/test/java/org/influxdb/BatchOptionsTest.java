@@ -6,6 +6,7 @@ import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.QueryResult.Series;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -130,7 +132,8 @@ public class BatchOptionsTest {
       
       //check no points writen to DB before the flush duration
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
-      Assertions.assertNull(result.getResults().get(0).getSeries());
+      List<Series> series = result.getResults().get(0).getSeries();
+      Assertions.assertTrue(series == null || series.isEmpty());
       Assertions.assertNull(result.getResults().get(0).getError());
       
       //wait for at least one flush
@@ -164,7 +167,8 @@ public class BatchOptionsTest {
       Thread.sleep(100);
       
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
-      Assertions.assertNull(result.getResults().get(0).getSeries());
+      List<Series> series = result.getResults().get(0).getSeries();
+      Assertions.assertTrue(series == null || series.isEmpty());
       Assertions.assertNull(result.getResults().get(0).getError());
       
       //wait for at least one flush
@@ -231,7 +235,8 @@ public class BatchOptionsTest {
       
       QueryResult result = spy.query(new Query("select * from weather", dbName));
       //assert 0 point written because of InfluxDBException and OneShotBatchWriter did not retry
-      Assertions.assertNull(result.getResults().get(0).getSeries());
+      List<Series> series = result.getResults().get(0).getSeries();
+      Assertions.assertTrue(series == null || series.isEmpty());
       Assertions.assertNull(result.getResults().get(0).getError());
       
       answer.params.put("throwException", false);
@@ -290,7 +295,8 @@ public class BatchOptionsTest {
       
       QueryResult result = spy.query(new Query("select * from measurement1", dbName));
       //assert 0 point written because of non-retry capable DATABASE_NOT_FOUND_ERROR and RetryCapableBatchWriter did not retry
-      Assertions.assertNull(result.getResults().get(0).getSeries());
+      List<Series> series = result.getResults().get(0).getSeries();
+      Assertions.assertTrue(series == null || series.isEmpty());
       Assertions.assertNull(result.getResults().get(0).getError());
       
       writeSomePoints(spy, "measurement2", 0, 5);
@@ -382,7 +388,8 @@ public class BatchOptionsTest {
       verify(mockHandler, times(1)).accept(any(), any());
       
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
-      Assertions.assertNull(result.getResults().get(0).getSeries());
+      List<Series> series = result.getResults().get(0).getSeries();
+      Assertions.assertTrue(series == null || series.isEmpty());
       Assertions.assertNull(result.getResults().get(0).getError());
     } finally {
       spy.disableBatch();

@@ -52,14 +52,18 @@ public class TestUtils {
   }
 
   public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
-    return connectToInfluxDB(null, null);
+    return connectToInfluxDB(null, null, false);
   }
 
+  public static InfluxDB connectToInfluxDB(boolean useMsgPack) throws InterruptedException, IOException {
+    return connectToInfluxDB(null, null, useMsgPack);
+  }
   public static InfluxDB connectToInfluxDB(String apiUrl) throws InterruptedException, IOException {
-    return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl);
+    return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl, false);
   }
   
-  public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, String apiUrl) throws InterruptedException, IOException {
+  public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, String apiUrl,
+      boolean useMsgPack) throws InterruptedException, IOException {
     OkHttpClient.Builder clientToUse;
     if (client == null) {
       clientToUse = new OkHttpClient.Builder();
@@ -72,7 +76,7 @@ public class TestUtils {
     } else {
       apiUrlToUse = apiUrl;
     }
-    InfluxDB influxDB = InfluxDBFactory.connect(apiUrlToUse, "admin", "admin", clientToUse);
+    InfluxDB influxDB = InfluxDBFactory.connect(apiUrlToUse, "admin", "admin", clientToUse, useMsgPack);
     boolean influxDBstarted = false;
     do {
       Pong response;
