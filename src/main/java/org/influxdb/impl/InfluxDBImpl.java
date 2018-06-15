@@ -1,12 +1,14 @@
 package org.influxdb.impl;
 
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -145,26 +147,21 @@ public class InfluxDBImpl implements InfluxDB {
       messagePackFactory.setExtTypeCustomDesers(extTypeCustomDeserializers);
 
       mapper = new ObjectMapper(messagePackFactory);
-      //mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
       converterFactory = MessagePackConverterFactory.create(mapper);
+
+      JavaType javaType = mapper.getTypeFactory().constructType(QueryResult.class);
+      final ObjectReader objectReader =  mapper.readerFor(javaType);
+      chunkProccesor = new MessagePackChunkProccesor(objectReader);
     } else {
       mapper = new ObjectMapper(new MappingJsonFactory());
       converterFactory = MoshiConverterFactory.create();
+
+      Moshi moshi = new Moshi.Builder().build();
+      JsonAdapter<QueryResult> adapter = moshi.adapter(QueryResult.class);
+      chunkProccesor = new JSONChunkProccesor(adapter);
     }
 
-    JavaType javaType = mapper.getTypeFactory().constructType(QueryResult.class);
-    final ObjectReader objectReader =  mapper.readerFor(javaType);
-
-    chunkProccesor = (chunkedBody, consumer) -> {
-        BufferedSource source = chunkedBody.source();
-
-        QueryResult result = null;
-        MappingIterator<QueryResult> results = objectReader.readValues(source.inputStream());
-        while (results.hasNext()) {
-          result = results.nextValue();
-          consumer.accept(result);
-        }
-    };
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
         .client(client.build())
@@ -196,21 +193,7 @@ public class InfluxDBImpl implements InfluxDB {
         .addConverterFactory(MoshiConverterFactory.create()).build();
     this.influxDBService = influxDBService;
 
-    chunkProccesor = (chunkedBody, consumer) -> {
-      try {
-        BufferedSource source = chunkedBody.source();
-        while (true) {
-          QueryResult result = adapter.fromJson(source);
-          if (result != null) {
-            consumer.accept(result);
-          }
-        }
-      } catch (EOFException e) {
-        QueryResult queryResult = new QueryResult();
-        queryResult.setError("DONE");
-        consumer.accept(queryResult);
-      }
-    };
+    chunkProccesor = new JSONChunkProccesor(adapter);
   }
 
   public InfluxDBImpl(final String url, final String username, final String password,
@@ -832,5 +815,48 @@ public class InfluxDBImpl implements InfluxDB {
 
   private interface ChunkProccesor {
     void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer) throws IOException;
+  }
+
+  private class MessagePackChunkProccesor implements ChunkProccesor {
+
+    private ObjectReader objectReader;
+    public MessagePackChunkProccesor(final ObjectReader objectReader) {
+      this.objectReader = objectReader;
+    }
+
+    @Override
+    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+      BufferedSource source = chunkedBody.source();
+      QueryResult result = null;
+      MappingIterator<QueryResult> results = objectReader.readValues(source.inputStream());
+      while (results.hasNext()) {
+        result = results.nextValue();
+        consumer.accept(result);
+      }
+    }
+  }
+
+  private class JSONChunkProccesor implements ChunkProccesor {
+    private JsonAdapter<QueryResult> adapter;
+    public JSONChunkProccesor(final JsonAdapter<QueryResult> adapter) {
+      this.adapter = adapter;
+    }
+
+    @Override
+    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+      try {
+        BufferedSource source = chunkedBody.source();
+        while (true) {
+          QueryResult result = adapter.fromJson(source);
+          if (result != null) {
+            consumer.accept(result);
+          }
+        }
+      } catch (EOFException e) {
+        QueryResult queryResult = new QueryResult();
+        queryResult.setError("DONE");
+        consumer.accept(queryResult);
+      }
+    }
   }
 }

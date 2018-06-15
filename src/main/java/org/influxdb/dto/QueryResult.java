@@ -3,8 +3,6 @@ package org.influxdb.dto;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 /**
  * {Purpose of This Type}.
  *
@@ -70,7 +68,6 @@ public class QueryResult {
     this.error = error;
   }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Result {
     private List<Series> series;
     private String error;
@@ -131,7 +128,6 @@ public class QueryResult {
 
   }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Series {
     private String name;
     private Map<String, String> tags;
