@@ -4,7 +4,6 @@ package org.influxdb.impl;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.squareup.moshi.JsonAdapter;
@@ -82,6 +81,9 @@ public class InfluxDBImpl implements InfluxDB {
    *
    * @see org.influxdb.impl.LOG_LEVEL_PROPERTY
    */
+
+  private static final ObjectMapper QUERY_RESULTS_OBJECT_MAPPER;
+  private static final ObjectReader QUERY_RESULTS_OBJECT_READER;
   private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
   private final InetAddress hostAddress;
@@ -103,6 +105,25 @@ public class InfluxDBImpl implements InfluxDB {
   private ConsistencyLevel consistency = ConsistencyLevel.ONE;
   private final ChunkProccesor chunkProccesor;
 
+
+  static {
+    MessagePackFactory messagePackFactory = new MessagePackFactory();
+    ExtensionTypeCustomDeserializers extTypeCustomDeserializers = new ExtensionTypeCustomDeserializers();
+    final byte msgPackTimeExtType = (byte) 5;
+    final int timeOffset = 0;
+    final int timeByteArrayLength = 8;
+    extTypeCustomDeserializers.addCustomDeser(msgPackTimeExtType, data -> {
+      return ByteBuffer.wrap(data, timeOffset, timeByteArrayLength).getLong();
+    });
+    messagePackFactory.setExtTypeCustomDesers(extTypeCustomDeserializers);
+
+    QUERY_RESULTS_OBJECT_MAPPER = new ObjectMapper(messagePackFactory);
+    QUERY_RESULTS_OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    JavaType javaType = QUERY_RESULTS_OBJECT_MAPPER.getTypeFactory().constructType(QueryResult.class);
+    QUERY_RESULTS_OBJECT_READER =  QUERY_RESULTS_OBJECT_MAPPER.readerFor(javaType);
+  }
+
   /**
    * Constructs a new {@code InfluxDBImpl}.
    * @param url
@@ -113,11 +134,11 @@ public class InfluxDBImpl implements InfluxDB {
    *        The InfluxDB user password
    * @param client
    *        The OkHttp Client Builder
-   * @param useMsgPack
-   *        Accept MessagePack format (TRUE) or JSon (FALSE) for response from InfluxDB server
+   * @param responseFormat
+   *            The {@code ResponseFormat} to use for response from InfluxDB server
    */
   public InfluxDBImpl(final String url, final String username, final String password,
-      final OkHttpClient.Builder client, final boolean useMsgPack) {
+      final OkHttpClient.Builder client, final ResponseFormat responseFormat) {
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
@@ -129,37 +150,24 @@ public class InfluxDBImpl implements InfluxDB {
     client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor);
 
     Factory converterFactory = null;
-    ObjectMapper mapper = null;
-    if (useMsgPack) {
+    switch (responseFormat) {
+    case MSGPACK:
       client.addInterceptor(chain -> {
         Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK).build();
         return chain.proceed(request);
       });
 
-      MessagePackFactory messagePackFactory = new MessagePackFactory();
-      ExtensionTypeCustomDeserializers extTypeCustomDeserializers = new ExtensionTypeCustomDeserializers();
-      final byte msgPackTimeExtType = (byte) 5;
-      final int timeOffset = 0;
-      final int timeByteArrayLength = 8;
-      extTypeCustomDeserializers.addCustomDeser(msgPackTimeExtType, data -> {
-        return ByteBuffer.wrap(data, timeOffset, timeByteArrayLength).getLong();
-      });
-      messagePackFactory.setExtTypeCustomDesers(extTypeCustomDeserializers);
-
-      mapper = new ObjectMapper(messagePackFactory);
-      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-      converterFactory = MessagePackConverterFactory.create(mapper);
-
-      JavaType javaType = mapper.getTypeFactory().constructType(QueryResult.class);
-      final ObjectReader objectReader =  mapper.readerFor(javaType);
-      chunkProccesor = new MessagePackChunkProccesor(objectReader);
-    } else {
-      mapper = new ObjectMapper(new MappingJsonFactory());
+      converterFactory = MessagePackConverterFactory.create(QUERY_RESULTS_OBJECT_MAPPER);
+      chunkProccesor = new MessagePackChunkProccesor(QUERY_RESULTS_OBJECT_READER);
+      break;
+    case JSON:
+    default:
       converterFactory = MoshiConverterFactory.create();
 
       Moshi moshi = new Moshi.Builder().build();
       JsonAdapter<QueryResult> adapter = moshi.adapter(QueryResult.class);
       chunkProccesor = new JSONChunkProccesor(adapter);
+      break;
     }
 
     this.retrofit = new Retrofit.Builder()
@@ -173,7 +181,7 @@ public class InfluxDBImpl implements InfluxDB {
 
   public InfluxDBImpl(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
-    this(url, username, password, client, false);
+    this(url, username, password, client, ResponseFormat.JSON);
 
   }
 

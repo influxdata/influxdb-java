@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.InfluxDBException.DatabaseNotFoundException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -40,7 +41,7 @@ public class MessagePackBatchOptionsTest extends BatchOptionsTest {
   @Override
   @BeforeEach
   public void setUp() throws InterruptedException, IOException {
-    influxDB = TestUtils.connectToInfluxDB(true);
+    influxDB = TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
   }
 
   /**

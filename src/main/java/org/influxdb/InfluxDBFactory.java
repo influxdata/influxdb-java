@@ -1,5 +1,6 @@
 package org.influxdb;
 
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.impl.InfluxDBImpl;
 
 import okhttp3.OkHttpClient;
@@ -78,7 +79,7 @@ public enum InfluxDBFactory {
    */
   public static InfluxDB connect(final String url, final String username, final String password,
       final OkHttpClient.Builder client) {
-    return connect(url, username, password, client, false);
+    return connect(url, username, password, client, ResponseFormat.JSON);
   }
 
   /**
@@ -93,15 +94,15 @@ public enum InfluxDBFactory {
    *            instance.
    * @param client
    *            the HTTP client to use
-   * @param useMsgPack
-   *            Accept MessagePack format (TRUE) or JSon (FALSE) for response from InfluxDB server
+   * @param responseFormat
+   *            The {@code ResponseFormat} to use for response from InfluxDB server
    * @return a InfluxDB adapter suitable to access a InfluxDB.
    */
   public static InfluxDB connect(final String url, final String username, final String password,
-      final OkHttpClient.Builder client, final boolean useMsgPack) {
+      final OkHttpClient.Builder client, final ResponseFormat responseFormat) {
     Preconditions.checkNonEmptyString(url, "url");
     Preconditions.checkNonEmptyString(username, "username");
     Objects.requireNonNull(client, "client");
-    return new InfluxDBImpl(url, username, password, client, useMsgPack);
+    return new InfluxDBImpl(url, username, password, client, responseFormat);
   }
 }

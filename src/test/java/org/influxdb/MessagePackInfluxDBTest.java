@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
@@ -34,7 +35,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
   @Override
   @BeforeEach
   public void setUp() throws InterruptedException, IOException {
-    influxDB = TestUtils.connectToInfluxDB(true);
+    influxDB = TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
     influxDB.createDatabase(UDP_DATABASE);
   }
   
