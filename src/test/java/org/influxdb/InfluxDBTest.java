@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import org.influxdb.InfluxDB.LogLevel;
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
 import org.influxdb.dto.Point;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
@@ -877,4 +879,16 @@ public class InfluxDBTest {
 				}, InfluxDB.ConsistencyLevel.ALL);
 		Assertions.assertTrue(this.influxDB.isBatchEnabled());
 	}
+
+	/**
+   * Test initialize InfluxDBImpl with MessagePack format for InfluxDB versions before 1.4 will throw exception
+   */
+	@Test
+	@EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "1\\.3|1\\.2|1\\.1")
+	public void testMessagePackOnOldDbVersion() {
+	  Assertions.assertThrows(InfluxDBException.class, () -> {
+	    TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
+	  });
+	}
+	
 }

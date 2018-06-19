@@ -177,6 +177,15 @@ public class InfluxDBImpl implements InfluxDB {
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
+    if (ResponseFormat.MSGPACK.equals(responseFormat)) {
+      String[] versionNumbers = version().split("\\.");
+      final int major = Integer.parseInt(versionNumbers[0]);
+      final int minor = Integer.parseInt(versionNumbers[1]);
+      final int fromMinor = 4;
+      if ((major < 2) && ((major != 1) || (minor < fromMinor))) {
+        throw new InfluxDBException("MessagePack format is only supported from InfluxDB version 1.4 and later");
+      }
+    }
   }
 
   public InfluxDBImpl(final String url, final String username, final String password,
