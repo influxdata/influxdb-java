@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.11 [unreleased]
+## 2.11 [2018-07-02]
 
 ### Features
 
