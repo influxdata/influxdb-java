@@ -45,6 +45,7 @@ docker run -it --rm  \
       --workdir /usr/src/mymaven \
    --link=influxdb \
    --link=nginx \
+   --env INFLUXDB_VERSION=${INFLUXDB_VERSION} \
    --env INFLUXDB_IP=influxdb \
    --env PROXY_API_URL=$PROXY_API_URL \
    --env PROXY_UDP_PORT=$PROXY_UDP_PORT \
