@@ -2,7 +2,7 @@
 #
 # script to start influxdb and compile influxdb-java with all tests.
 #
-set -ex
+set -e
 
 DEFAULT_INFLUXDB_VERSION="1.6"
 DEFAULT_MAVEN_JAVA_VERSION="3-jdk-10-slim"
@@ -39,7 +39,7 @@ echo "Running tests"
 PROXY_API_URL=http://nginx:8080/influx-api/
 PROXY_UDP_PORT=8080
 
-docker run -it --rm  \
+docker run -it --rm \
        --volume ${PWD}:/usr/src/mymaven \
        --volume ${PWD}/.m2:/root/.m2 \
        --workdir /usr/src/mymaven \
