@@ -1,6 +1,8 @@
 package org.influxdb;
 
 import okhttp3.OkHttpClient;
+
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.Pong;
 
 import java.io.IOException;
@@ -52,14 +54,18 @@ public class TestUtils {
   }
 
   public static InfluxDB connectToInfluxDB() throws InterruptedException, IOException {
-    return connectToInfluxDB(null, null);
+    return connectToInfluxDB(null, null, ResponseFormat.JSON);
   }
 
+  public static InfluxDB connectToInfluxDB(ResponseFormat responseFormat) throws InterruptedException, IOException {
+    return connectToInfluxDB(null, null, responseFormat);
+  }
   public static InfluxDB connectToInfluxDB(String apiUrl) throws InterruptedException, IOException {
-    return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl);
+    return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl, ResponseFormat.JSON);
   }
   
-  public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, String apiUrl) throws InterruptedException, IOException {
+  public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, String apiUrl,
+      ResponseFormat responseFormat) throws InterruptedException, IOException {
     OkHttpClient.Builder clientToUse;
     if (client == null) {
       clientToUse = new OkHttpClient.Builder();
@@ -72,7 +78,7 @@ public class TestUtils {
     } else {
       apiUrlToUse = apiUrl;
     }
-    InfluxDB influxDB = InfluxDBFactory.connect(apiUrlToUse, "admin", "admin", clientToUse);
+    InfluxDB influxDB = InfluxDBFactory.connect(apiUrlToUse, "admin", "admin", clientToUse, responseFormat);
     boolean influxDBstarted = false;
     do {
       Pong response;

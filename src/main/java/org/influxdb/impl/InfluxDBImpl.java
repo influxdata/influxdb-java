@@ -7,6 +7,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -25,14 +26,19 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
 import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
+import org.influxdb.msgpack.MessagePackConverterFactory;
+import org.influxdb.msgpack.MessagePackTraverser;
+
 import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Converter.Factory;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -55,6 +61,8 @@ import java.util.function.Consumer;
  * @author stefan.majer [at] gmail.com
  */
 public class InfluxDBImpl implements InfluxDB {
+
+  private static final String APPLICATION_MSGPACK = "application/x-msgpack";
 
   static final okhttp3.MediaType MEDIA_TYPE_STRING = MediaType.parse("text/plain");
 
@@ -83,15 +91,28 @@ public class InfluxDBImpl implements InfluxDB {
   private final HttpLoggingInterceptor loggingInterceptor;
   private final GzipRequestInterceptor gzipRequestInterceptor;
   private LogLevel logLevel = LogLevel.NONE;
-  private JsonAdapter<QueryResult> adapter;
   private String database;
   private String retentionPolicy = "autogen";
   private ConsistencyLevel consistency = ConsistencyLevel.ONE;
+  private final ChunkProccesor chunkProccesor;
 
-  public InfluxDBImpl(final String url, final String username, final String password,
-      final OkHttpClient.Builder client) {
-    super();
-    Moshi moshi = new Moshi.Builder().build();
+  /**
+   * Constructs a new {@code InfluxDBImpl}.
+   *
+   * @param url
+   *          The InfluxDB server API URL
+   * @param username
+   *          The InfluxDB user name
+   * @param password
+   *          The InfluxDB user password
+   * @param client
+   *          The OkHttp Client Builder
+   * @param responseFormat
+   *          The {@code ResponseFormat} to use for response from InfluxDB
+   *          server
+   */
+  public InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
+      final ResponseFormat responseFormat) {
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
@@ -100,38 +121,72 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    this.retrofit = new Retrofit.Builder()
-        .baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
-        .addConverterFactory(MoshiConverterFactory.create())
-        .build();
-    this.influxDBService = this.retrofit.create(InfluxDBService.class);
-    this.adapter = moshi.adapter(QueryResult.class);
-  }
+    client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor);
 
-    InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
-            final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
-        super();
-        this.hostAddress = parseHostAddress(url);
-        this.username = username;
-        this.password = password;
+    Factory converterFactory = null;
+    switch (responseFormat) {
+    case MSGPACK:
+      client.addInterceptor(chain -> {
+        Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK)
+            .addHeader("Accept-Encoding", "identity").build();
+        return chain.proceed(request);
+      });
 
-        this.loggingInterceptor = new HttpLoggingInterceptor();
-        setLogLevel(LOG_LEVEL);
+      converterFactory = MessagePackConverterFactory.create();
+      chunkProccesor = new MessagePackChunkProccesor();
+      break;
+    case JSON:
+    default:
+      converterFactory = MoshiConverterFactory.create();
 
-        this.gzipRequestInterceptor = new GzipRequestInterceptor();
-        this.retrofit = new Retrofit.Builder()
-                .baseUrl(url)
-                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
-                .addConverterFactory(MoshiConverterFactory.create())
-                .build();
-        this.influxDBService = influxDBService;
-        this.adapter = adapter;
+      Moshi moshi = new Moshi.Builder().build();
+      JsonAdapter<QueryResult> adapter = moshi.adapter(QueryResult.class);
+      chunkProccesor = new JSONChunkProccesor(adapter);
+      break;
     }
 
+    this.retrofit = new Retrofit.Builder().baseUrl(url).client(client.build()).addConverterFactory(converterFactory)
+        .build();
+    this.influxDBService = this.retrofit.create(InfluxDBService.class);
+
+    if (ResponseFormat.MSGPACK.equals(responseFormat)) {
+      String[] versionNumbers = version().split("\\.");
+      final int major = Integer.parseInt(versionNumbers[0]);
+      final int minor = Integer.parseInt(versionNumbers[1]);
+      final int fromMinor = 4;
+      if ((major < 2) && ((major != 1) || (minor < fromMinor))) {
+        throw new InfluxDBException("MessagePack format is only supported from InfluxDB version 1.4 and later");
+      }
+    }
+  }
+
   public InfluxDBImpl(final String url, final String username, final String password,
-                      final OkHttpClient.Builder client, final String database,
-                      final String retentionPolicy, final ConsistencyLevel consistency) {
+      final OkHttpClient.Builder client) {
+    this(url, username, password, client, ResponseFormat.JSON);
+
+  }
+
+  InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
+      final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
+    super();
+    this.hostAddress = parseHostAddress(url);
+    this.username = username;
+    this.password = password;
+
+    this.loggingInterceptor = new HttpLoggingInterceptor();
+    setLogLevel(LOG_LEVEL);
+
+    this.gzipRequestInterceptor = new GzipRequestInterceptor();
+    this.retrofit = new Retrofit.Builder().baseUrl(url)
+        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .addConverterFactory(MoshiConverterFactory.create()).build();
+    this.influxDBService = influxDBService;
+
+    chunkProccesor = new JSONChunkProccesor(adapter);
+  }
+
+  public InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
+      final String database, final String retentionPolicy, final ConsistencyLevel consistency) {
     this(url, username, password, client);
 
     setConsistency(consistency);
@@ -492,32 +547,26 @@ public class InfluxDBImpl implements InfluxDB {
                     query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
         }
 
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
-                try {
-                    if (response.isSuccessful()) {
-                        BufferedSource source = response.body().source();
-                        while (true) {
-                            QueryResult result = InfluxDBImpl.this.adapter.fromJson(source);
-                            if (result != null) {
-                                consumer.accept(result);
-                            }
-                        }
-                    }
-                    try (ResponseBody errorBody = response.errorBody()) {
-                        throw new InfluxDBException(errorBody.string());
-                    }
-                } catch (EOFException e) {
-                    QueryResult queryResult = new QueryResult();
-                    queryResult.setError("DONE");
-                    consumer.accept(queryResult);
-                } catch (IOException e) {
-                    QueryResult queryResult = new QueryResult();
-                    queryResult.setError(e.toString());
-                    consumer.accept(queryResult);
-                }
+    call.enqueue(new Callback<ResponseBody>() {
+      @Override
+      public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
+        try {
+          if (response.isSuccessful()) {
+            ResponseBody chunkedBody = response.body();
+            chunkProccesor.process(chunkedBody, consumer);
+          } else {
+            // REVIEW: must be handled consistently with IOException.
+            ResponseBody errorBody = response.errorBody();
+            if (errorBody != null) {
+              throw new InfluxDBException(errorBody.string());
             }
+          }
+        } catch (IOException e) {
+          QueryResult queryResult = new QueryResult();
+          queryResult.setError(e.toString());
+          consumer.accept(queryResult);
+        }
+      }
 
             @Override
             public void onFailure(final Call<ResponseBody> call, final Throwable t) {
@@ -748,4 +797,44 @@ public class InfluxDBImpl implements InfluxDB {
         Query.encode(queryBuilder.toString())));
   }
 
+  private interface ChunkProccesor {
+    void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer) throws IOException;
+  }
+
+  private class MessagePackChunkProccesor implements ChunkProccesor {
+    @Override
+    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+      MessagePackTraverser traverser = new MessagePackTraverser();
+      try (InputStream is = chunkedBody.byteStream()) {
+        for (QueryResult result : traverser.traverse(is)) {
+          consumer.accept(result);
+        }
+      }
+    }
+  }
+
+  private class JSONChunkProccesor implements ChunkProccesor {
+    private JsonAdapter<QueryResult> adapter;
+
+    public JSONChunkProccesor(final JsonAdapter<QueryResult> adapter) {
+      this.adapter = adapter;
+    }
+
+    @Override
+    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+      try {
+        BufferedSource source = chunkedBody.source();
+        while (true) {
+          QueryResult result = adapter.fromJson(source);
+          if (result != null) {
+            consumer.accept(result);
+          }
+        }
+      } catch (EOFException e) {
+        QueryResult queryResult = new QueryResult();
+        queryResult.setError("DONE");
+        consumer.accept(queryResult);
+      }
+    }
+  }
 }

@@ -255,6 +255,11 @@
       <artifactId>converter-moshi</artifactId>
       <version>2.4.0</version>
     </dependency>
+    <dependency>
+    <groupId>org.msgpack</groupId>
+      <artifactId>msgpack-core</artifactId>
+      <version>0.8.16</version>
+    </dependency>
     <!-- If we use okhttp instead of java urlconnection we achieve server failover
             of the influxdb server address resolves to all influxdb server ips. -->
     <dependency>
