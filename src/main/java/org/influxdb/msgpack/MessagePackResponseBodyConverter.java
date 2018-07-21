@@ -19,10 +19,7 @@ public class MessagePackResponseBodyConverter implements Converter<ResponseBody,
   public QueryResult convert(final ResponseBody value) throws IOException {
       try (InputStream is = value.byteStream()) {
         MessagePackTraverser traverser = new MessagePackTraverser();
-        for (QueryResult queryResult : traverser.traverse(is)) {
-          return queryResult;
-        }
-        return null;
+        return traverser.parse(is);
       }
   }
 }

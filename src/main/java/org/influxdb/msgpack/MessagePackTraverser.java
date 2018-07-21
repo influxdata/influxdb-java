@@ -20,7 +20,7 @@ import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.ValueType;
 
 /**
- * Traverse the MessagePack input stream and return Query Result objects.
+ * Traverse the MessagePack input stream and return Query Result object(s).
  *
  * @author hoan.le [at] bonitoo.io
  *
@@ -29,7 +29,16 @@ public class MessagePackTraverser {
 
   private String lastStringNode;
 
-  public Iterable<QueryResult> traverse(final InputStream is) throws IOException {
+  /**
+   * Traverse over the whole message pack stream.
+   * This method can be used for converting query results in chunk.
+   *
+   * @param is
+   *          The MessagePack format input stream
+   * @return an Iterable over the QueryResult objects
+   *
+   */
+  public Iterable<QueryResult> traverse(final InputStream is) {
     MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(is);
 
     return () -> {
@@ -45,23 +54,42 @@ public class MessagePackTraverser {
 
         @Override
         public QueryResult next() {
-          QueryResult queryResult = new QueryResult();
-          QueryResultModelPath queryResultPath = new QueryResultModelPath();
-          queryResultPath.add("queryResult", queryResult);
-          try {
-            traverse(unpacker, queryResultPath, 1);
-          } catch (IOException e) {
-            throw new InfluxDBException(e);
-          }
-          return queryResult;
+          return parse(unpacker);
         }
       };
     };
 
   }
 
-  void traverse(final MessageUnpacker unpacker, final QueryResultModelPath queryResultPath,
-      final int readAmount) throws IOException {
+  /**
+   * Parse the message pack stream.
+   * This method can be used for converting query
+   * result from normal query response where exactly one QueryResult returned
+   *
+   * @param is
+   *          The MessagePack format input stream
+   * @return QueryResult
+   *
+   */
+  public QueryResult parse(final InputStream is) {
+    MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(is);
+    return parse(unpacker);
+  }
+
+  private QueryResult parse(final MessageUnpacker unpacker) {
+    QueryResult queryResult = new QueryResult();
+    QueryResultModelPath queryResultPath = new QueryResultModelPath();
+    queryResultPath.add("queryResult", queryResult);
+    try {
+      traverse(unpacker, queryResultPath, 1);
+    } catch (IOException e) {
+      throw new InfluxDBException(e);
+    }
+    return queryResult;
+  }
+
+  void traverse(final MessageUnpacker unpacker, final QueryResultModelPath queryResultPath, final int readAmount)
+      throws IOException {
     int amount = 0;
 
     while (unpacker.hasNext() && amount < readAmount) {
