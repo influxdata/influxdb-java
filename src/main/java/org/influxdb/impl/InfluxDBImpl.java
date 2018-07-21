@@ -71,7 +71,7 @@ public class InfluxDBImpl implements InfluxDB {
   private final InetAddress hostAddress;
   private final String username;
   private final String password;
-  private String version = "";
+  private String version;
   private final Retrofit retrofit;
   private final InfluxDBService influxDBService;
   private BatchProcessor batchProcessor;
@@ -314,7 +314,7 @@ public class InfluxDBImpl implements InfluxDB {
 
   @Override
   public String version() {
-    if (version == "") {
+    if (version == null) {
       this.version = ping().getVersion();
     }
     return this.version;
