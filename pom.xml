@@ -73,6 +73,9 @@
           <exclude>docker-compose.yml</exclude>
         </excludes>
       </resource>
+      <resource>
+        <directory>src/test/resources</directory>
+      </resource>
     </resources>
     <pluginManagement>
       <plugins>
