@@ -481,11 +481,6 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
     public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
-
-        if (version().startsWith("0.") || version().startsWith("1.0")) {
-            throw new UnsupportedOperationException("chunking not supported");
-        }
-
         Call<ResponseBody> call = null;
         if (query instanceof BoundParameterQuery) {
             BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
@@ -556,9 +551,6 @@ public class InfluxDBImpl implements InfluxDB {
   public void createDatabase(final String name) {
     Preconditions.checkNonEmptyString(name, "name");
     String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
-    if (this.version().startsWith("0.")) {
-      createDatabaseQueryString = String.format("CREATE DATABASE IF NOT EXISTS \"%s\"", name);
-    }
     execute(this.influxDBService.postQuery(this.username, this.password, Query.encode(createDatabaseQueryString)));
   }
 
