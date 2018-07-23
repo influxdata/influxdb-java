@@ -94,6 +94,7 @@ public class InfluxDBImpl implements InfluxDB {
   private String database;
   private String retentionPolicy = "autogen";
   private ConsistencyLevel consistency = ConsistencyLevel.ONE;
+  private final boolean messagePack;
   private final ChunkProccesor chunkProccesor;
 
   /**
@@ -113,6 +114,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   public InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
       final ResponseFormat responseFormat) {
+    this.messagePack = ResponseFormat.MSGPACK.equals(responseFormat);
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
@@ -149,15 +151,6 @@ public class InfluxDBImpl implements InfluxDB {
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
-    if (ResponseFormat.MSGPACK.equals(responseFormat)) {
-      String[] versionNumbers = version().split("\\.");
-      final int major = Integer.parseInt(versionNumbers[0]);
-      final int minor = Integer.parseInt(versionNumbers[1]);
-      final int fromMinor = 4;
-      if ((major < 2) && ((major != 1) || (minor < fromMinor))) {
-        throw new InfluxDBException("MessagePack format is only supported from InfluxDB version 1.4 and later");
-      }
-    }
   }
 
   public InfluxDBImpl(final String url, final String username, final String password,
@@ -169,6 +162,7 @@ public class InfluxDBImpl implements InfluxDB {
   InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
       final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
     super();
+    this.messagePack = false;
     this.hostAddress = parseHostAddress(url);
     this.username = username;
     this.password = password;
@@ -509,7 +503,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public QueryResult query(final Query query) {
-    return execute(callQuery(query));
+    return executeQuery(callQuery(query));
   }
 
   /**
@@ -590,7 +584,7 @@ public class InfluxDBImpl implements InfluxDB {
         call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
                 TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
     }
-    return execute(call);
+    return executeQuery(call);
   }
 
   /**
@@ -600,7 +594,7 @@ public class InfluxDBImpl implements InfluxDB {
   public void createDatabase(final String name) {
     Preconditions.checkNonEmptyString(name, "name");
     String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
-    execute(this.influxDBService.postQuery(this.username, this.password, Query.encode(createDatabaseQueryString)));
+    executeQuery(this.influxDBService.postQuery(this.username, this.password, Query.encode(createDatabaseQueryString)));
   }
 
   /**
@@ -608,7 +602,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void deleteDatabase(final String name) {
-    execute(this.influxDBService.postQuery(this.username, this.password,
+    executeQuery(this.influxDBService.postQuery(this.username, this.password,
                                            Query.encode("DROP DATABASE \"" + name + "\"")));
   }
 
@@ -617,7 +611,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public List<String> describeDatabases() {
-    QueryResult result = execute(this.influxDBService.query(this.username,
+    QueryResult result = executeQuery(this.influxDBService.query(this.username,
                                                             this.password, SHOW_DATABASE_COMMAND_ENCODED));
     // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
     // Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
@@ -669,6 +663,20 @@ public class InfluxDBImpl implements InfluxDB {
 
   static class ErrorMessage {
     public String error;
+  }
+
+  private QueryResult executeQuery(final Call<QueryResult> call) {
+    if (messagePack) {
+      String[] versionNumbers = version().split("\\.");
+      final int major = Integer.parseInt(versionNumbers[0]);
+      final int minor = Integer.parseInt(versionNumbers[1]);
+      final int fromMinor = 4;
+      if ((major < 2) && ((major != 1) || (minor < fromMinor))) {
+        throw new UnsupportedOperationException(
+            "MessagePack format is only supported from InfluxDB version 1.4 and later");
+      }
+    }
+    return execute(call);
   }
 
   private <T> T execute(final Call<T> call) {
@@ -758,7 +766,7 @@ public class InfluxDBImpl implements InfluxDB {
     if (isDefault) {
       queryBuilder.append(" DEFAULT");
     }
-    execute(this.influxDBService.postQuery(this.username, this.password, Query.encode(queryBuilder.toString())));
+    executeQuery(this.influxDBService.postQuery(this.username, this.password, Query.encode(queryBuilder.toString())));
   }
 
   /**
@@ -793,7 +801,7 @@ public class InfluxDBImpl implements InfluxDB {
         .append("\" ON \"")
         .append(database)
         .append("\"");
-    execute(this.influxDBService.postQuery(this.username, this.password,
+    executeQuery(this.influxDBService.postQuery(this.username, this.password,
         Query.encode(queryBuilder.toString())));
   }
 

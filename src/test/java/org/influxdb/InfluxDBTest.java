@@ -886,8 +886,9 @@ public class InfluxDBTest {
 	@Test
 	@EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "1\\.3|1\\.2|1\\.1")
 	public void testMessagePackOnOldDbVersion() {
-	  Assertions.assertThrows(InfluxDBException.class, () -> {
-	    TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
+	  Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+	    InfluxDB influxDB = TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
+	    influxDB.describeDatabases();
 	  });
 	}
 	
