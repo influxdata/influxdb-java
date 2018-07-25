@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import org.influxdb.InfluxDB.LogLevel;
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
 import org.influxdb.dto.Point;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
@@ -41,9 +43,9 @@ import java.util.function.Consumer;
 @RunWith(JUnitPlatform.class)
 public class InfluxDBTest {
 
-	private InfluxDB influxDB;
+	InfluxDB influxDB;
 	private final static int UDP_PORT = 8089;
-	private final static String UDP_DATABASE = "udp";
+	final static String UDP_DATABASE = "udp";
 
 	/**
 	 * Create a influxDB connection before all tests start.
@@ -721,49 +723,44 @@ public class InfluxDBTest {
      */
     @Test
     public void testChunking() throws InterruptedException {
-        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
-            // do not test version 0.13 and 1.0
-            return;
-        }
-        String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.createDatabase(dbName);
-        String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
-        BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
-        Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
-        Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
-        Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
-        batchPoints.point(point1);
-        batchPoints.point(point2);
-        batchPoints.point(point3);
-        this.influxDB.write(batchPoints);
+      if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+          // do not test version 0.13 and 1.0
+          return;
+      }
+      String dbName = "write_unittest_" + System.currentTimeMillis();
+      this.influxDB.createDatabase(dbName);
+      String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+      BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+      Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+      Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+      Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+      batchPoints.point(point1);
+      batchPoints.point(point2);
+      batchPoints.point(point3);
+      this.influxDB.write(batchPoints);
 
-        Thread.sleep(2000);
-        final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
-        Query query = new Query("SELECT * FROM disk", dbName);
-        this.influxDB.query(query, 2, new Consumer<QueryResult>() {
-            @Override
-            public void accept(QueryResult result) {
-                queue.add(result);
-            }});
+      Thread.sleep(2000);
+      final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+      Query query = new Query("SELECT * FROM disk", dbName);
+      this.influxDB.query(query, 2, new Consumer<QueryResult>() {
+          @Override
+          public void accept(QueryResult result) {
+              queue.add(result);
+          }});
 
-        Thread.sleep(2000);
-        this.influxDB.deleteDatabase(dbName);
+      Thread.sleep(2000);
+      this.influxDB.deleteDatabase(dbName);
 
-        QueryResult result = queue.poll(20, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result);
-        System.out.println(result);
-        Assertions.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
+      QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+      Assertions.assertNotNull(result);
+      System.out.println(result);
+      Assertions.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
 
-        result = queue.poll(20, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result);
-        System.out.println(result);
-        Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
-
-        result = queue.poll(20, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result);
-        System.out.println(result);
-        Assertions.assertEquals("DONE", result.getError());
-    }
+      result = queue.poll(20, TimeUnit.SECONDS);
+      Assertions.assertNotNull(result);
+      System.out.println(result);
+      Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+  }
 
     /**
      * Test chunking edge case.
@@ -882,4 +879,17 @@ public class InfluxDBTest {
 				}, InfluxDB.ConsistencyLevel.ALL);
 		Assertions.assertTrue(this.influxDB.isBatchEnabled());
 	}
+
+	/**
+   * Test initialize InfluxDBImpl with MessagePack format for InfluxDB versions before 1.4 will throw exception
+   */
+	@Test
+	@EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "1\\.3|1\\.2|1\\.1")
+	public void testMessagePackOnOldDbVersion() {
+	  Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+	    InfluxDB influxDB = TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
+	    influxDB.describeDatabases();
+	  });
+	}
+	
 }

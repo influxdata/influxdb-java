@@ -27,7 +27,7 @@ import java.util.function.BiConsumer;
 @RunWith(JUnitPlatform.class)
 public class BatchOptionsTest {
 
-  private InfluxDB influxDB;
+  InfluxDB influxDB;
 
   @BeforeEach
   public void setUp() throws InterruptedException, IOException {
@@ -485,7 +485,7 @@ public class BatchOptionsTest {
     }
   }
   
-  private void writeSomePoints(InfluxDB influxDB, String measurement, int firstIndex, int lastIndex) {
+  void writeSomePoints(InfluxDB influxDB, String measurement, int firstIndex, int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement(measurement)
               .time(i,TimeUnit.HOURS)
@@ -496,7 +496,7 @@ public class BatchOptionsTest {
     }
   }
   
-  private void writeSomePoints(InfluxDB influxDB, int firstIndex, int lastIndex) {
+  void writeSomePoints(InfluxDB influxDB, int firstIndex, int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement("weather")
               .time(i,TimeUnit.HOURS)
@@ -507,15 +507,15 @@ public class BatchOptionsTest {
     }
   }
   
-  private void write20Points(InfluxDB influxDB) {
+  void write20Points(InfluxDB influxDB) {
     writeSomePoints(influxDB, 0, 19);
   }
   
-  private void writeSomePoints(InfluxDB influxDB, int n) {
+  void writeSomePoints(InfluxDB influxDB, int n) {
     writeSomePoints(influxDB, 0, n - 1);
   }
   
-  private static String createErrorBody(String errorMessage) {
+  static String createErrorBody(String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
 }

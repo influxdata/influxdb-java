@@ -95,6 +95,15 @@ public interface InfluxDB {
   }
 
   /**
+   * Format of HTTP Response body from InfluxDB server.
+   */
+  public enum ResponseFormat {
+    /** application/json format. */
+    JSON,
+    /** application/x-msgpack format. */
+    MSGPACK
+  }
+  /**
    * Set the loglevel which is used for REST related actions.
    *
    * @param logLevel
