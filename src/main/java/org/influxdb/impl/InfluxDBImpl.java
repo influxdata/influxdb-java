@@ -100,9 +100,10 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
+    OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
     this.retrofit = new Retrofit.Builder()
         .baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .client(clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
         .addConverterFactory(MoshiConverterFactory.create())
         .build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
@@ -120,9 +121,10 @@ public class InfluxDBImpl implements InfluxDB {
         setLogLevel(LOG_LEVEL);
 
         this.gzipRequestInterceptor = new GzipRequestInterceptor();
+        OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
         this.retrofit = new Retrofit.Builder()
                 .baseUrl(url)
-                .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+                .client(clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
                 .addConverterFactory(MoshiConverterFactory.create())
                 .build();
         this.influxDBService = influxDBService;

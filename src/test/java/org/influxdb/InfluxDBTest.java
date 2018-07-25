@@ -1,5 +1,24 @@
 package org.influxdb;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
@@ -16,21 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import okhttp3.OkHttpClient;
 
 /**
  * Test the InfluxDB API.
@@ -882,4 +887,55 @@ public class InfluxDBTest {
 				}, InfluxDB.ConsistencyLevel.ALL);
 		Assertions.assertTrue(this.influxDB.isBatchEnabled());
 	}
+	
+  /**
+   * test for issue #445
+   * make sure reusing of OkHttpClient.Builder causes no error
+   * @throws InterruptedException
+   */
+	@Test
+  public void testIssue445() throws InterruptedException {
+    ExecutorService executor = Executors.newFixedThreadPool(100);
+
+    final int maxCallables = 10_000;
+    List<Callable<String>> callableList = new ArrayList<>(maxCallables);
+    for (int i = 0; i < maxCallables; i++) {
+      callableList.add(new Callable<String>() {
+        @Override
+        public String call() throws Exception {
+          MyInfluxDBBean myBean = new MyInfluxDBBean();
+          return myBean.connectAndDoNothing1();
+        }
+      });
+    }
+    System.out.println("Invoking all callableList (size()=" + callableList.size() + ")");
+    executor.invokeAll(callableList);
+    System.out.println("Shutting down...");
+    executor.shutdown();
+    System.out.println("Shutdown requested and waiting for termination...");
+    if (!executor.awaitTermination(20, TimeUnit.SECONDS)) {
+      executor.shutdownNow();
+    }
+    
+    //assert that MyInfluxDBBean.OKHTTP_BUILDER stay untouched (no interceptor added)
+    Assertions.assertTrue(MyInfluxDBBean.OKHTTP_BUILDER.interceptors().isEmpty());
+  }
+
+  private static final class MyInfluxDBBean {
+
+    static final OkHttpClient.Builder OKHTTP_BUILDER = new OkHttpClient.Builder();
+
+    InfluxDB influxClient;
+
+    String connectAndDoNothing1() {
+      try {
+        influxClient = InfluxDBFactory.connect("http://127.0.0.1:8086", "admin", "supersecretpassword", OKHTTP_BUILDER);
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.exit(1); // OPS!
+      }
+      return null;
+    }
+
+  }
 }
