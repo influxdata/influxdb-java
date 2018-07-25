@@ -450,4 +450,31 @@ public class PointTest {
         String expectedHourTimeStamp = String.valueOf(Math.round(pDate.getTime() / 3600000)); // 1000ms * 60s * 60m
         assertThat(hourTime).isEqualTo(expectedHourTimeStamp);
     }
+    
+    /*
+     * Test if representation of tags in line protocol format should be sorted by tag key
+     */
+    @Test
+    public void testTagKeyIsSortedInLineProtocol() {
+      Point p = Point
+          .measurement("cpu")
+          .time(1000000000L, TimeUnit.MILLISECONDS)
+          .addField("value", 1)
+          .tag("region", "us-west")
+          .tag("host", "serverA")
+          .tag("env", "prod")
+          .tag("target", "servers")
+          .tag("zone", "1c")
+          .tag("tag5", "value5")
+          .tag("tag1", "value1")
+          .tag("tag2", "value2")
+          .tag("tag3", "value3")
+          .tag("tag4", "value4")
+          .build();
+      
+      String lineProtocol = p.lineProtocol();
+      String correctOrder = "env=prod,host=serverA,region=us-west,tag1=value1,tag2=value2,tag3=value3,tag4=value4,tag5=value5,target=servers,zone=1c";
+      String tags = lineProtocol.substring(lineProtocol.indexOf(',') + 1, lineProtocol.indexOf(' '));
+      assertThat(tags).isEqualTo(correctOrder);
+    }
 }
