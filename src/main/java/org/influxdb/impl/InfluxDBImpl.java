@@ -123,12 +123,13 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor);
+    OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
+    clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor);
 
     Factory converterFactory = null;
     switch (responseFormat) {
     case MSGPACK:
-      client.addInterceptor(chain -> {
+      clonedBuilder.addInterceptor(chain -> {
         Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK)
             .addHeader("Accept-Encoding", "identity").build();
         return chain.proceed(request);
@@ -147,8 +148,8 @@ public class InfluxDBImpl implements InfluxDB {
       break;
     }
 
-    this.retrofit = new Retrofit.Builder().baseUrl(url).client(client.build()).addConverterFactory(converterFactory)
-        .build();
+    this.retrofit = new Retrofit.Builder().baseUrl(url).client(
+        clonedBuilder.build()).addConverterFactory(converterFactory).build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
   }
@@ -171,8 +172,9 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
+    OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
     this.retrofit = new Retrofit.Builder().baseUrl(url)
-        .client(client.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .client(clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
         .addConverterFactory(MoshiConverterFactory.create()).build();
     this.influxDBService = influxDBService;
 
