@@ -164,9 +164,6 @@
             </goals>
           </execution>
         </executions>
-        <configuration>
-          <additionalOptions>-html4</additionalOptions>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
