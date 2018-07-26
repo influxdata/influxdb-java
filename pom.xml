@@ -165,7 +165,7 @@
           </execution>
         </executions>
         <configuration>
-          <additionalOptions>-html5</additionalOptions>
+          <additionalOptions>-html4</additionalOptions>
         </configuration>
       </plugin>
       <plugin>
