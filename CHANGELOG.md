@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.12 [unreleased]
+
+### Fixes
+
+- Remove code which checks for unsupported influxdb versions [PR #474](https://github.com/influxdata/influxdb-java/pull/474)
+- Unpredictable errors when OkHttpClient.Builder instance is reused [PR #478](https://github.com/influxdata/influxdb-java/pull/478)
+
+### Features
+
+- Support for MessagePack [PR #471](https://github.com/influxdata/influxdb-java/pull/471)
+- Cache version per influxdb instance and reduce ping() calls for every query call [PR #472](https://github.com/influxdata/influxdb-java/pull/472)
+
+### Improvements
+
+- Test: Unit test to ensure tags should be sorted by key in line protocol (to reduce db server overheads) [PR #476](https://github.com/influxdata/influxdb-java/pull/476)
+
 ## 2.11 [2018-07-02]
 
 ### Features
