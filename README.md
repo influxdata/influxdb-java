@@ -352,3 +352,8 @@ This is a
 to the sonatype oss guide to publishing. I'll update this section once
 the [jira ticket](https://issues.sonatype.org/browse/OSSRH-9728) is
 closed and I'm able to upload artifacts to the sonatype repositories.
+
+### Frequently Asked Questions
+
+This is a [FAQ](FAQ.md) list for influxdb-java.
+
