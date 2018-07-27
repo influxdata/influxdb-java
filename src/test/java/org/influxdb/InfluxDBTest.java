@@ -18,6 +18,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
+import okhttp3.OkHttpClient;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -27,7 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -891,5 +895,62 @@ public class InfluxDBTest {
 	    influxDB.describeDatabases();
 	  });
 	}
-	
+
+  /**
+   * test for issue #445
+   * make sure reusing of OkHttpClient.Builder causes no error
+   * @throws InterruptedException
+   */
+  @Test
+  public void testIssue445() throws InterruptedException {
+    ExecutorService executor = Executors.newFixedThreadPool(100);
+
+    final int maxCallables = 10_000;
+    List<Callable<String>> callableList = new ArrayList<>(maxCallables);
+    for (int i = 0; i < maxCallables; i++) {
+      callableList.add(new Callable<String>() {
+        @Override
+        public String call() throws Exception {
+          MyInfluxDBBean myBean = new MyInfluxDBBean();
+          return myBean.connectAndDoNothing1();
+        }
+      });
+    }
+    executor.invokeAll(callableList);
+    executor.shutdown();
+    if (!executor.awaitTermination(20, TimeUnit.SECONDS)) {
+      executor.shutdownNow();
+    }
+    Assertions.assertTrue(MyInfluxDBBean.OK);
+    //assert that MyInfluxDBBean.OKHTTP_BUILDER stays untouched (no interceptor added)
+    Assertions.assertTrue(MyInfluxDBBean.OKHTTP_BUILDER.interceptors().isEmpty());
+  }
+
+  private static final class MyInfluxDBBean {
+
+    static final OkHttpClient.Builder OKHTTP_BUILDER = new OkHttpClient.Builder();
+    static Boolean OK = true;
+    static final String URL = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
+
+    InfluxDB influxClient;
+
+    String connectAndDoNothing1() {
+      synchronized (OK) {
+        if (!OK) {
+          return null;
+        }
+      }
+      try {
+        influxClient = InfluxDBFactory.connect(URL, "admin", "admin", OKHTTP_BUILDER);
+        influxClient.close();
+      } catch (Exception e) {
+        synchronized (OK) {
+          if (OK) {
+            OK = false;
+          }
+        }
+      }
+      return null;
+    }
+  }
 }
