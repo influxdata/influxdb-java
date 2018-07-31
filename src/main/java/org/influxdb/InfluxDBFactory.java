@@ -1,9 +1,8 @@
 package org.influxdb;
 
+import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.impl.InfluxDBImpl;
-
-import okhttp3.OkHttpClient;
 import org.influxdb.impl.Preconditions;
 
 import java.util.Objects;
