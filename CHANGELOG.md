@@ -11,6 +11,7 @@
 
 - Support for MessagePack [PR #471](https://github.com/influxdata/influxdb-java/pull/471)
 - Cache version per influxdb instance and reduce ping() calls for every query call [PR #472](https://github.com/influxdata/influxdb-java/pull/472)
+- FAQ list for influxdb-java [PR #475](https://github.com/influxdata/influxdb-java/pull/475)
 
 ### Improvements
 
