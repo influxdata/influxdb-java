@@ -130,8 +130,7 @@ public class InfluxDBImpl implements InfluxDB {
     switch (responseFormat) {
     case MSGPACK:
       clonedBuilder.addInterceptor(chain -> {
-        Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK)
-            .addHeader("Accept-Encoding", "identity").build();
+        Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK).build();
         return chain.proceed(request);
       });
 
