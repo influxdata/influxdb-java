@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
-import org.influxdb.impl.InfluxDBResultMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -221,6 +221,26 @@ public class InfluxDBResultMapperTest {
 	}
 
 	@Test
+	public void testFieldValueModified_DateAsInteger() {
+	  // Given...
+		mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+		List<String> columnList = Arrays.asList("time");
+		List<Object> firstSeriesResult = Arrays.asList(1_000);
+
+		QueryResult.Series series = new QueryResult.Series();
+		series.setColumns(columnList);
+		series.setValues(Arrays.asList(firstSeriesResult));
+
+		//When...
+		List<MyCustomMeasurement> result = new LinkedList<>();
+		mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
+
+		//Then...
+		Assertions.assertTrue(result.size() == 1);
+	}
+
+	@Test
 	public void testUnsupportedField() {
 	  // Given...
 		mapper.cacheMeasurementClass(MyPojoWithUnsupportedField.class);
@@ -334,6 +354,60 @@ public class InfluxDBResultMapperTest {
     Assertions.assertEquals(1, result.size(), "incorrect number of elemets");
     Assertions.assertEquals(1, result.get(0).time.getNano(), "incorrect value for the nanoseconds field");
   }
+
+	@Test
+	void testToPOJO_Precision() {
+		// Given...
+		mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+		List<String> columnList = Arrays.asList("time");
+		List<Object> firstSeriesResult = Arrays.asList(1_500_000L);
+
+		QueryResult.Series series = new QueryResult.Series();
+		series.setName("CustomMeasurement");
+		series.setColumns(columnList);
+		series.setValues(Arrays.asList(firstSeriesResult));
+
+		QueryResult.Result internalResult = new QueryResult.Result();
+		internalResult.setSeries(Arrays.asList(series));
+
+		QueryResult queryResult = new QueryResult();
+		queryResult.setResults(Arrays.asList(internalResult));
+
+		// When...
+		List<MyCustomMeasurement> result = mapper.toPOJO(queryResult, MyCustomMeasurement.class, TimeUnit.SECONDS);
+
+		// Then...
+		Assertions.assertEquals(1, result.size(), "incorrect number of elements");
+		Assertions.assertEquals(1_500_000_000L, result.get(0).time.toEpochMilli(), "incorrect value for the millis field");
+	}
+
+	@Test
+	void testToPOJO_SetMeasureName() {
+		// Given...
+		mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+		List<String> columnList = Arrays.asList("uuid");
+		List<Object> firstSeriesResult = Arrays.asList(UUID.randomUUID().toString());
+
+		QueryResult.Series series = new QueryResult.Series();
+		series.setName("MySeriesName");
+		series.setColumns(columnList);
+		series.setValues(Arrays.asList(firstSeriesResult));
+
+		QueryResult.Result internalResult = new QueryResult.Result();
+		internalResult.setSeries(Arrays.asList(series));
+
+		QueryResult queryResult = new QueryResult();
+		queryResult.setResults(Arrays.asList(internalResult));
+
+		//When...
+		List<MyCustomMeasurement> result =
+				mapper.toPOJO(queryResult, MyCustomMeasurement.class, "MySeriesName");
+
+		//Then...
+		Assertions.assertTrue(result.size() == 1);
+	}
 
 	@Measurement(name = "CustomMeasurement")
 	static class MyCustomMeasurement {

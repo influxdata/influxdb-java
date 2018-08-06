@@ -107,14 +107,37 @@ public class InfluxDBImpl implements InfluxDB {
    *          The InfluxDB user name
    * @param password
    *          The InfluxDB user password
-   * @param client
+   * @param okHttpBuilder
    *          The OkHttp Client Builder
    * @param responseFormat
    *          The {@code ResponseFormat} to use for response from InfluxDB
    *          server
    */
-  public InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
-      final ResponseFormat responseFormat) {
+  public InfluxDBImpl(final String url, final String username, final String password,
+                      final OkHttpClient.Builder okHttpBuilder, final ResponseFormat responseFormat) {
+    this(url, username, password, okHttpBuilder, new Retrofit.Builder(), responseFormat);
+  }
+
+  /**
+   * Constructs a new {@code InfluxDBImpl}.
+   *
+   * @param url
+   *          The InfluxDB server API URL
+   * @param username
+   *          The InfluxDB user name
+   * @param password
+   *          The InfluxDB user password
+   * @param okHttpBuilder
+   *          The OkHttp Client Builder
+   * @param retrofitBuilder
+   *          The Retrofit Builder
+   * @param responseFormat
+   *          The {@code ResponseFormat} to use for response from InfluxDB
+   *          server
+   */
+  public InfluxDBImpl(final String url, final String username, final String password,
+                      final OkHttpClient.Builder okHttpBuilder, final Retrofit.Builder retrofitBuilder,
+                      final ResponseFormat responseFormat) {
     this.messagePack = ResponseFormat.MSGPACK.equals(responseFormat);
     this.hostAddress = parseHostAddress(url);
 
@@ -122,7 +145,7 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
+    OkHttpClient.Builder clonedBuilder = okHttpBuilder.build().newBuilder();
     clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
       addInterceptor(new BasicAuthInterceptor(username, password));
     Factory converterFactory = null;
@@ -146,7 +169,7 @@ public class InfluxDBImpl implements InfluxDB {
       break;
     }
 
-    this.retrofit = new Retrofit.Builder().baseUrl(url).client(
+    this.retrofit = retrofitBuilder.baseUrl(url).client(
         clonedBuilder.build()).addConverterFactory(converterFactory).build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
