@@ -232,8 +232,9 @@ public class Point {
     this.time = time;
   }
 
-  /**
-   * @param tags
+  public TimeUnit getPrecision() { return this.precision; }
+
+  /**   * @param tags
    *            the tags to set
    */
   void setTags(final Map<String, String> tags) {

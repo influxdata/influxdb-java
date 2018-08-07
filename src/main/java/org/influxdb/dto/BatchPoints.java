@@ -211,7 +211,7 @@ public class BatchPoints {
   /**
    * @param precision the time precision to set for the batch points
    */
-  void setPrecision(final TimeUnit precision) {
+  public void setPrecision(final TimeUnit precision) {
     this.precision = precision;
   }
 
