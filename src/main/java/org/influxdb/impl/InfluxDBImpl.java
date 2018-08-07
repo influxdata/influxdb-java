@@ -393,7 +393,7 @@ public class InfluxDBImpl implements InfluxDB {
     } else {
       BatchPoints batchPoints = BatchPoints.database(database)
                                            .retentionPolicy(retentionPolicy).build();
-      if(point != null && point.getPrecision() != null){
+      if (point != null && point.getPrecision() != null) {
         batchPoints.setPrecision(point.getPrecision());
       }
       batchPoints.point(point);

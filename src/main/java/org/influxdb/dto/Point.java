@@ -232,7 +232,9 @@ public class Point {
     this.time = time;
   }
 
-  public TimeUnit getPrecision() { return this.precision; }
+  public TimeUnit getPrecision() {
+      return this.precision;
+  }
 
   /**   * @param tags
    *            the tags to set
