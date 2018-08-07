@@ -304,6 +304,9 @@ public final class BatchProcessor {
             if (!batchKeyToBatchPoints.containsKey(batchKey)) {
               BatchPoints batchPoints = BatchPoints.database(dbName)
                                                    .retentionPolicy(rp).consistency(getConsistencyLevel()).build();
+              if (point != null && point.getPrecision() != null) {
+                batchPoints.setPrecision(point.getPrecision());
+              }
               batchKeyToBatchPoints.put(batchKey, batchPoints);
             }
             batchKeyToBatchPoints.get(batchKey).point(point);
@@ -314,7 +317,7 @@ public final class BatchProcessor {
               List<String> batchPoints = new ArrayList<String>();
               udpPortToBatchPoints.put(udpPort, batchPoints);
             }
-            udpPortToBatchPoints.get(udpPort).add(point.lineProtocol());
+            udpPortToBatchPoints.get(udpPort).add(point.lineProtocol(point.getPrecision()));
         }
       }
 
