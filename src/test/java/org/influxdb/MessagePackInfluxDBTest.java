@@ -1,5 +1,9 @@
 package org.influxdb;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -182,5 +186,42 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
     this.influxDB.deleteDatabase(dbName);
+  }
+
+  @Test
+  public void testInfluxDBVersionChecking() throws InterruptedException, IOException {
+
+    InfluxDB spy = spy(TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK));
+
+    doReturn("1.5.2").when(spy).version();
+    spy.databaseExists("abc");
+    spy.close();
+
+    spy = spy(TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK));
+    doReturn("v1.6.0").when(spy).version();
+    spy.databaseExists("abc");
+    spy.close();
+
+    assertThrows(UnsupportedOperationException.class, () -> {
+      InfluxDB spy1 = spy(TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK));
+      try {
+        doReturn("1.3.0").when(spy1).version();
+        spy1.databaseExists("abc");
+      } finally {
+        spy1.close();
+      }
+
+    });
+
+    assertThrows(UnsupportedOperationException.class, () -> {
+      InfluxDB spy1 = spy(TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK));
+      try {
+        doReturn("a.b.c").when(spy1).version();
+        spy1.databaseExists("abc");
+      } finally {
+        spy1.close();
+      }
+    });
+
   }
 }
