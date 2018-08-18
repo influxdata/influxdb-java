@@ -54,6 +54,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Implementation of a InluxDB API.
@@ -95,6 +97,7 @@ public class InfluxDBImpl implements InfluxDB {
   private String retentionPolicy = "autogen";
   private ConsistencyLevel consistency = ConsistencyLevel.ONE;
   private final boolean messagePack;
+  private Boolean messagePackSupport;
   private final ChunkProccesor chunkProccesor;
 
   /**
@@ -666,13 +669,26 @@ public class InfluxDBImpl implements InfluxDB {
     public String error;
   }
 
+  private boolean checkMessagePackSupport() {
+    Matcher matcher = Pattern.compile("(\\d+\\.*)+").matcher(version());
+    if (!matcher.find()) {
+      return false;
+    }
+    String s = matcher.group();
+    String[] versionNumbers = s.split("\\.");
+    final int major = Integer.parseInt(versionNumbers[0]);
+    final int minor = Integer.parseInt(versionNumbers[1]);
+    final int fromMinor = 4;
+    return (major >= 2) || ((major == 1) && (minor >= fromMinor));
+  }
+
   private QueryResult executeQuery(final Call<QueryResult> call) {
     if (messagePack) {
-      String[] versionNumbers = version().split("\\.");
-      final int major = Integer.parseInt(versionNumbers[0]);
-      final int minor = Integer.parseInt(versionNumbers[1]);
-      final int fromMinor = 4;
-      if ((major < 2) && ((major != 1) || (minor < fromMinor))) {
+      if (messagePackSupport == null) {
+        messagePackSupport = checkMessagePackSupport();
+      }
+
+      if (!messagePackSupport) {
         throw new UnsupportedOperationException(
             "MessagePack format is only supported from InfluxDB version 1.4 and later");
       }
