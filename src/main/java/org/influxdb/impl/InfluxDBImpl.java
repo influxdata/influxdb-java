@@ -45,6 +45,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -78,7 +80,14 @@ public class InfluxDBImpl implements InfluxDB {
    */
   private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
-  private final InetAddress hostAddress;
+  /**
+   * How often (in seconds) the address will be looked up when writing over UDP.
+   */
+  private static final long ADDRESS_LOOKUP_INTERVAL = 300L;
+
+  private InetAddress hostAddress;
+  private ZonedDateTime lastAddressLookup = ZonedDateTime.now(ZoneOffset.UTC);
+  private final String url;
   private final String username;
   private final String password;
   private String version;
@@ -119,6 +128,7 @@ public class InfluxDBImpl implements InfluxDB {
       final ResponseFormat responseFormat) {
     this.messagePack = ResponseFormat.MSGPACK.equals(responseFormat);
     this.hostAddress = parseHostAddress(url);
+    this.url = url;
     this.username = username;
     this.password = password;
 
@@ -167,6 +177,7 @@ public class InfluxDBImpl implements InfluxDB {
     super();
     this.messagePack = false;
     this.hostAddress = parseHostAddress(url);
+    this.url = url;
     this.username = username;
     this.password = password;
 
@@ -474,7 +485,12 @@ public class InfluxDBImpl implements InfluxDB {
     initialDatagramSocket();
     byte[] bytes = records.getBytes(StandardCharsets.UTF_8);
     try {
-        datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
+        // look up the url again
+        if (this.lastAddressLookup.plusSeconds(ADDRESS_LOOKUP_INTERVAL).isAfter(ZonedDateTime.now(ZoneOffset.UTC))) {
+          this.hostAddress = this.parseHostAddress(this.url);
+        }
+
+        datagramSocket.send(new DatagramPacket(bytes, bytes.length, this.hostAddress, udpPort));
     } catch (IOException e) {
         throw new InfluxDBIOException(e);
     }
