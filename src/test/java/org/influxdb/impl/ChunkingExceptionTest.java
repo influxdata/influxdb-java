@@ -56,7 +56,7 @@ public class ChunkingExceptionTest {
         Call<ResponseBody> call = mock(Call.class);
         ResponseBody responseBody = mock(ResponseBody.class);
 
-        when(influxDBService.query(any(String.class), any(String.class), any(String.class), any(String.class), anyInt())).thenReturn(call);
+        when(influxDBService.query(any(String.class), any(String.class), anyInt())).thenReturn(call);
         when(responseBody.source()).thenReturn(new Buffer());
         doThrow(ex).when(adapter).fromJson(any(JsonReader.class));
 

@@ -2,6 +2,9 @@
 
 ## 2.13 [unreleased]
 
+### Features
+
+- Support for Basic Authentication [PR #492](https://github.com/influxdata/influxdb-java/pull/492)
 
 ## 2.12 [2018-07-31]
 

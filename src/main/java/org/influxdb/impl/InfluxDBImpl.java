@@ -77,8 +77,6 @@ public class InfluxDBImpl implements InfluxDB {
   private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
   private final InetAddress hostAddress;
-  private final String username;
-  private final String password;
   private String version;
   private final Retrofit retrofit;
   private final InfluxDBService influxDBService;
@@ -116,16 +114,14 @@ public class InfluxDBImpl implements InfluxDB {
       final ResponseFormat responseFormat) {
     this.messagePack = ResponseFormat.MSGPACK.equals(responseFormat);
     this.hostAddress = parseHostAddress(url);
-    this.username = username;
-    this.password = password;
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
-    clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor);
-
+    clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
+      addInterceptor(new BasicAuthInterceptor(username, password));
     Factory converterFactory = null;
     switch (responseFormat) {
     case MSGPACK:
@@ -164,8 +160,6 @@ public class InfluxDBImpl implements InfluxDB {
     super();
     this.messagePack = false;
     this.hostAddress = parseHostAddress(url);
-    this.username = username;
-    this.password = password;
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
     setLogLevel(LOG_LEVEL);
@@ -173,7 +167,8 @@ public class InfluxDBImpl implements InfluxDB {
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
     this.retrofit = new Retrofit.Builder().baseUrl(url)
-        .client(clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).build())
+        .client(clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
+            addInterceptor(new BasicAuthInterceptor(username, password)).build())
         .addConverterFactory(MoshiConverterFactory.create()).build();
     this.influxDBService = influxDBService;
 
@@ -420,8 +415,6 @@ public class InfluxDBImpl implements InfluxDB {
     this.batchedCount.add(batchPoints.getPoints().size());
     RequestBody lineProtocol = RequestBody.create(MEDIA_TYPE_STRING, batchPoints.lineProtocol());
     execute(this.influxDBService.writePoints(
-        this.username,
-        this.password,
         batchPoints.getDatabase(),
         batchPoints.getRetentionPolicy(),
         TimeUtil.toTimePrecision(batchPoints.getPrecision()),
@@ -434,8 +427,6 @@ public class InfluxDBImpl implements InfluxDB {
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
           final TimeUnit precision, final String records) {
     execute(this.influxDBService.writePoints(
-        this.username,
-        this.password,
         database,
         retentionPolicy,
         TimeUtil.toTimePrecision(precision),
@@ -534,12 +525,10 @@ public class InfluxDBImpl implements InfluxDB {
         Call<ResponseBody> call = null;
         if (query instanceof BoundParameterQuery) {
             BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-            call = this.influxDBService.query(this.username, this.password,
-                    query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
                     boundParameterQuery.getParameterJsonWithUrlEncoded());
         } else {
-            call = this.influxDBService.query(this.username, this.password,
-                    query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
         }
 
     call.enqueue(new Callback<ResponseBody>() {
@@ -578,11 +567,11 @@ public class InfluxDBImpl implements InfluxDB {
     Call<QueryResult> call = null;
     if (query instanceof BoundParameterQuery) {
         BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-        call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+        call = this.influxDBService.query(query.getDatabase(),
                 TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(),
                 boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
-        call = this.influxDBService.query(this.username, this.password, query.getDatabase(),
+        call = this.influxDBService.query(query.getDatabase(),
                 TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
     }
     return executeQuery(call);
@@ -595,7 +584,7 @@ public class InfluxDBImpl implements InfluxDB {
   public void createDatabase(final String name) {
     Preconditions.checkNonEmptyString(name, "name");
     String createDatabaseQueryString = String.format("CREATE DATABASE \"%s\"", name);
-    executeQuery(this.influxDBService.postQuery(this.username, this.password, Query.encode(createDatabaseQueryString)));
+    executeQuery(this.influxDBService.postQuery(Query.encode(createDatabaseQueryString)));
   }
 
   /**
@@ -603,8 +592,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void deleteDatabase(final String name) {
-    executeQuery(this.influxDBService.postQuery(this.username, this.password,
-                                           Query.encode("DROP DATABASE \"" + name + "\"")));
+    executeQuery(this.influxDBService.postQuery(Query.encode("DROP DATABASE \"" + name + "\"")));
   }
 
   /**
@@ -612,8 +600,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public List<String> describeDatabases() {
-    QueryResult result = executeQuery(this.influxDBService.query(this.username,
-                                                            this.password, SHOW_DATABASE_COMMAND_ENCODED));
+    QueryResult result = executeQuery(this.influxDBService.query(SHOW_DATABASE_COMMAND_ENCODED));
     // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
     // Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
     List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();
@@ -647,16 +634,13 @@ public class InfluxDBImpl implements InfluxDB {
     Call<QueryResult> call;
     if (query instanceof BoundParameterQuery) {
         BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-        call = this.influxDBService.postQuery(this.username,
-                this.password, query.getDatabase(), query.getCommandWithUrlEncoded(),
+        call = this.influxDBService.postQuery(query.getDatabase(), query.getCommandWithUrlEncoded(),
                 boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
         if (query.requiresPost()) {
-          call = this.influxDBService.postQuery(this.username,
-                  this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+          call = this.influxDBService.postQuery(query.getDatabase(), query.getCommandWithUrlEncoded());
         } else {
-          call = this.influxDBService.query(this.username,
-                  this.password, query.getDatabase(), query.getCommandWithUrlEncoded());
+          call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded());
         }
     }
     return call;
@@ -767,7 +751,7 @@ public class InfluxDBImpl implements InfluxDB {
     if (isDefault) {
       queryBuilder.append(" DEFAULT");
     }
-    executeQuery(this.influxDBService.postQuery(this.username, this.password, Query.encode(queryBuilder.toString())));
+    executeQuery(this.influxDBService.postQuery(Query.encode(queryBuilder.toString())));
   }
 
   /**
@@ -802,8 +786,7 @@ public class InfluxDBImpl implements InfluxDB {
         .append("\" ON \"")
         .append(database)
         .append("\"");
-    executeQuery(this.influxDBService.postQuery(this.username, this.password,
-        Query.encode(queryBuilder.toString())));
+    executeQuery(this.influxDBService.postQuery(Query.encode(queryBuilder.toString())));
   }
 
   private interface ChunkProccesor {

@@ -39,49 +39,44 @@ interface InfluxDBService {
    *                             Can be one of one, any, all, quorum. Defaults to all.
    */
   @POST("write")
-  public Call<ResponseBody> writePoints(@Query(U) String username,
-      @Query(P) String password, @Query(DB) String database,
+  public Call<ResponseBody> writePoints(@Query(DB) String database,
       @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
       @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
 
   @GET("query")
-  public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+  public Call<QueryResult> query(@Query(DB) String db,
       @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
 
   @POST("query")
-  public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+  public Call<QueryResult> query(@Query(DB) String db,
           @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
           @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
-  public Call<QueryResult> query(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+  public Call<QueryResult> query(@Query(DB) String db,
       @Query(value = Q, encoded = true) String query);
 
   @POST("query")
-  public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+  public Call<QueryResult> postQuery(@Query(DB) String db,
       @Query(value = Q, encoded = true) String query);
 
   @POST("query")
-  public Call<QueryResult> postQuery(@Query(U) String username, @Query(P) String password, @Query(DB) String db,
+  public Call<QueryResult> postQuery(@Query(DB) String db,
           @Query(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
-  public Call<QueryResult> query(@Query(U) String username, @Query(P) String password,
-      @Query(value = Q, encoded = true) String query);
+  public Call<QueryResult> query(@Query(value = Q, encoded = true) String query);
 
   @POST("query")
-  public Call<QueryResult> postQuery(@Query(U) String username,
-      @Query(P) String password, @Query(value = Q, encoded = true) String query);
+  public Call<QueryResult> postQuery(@Query(value = Q, encoded = true) String query);
 
   @Streaming
   @GET("query?chunked=true")
-  public Call<ResponseBody> query(@Query(U) String username,
-      @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
       @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
   @POST("query?chunked=true")
-  public Call<ResponseBody> query(@Query(U) String username,
-          @Query(P) String password, @Query(DB) String db, @Query(value = Q, encoded = true) String query,
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
           @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 }
