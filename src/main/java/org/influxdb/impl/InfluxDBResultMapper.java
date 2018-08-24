@@ -202,7 +202,7 @@ public class InfluxDBResultMapper {
     });
   }
 
-  public void cacheMeasurementClass(final Class<?>... classVarAgrs) {
+  void cacheMeasurementClass(final Class<?>... classVarAgrs) {
     for (Class<?> clazz : classVarAgrs) {
       if (CLASS_FIELD_CACHE.containsKey(clazz.getName())) {
         continue;
@@ -222,12 +222,8 @@ public class InfluxDBResultMapper {
     }
   }
 
-  public String getMeasurementName(final Class<?> clazz) {
+  String getMeasurementName(final Class<?> clazz) {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).name();
-  }
-
-  public <T> ConcurrentMap<String, Field> getColNameAndFieldMap(final Class<T> clazz) {
-    return CLASS_FIELD_CACHE.get(clazz.getName());
   }
 
   <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
@@ -237,7 +233,7 @@ public class InfluxDBResultMapper {
   <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result,
                             final TimeUnit precision) {
     int columnSize = series.getColumns().size();
-    ConcurrentMap<String, Field> colNameAndFieldMap = getColNameAndFieldMap(clazz);
+    ConcurrentMap<String, Field> colNameAndFieldMap = CLASS_FIELD_CACHE.get(clazz.getName());
     try {
       T object = null;
       for (List<Object> row : series.getValues()) {
@@ -324,7 +320,7 @@ public class InfluxDBResultMapper {
       if (value instanceof String) {
         instant = Instant.from(ISO8601_FORMATTER.parse(String.valueOf(value)));
       } else if (value instanceof Long) {
-        instant = Instant.ofEpochMilli(toMillis((Long) value, precision));
+        instant = Instant.ofEpochMilli(toMillis((long) value, precision));
       } else if (value instanceof Double) {
         instant = Instant.ofEpochMilli(toMillis(((Double) value).longValue(), precision));
       } else if (value instanceof Integer) {
@@ -380,7 +376,7 @@ public class InfluxDBResultMapper {
     return false;
   }
 
-  private Long toMillis(final Long value, final TimeUnit precision) {
+  private Long toMillis(final long value, final TimeUnit precision) {
 
     return TimeUnit.MILLISECONDS.convert(value, precision);
   }
