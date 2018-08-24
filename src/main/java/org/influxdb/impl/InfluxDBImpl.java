@@ -145,13 +145,13 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    OkHttpClient.Builder clonedBuilder = okHttpBuilder.build().newBuilder();
-    clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
+    OkHttpClient.Builder clonedOkHttpBuilder = okHttpBuilder.build().newBuilder();
+    clonedOkHttpBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
       addInterceptor(new BasicAuthInterceptor(username, password));
     Factory converterFactory = null;
     switch (responseFormat) {
     case MSGPACK:
-      clonedBuilder.addInterceptor(chain -> {
+      clonedOkHttpBuilder.addInterceptor(chain -> {
         Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK).build();
         return chain.proceed(request);
       });
@@ -169,8 +169,9 @@ public class InfluxDBImpl implements InfluxDB {
       break;
     }
 
-    this.retrofit = retrofitBuilder.baseUrl(url).client(
-        clonedBuilder.build()).addConverterFactory(converterFactory).build();
+    Retrofit.Builder clonedRetrofitBuilder = retrofitBuilder.baseUrl(url).build().newBuilder();
+    this.retrofit = clonedRetrofitBuilder.client(clonedOkHttpBuilder.build())
+            .addConverterFactory(converterFactory).build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
   }
