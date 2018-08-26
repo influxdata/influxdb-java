@@ -46,6 +46,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -415,6 +416,14 @@ public class InfluxDBImpl implements InfluxDB {
 
   @Override
   public void write(final BatchPoints batchPoints) {
+    if (isBatchEnabled()) {
+      batchProcessor.getBatchWriter().write(Collections.singleton(batchPoints));
+    } else {
+      writeNoRetry(batchPoints);
+    }
+  }
+
+  void writeNoRetry(final BatchPoints batchPoints) {
     this.batchedCount.add(batchPoints.getPoints().size());
     RequestBody lineProtocol = RequestBody.create(MEDIA_TYPE_STRING, batchPoints.lineProtocol());
     execute(this.influxDBService.writePoints(
@@ -424,7 +433,6 @@ public class InfluxDBImpl implements InfluxDB {
         batchPoints.getConsistency().value(),
         lineProtocol));
   }
-
 
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,

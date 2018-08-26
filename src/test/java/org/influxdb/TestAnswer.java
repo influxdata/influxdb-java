@@ -9,7 +9,7 @@ import org.mockito.stubbing.Answer;
 
 public abstract class TestAnswer implements Answer<Object> {
 
-  Map<String, Object> params = new HashMap<>();
+  public Map<String, Object> params = new HashMap<>();
   
   protected abstract void check(InvocationOnMock invocation);
 

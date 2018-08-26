@@ -31,7 +31,7 @@ public class BatchProcessorTest {
 
     @Test
     public void testSchedulerExceptionHandling() throws InterruptedException, IOException {
-        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        InfluxDBImpl mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
             .interval(1, TimeUnit.NANOSECONDS).build();
 
@@ -45,22 +45,22 @@ public class BatchProcessorTest {
         Thread.sleep(200); // wait for scheduler
 
         // first try throws an exception
-        verify(mockInfluxDB, times(1)).write(any(BatchPoints.class));
+        verify(mockInfluxDB, times(1)).writeNoRetry(any(BatchPoints.class));
 
         batchProcessor.put(batchEntry2);
         Thread.sleep(200); // wait for scheduler
         // without try catch the 2nd time does not occur
-        verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
+        verify(mockInfluxDB, times(2)).writeNoRetry(any(BatchPoints.class));
     }
 
   @Test
   public void testSchedulerExceptionHandlingCallback() throws InterruptedException, IOException {
-    InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+    InfluxDBImpl mockInfluxDB = mock(InfluxDBImpl.class);
     BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
     BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
         .interval(1, TimeUnit.NANOSECONDS).exceptionHandler(mockHandler).build();
 
-    doThrow(new RuntimeException()).when(mockInfluxDB).write(any(BatchPoints.class));
+    doThrow(new RuntimeException()).when(mockInfluxDB).writeNoRetry(any(BatchPoints.class));
 
     Point point = Point.measurement("cpu").field("6", "").build();
     BatchProcessor.HttpBatchEntry batchEntry1 = new BatchProcessor.HttpBatchEntry(point, "db1", "");
@@ -74,7 +74,7 @@ public class BatchProcessorTest {
 
     @Test
     public void testBatchWriteWithDifferenctRp() throws InterruptedException, IOException {
-        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        InfluxDBImpl mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
             .interval(1, TimeUnit.NANOSECONDS).build();
 
@@ -87,12 +87,12 @@ public class BatchProcessorTest {
 
         Thread.sleep(200); // wait for scheduler
         // same dbname with different rp should write two batchs instead of only one.
-        verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
+        verify(mockInfluxDB, times(2)).writeNoRetry(any(BatchPoints.class));
     }
 
     @Test
     public void testFlushWritesBufferedPointsAndDoesNotShutdownScheduler() throws InterruptedException {
-        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        InfluxDBImpl mockInfluxDB = mock(InfluxDBImpl.class);
         BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB)
                 .actions(Integer.MAX_VALUE)
                 .interval(1, TimeUnit.NANOSECONDS).build();
@@ -103,7 +103,7 @@ public class BatchProcessorTest {
         batchProcessor.put(httpBatchEntry);
         Thread.sleep(100); // wait for scheduler
         // Our put should have been written
-        verify(mockInfluxDB).write(any(BatchPoints.class));
+        verify(mockInfluxDB).writeNoRetry(any(BatchPoints.class));
 
         // Force a flush which should not stop the scheduler
         batchProcessor.flush();
@@ -111,7 +111,7 @@ public class BatchProcessorTest {
         batchProcessor.put(httpBatchEntry);
         Thread.sleep(100); // wait for scheduler
         // Our second put should have been written if the scheduler is still running
-        verify(mockInfluxDB, times(2)).write(any(BatchPoints.class));
+        verify(mockInfluxDB, times(2)).writeNoRetry(any(BatchPoints.class));
 
         verifyNoMoreInteractions(mockInfluxDB);
     }

@@ -1,6 +1,5 @@
 package org.influxdb.impl;
 
-import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 
 import java.util.Collection;
@@ -10,16 +9,16 @@ import java.util.Collection;
  */
 class OneShotBatchWriter implements BatchWriter {
 
-  private InfluxDB influxDB;
+  private InfluxDBImpl influxDB;
 
-  OneShotBatchWriter(final InfluxDB influxDB) {
+  OneShotBatchWriter(final InfluxDBImpl influxDB) {
     this.influxDB = influxDB;
   }
 
   @Override
   public void write(final Collection<BatchPoints> batchPointsCollection) {
     for (BatchPoints batchPoints : batchPointsCollection) {
-      influxDB.write(batchPoints);
+      influxDB.writeNoRetry(batchPoints);
     }
   }
 
