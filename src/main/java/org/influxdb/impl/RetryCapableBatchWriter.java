@@ -1,6 +1,5 @@
 package org.influxdb.impl;
 
-import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -18,14 +17,14 @@ import java.util.function.BiConsumer;
  */
 class RetryCapableBatchWriter implements BatchWriter {
 
-  private InfluxDB influxDB;
+  private InfluxDBImpl influxDB;
   private BiConsumer<Iterable<Point>, Throwable> exceptionHandler;
   private LinkedList<BatchPoints> batchQueue;
   private int requestActionsLimit;
   private int retryBufferCapacity;
   private int usedRetryBufferCapacity;
 
-  RetryCapableBatchWriter(final InfluxDB influxDB, final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+  RetryCapableBatchWriter(final InfluxDBImpl influxDB, final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
                           final int retryBufferCapacity, final int requestActionsLimit) {
     this.influxDB = influxDB;
     this.exceptionHandler = exceptionHandler;
@@ -124,7 +123,7 @@ class RetryCapableBatchWriter implements BatchWriter {
 
   private WriteResult tryToWrite(final BatchPoints batchPoints) {
     try {
-      influxDB.write(batchPoints);
+      influxDB.writeNoRetry(batchPoints);
       return WriteResult.WRITTEN;
     } catch (InfluxDBException e) {
       return new WriteResult(e);

@@ -1,8 +1,7 @@
 package org.influxdb;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
-import org.influxdb.InfluxDBException.DatabaseNotFoundException;
-import org.influxdb.dto.BatchPoints;
+import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
@@ -11,13 +10,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
 
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -176,8 +179,6 @@ public class BatchOptionsTest {
       influxDB.disableBatch();
       influxDB.deleteDatabase(dbName);
     }
-    
-    
   }
   
   /**
@@ -192,121 +193,7 @@ public class BatchOptionsTest {
       influxDB.disableBatch();
     });
   }
-  
-  /**
-   * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
-   * use a bufferLimit that less than actions, then OneShotBatchWrite is used
-   */
-  @Test
-  public void testBufferLimitLessThanActions() throws InterruptedException {
-    
-    TestAnswer answer = new TestAnswer() {
 
-      InfluxDBException influxDBException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR)); 
-      @Override
-      protected void check(InvocationOnMock invocation) {
-        if ((Boolean) params.get("throwException")) {
-          throw influxDBException;
-        }
-      }
-    };
-    
-    InfluxDB spy = spy(influxDB);
-    //the spied influxDB.write(BatchPoints) will always throw InfluxDBException
-    doAnswer(answer).when(spy).write(any(BatchPoints.class));
-    
-    String dbName = "write_unittest_" + System.currentTimeMillis();
-    try {
-      answer.params.put("throwException", true);
-      BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
-      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(3).actions(4).flushDuration(100).exceptionHandler(mockHandler);
-
-      spy.createDatabase(dbName);
-      spy.setDatabase(dbName);
-      spy.enableBatch(options);
-      write20Points(spy);
-      
-      Thread.sleep(300);
-      verify(mockHandler, atLeastOnce()).accept(any(), any());
-      
-      QueryResult result = spy.query(new Query("select * from weather", dbName));
-      //assert 0 point written because of InfluxDBException and OneShotBatchWriter did not retry
-      Assertions.assertNull(result.getResults().get(0).getSeries());
-      Assertions.assertNull(result.getResults().get(0).getError());
-      
-      answer.params.put("throwException", false);
-      write20Points(spy);
-      Thread.sleep(300);
-      result = spy.query(new Query("select * from weather", dbName));
-      //assert all 20 points written to DB due to no exception
-      Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
-      spy.disableBatch();
-      spy.deleteDatabase(dbName);
-    }
-    
-  }
-
-  /**
-   * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
-   * use a bufferLimit that greater than actions, then RetryCapableBatchWriter is used
-   */
-  @Test
-  public void testBufferLimitGreaterThanActions() throws InterruptedException {
-    TestAnswer answer = new TestAnswer() {
-      
-      int nthCall = 0;
-      InfluxDBException cacheMaxMemorySizeExceededException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR)); 
-      @Override
-      protected void check(InvocationOnMock invocation) {
-        
-        switch (nthCall++) {
-        case 0:
-          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.DATABASE_NOT_FOUND_ERROR));
-        case 1:
-          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
-        default:
-          break;
-        }
-      }
-    };
-
-    InfluxDB spy = spy(influxDB);
-    doAnswer(answer).when(spy).write(any(BatchPoints.class));
-    
-    String dbName = "write_unittest_" + System.currentTimeMillis();
-    try {
-      BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
-      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(10).actions(8).flushDuration(100).exceptionHandler(mockHandler);
-
-      spy.createDatabase(dbName);
-      spy.setDatabase(dbName);
-      spy.enableBatch(options);
-      writeSomePoints(spy, "measurement1", 0, 5);
-      
-      Thread.sleep(300);
-      verify(mockHandler, atLeastOnce()).accept(any(), any());
-      
-      QueryResult result = spy.query(new Query("select * from measurement1", dbName));
-      //assert 0 point written because of non-retry capable DATABASE_NOT_FOUND_ERROR and RetryCapableBatchWriter did not retry
-      Assertions.assertNull(result.getResults().get(0).getSeries());
-      Assertions.assertNull(result.getResults().get(0).getError());
-      
-      writeSomePoints(spy, "measurement2", 0, 5);
-      
-      Thread.sleep(300);
-      
-      result = spy.query(new Query("select * from measurement2", dbName));
-      //assert all 6 point written because of retry capable CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR and RetryCapableBatchWriter did retry
-      Assertions.assertEquals(6, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
-      spy.disableBatch();
-      spy.deleteDatabase(dbName);
-    }
-        
-  }
   /**
    * Test the implementation of {@link BatchOptions#bufferLimit(int)} }.
    */
@@ -357,131 +244,47 @@ public class BatchOptionsTest {
     
   }
   
-  /**
-   * Test the implementation of {@link BatchOptions#exceptionHandler(BiConsumer)} }.
-   * @throws InterruptedException
-   */
-  @Test
-  public void testHandlerOnRetryImpossible() throws InterruptedException {
-    
-    String dbName = "write_unittest_" + System.currentTimeMillis();
-    InfluxDB spy = spy(influxDB);
-    doThrow(DatabaseNotFoundException.class).when(spy).write(any(BatchPoints.class));
-    
-    try {
-      BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
-      BatchOptions options = BatchOptions.DEFAULTS.exceptionHandler(mockHandler).flushDuration(100);
 
-      spy.createDatabase(dbName);
-      spy.setDatabase(dbName);
-      spy.enableBatch(options);
-      
-      writeSomePoints(spy, 1);
-      
-      Thread.sleep(200);
-      verify(mockHandler, times(1)).accept(any(), any());
-      
-      QueryResult result = influxDB.query(new Query("select * from weather", dbName));
-      Assertions.assertNull(result.getResults().get(0).getSeries());
-      Assertions.assertNull(result.getResults().get(0).getError());
-    } finally {
-      spy.disableBatch();
-      spy.deleteDatabase(dbName);
-    }
-    
-  }
-  
-  /**
-   * Test the implementation of {@link BatchOptions#exceptionHandler(BiConsumer)} }.
-   * @throws InterruptedException
-   */
-  @Test
-  public void testHandlerOnRetryPossible() throws InterruptedException {
-    
-    String dbName = "write_unittest_" + System.currentTimeMillis();
-    InfluxDB spy = spy(influxDB);
-    doAnswer(new Answer<Object>() {
-      boolean firstCall = true;
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        if (firstCall) {
-          firstCall = false;
-          throw new InfluxDBException("error");
-        } else {
-          return invocation.callRealMethod();
-        }
-      }
-    }).when(spy).write(any(BatchPoints.class));
-    
-    try {
-      BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
-      BatchOptions options = BatchOptions.DEFAULTS.exceptionHandler(mockHandler).flushDuration(100);
-
-      spy.createDatabase(dbName);
-      spy.setDatabase(dbName);
-      spy.enableBatch(options);
-      
-      writeSomePoints(spy, 1);
-      
-      Thread.sleep(500);
-      verify(mockHandler, never()).accept(any(), any());
-      
-      verify(spy, times(2)).write(any(BatchPoints.class));
-      
-      QueryResult result = influxDB.query(new Query("select * from weather", dbName));
-      Assertions.assertNotNull(result.getResults().get(0).getSeries());
-      Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
-      
-    } finally {
-      spy.disableBatch();
-      spy.deleteDatabase(dbName);
-    }
-    
-  }
 
   /**
    * Test the implementation of {@link BatchOptions#consistency(InfluxDB.ConsistencyLevel)} }.
    * @throws InterruptedException 
+   * @throws IOException 
    */
   @Test
-  public void testConsistency() throws InterruptedException {
+  public void testConsistency() throws InterruptedException, IOException {
     String dbName = "write_unittest_" + System.currentTimeMillis();
-    
-    InfluxDB spy = spy(influxDB);
-    spy.createDatabase(dbName);
-    spy.setDatabase(dbName);
+    final Map<String, Object> params = new HashMap<>();
+    InfluxDB influxDB = createInterceptedInfluxDb(chain -> {
+      HttpUrl url = chain.request().url();
+      if ("/write".equals(url.encodedPath())) {
+        String consistencyLevel = url.queryParameter("consistency");
+        Assertions.assertEquals(params.get("consistencyLevel").toString(), consistencyLevel.toUpperCase());
+      }
+      return chain.proceed(chain.request());
+    });
+    influxDB.createDatabase(dbName);
+    influxDB.setDatabase(dbName);
     try {
-      TestAnswer answer = new TestAnswer() {
-        @Override
-        protected void check(InvocationOnMock invocation) {
-          BatchPoints batchPoints = (BatchPoints) invocation.getArgument(0);
-          Assertions.assertEquals(params.get("consistencyLevel"), batchPoints.getConsistency());
-          
-        }
-      };
-      doAnswer(answer).when(spy).write(any(BatchPoints.class));
-
       int n = 0;
       for (final ConsistencyLevel consistencyLevel : ConsistencyLevel.values()) {
-        answer.params.put("consistencyLevel", consistencyLevel);
+        params.put("consistencyLevel", consistencyLevel);
         BatchOptions options = BatchOptions.DEFAULTS.consistency(consistencyLevel).flushDuration(100);
-        spy.enableBatch(options);
+        influxDB.enableBatch(options);
         Assertions.assertEquals(options.getConsistency(), consistencyLevel);
         
-        writeSomePoints(spy, n, n + 4);
+        writeSomePoints(influxDB, n, n + 4);
         n += 5;
         Thread.sleep(300);
         
-        verify(spy, atLeastOnce()).write(any(BatchPoints.class));
-        QueryResult result = spy.query(new Query("select * from weather", dbName));
+        QueryResult result = influxDB.query(new Query("select * from weather", dbName));
         Assertions.assertEquals(n, result.getResults().get(0).getSeries().get(0).getValues().size());
         
-        
-        spy.disableBatch();
+        influxDB.disableBatch();
       }
       
     } finally {
-      spy.deleteDatabase(dbName);
+      influxDB.deleteDatabase(dbName);
     }
   }
   
@@ -517,5 +320,11 @@ public class BatchOptionsTest {
   
   static String createErrorBody(String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
+  }
+  
+  private InfluxDB createInterceptedInfluxDb(Interceptor interceptor) throws InterruptedException, IOException {
+    OkHttpClient.Builder client = new OkHttpClient.Builder();
+    client.addInterceptor(interceptor);
+    return TestUtils.connectToInfluxDB(client, null, ResponseFormat.JSON);
   }
 }
