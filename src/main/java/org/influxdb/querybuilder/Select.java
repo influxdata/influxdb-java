@@ -154,7 +154,7 @@ public class Select extends BuiltQuery {
         Builder() {
         }
 
-        Builder(List<Object> columnNames) {
+        public Builder(List<Object> columnNames) {
             this.columnNames = columnNames;
         }
 

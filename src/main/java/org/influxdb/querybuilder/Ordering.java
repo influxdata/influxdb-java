@@ -10,7 +10,7 @@ public class Ordering implements Appendable {
      * Influxdb ordering currently supports onlye time
      * @param isDesc
      */
-    Ordering(boolean isDesc) {
+    public Ordering(boolean isDesc) {
         this.isDesc = isDesc;
     }
 

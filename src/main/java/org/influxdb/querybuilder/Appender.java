@@ -1,8 +1,11 @@
 package org.influxdb.querybuilder;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Appender {
+
+    private static final Pattern columnNamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
 
     public static StringBuilder joinAndAppend(StringBuilder stringBuilder, String separator, List<? extends Appendable> values) {
         for (int i = 0; i < values.size(); i++) {
@@ -51,7 +54,7 @@ public class Appender {
 
     public static StringBuilder appendName(String name, StringBuilder stringBuilder) {
         name = name.trim();
-        if (name.startsWith("\"")) {
+        if (name.startsWith("\"") || columnNamePattern.matcher(name).matches()) {
             stringBuilder.append(name);
         } else {
             stringBuilder.append('"').append(name).append('"');

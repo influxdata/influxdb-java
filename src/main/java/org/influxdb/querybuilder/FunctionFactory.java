@@ -2,6 +2,14 @@ package org.influxdb.querybuilder;
 
 public class FunctionFactory {
 
+    public static Object fcall(String name, Object... parameters) {
+        return new Function(name, parameters);
+    }
+
+    public static Object now() {
+        return new Function("now");
+    }
+
     public static Object count(Object column) {
         if (column instanceof String)
             column = column(((String) column));
@@ -32,7 +40,7 @@ public class FunctionFactory {
         return new Function("MEAN", column);
     }
 
-    private static Object column(String name) {
+    public static Object column(String name) {
         return new Column(name);
     }
 
