@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.RawTextClause;
 
 public class Select extends BuiltQuery {
 
@@ -79,6 +80,10 @@ public class Select extends BuiltQuery {
 
     public Where where(Clause clause) {
         return where.and(clause);
+    }
+
+    public Where where(String text) {
+        return where.and(new RawTextClause(text));
     }
 
     public Where where() {
