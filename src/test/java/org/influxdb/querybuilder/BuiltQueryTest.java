@@ -86,6 +86,66 @@ public class BuiltQueryTest {
 		assertEquals(query.getDatabase(),select.getDatabase());
 	}
 
+	@Test
+	public void testSelect() {
+		Query query = new Query("SELECT * FROM foo WHERE k=4 AND c>'a' AND c<='z';",DATABASE);
+		Query select = select().all().from(DATABASE,"foo").where(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testMean() {
+		Query query = new Query("SELECT MEAN(k) FROM foo WHERE k=4 AND c>'a' AND c<='z';",DATABASE);
+		Query select = select().mean("k")
+				.from(DATABASE,"foo")
+				.where(eq("k", 4))
+				.and(gt("c", "a"))
+				.and(lte("c", "z"));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testSum() {
+		Query query = new Query("SELECT SUM(k) FROM foo WHERE k=4 AND c>'a' AND c<='z';",DATABASE);
+		Query select = select().sum("k")
+				.from(DATABASE,"foo")
+				.where(eq("k", 4))
+				.and(gt("c", "a"))
+				.and(lte("c", "z"));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testMin() {
+		Query query = new Query("SELECT MIN(k) FROM foo WHERE k=4 AND c>'a' AND c<='z';",DATABASE);
+		Query select = select().min("k")
+				.from(DATABASE,"foo")
+				.where(eq("k", 4))
+				.and(gt("c", "a"))
+				.and(lte("c", "z"));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testMax() {
+		Query query = new Query("SELECT MAX(k) FROM foo WHERE k=4 AND c>'a' AND c<='z';",DATABASE);
+		Query select = select().max("k")
+				.from(DATABASE,"foo")
+				.where(eq("k", 4))
+				.and(gt("c", "a"))
+				.and(lte("c", "z"));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
 
 }
 
