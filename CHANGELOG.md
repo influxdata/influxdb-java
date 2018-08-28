@@ -5,6 +5,7 @@
 ### Features
 
 - Support for Basic Authentication [PR #492](https://github.com/influxdata/influxdb-java/pull/492)
+- Added possibility to reuse client as a core part of [influxdb-java-reactive](https://github.com/bonitoo-io/influxdb-java-reactive) client [PR #493](https://github.com/influxdata/influxdb-java/pull/493)
 
 ## 2.12 [2018-07-31]
 
