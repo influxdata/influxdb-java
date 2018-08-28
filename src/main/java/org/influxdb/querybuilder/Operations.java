@@ -2,6 +2,9 @@ package org.influxdb.querybuilder;
 
 public class Operations {
 
+    private Operations() {
+    }
+
     public static final String EQ = "=";
     public static final String NE = "!=";
     public static final String LT = "<";

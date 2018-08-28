@@ -156,6 +156,14 @@ public abstract class BuiltQuery extends Query {
             return new Alias(column, alias);
         }
 
+        /**
+         * Functions
+         */
+
+        public static Object now() {
+            return FunctionFactory.now();
+        }
+
     }
 
 }

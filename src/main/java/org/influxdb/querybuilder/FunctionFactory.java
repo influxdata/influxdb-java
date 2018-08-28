@@ -1,5 +1,7 @@
 package org.influxdb.querybuilder;
 
+import static org.influxdb.querybuilder.Aggregations.*;
+
 public class FunctionFactory {
 
     public static Object function(String name, Object... parameters) {
@@ -12,23 +14,23 @@ public class FunctionFactory {
     }
 
     public static Object count(Object column) {
-        return new Function("COUNT", toColumn(column));
+        return new Function(COUNT, toColumn(column));
     }
 
     public static Object max(Object column) {
-        return new Function("MAX", toColumn(column));
+        return new Function(MAX,toColumn(column));
     }
 
     public static Object min(Object column) {
-        return new Function("MIN", toColumn(column));
+        return new Function(MIN, toColumn(column));
     }
 
     public static Object sum(Object column) {
-        return new Function("SUM", toColumn(column));
+        return new Function(SUM, toColumn(column));
     }
 
     public static Object mean(Object column) {
-        return new Function("MEAN", toColumn(column));
+        return new Function(MEAN, toColumn(column));
     }
 
     public static Object column(String name) {
