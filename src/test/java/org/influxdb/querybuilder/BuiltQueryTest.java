@@ -67,7 +67,7 @@ public class BuiltQueryTest {
 
 	@Test
 	public void testMultipleColumns() {
-		Query query = select().column("test1").distinct().column("test2").from("foo");
+		Query query = select().column("test1").distinct().column("test2").from(DATABASE , "foo");
 		assertThrows(IllegalStateException.class, () -> query.getCommand(), "Cannot mix all columns and specific columns");
 	}
 
@@ -142,6 +142,87 @@ public class BuiltQueryTest {
 				.where(eq("k", 4))
 				.and(gt("c", "a"))
 				.and(lte("c", "z"));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testSelectField() {
+		Query query = new Query("SELECT test1,test2 FROM foo;",DATABASE);
+		Query select = select().column("test1").column("test2") .from(DATABASE , "foo");
+		
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testGroupBy() {
+		Query query = new Query("SELECT test1 FROM foo GROUP BY test2,test3;",DATABASE);
+		Query select = select().column("test1") .from(DATABASE , "foo").groupBy("test2","test3");
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testLimit() {
+		Query query = new Query("SELECT test1 FROM foo GROUP BY test2,test3 LIMIT 1;",DATABASE);
+		Query select = select().column("test1").from(DATABASE , "foo").groupBy("test2","test3").limit(1);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testLimitOffset() {
+		Query query = new Query("SELECT test1 FROM foo GROUP BY test2,test3 LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().column("test1").from(DATABASE , "foo").groupBy("test2","test3").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testCount() {
+		Query query = new Query("SELECT COUNT(test1) FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().count("test1").from(DATABASE , "foo").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testMinWithLimit() {
+		Query query = new Query("SELECT MIN(test1) FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().min("test1").from(DATABASE , "foo").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testMaxWithLimit() {
+		Query query = new Query("SELECT MAX(test1) FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().max("test1").from(DATABASE , "foo").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testSumWithLimit() {
+		Query query = new Query("SELECT SUM(test1) FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().sum("test1").from(DATABASE , "foo").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testAggregateCompination() {
+		Query query = new Query("SELECT MAX(test1),MIN(test2),COUNT(test3),SUM(test4) FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().max("test1").min("test2").count("test3").sum("test4").from(DATABASE , "foo").limit(1,20);
 
 		assertEquals(query.getCommand(),select.getCommand());
 		assertEquals(query.getDatabase(),select.getDatabase());
