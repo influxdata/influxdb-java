@@ -6,33 +6,33 @@ import org.influxdb.querybuilder.Appender;
 
 public class CompoundClause implements Clause {
 
-    private String op;
+    private String operation;
     private final List<String> names;
     private final List<?> values;
 
-    public CompoundClause(List<String> names, String op, List<?> values) {
-        this.op = op;
+    public CompoundClause(List<String> names, String operation, List<?> values) {
+        this.operation = operation;
         this.names = names;
         this.values = values;
         if (this.names.size() != this.values.size())
-            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", this.names.size(), this.values.size()));
+            throw new IllegalArgumentException(String.format("Size of names: (%d) and values: (%d) should match", this.names.size(), this.values.size()));
     }
 
     @Override
-    public void appendTo(StringBuilder sb) {
-        sb.append("(");
+    public void appendTo(StringBuilder stringBuilder) {
+        stringBuilder.append("(");
         for (int i = 0; i < names.size(); i++) {
             if (i > 0)
-                sb.append(",");
-            Appender.appendName(names.get(i), sb);
+                stringBuilder.append(",");
+            Appender.appendName(names.get(i), stringBuilder);
         }
-        sb.append(")").append(op).append("(");
+        stringBuilder.append(")").append(operation).append("(");
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
-                sb.append(",");
-            Appender.appendValue(values.get(i), sb);
+                stringBuilder.append(",");
+            Appender.appendValue(values.get(i), stringBuilder);
         }
-        sb.append(")");
+        stringBuilder.append(")");
     }
 
 }

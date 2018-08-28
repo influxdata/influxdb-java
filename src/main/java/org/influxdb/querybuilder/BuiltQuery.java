@@ -48,6 +48,9 @@ public abstract class BuiltQuery extends Query {
         return encode(getCommand());
     }
 
+    /**
+     * The query builder shall provide all the building blocks needed, only a static block shall be used
+     */
     public static final class QueryBuilder {
 
         private QueryBuilder() {

@@ -26,10 +26,10 @@ public class Selection extends Select.Builder {
     }
 
     private Selection addName(Object name) {
-        if (columnNames == null)
-            columnNames = new ArrayList<>();
+        if (columns == null)
+            columns = new ArrayList<>();
 
-        columnNames.add(name);
+        columns.add(name);
         return this;
     }
 
@@ -44,20 +44,20 @@ public class Selection extends Select.Builder {
     public Select.Builder all() {
         if (isDistinct)
             throw new IllegalStateException("DISTINCT function can only be used with one column");
-        if (columnNames != null)
-            throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+        if (columns != null)
+            throw new IllegalStateException("Can't select all columns over columns selected previously");
         if (previousSelection != null)
-            throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
+            throw new IllegalStateException("Can't select all columns over columns selected previously");
         return this;
     }
 
     public Select.Builder countAll() {
-        if (columnNames != null)
-            throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+        if (columns != null)
+            throw new IllegalStateException("Can't select all columns over columns selected previously");
         if (previousSelection != null)
-            throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
+            throw new IllegalStateException("Can't select all columns over columns selected previously");
 
-        columnNames = COUNT_ALL;
+        columns = COUNT_ALL;
         return this;
     }
 
@@ -65,8 +65,8 @@ public class Selection extends Select.Builder {
         return queueName(name);
     }
 
-    public Selection functionCall(String name, Object... parameters) {
-        return queueName(new Function(name, parameters));
+    public Selection function(String name, Object... parameters) {
+        return queueName(FunctionFactory.function(name, parameters));
     }
 
     public Selection raw(String rawString) {

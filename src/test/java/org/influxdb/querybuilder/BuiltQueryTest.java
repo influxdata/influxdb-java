@@ -228,6 +228,19 @@ public class BuiltQueryTest {
 		assertEquals(query.getDatabase(),select.getDatabase());
 	}
 
+	@Test
+	public void testFunctionCall() {
+		Query query = new Query("SELECT MEDIAN(test1) FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().function("MEDIAN","test1").from(DATABASE , "foo").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	/**
+	 * Test function in function
+	 */
+
 }
 
 

@@ -2,7 +2,8 @@ package org.influxdb.querybuilder;
 
 public class FunctionFactory {
 
-    public static Object fcall(String name, Object... parameters) {
+    public static Object function(String name, Object... parameters) {
+        toColumns(parameters);
         return new Function(name, parameters);
     }
 
@@ -11,37 +12,39 @@ public class FunctionFactory {
     }
 
     public static Object count(Object column) {
-        if (column instanceof String)
-            column = column(((String) column));
-        return new Function("COUNT", column);
+        return new Function("COUNT", toColumn(column));
     }
 
     public static Object max(Object column) {
-        if (column instanceof String)
-            column = column(((String) column));
-        return new Function("MAX", column);
+        return new Function("MAX", toColumn(column));
     }
 
     public static Object min(Object column) {
-        if (column instanceof String)
-            column = column(((String) column));
-        return new Function("MIN", column);
+        return new Function("MIN", toColumn(column));
     }
 
     public static Object sum(Object column) {
-        if (column instanceof String)
-            column = column(((String) column));
-        return new Function("SUM", column);
+        return new Function("SUM", toColumn(column));
     }
 
     public static Object mean(Object column) {
-        if (column instanceof String)
-            column = column(((String) column));
-        return new Function("MEAN", column);
+        return new Function("MEAN", toColumn(column));
     }
 
     public static Object column(String name) {
         return new Column(name);
+    }
+
+    private static void toColumns(Object... arguments) {
+        for(int i=0;i<arguments.length;i++) {
+            arguments[i] = toColumn(arguments[i]);
+        }
+    }
+
+    private static Object toColumn(Object argument) {
+        if (argument instanceof String)
+            return column(((String) argument));
+        return argument;
     }
 
 }

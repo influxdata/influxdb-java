@@ -3,24 +3,6 @@ package org.influxdb.dto;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-
-import org.influxdb.annotation.Column;
-import org.influxdb.querybuilder.Alias;
-import org.influxdb.querybuilder.FunctionFactory;
-import org.influxdb.querybuilder.Ordering;
-import org.influxdb.querybuilder.RawString;
-import org.influxdb.querybuilder.Select;
-import org.influxdb.querybuilder.Selection;
-import org.influxdb.querybuilder.clauses.Clause;
-import org.influxdb.querybuilder.clauses.CompoundClause;
-import org.influxdb.querybuilder.clauses.ContainsClause;
-import org.influxdb.querybuilder.clauses.NegativeRegexClause;
-import org.influxdb.querybuilder.clauses.RegexClause;
-import org.influxdb.querybuilder.clauses.SimpleClause;
-
-import static org.influxdb.querybuilder.Operations.*;
 
 /**
  * Represents a Query against Influxdb.

@@ -148,14 +148,14 @@ public class Select extends BuiltQuery {
 
     public static class Builder {
 
-        List<Object> columnNames;
+        List<Object> columns;
         boolean isDistinct;
 
         Builder() {
         }
 
-        public Builder(List<Object> columnNames) {
-            this.columnNames = columnNames;
+        public Builder(List<Object> columns) {
+            this.columns = columns;
         }
 
         public Select from(String table) {
@@ -163,7 +163,7 @@ public class Select extends BuiltQuery {
         }
 
         public Select from(String database, String table) {
-            return new Select(database, table, columnNames, isDistinct);
+            return new Select(database, table, columns, isDistinct);
         }
 
     }
