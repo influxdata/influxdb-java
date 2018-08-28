@@ -246,6 +246,15 @@ public class BuiltQueryTest {
 		assertEquals(query.getDatabase(),select.getDatabase());
 	}
 
+	@Test
+	public void testRawStringOnSelection() {
+		Query query = new Query("SELECT an expression on select FROM foo LIMIT 1 OFFSET 20;",DATABASE);
+		Query select = select().raw("an expression on select").from(DATABASE , "foo").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
 }
 
 
