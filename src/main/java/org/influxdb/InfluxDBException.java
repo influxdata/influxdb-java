@@ -126,7 +126,7 @@ public class InfluxDBException extends RuntimeException {
     }
   }
 
-  public static InfluxDBException buildExceptionFromErrorMessage(final String errorMessage) {
+  private static InfluxDBException buildExceptionFromErrorMessage(final String errorMessage) {
     if (errorMessage.contains(DATABASE_NOT_FOUND_ERROR)) {
       return new DatabaseNotFoundException(errorMessage);
     }
