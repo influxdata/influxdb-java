@@ -376,4 +376,8 @@ public final class BatchProcessor {
     return consistencyLevel;
   }
 
+  BatchWriter getBatchWriter() {
+    return batchWriter;
+  }
+
 }

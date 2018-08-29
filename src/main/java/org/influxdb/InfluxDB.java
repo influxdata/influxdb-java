@@ -313,6 +313,23 @@ public interface InfluxDB {
   public void write(final BatchPoints batchPoints);
 
   /**
+   * Write a set of Points to the influxdb database with the new (&gt;= 0.9.0rc32) lineprotocol.
+   *
+   * If batching is enabled with appropriate {@code BatchOptions} settings
+   * ({@code BatchOptions.bufferLimit} greater than {@code BatchOptions.actions})
+   * This method will try to retry in case of some recoverable errors.
+   * Otherwise it just works as {@link #write(BatchPoints)}
+   *
+   * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>
+   * @see <a href="https://github.com/influxdata/influxdb-java/wiki/Handling-errors-of-InfluxDB-under-high-load">
+   * Retry worth errors</a>
+   *
+   * @param batchPoints
+   *            the points to write in BatchPoints.
+   */
+  public void writeWithRetry(final BatchPoints batchPoints);
+
+  /**
    * Write a set of Points to the influxdb database with the string records.
    *
    * @see <a href="https://github.com/influxdb/influxdb/pull/2696">2696</a>

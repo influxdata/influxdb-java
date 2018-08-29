@@ -484,7 +484,100 @@ public class BatchOptionsTest {
       spy.deleteDatabase(dbName);
     }
   }
-  
+
+
+  @Test
+  public void testWriteWithRetryOnRecoverableError() throws InterruptedException {
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    InfluxDB spy = spy(influxDB);
+    doAnswer(new Answer() {
+      boolean firstCall = true;
+
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        if (firstCall) {
+          firstCall = false;
+          throw new InfluxDBException("error");
+        } else {
+          return invocation.callRealMethod();
+        }
+      }
+    }).when(spy).write(any(BatchPoints.class));
+    try {
+      BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
+      BatchOptions options = BatchOptions.DEFAULTS.exceptionHandler(mockHandler).flushDuration(100);
+
+      spy.createDatabase(dbName);
+      spy.setDatabase(dbName);
+      spy.enableBatch(options);
+
+      BatchPoints batchPoints = createBatchPoints(dbName, "m0", 200);
+      spy.writeWithRetry(batchPoints);
+      Thread.sleep(500);
+      verify(mockHandler, never()).accept(any(), any());
+
+      verify(spy, times(2)).write(any(BatchPoints.class));
+
+      QueryResult result = influxDB.query(new Query("select * from m0", dbName));
+      Assertions.assertNotNull(result.getResults().get(0).getSeries());
+      Assertions.assertEquals(200, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+    } finally {
+      spy.disableBatch();
+      spy.deleteDatabase(dbName);
+    }
+  }
+
+  @Test
+  public void testWriteWithRetryOnUnrecoverableError() throws InterruptedException {
+
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    InfluxDB spy = spy((InfluxDB) influxDB);
+    doThrow(DatabaseNotFoundException.class).when(spy).write(any(BatchPoints.class));
+
+    try {
+      BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
+      BatchOptions options = BatchOptions.DEFAULTS.exceptionHandler(mockHandler).flushDuration(100);
+
+      spy.createDatabase(dbName);
+      spy.setDatabase(dbName);
+      spy.enableBatch(options);
+
+      BatchPoints batchPoints = createBatchPoints(dbName, "m0", 200);
+      spy.writeWithRetry(batchPoints);
+      Thread.sleep(500);
+      
+      verify(mockHandler, times(1)).accept(any(), any());
+
+      QueryResult result = influxDB.query(new Query("select * from m0", dbName));
+      Assertions.assertNull(result.getResults().get(0).getSeries());
+      Assertions.assertNull(result.getResults().get(0).getError());
+    } finally {
+      spy.disableBatch();
+      spy.deleteDatabase(dbName);
+    }
+
+  }
+
+  @Test
+  public void testWriteWithRetryOnBatchingNotEnabled() {
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    try {
+
+      influxDB.createDatabase(dbName);
+      influxDB.setDatabase(dbName);
+
+      BatchPoints batchPoints = createBatchPoints(dbName, "m0", 200);
+      influxDB.writeWithRetry(batchPoints);
+
+      QueryResult result = influxDB.query(new Query("select * from m0", dbName));
+      Assertions.assertNotNull(result.getResults().get(0).getSeries());
+      Assertions.assertEquals(200, result.getResults().get(0).getSeries().get(0).getValues().size());
+    } finally {
+      influxDB.deleteDatabase(dbName);
+    }
+    
+  }
   void writeSomePoints(InfluxDB influxDB, String measurement, int firstIndex, int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement(measurement)
@@ -514,7 +607,21 @@ public class BatchOptionsTest {
   void writeSomePoints(InfluxDB influxDB, int n) {
     writeSomePoints(influxDB, 0, n - 1);
   }
-  
+
+  private BatchPoints createBatchPoints(String dbName, String measurement, int n) {
+    BatchPoints batchPoints = BatchPoints.database(dbName).build();
+    for (int i = 1; i <= n; i++) {
+      Point point = Point.measurement(measurement)
+              .time(i,TimeUnit.MILLISECONDS)
+              .addField("f1", (double) i)
+              .addField("f2", (double) (i) * 1.1)
+              .addField("f3", "f_v3").build();
+      batchPoints.point(point);
+    }
+    
+    return batchPoints;
+  }  
+
   static String createErrorBody(String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
