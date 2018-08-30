@@ -365,28 +365,23 @@ public class BatchOptionsTest {
   public void testHandlerOnRetryImpossible() throws InterruptedException {
     
     String dbName = "write_unittest_" + System.currentTimeMillis();
-    InfluxDB spy = spy(influxDB);
-    doThrow(DatabaseNotFoundException.class).when(spy).write(any(BatchPoints.class));
     
     try {
       BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
       BatchOptions options = BatchOptions.DEFAULTS.exceptionHandler(mockHandler).flushDuration(100);
 
-      spy.createDatabase(dbName);
-      spy.setDatabase(dbName);
-      spy.enableBatch(options);
+      influxDB.setDatabase(dbName);
+      influxDB.enableBatch(options);
       
-      writeSomePoints(spy, 1);
+      writeSomePoints(influxDB, 1);
       
       Thread.sleep(200);
       verify(mockHandler, times(1)).accept(any(), any());
       
       QueryResult result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertNull(result.getResults().get(0).getSeries());
-      Assertions.assertNull(result.getResults().get(0).getError());
     } finally {
-      spy.disableBatch();
-      spy.deleteDatabase(dbName);
+      influxDB.disableBatch();
     }
     
   }

@@ -687,7 +687,11 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
+        if (messagePack) {
+          throw InfluxDBException.buildExceptionForErrorState(errorBody.byteStream());
+        } else {
+          throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
+        }
       }
     } catch (IOException e) {
       throw new InfluxDBIOException(e);

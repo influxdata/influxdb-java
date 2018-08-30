@@ -1,5 +1,12 @@
 package org.influxdb;
 
+import java.io.InputStream;
+
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageUnpacker;
+import org.msgpack.value.ImmutableMapValue;
+import org.msgpack.value.impl.ImmutableStringValueImpl;
+
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
@@ -166,6 +173,22 @@ public class InfluxDBException extends RuntimeException {
       return InfluxDBException.buildExceptionFromErrorMessage(errorMessage.error);
     } catch (Exception e) {
       return new InfluxDBException(errorBody);
+    }
+  }
+
+  /**
+   * Create corresponding InfluxDBException from the message pack error body.
+   * @param messagePackErrorBody
+   * @return
+   */
+  public static InfluxDBException buildExceptionForErrorState(final InputStream messagePackErrorBody) {
+    try {
+      MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(messagePackErrorBody);
+      ImmutableMapValue mapVal = (ImmutableMapValue) unpacker.unpackValue();
+      return InfluxDBException.buildExceptionFromErrorMessage(
+          mapVal.map().get(new ImmutableStringValueImpl("error")).toString());
+    } catch (Exception e) {
+      return new InfluxDBException(e);
     }
   }
 }
