@@ -12,6 +12,6 @@ public class Operations {
     public static final String GT = ">";
     public static final String GTE = ">=";
     public static final String EQR = "=~";
-    public static final String NER = "~!";
+    public static final String NER = "!~";
 
 }
