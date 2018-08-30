@@ -124,13 +124,29 @@ public abstract class BuiltQuery extends Query {
             return new RawString(str);
         }
 
+        public static Object count(Object column) {
+            return FunctionFactory.count(column);
+        }
+
+        public static Object max(Object column) {
+            return FunctionFactory.max(column);
+        }
+
+        public static Object min(Object column) {
+            return FunctionFactory.min(column);
+        }
+
+        public static Object sum(Object column) {
+            return FunctionFactory.sum(column);
+        }
+
+        public static Object mean(Object column) {
+            return FunctionFactory.mean(column);
+        }
+
         public static Object column(String name) {
             return FunctionFactory.column(name);
         }
-
-        /**
-         * Functions
-         */
 
         public static Object now() {
             return FunctionFactory.now();

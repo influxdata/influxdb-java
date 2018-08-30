@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BuiltQueryTest {
 
@@ -328,6 +329,17 @@ public class BuiltQueryTest {
 
 		assertEquals(query.getCommand(),select.getCommand());
 		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testRequiresPost() {
+		Query select = select().requiresPost().countAll().from(DATABASE , "foobar");
+		Query selectColumns = select("column1","column2").requiresPost().from(DATABASE,"foobar");
+		Query selectColumnsAndAggregations = select(min("column1"),max("column2")).requiresPost().from(DATABASE,"foobar");
+
+		assertTrue(select.requiresPost());
+		assertTrue(selectColumns.requiresPost());
+		assertTrue(selectColumnsAndAggregations.requiresPost());
 	}
 
 }

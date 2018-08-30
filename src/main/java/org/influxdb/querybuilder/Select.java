@@ -22,8 +22,9 @@ public class Select extends BuiltQuery {
     Select(String database,
            String table,
            List<Object> columns,
-           boolean isDistinct) {
-        super(database);
+           boolean isDistinct,
+           boolean requiresPost) {
+        super(database, requiresPost);
         this.table = table;
         this.columns = columns;
         this.isDistinct = isDistinct;
@@ -152,8 +153,9 @@ public class Select extends BuiltQuery {
 
     public static class Builder {
 
-        List<Object> columns;
-        boolean isDistinct;
+        protected List<Object> columns;
+        protected boolean requiresPost;
+        protected boolean isDistinct;
 
         Builder() {
         }
@@ -162,12 +164,17 @@ public class Select extends BuiltQuery {
             this.columns = columns;
         }
 
+        public Builder requiresPost() {
+            this.requiresPost = true;
+            return this;
+        }
+
         public Select from(String table) {
             return from(null, table);
         }
 
         public Select from(String database, String table) {
-            return new Select(database, table, columns, isDistinct);
+            return new Select(database, table, columns, isDistinct, requiresPost);
         }
 
     }

@@ -18,6 +18,11 @@ public class Selection extends Select.Builder {
         return moveToColumns(distinct);
     }
 
+    public Selection requiresPost() {
+        requiresPost = true;
+        return this;
+    }
+
     public Selection as(String aliasName) {
         assertColumnIsSelected();
         Object alias = new Alias(currentSelection, aliasName);
