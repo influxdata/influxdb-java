@@ -1,13 +1,10 @@
 package org.influxdb;
 
+import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.InfluxDB.ResponseFormat;
-import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.*;
 import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
 import org.influxdb.dto.QueryResult.Series;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -18,8 +15,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
-import okhttp3.OkHttpClient;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -28,14 +23,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -47,9 +37,12 @@ import java.util.function.Consumer;
 @RunWith(JUnitPlatform.class)
 public class InfluxDBTest {
 
-	InfluxDB influxDB;
+	private final static long DEFAULT_OPERATION_TIMEOUT = 5000L;
+	private final static int DEFAULT_QUERY_CHUNK_SIZE = 10;
 	private final static int UDP_PORT = 8089;
 	final static String UDP_DATABASE = "udp";
+
+	InfluxDB influxDB;
 
 	/**
 	 * Create a influxDB connection before all tests start.
@@ -137,11 +130,12 @@ public class InfluxDBTest {
         waitForTestresults.notifyAll();
       }
     };
-    this.influxDB.query(query, 10, check);
+    this.influxDB.query(query, DEFAULT_QUERY_CHUNK_SIZE, check);
     synchronized (waitForTestresults) {
-      waitForTestresults.wait(2000);
+      waitForTestresults.wait(DEFAULT_OPERATION_TIMEOUT);
     }
   }
+
 
 	/**
 	 * Tests for callback query.
@@ -161,6 +155,97 @@ public class InfluxDBTest {
 		// Will throw exception in case of error.
 		result.result();
 	}
+
+	/**
+	 * Tests for the chunk stream query with specified time unit
+	 */
+	@Test
+	public void testChunkTimeUnitCallbackQuery() throws Throwable {
+	  this.influxDB.setDatabase(UDP_DATABASE);
+	  final int chunkCount = 40;
+
+	  for (int i = 0; i < chunkCount; i++) {
+	    Point point = Point.measurement("cpu")
+            .tag("atag", "test")
+            .addField("idle", 90L + i)
+            .addField("usertime", 9L + i)
+            .addField("system", 1L + i)
+            .build();
+	    this.influxDB.write(point);
+	  }
+
+	  // test
+      Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE atag = $atag")
+          .forDatabase(UDP_DATABASE)
+          .bind("atag", "test")
+          .create();
+
+	  Object waitForTestresults = new Object();
+	  AtomicInteger callBackCalled = new AtomicInteger(0);
+	  final int expectedCallBackCalled = chunkCount / DEFAULT_QUERY_CHUNK_SIZE;
+
+	  Consumer<QueryResult> check = (queryResult) -> {
+	    if (queryResult.getResults() == null) {
+	      return;
+        }
+
+	    callBackCalled.getAndIncrement();
+	    List<List<Object>> values = queryResult.getResults().get(0).getSeries().get(0).getValues();
+	    Assertions.assertEquals(DEFAULT_QUERY_CHUNK_SIZE, values.size());
+	    Assertions.assertTrue(values.get(0).get(0) instanceof Number);
+
+	    if (callBackCalled.get() == expectedCallBackCalled) {
+	      synchronized (waitForTestresults) {
+	        waitForTestresults.notifyAll();
+	      }
+	    }
+	  };
+
+	  this.influxDB.query(query, TimeUnit.MILLISECONDS, DEFAULT_QUERY_CHUNK_SIZE, check);
+
+	  synchronized (waitForTestresults) {
+	    waitForTestresults.wait(DEFAULT_OPERATION_TIMEOUT);
+	    Assertions.assertEquals(expectedCallBackCalled, callBackCalled.get());
+	  }
+	}
+
+    /**
+     * Test for the failure callback for a stream query
+     */
+    @Test
+    public void testFailureCallbackQuery() throws Throwable {
+      this.influxDB.setDatabase(UDP_DATABASE);
+      Query query = QueryBuilder.newQuery("Invalid query")
+          .forDatabase(UDP_DATABASE)
+          .bind("atag", "test")
+          .create();
+
+      AtomicBoolean onSuccessCalled = new AtomicBoolean(false);
+      AtomicBoolean onFailureCalled = new AtomicBoolean(false);
+      Object waitForTestResults = new Object();
+
+      Consumer<QueryResult> onSuccess = (queryResult) -> {
+        onSuccessCalled.set(true);
+        synchronized (waitForTestResults) {
+          waitForTestResults.notifyAll();
+        }
+      };
+
+      Consumer<Throwable> onFailure = (throwable) -> {
+        onFailureCalled.set(true);
+        synchronized (waitForTestResults) {
+          waitForTestResults.notifyAll();
+        }
+      };
+
+      this.influxDB.query(query, TimeUnit.MILLISECONDS, DEFAULT_QUERY_CHUNK_SIZE, onSuccess, onFailure);
+
+      synchronized (waitForTestResults) {
+        waitForTestResults.wait(DEFAULT_OPERATION_TIMEOUT);
+        Assertions.assertFalse(onSuccessCalled.get());
+        Assertions.assertTrue(onFailureCalled.get());
+      }
+    }
 
 	/**
 	 * Test that describe Databases works.
