@@ -15,7 +15,7 @@ public class CompoundClause implements Clause {
         this.names = names;
         this.values = values;
         if (this.names.size() != this.values.size())
-            throw new IllegalArgumentException(String.format("Size of names: (%d) and values: (%d) should match", this.names.size(), this.values.size()));
+            throw new IllegalArgumentException(String.format("Number of names: (%d) and values: (%d) should match", this.names.size(), this.values.size()));
     }
 
     @Override

@@ -152,10 +152,6 @@ public abstract class BuiltQuery extends Query {
             return FunctionFactory.column(name);
         }
 
-        public static Object alias(Object column, String alias) {
-            return new Alias(column, alias);
-        }
-
         /**
          * Functions
          */

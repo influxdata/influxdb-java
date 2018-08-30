@@ -33,7 +33,7 @@ public class Selection extends Select.Builder {
         return this;
     }
 
-    private Selection queueName(Object name) {
+    private Selection addToColumns(Object name) {
         if (previousSelection != null)
             addName(previousSelection);
 
@@ -62,35 +62,35 @@ public class Selection extends Select.Builder {
     }
 
     public Selection column(String name) {
-        return queueName(name);
+        return addToColumns(name);
     }
 
     public Selection function(String name, Object... parameters) {
-        return queueName(FunctionFactory.function(name, parameters));
+        return addToColumns(FunctionFactory.function(name, parameters));
     }
 
     public Selection raw(String rawString) {
-        return queueName(new RawString(rawString));
+        return addToColumns(new RawString(rawString));
     }
 
     public Selection count(Object column) {
-        return queueName(FunctionFactory.count(column));
+        return addToColumns(FunctionFactory.count(column));
     }
 
     public Selection max(Object column) {
-        return queueName(FunctionFactory.max(column));
+        return addToColumns(FunctionFactory.max(column));
     }
 
     public Selection min(Object column) {
-        return queueName(FunctionFactory.min(column));
+        return addToColumns(FunctionFactory.min(column));
     }
 
     public Selection sum(Object column) {
-        return queueName(FunctionFactory.sum(column));
+        return addToColumns(FunctionFactory.sum(column));
     }
 
     public Selection mean(Object column) {
-        return queueName(FunctionFactory.mean(column));
+        return addToColumns(FunctionFactory.mean(column));
     }
 
     @Override

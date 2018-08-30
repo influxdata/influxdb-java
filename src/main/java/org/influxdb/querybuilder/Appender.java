@@ -87,7 +87,7 @@ public class Appender {
             stringBuilder.append("DISTINCT ");
             appendName(distinct.getExpression(), stringBuilder);
         } else {
-            throw new IllegalArgumentException(String.format("Invalid column %s of type unknown of the query builder", name));
+            throw new IllegalArgumentException("Invalid type");
         }
         return stringBuilder;
     }

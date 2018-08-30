@@ -72,7 +72,7 @@ public class BuiltQueryTest {
 	}
 
 	@Test
-	public void testOrdering() {
+	public void testOrderingAsc() {
 
 		Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time ASC;",DATABASE);
 
@@ -85,6 +85,22 @@ public class BuiltQueryTest {
 		assertEquals(query.getCommand(),select.getCommand());
 		assertEquals(query.getDatabase(),select.getDatabase());
 	}
+
+	@Test
+	public void testOrderingDesc() {
+
+		Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time DESC;",DATABASE);
+
+		Select select = select().all().from(DATABASE,"foobar")
+				.where(eq("k", 4))
+				.and(gt("c", "a"))
+				.and(lte("c", "z"))
+				.orderBy(desc());
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
 
 	@Test
 	public void testSelect() {
@@ -259,6 +275,17 @@ public class BuiltQueryTest {
 	public void testRawStringOnCondition() {
 		Query query = new Query("SELECT * FROM foobar WHERE text as condition LIMIT 1 OFFSET 20;",DATABASE);
 		Query select = select().from(DATABASE , "foobar").where("text as condition").limit(1,20);
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testNowOnCondition() {
+		Query query = new Query("SELECT * FROM foobar WHERE time>now() AND time<=now();",DATABASE);
+		Query select = select().from(DATABASE , "foobar")
+				.where(gt("time",now()))
+				.and(lte("time",now()));
 
 		assertEquals(query.getCommand(),select.getCommand());
 		assertEquals(query.getDatabase(),select.getDatabase());
