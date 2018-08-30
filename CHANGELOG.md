@@ -2,6 +2,10 @@
 
 ## 2.13 [unreleased]
 
+### Fixes
+
+- The InfluxDBResultMapper is able to handle results with a different time precision [PR #501](https://github.com/influxdata/influxdb-java/pull/501)
+
 ### Features
 
 - Support for Basic Authentication [PR #492](https://github.com/influxdata/influxdb-java/pull/492)
