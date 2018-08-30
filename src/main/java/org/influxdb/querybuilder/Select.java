@@ -10,7 +10,6 @@ import org.influxdb.querybuilder.clauses.RawTextClause;
 
 public class Select extends BuiltQuery {
 
-
     private final String table;
     private final boolean isDistinct;
     private final List<Object> columns;

@@ -82,6 +82,16 @@ public class BuiltQueryTest {
 	}
 
 	@Test
+	public void testRawExpressionInWhere() {
+		Query query = new Query("SELECT * FROM foobar WHERE k!=raw expression;",DATABASE);
+		Query select = select().all().from(DATABASE,"foobar")
+				.where(ne("k", raw("raw expression")));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
 	public void testOrderingAsc() {
 		Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time ASC;",DATABASE);
 		Query select = select().all().from(DATABASE,"foobar")
