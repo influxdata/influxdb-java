@@ -72,11 +72,19 @@ public class BuiltQueryTest {
 	}
 
 	@Test
+	public void testNonEqual() {
+		Query query = new Query("SELECT * FROM foobar WHERE k!=4;",DATABASE);
+		Query select = select().all().from(DATABASE,"foobar")
+				.where(ne("k", 4));
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
 	public void testOrderingAsc() {
-
 		Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time ASC;",DATABASE);
-
-		Select select = select().all().from(DATABASE,"foobar")
+		Query select = select().all().from(DATABASE,"foobar")
 				.where(eq("k", 4))
 				.and(gt("c", "a"))
 				.and(lte("c", "z"))
@@ -88,10 +96,8 @@ public class BuiltQueryTest {
 
 	@Test
 	public void testOrderingDesc() {
-
 		Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time DESC;",DATABASE);
-
-		Select select = select().all().from(DATABASE,"foobar")
+		Query select = select().all().from(DATABASE,"foobar")
 				.where(eq("k", 4))
 				.and(gt("c", "a"))
 				.and(lte("c", "z"))
@@ -105,7 +111,10 @@ public class BuiltQueryTest {
 	@Test
 	public void testSelect() {
 		Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z';",DATABASE);
-		Query select = select().all().from(DATABASE,"foobar").where(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
+		Query select = select().all().from(DATABASE,"foobar")
+				.where(eq("k", 4))
+				.and(gt("c", "a"))
+				.and(lte("c", "z"));
 
 		assertEquals(query.getCommand(),select.getCommand());
 		assertEquals(query.getDatabase(),select.getDatabase());
@@ -176,6 +185,16 @@ public class BuiltQueryTest {
 	public void testGroupBy() {
 		Query query = new Query("SELECT test1 FROM foobar GROUP BY test2,test3;",DATABASE);
 		Query select = select().column("test1") .from(DATABASE , "foobar").groupBy("test2","test3");
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
+	@Test
+	public void testWhereGroupBy() {
+		Query query = new Query("SELECT test1 FROM foobar WHERE test4=1 GROUP BY test2,test3;",DATABASE);
+		Query select = select().column("test1") .from(DATABASE , "foobar")
+				.where(eq("test4",1)).groupBy("test2","test3");
 
 		assertEquals(query.getCommand(),select.getCommand());
 		assertEquals(query.getDatabase(),select.getDatabase());

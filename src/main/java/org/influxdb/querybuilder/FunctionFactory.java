@@ -5,7 +5,7 @@ import static org.influxdb.querybuilder.Aggregations.*;
 public class FunctionFactory {
 
     public static Object function(String name, Object... parameters) {
-        toColumns(parameters);
+        convertToColumns(parameters);
         return new Function(name, parameters);
     }
 
@@ -14,36 +14,36 @@ public class FunctionFactory {
     }
 
     public static Object count(Object column) {
-        return new Function(COUNT, toColumn(column));
+        return new Function(COUNT, convertToColumn(column));
     }
 
     public static Object max(Object column) {
-        return new Function(MAX,toColumn(column));
+        return new Function(MAX, convertToColumn(column));
     }
 
     public static Object min(Object column) {
-        return new Function(MIN, toColumn(column));
+        return new Function(MIN, convertToColumn(column));
     }
 
     public static Object sum(Object column) {
-        return new Function(SUM, toColumn(column));
+        return new Function(SUM, convertToColumn(column));
     }
 
     public static Object mean(Object column) {
-        return new Function(MEAN, toColumn(column));
+        return new Function(MEAN, convertToColumn(column));
     }
 
     public static Object column(String name) {
         return new Column(name);
     }
 
-    private static void toColumns(Object... arguments) {
+    private static void convertToColumns(Object... arguments) {
         for(int i=0;i<arguments.length;i++) {
-            arguments[i] = toColumn(arguments[i]);
+            arguments[i] = convertToColumn(arguments[i]);
         }
     }
 
-    private static Object toColumn(Object argument) {
+    private static Object convertToColumn(Object argument) {
         if (argument instanceof String)
             return column(((String) argument));
         return argument;

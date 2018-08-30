@@ -72,16 +72,8 @@ public abstract class BuiltQuery extends Query {
             return new SimpleClause(name, EQ, value);
         }
 
-        public static Clause eq(List<String> names, List<?> values) {
-            return new CompoundClause(names, EQ, values);
-        }
-
         public static Clause ne(String name, Object value) {
             return new SimpleClause(name, NE, value);
-        }
-
-        public static Clause ne(List<String> names, List<?> values) {
-            return new CompoundClause(names, NE, values);
         }
 
         public static Clause contains(String name, String value) {
@@ -100,32 +92,16 @@ public abstract class BuiltQuery extends Query {
             return new SimpleClause(name, LT, value);
         }
 
-        public static Clause lt(List<String> names, List<?> values) {
-            return new CompoundClause(names, LT, values);
-        }
-
         public static Clause lte(String name, Object value) {
             return new SimpleClause(name, LTE, value);
-        }
-
-        public static Clause lte(List<String> names, List<?> values) {
-            return new CompoundClause(names, LTE, values);
         }
 
         public static Clause gt(String name, Object value) {
             return new SimpleClause(name, GT, value);
         }
 
-        public static Clause gt(List<String> names, List<?> values) {
-            return new CompoundClause(names, GT, values);
-        }
-
         public static Clause gte(String name, Object value) {
             return new SimpleClause(name, GTE, value);
-        }
-
-        public static Clause gte(List<String> names, List<?> values) {
-            return new CompoundClause(names, GTE, values);
         }
 
         /**
