@@ -6,26 +6,32 @@ import java.util.List;
 
 public class Selection extends Select.Builder {
 
-    private static final List<Object> COUNT_ALL = Collections.singletonList(new Function("count", new RawString("*")));
+    private static final List<Object> COUNT_ALL = Collections.singletonList(new Function("COUNT", new RawString("*")));
 
-    private Object previousSelection;
+    private Object currentSelection;
 
     public Selection distinct() {
+        assertColumnIsSelected();
         this.isDistinct = true;
-        assert previousSelection != null;
-        Object distinct = new Distinct(previousSelection);
-        previousSelection = null;
-        return addName(distinct);
+        Object distinct = new Distinct(currentSelection);
+        currentSelection = null;
+        return moveToColumns(distinct);
     }
 
     public Selection as(String aliasName) {
-        assert previousSelection != null;
-        Object alias = new Alias(previousSelection, aliasName);
-        previousSelection = null;
-        return addName(alias);
+        assertColumnIsSelected();
+        Object alias = new Alias(currentSelection, aliasName);
+        currentSelection = null;
+        return moveToColumns(alias);
     }
 
-    private Selection addName(Object name) {
+    private void assertColumnIsSelected() {
+        if(currentSelection == null) {
+            throw new IllegalStateException("You need to select a column prior to calling distinct");
+        }
+    }
+
+    private Selection moveToColumns(Object name) {
         if (columns == null)
             columns = new ArrayList<>();
 
@@ -33,11 +39,11 @@ public class Selection extends Select.Builder {
         return this;
     }
 
-    private Selection addToColumns(Object name) {
-        if (previousSelection != null)
-            addName(previousSelection);
+    private Selection addToCurrentColumn(Object name) {
+        if (currentSelection != null)
+            moveToColumns(currentSelection);
 
-        previousSelection = name;
+        currentSelection = name;
         return this;
     }
 
@@ -46,7 +52,7 @@ public class Selection extends Select.Builder {
             throw new IllegalStateException("DISTINCT function can only be used with one column");
         if (columns != null)
             throw new IllegalStateException("Can't select all columns over columns selected previously");
-        if (previousSelection != null)
+        if (currentSelection != null)
             throw new IllegalStateException("Can't select all columns over columns selected previously");
         return this;
     }
@@ -54,7 +60,7 @@ public class Selection extends Select.Builder {
     public Select.Builder countAll() {
         if (columns != null)
             throw new IllegalStateException("Can't select all columns over columns selected previously");
-        if (previousSelection != null)
+        if (currentSelection != null)
             throw new IllegalStateException("Can't select all columns over columns selected previously");
 
         columns = COUNT_ALL;
@@ -62,50 +68,50 @@ public class Selection extends Select.Builder {
     }
 
     public Selection column(String name) {
-        return addToColumns(name);
+        return addToCurrentColumn(name);
     }
 
     public Selection function(String name, Object... parameters) {
-        return addToColumns(FunctionFactory.function(name, parameters));
+        return addToCurrentColumn(FunctionFactory.function(name, parameters));
     }
 
     public Selection raw(String rawString) {
-        return addToColumns(new RawString(rawString));
+        return addToCurrentColumn(new RawString(rawString));
     }
 
     public Selection count(Object column) {
-        return addToColumns(FunctionFactory.count(column));
+        return addToCurrentColumn(FunctionFactory.count(column));
     }
 
     public Selection max(Object column) {
-        return addToColumns(FunctionFactory.max(column));
+        return addToCurrentColumn(FunctionFactory.max(column));
     }
 
     public Selection min(Object column) {
-        return addToColumns(FunctionFactory.min(column));
+        return addToCurrentColumn(FunctionFactory.min(column));
     }
 
     public Selection sum(Object column) {
-        return addToColumns(FunctionFactory.sum(column));
+        return addToCurrentColumn(FunctionFactory.sum(column));
     }
 
     public Selection mean(Object column) {
-        return addToColumns(FunctionFactory.mean(column));
+        return addToCurrentColumn(FunctionFactory.mean(column));
     }
 
     @Override
     public Select from(String keyspace, String table) {
-        if (previousSelection != null)
-            addName(previousSelection);
-        previousSelection = null;
+        if (currentSelection != null)
+            moveToColumns(currentSelection);
+        currentSelection = null;
         return super.from(keyspace, table);
     }
 
     @Override
     public Select from(String table) {
-        if (previousSelection != null)
-            addName(previousSelection);
-        previousSelection = null;
+        if (currentSelection != null)
+            moveToColumns(currentSelection);
+        currentSelection = null;
         return super.from(table);
     }
 

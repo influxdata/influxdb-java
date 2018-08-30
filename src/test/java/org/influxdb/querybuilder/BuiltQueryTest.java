@@ -291,6 +291,16 @@ public class BuiltQueryTest {
 		assertEquals(query.getDatabase(),select.getDatabase());
 	}
 
+
+	@Test
+	public void testCountAll() {
+		Query query = new Query("SELECT COUNT(*) FROM foobar;",DATABASE);
+		Query select = select().countAll().from(DATABASE , "foobar");
+
+		assertEquals(query.getCommand(),select.getCommand());
+		assertEquals(query.getDatabase(),select.getDatabase());
+	}
+
 }
 
 
