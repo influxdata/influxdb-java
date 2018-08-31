@@ -11,7 +11,9 @@ public final class Appender {
   }
 
   public static StringBuilder joinAndAppend(
-      final StringBuilder stringBuilder, final String separator, final List<? extends Appendable> values) {
+      final StringBuilder stringBuilder,
+      final String separator,
+      final List<? extends Appendable> values) {
     for (int i = 0; i < values.size(); i++) {
       if (i > 0) {
         stringBuilder.append(separator);
@@ -21,7 +23,8 @@ public final class Appender {
     return stringBuilder;
   }
 
-  public static StringBuilder joinAndAppendNames(final StringBuilder stringBuilder, final List<?> values) {
+  public static StringBuilder joinAndAppendNames(
+      final StringBuilder stringBuilder, final List<?> values) {
     for (int i = 0; i < values.size(); i++) {
       if (i > 0) {
         stringBuilder.append(",");

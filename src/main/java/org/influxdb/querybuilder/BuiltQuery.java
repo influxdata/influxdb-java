@@ -1,20 +1,19 @@
 package org.influxdb.querybuilder;
 
+import static org.influxdb.querybuilder.Operations.EQ;
+import static org.influxdb.querybuilder.Operations.GT;
+import static org.influxdb.querybuilder.Operations.GTE;
+import static org.influxdb.querybuilder.Operations.LT;
+import static org.influxdb.querybuilder.Operations.LTE;
+import static org.influxdb.querybuilder.Operations.NE;
+
 import java.util.Arrays;
 import org.influxdb.dto.Query;
 import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.ContainsClause;
-import org.influxdb.querybuilder.clauses.SimpleClause;
-import org.influxdb.querybuilder.clauses.RegexClause;
 import org.influxdb.querybuilder.clauses.NegativeRegexClause;
-
-import static org.influxdb.querybuilder.Operations.EQ;
-import static org.influxdb.querybuilder.Operations.LT;
-import static org.influxdb.querybuilder.Operations.NE;
-import static org.influxdb.querybuilder.Operations.LTE;
-import static org.influxdb.querybuilder.Operations.GT;
-import static org.influxdb.querybuilder.Operations.GTE;
-
+import org.influxdb.querybuilder.clauses.RegexClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
 
 public abstract class BuiltQuery extends Query {
 
@@ -60,7 +59,8 @@ public abstract class BuiltQuery extends Query {
   }
 
   /**
-   * The query builder shall provide all the building blocks needed, only a static block shall be used.
+   * The query builder shall provide all the building blocks needed, only a static block shall be
+   * used.
    */
   public static final class QueryBuilder {
 

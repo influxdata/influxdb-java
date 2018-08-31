@@ -8,6 +8,7 @@ public class Ordering implements Appendable {
 
   /**
    * Influxdb ordering currently supports only time.
+   *
    * @param isDesc
    */
   public Ordering(final boolean isDesc) {

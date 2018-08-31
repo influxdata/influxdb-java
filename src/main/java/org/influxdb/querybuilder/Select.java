@@ -117,7 +117,7 @@ public class Select extends BuiltQuery {
   public Select limit(final int limit, final long offSet) {
     if (limit <= 0 || offSet <= 0) {
       throw new IllegalArgumentException(
-              "Invalid LIMIT and OFFSET Value, must be strictly positive");
+          "Invalid LIMIT and OFFSET Value, must be strictly positive");
     }
 
     this.limit = limit;

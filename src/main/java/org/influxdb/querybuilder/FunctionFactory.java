@@ -2,14 +2,13 @@ package org.influxdb.querybuilder;
 
 import static org.influxdb.querybuilder.Aggregations.COUNT;
 import static org.influxdb.querybuilder.Aggregations.MAX;
+import static org.influxdb.querybuilder.Aggregations.MEAN;
 import static org.influxdb.querybuilder.Aggregations.MIN;
 import static org.influxdb.querybuilder.Aggregations.SUM;
-import static org.influxdb.querybuilder.Aggregations.MEAN;
 
 public final class FunctionFactory {
 
   private FunctionFactory() {
-
   }
 
   public static Object function(final String name, final Object... parameters) {

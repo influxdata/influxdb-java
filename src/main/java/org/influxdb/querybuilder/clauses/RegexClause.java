@@ -13,7 +13,7 @@ public class RegexClause extends AbstractClause {
     this.value = new RawText(value);
 
     if (value == null) {
-        throw new IllegalArgumentException("Missing value for regex clause");
+      throw new IllegalArgumentException("Missing value for regex clause");
     }
   }
 
