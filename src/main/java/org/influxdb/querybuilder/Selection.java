@@ -112,20 +112,12 @@ public class Selection extends Select.Builder {
   }
 
   @Override
-  public Select from(final String keyspace, final String table) {
+  public Select from(final String database, final String table) {
     if (currentSelection != null) {
       moveToColumns(currentSelection);
     }
     currentSelection = null;
-    return super.from(keyspace, table);
+    return super.from(database, table);
   }
 
-  @Override
-  public Select from(final String table) {
-    if (currentSelection != null) {
-      moveToColumns(currentSelection);
-    }
-    currentSelection = null;
-    return super.from(table);
-  }
 }
