@@ -251,7 +251,7 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 -- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
 
 #### QueryBuilder:
-An alternative way to create InfluxDB queries is not available.
+An alternative way to create InfluxDB queries is available.
 
 Supposing that you have a measurement _CPU_:
 ```
