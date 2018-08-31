@@ -145,18 +145,6 @@ public abstract class BuiltQuery extends Query {
       return FunctionFactory.min(column);
     }
 
-    public static Object sum(final Object column) {
-      return FunctionFactory.sum(column);
-    }
-
-    public static Object mean(final Object column) {
-      return FunctionFactory.mean(column);
-    }
-
-    public static Object column(final String name) {
-      return FunctionFactory.column(name);
-    }
-
     public static Object now() {
       return FunctionFactory.now();
     }
