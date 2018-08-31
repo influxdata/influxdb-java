@@ -183,6 +183,20 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testSelectLtGte() {
+    Query query = new Query("SELECT * FROM foobar WHERE k<4 AND c>='a';", DATABASE);
+    Query select =
+            select()
+                    .all()
+                    .from(DATABASE, "foobar")
+                    .where(lt("k", 4))
+                    .and(gte("c", "a"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testMean() {
     Query query = new Query("SELECT MEAN(k) FROM foobar WHERE k=4 AND c>'a' AND c<='z';", DATABASE);
     Query select =
