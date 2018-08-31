@@ -451,6 +451,16 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testCountAllWithColumn() {
+    assertThrows(IllegalStateException.class, () -> select().column("test1").countAll().from(DATABASE, "foobar"),"Can't count all with previously selected columns");
+  }
+
+  @Test
+  public void testCountAllWithColumns() {
+    assertThrows(IllegalStateException.class, () -> select().column("test1").column("test2").countAll().from(DATABASE, "foobar"),"Can't count all with previously selected columns");
+  }
+
+  @Test
   public void testRequiresPost() {
     Query select = select().requiresPost().countAll().from(DATABASE, "foobar");
     Query selectColumns = select("column1", "column2").requiresPost().from(DATABASE, "foobar");
