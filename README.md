@@ -250,6 +250,38 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 - A Class field annotated with _@Column(..., tag = true)_ (i.e. a [InfluxDB Tag](https://docs.influxdata.com/influxdb/v1.2/concepts/glossary/#tag-value)) must be declared as _String_.
 -- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
 
+#### QueryBuilder:
+An alternative way to create InfluxDB queries is not available.
+
+Supposing that you have a measurement _CPU_:
+```
+> INSERT cpu,host=serverA,region=us_west idle=0.64,happydevop=false,uptimesecs=123456789i
+>
+> select * from cpu
+name: cpu
+time                           happydevop host    idle region  uptimesecs
+----                           ---------- ----    ---- ------  ----------
+2017-06-20T15:32:46.202829088Z false      serverA 0.64 us_west 123456789
+```
+
+Create query that selects all fields with a limit 
+
+```java
+> Query select = select().from(dbName, "cpu").groupBy("host", "region").limit(1);
+```
+
+Create query with aggregations
+
+```java
+> Query select = select().max("idle").sum("uptimesecs").from(dbName, "cpu");
+```
+
+Use your expressions using raw text
+
+```java
+> Query select = select().raw("an expression on select").from(dbName, "cpu").where("an expression as condition");
+```
+
 #### Query using Callbacks (version 2.8+ required)
 
 influxdb-java now supports returning results of a query via callbacks. Only one
