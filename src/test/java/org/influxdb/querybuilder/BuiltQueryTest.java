@@ -68,6 +68,16 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testDistinctWithMultipleSelectedColumns() {
+    Query select = select().column("test1").column("test2").distinct().from(DATABASE, "foobar").limit(1, 20);
+
+    assertThrows(
+            IllegalStateException.class,
+            () -> select.getCommand(),
+            "DISTINCT function can only be used with one column");
+  }
+
+  @Test
   public void testMultipleColumns() {
     Query query = select().column("test1").distinct().column("test2").from(DATABASE, "foobar");
     assertThrows(
@@ -96,8 +106,8 @@ public class BuiltQueryTest {
 
   @Test
   public void testRawExpressionEmptyValue() {
-    Query select = select().all().from(DATABASE, "foobar").where(ne("k", raw(null)));
-    assertThrows(IllegalArgumentException.class, () -> select.getCommand(), "Missing text for expression");
+    String rawTextClause = null;
+    assertThrows(IllegalArgumentException.class, () -> select().all().from(DATABASE, "foobar").where(rawTextClause), "Missing text for expression");
   }
 
   @Test
@@ -256,12 +266,9 @@ public class BuiltQueryTest {
 
     @Test
     public void testInvalidLimit() {
-        Query select =
-                select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(-1);
-
       assertThrows(
               IllegalArgumentException.class,
-              () -> select.getCommand(),
+              () -> select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(-1),
               "Invalid LIMIT value, must be strictly positive");
     }
 
