@@ -169,10 +169,6 @@ public class Select extends BuiltQuery {
       return this;
     }
 
-    public Select from(final String table) {
-      return from(null, table);
-    }
-
     public Select from(final String database, final String table) {
       return new Select(database, table, columns, isDistinct, requiresPost);
     }
