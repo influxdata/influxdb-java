@@ -13,6 +13,14 @@ public class BuiltQueryTest {
   private static final String DATABASE = "testdb";
 
   @Test
+  public void testCommandWithUrlEncoded() {
+    Query select = select().max("k").as("hello").from(DATABASE, "foobar");
+    String encoded = select.getCommandWithUrlEncoded();
+
+    assertEquals("SELECT+MAX%28k%29+AS+hello+FROM+foobar%3B", encoded);
+  }
+
+  @Test
   public void testAlias() {
     Query query = new Query("SELECT MAX(k) AS hello FROM foobar;", DATABASE);
     Query select = select().max("k").as("hello").from(DATABASE, "foobar");
