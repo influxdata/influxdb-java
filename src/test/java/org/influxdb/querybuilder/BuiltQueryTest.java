@@ -114,11 +114,26 @@ public class BuiltQueryTest {
 
   @Test
   public void testNonEqual() {
-    Query query = new Query("SELECT * FROM foobar WHERE k!=4;", DATABASE);
-    Query select = select().all().from(DATABASE, "foobar").where(ne("k", 4));
+    Query query = new Query("SELECT * FROM foobar WHERE test1!=4;", DATABASE);
+    Query select = select().all().from(DATABASE, "foobar").where(ne("test1", 4));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSelectAllWithColumn() {
+    assertThrows(IllegalStateException.class, () -> select().column("test1").all().from(DATABASE, "foobar").where(ne("k", raw("raw expression"))),"Can't select all columns over columns selected previously");
+  }
+
+  @Test
+  public void testSelectAllWithColumns() {
+    assertThrows(IllegalStateException.class, () -> select().column("test1").column("test2").all().from(DATABASE, "foobar").where(ne("k", raw("raw expression"))),"Can't select all columns over columns selected previously");
+  }
+
+  @Test
+  public void testSelectAllWithDistinct() {
+    assertThrows(IllegalStateException.class, () -> select().column("test1").distinct().all().from(DATABASE, "foobar").where(ne("k", raw("raw expression"))),"Can't select all columns over columns selected previously");
   }
 
   @Test
