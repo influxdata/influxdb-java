@@ -39,6 +39,11 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testInvalidRegex() {
+    assertThrows(IllegalArgumentException.class, () -> select().max("k").from(DATABASE, "foobar").where(regex("k", null)),"Missing text for expression");
+  }
+
+  @Test
   public void testNegativeRegex() {
     Query query = new Query("SELECT MAX(k) FROM foobar WHERE k !~ /[0-9]/;", DATABASE);
     Query select = select().max("k").from(DATABASE, "foobar").where(nregex("k", "/[0-9]/"));
