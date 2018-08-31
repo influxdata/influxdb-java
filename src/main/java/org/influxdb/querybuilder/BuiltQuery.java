@@ -133,10 +133,6 @@ public abstract class BuiltQuery extends Query {
       return new RawText(str);
     }
 
-    public static Object count(final Object column) {
-      return FunctionFactory.count(column);
-    }
-
     public static Object max(final Object column) {
       return FunctionFactory.max(column);
     }
