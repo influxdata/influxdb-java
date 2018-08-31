@@ -78,6 +78,14 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testDistinctWithoutSelectedColumns() {
+    assertThrows(
+            IllegalStateException.class,
+            () -> select().distinct().from(DATABASE, "foobar").limit(1, 20),
+            "DISTINCT function can only be used with one column");
+  }
+
+  @Test
   public void testMultipleColumns() {
     Query query = select().column("test1").distinct().column("test2").from(DATABASE, "foobar");
     assertThrows(
