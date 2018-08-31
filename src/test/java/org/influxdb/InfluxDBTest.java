@@ -875,6 +875,35 @@ public class InfluxDBTest {
         Assertions.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
     }
 
+  /**
+   * Test chunking edge case.
+   * @throws InterruptedException
+   */
+  @Test
+  public void testChunkingFailureWithCallback() throws InterruptedException {
+    if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+      // do not test version 0.13 and 1.0
+      return;
+    }
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    this.influxDB.createDatabase(dbName);
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    Query query = new Query("UNKNOWN_QUERY", dbName);
+    this.influxDB.query(query, TimeUnit.NANOSECONDS, 10, new Consumer<QueryResult>() {
+      @Override
+      public void accept(QueryResult result) {
+        countDownLatch.countDown();
+      }
+    }, new Consumer<Throwable>() {
+      @Override
+      public void accept(Throwable throwable) {
+        countDownLatch.countDown();
+      }
+    });
+    this.influxDB.deleteDatabase(dbName);
+    Assertions.assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+  }
+
     /**
      * Test chunking on 0.13 and 1.0.
      * @throws InterruptedException
