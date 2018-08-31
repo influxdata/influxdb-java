@@ -276,7 +276,7 @@ Create query with aggregations
 > Query select = select().max("idle").sum("uptimesecs").from(dbName, "cpu");
 ```
 
-Use expressions using raw text
+Create queries using raw text 
 
 ```java
 > Query select = select().raw("an expression on select").from(dbName, "cpu").where("an expression as condition");
