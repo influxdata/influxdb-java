@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.influxdb.dto.Query;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,11 @@ public class BuiltQueryTest {
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testInvalidNegativeRegex() {
+    assertThrows(IllegalArgumentException.class, () -> select().max("k").from(DATABASE, "foobar").where(nregex("k", null)),"Missing text for expression");
   }
 
   @Test
