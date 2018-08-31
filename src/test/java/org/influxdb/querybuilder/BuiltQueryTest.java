@@ -333,7 +333,7 @@ public class BuiltQueryTest {
   }
 
   @Test
-  public void testRawStringOnSelection() {
+  public void testRawTextOnSelection() {
     Query query =
         new Query("SELECT an expression on select FROM foobar LIMIT 1 OFFSET 20;", DATABASE);
     Query select = select().raw("an expression on select").from(DATABASE, "foobar").limit(1, 20);
@@ -343,7 +343,7 @@ public class BuiltQueryTest {
   }
 
   @Test
-  public void testRawStringOnCondition() {
+  public void testRawTextOnCondition() {
     Query query =
         new Query("SELECT * FROM foobar WHERE text as condition LIMIT 1 OFFSET 20;", DATABASE);
     Query select = select().from(DATABASE, "foobar").where("text as condition").limit(1, 20);
