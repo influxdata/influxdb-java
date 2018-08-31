@@ -24,8 +24,4 @@ public class BuiltQueryDecorator<T extends BuiltQuery> extends BuiltQuery {
     return query.getDatabase();
   }
 
-  @Override
-  public String toString() {
-    return query.toString();
-  }
 }

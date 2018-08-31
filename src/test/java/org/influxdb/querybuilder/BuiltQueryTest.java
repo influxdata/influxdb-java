@@ -95,6 +95,12 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testRawExpressionEmptyValue() {
+    Query select = select().all().from(DATABASE, "foobar").where(ne("k", raw(null)));
+    assertThrows(IllegalArgumentException.class, () -> select.getCommand(), "Missing text for expression");
+  }
+
+  @Test
   public void testOrderingAsc() {
     Query query =
         new Query(

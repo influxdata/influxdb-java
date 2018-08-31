@@ -38,13 +38,13 @@ public final class Appender {
     if (value == null) {
       stringBuilder.append("null");
     } else if (value instanceof Function) {
-      Function fcall = (Function) value;
-      stringBuilder.append(fcall.getName()).append('(');
-      for (int i = 0; i < fcall.getParameters().length; i++) {
+      Function functionCall = (Function) value;
+      stringBuilder.append(functionCall.getName()).append('(');
+      for (int i = 0; i < functionCall.getParameters().length; i++) {
         if (i > 0) {
           stringBuilder.append(',');
         }
-        appendValue(fcall.getParameters()[i], stringBuilder);
+        appendValue(functionCall.getParameters()[i], stringBuilder);
       }
       stringBuilder.append(')');
     } else if (value instanceof Column) {
