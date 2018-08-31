@@ -108,5 +108,4 @@ public class Query {
       throw new IllegalStateException("Every JRE must support UTF-8", e);
     }
   }
-
 }
