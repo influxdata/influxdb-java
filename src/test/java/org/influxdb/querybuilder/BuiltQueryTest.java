@@ -254,6 +254,17 @@ public class BuiltQueryTest {
     assertEquals(query.getDatabase(), select.getDatabase());
   }
 
+    @Test
+    public void testInvalidLimit() {
+        Query select =
+                select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(-1);
+
+      assertThrows(
+              IllegalArgumentException.class,
+              () -> select.getCommand(),
+              "Invalid LIMIT value, must be strictly positive");
+    }
+
   @Test
   public void testLimitOffset() {
     Query query =

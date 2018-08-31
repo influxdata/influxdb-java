@@ -86,10 +86,6 @@ public class Select extends BuiltQuery {
     return where.and(new RawTextClause(text));
   }
 
-  public Where where() {
-    return where;
-  }
-
   public Select orderBy(final Ordering ordering) {
 
     this.ordering = ordering;
