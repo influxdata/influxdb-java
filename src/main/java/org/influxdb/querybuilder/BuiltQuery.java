@@ -1,33 +1,49 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.Operations.*;
-
 import java.util.Arrays;
 import org.influxdb.dto.Query;
-import org.influxdb.querybuilder.clauses.*;
+import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.ContainsClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
+import org.influxdb.querybuilder.clauses.RegexClause;
+import org.influxdb.querybuilder.clauses.NegativeRegexClause;
+
+import static org.influxdb.querybuilder.Operations.EQ;
+import static org.influxdb.querybuilder.Operations.LT;
+import static org.influxdb.querybuilder.Operations.NE;
+import static org.influxdb.querybuilder.Operations.LTE;
+import static org.influxdb.querybuilder.Operations.GT;
+import static org.influxdb.querybuilder.Operations.GTE;
+
 
 public abstract class BuiltQuery extends Query {
 
-  public BuiltQuery(String database) {
+  public BuiltQuery(final String database) {
     super(null, database);
   }
 
-  public BuiltQuery(String database, boolean requiresPost) {
+  public BuiltQuery(final String database, final boolean requiresPost) {
     super(null, database, requiresPost);
   }
 
   abstract StringBuilder buildQueryString();
 
-  static StringBuilder addSemicolonIfNeeded(StringBuilder stringBuilder) {
+  static StringBuilder addSemicolonIfNeeded(final StringBuilder stringBuilder) {
     int length = moveToEndOfText(stringBuilder);
-    if (length == 0 || stringBuilder.charAt(length - 1) != ';') stringBuilder.append(';');
+    if (length == 0 || stringBuilder.charAt(length - 1) != ';') {
+      stringBuilder.append(';');
+    }
     return stringBuilder;
   }
 
-  private static int moveToEndOfText(StringBuilder stringBuilder) {
+  private static int moveToEndOfText(final StringBuilder stringBuilder) {
     int length = stringBuilder.length();
-    while (length > 0 && stringBuilder.charAt(length - 1) <= ' ') length -= 1;
-    if (length != stringBuilder.length()) stringBuilder.setLength(length);
+    while (length > 0 && stringBuilder.charAt(length - 1) <= ' ') {
+      length -= 1;
+    }
+    if (length != stringBuilder.length()) {
+      stringBuilder.setLength(length);
+    }
     return length;
   }
 
@@ -44,18 +60,18 @@ public abstract class BuiltQuery extends Query {
   }
 
   /**
-   * The query builder shall provide all the building blocks needed, only a static block shall be
-   * used
+   * The query builder shall provide all the building blocks needed, only a static block shall be used.
    */
   public static final class QueryBuilder {
 
-    private QueryBuilder() {}
+    private QueryBuilder() {
+    }
 
-    public static Select.Builder select(String... columns) {
+    public static Select.Builder select(final String... columns) {
       return select((Object[]) columns);
     }
 
-    public static Select.Builder select(Object... columns) {
+    public static Select.Builder select(final Object... columns) {
       return new Select.Builder(Arrays.asList(columns));
     }
 
@@ -63,39 +79,39 @@ public abstract class BuiltQuery extends Query {
       return new Selection();
     }
 
-    public static Clause eq(String name, Object value) {
+    public static Clause eq(final String name, final Object value) {
       return new SimpleClause(name, EQ, value);
     }
 
-    public static Clause ne(String name, Object value) {
+    public static Clause ne(final String name, final Object value) {
       return new SimpleClause(name, NE, value);
     }
 
-    public static Clause contains(String name, String value) {
+    public static Clause contains(final String name, final String value) {
       return new ContainsClause(name, value);
     }
 
-    public static Clause regex(String name, String value) {
+    public static Clause regex(final String name, final String value) {
       return new RegexClause(name, value);
     }
 
-    public static Clause nregex(String name, String value) {
+    public static Clause nregex(final String name, final String value) {
       return new NegativeRegexClause(name, value);
     }
 
-    public static Clause lt(String name, Object value) {
+    public static Clause lt(final String name, final Object value) {
       return new SimpleClause(name, LT, value);
     }
 
-    public static Clause lte(String name, Object value) {
+    public static Clause lte(final String name, final Object value) {
       return new SimpleClause(name, LTE, value);
     }
 
-    public static Clause gt(String name, Object value) {
+    public static Clause gt(final String name, final Object value) {
       return new SimpleClause(name, GT, value);
     }
 
-    public static Clause gte(String name, Object value) {
+    public static Clause gte(final String name, final Object value) {
       return new SimpleClause(name, GTE, value);
     }
 
@@ -105,7 +121,7 @@ public abstract class BuiltQuery extends Query {
     }
 
     /**
-     * InfluxDB supports only time for ordering
+     * InfluxDB supports only time for ordering.
      *
      * @return
      */
@@ -113,31 +129,31 @@ public abstract class BuiltQuery extends Query {
       return new Ordering(true);
     }
 
-    public static Object raw(String str) {
-      return new RawString(str);
+    public static Object raw(final String str) {
+      return new RawText(str);
     }
 
-    public static Object count(Object column) {
+    public static Object count(final Object column) {
       return FunctionFactory.count(column);
     }
 
-    public static Object max(Object column) {
+    public static Object max(final Object column) {
       return FunctionFactory.max(column);
     }
 
-    public static Object min(Object column) {
+    public static Object min(final Object column) {
       return FunctionFactory.min(column);
     }
 
-    public static Object sum(Object column) {
+    public static Object sum(final Object column) {
       return FunctionFactory.sum(column);
     }
 
-    public static Object mean(Object column) {
+    public static Object mean(final Object column) {
       return FunctionFactory.mean(column);
     }
 
-    public static Object column(String name) {
+    public static Object column(final String name) {
       return FunctionFactory.column(name);
     }
 

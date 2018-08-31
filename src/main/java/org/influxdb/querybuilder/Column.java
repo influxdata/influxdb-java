@@ -4,7 +4,7 @@ public class Column {
 
   private final String name;
 
-  Column(String name) {
+  Column(final String name) {
     this.name = name;
   }
 

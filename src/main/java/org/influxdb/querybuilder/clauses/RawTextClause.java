@@ -1,15 +1,15 @@
 package org.influxdb.querybuilder.clauses;
 
 import org.influxdb.querybuilder.Appender;
-import org.influxdb.querybuilder.RawString;
+import org.influxdb.querybuilder.RawText;
 
 public class RawTextClause extends AbstractClause {
 
-  private final RawString value;
+  private final RawText value;
 
-  public RawTextClause(String text) {
+  public RawTextClause(final String text) {
     super("");
-    this.value = new RawString(text);
+    this.value = new RawText(text);
 
     if (text == null) {
       throw new IllegalArgumentException("Missing text for expression");
@@ -17,7 +17,7 @@ public class RawTextClause extends AbstractClause {
   }
 
   @Override
-  public void appendTo(StringBuilder sb) {
-    Appender.appendValue(value, sb);
+  public void appendTo(final StringBuilder stringBuilder) {
+    Appender.appendValue(value, stringBuilder);
   }
 }

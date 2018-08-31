@@ -2,22 +2,24 @@ package org.influxdb.querybuilder.clauses;
 
 import org.influxdb.querybuilder.Appender;
 import org.influxdb.querybuilder.Operations;
-import org.influxdb.querybuilder.RawString;
+import org.influxdb.querybuilder.RawText;
 
 public class RegexClause extends AbstractClause {
 
-  private final RawString value;
+  private final RawText value;
 
-  public RegexClause(String name, String value) {
+  public RegexClause(final String name, final String value) {
     super(name);
-    this.value = new RawString(value);
+    this.value = new RawText(value);
 
-    if (value == null) throw new IllegalArgumentException("Missing value for regex clause");
+    if (value == null) {
+        throw new IllegalArgumentException("Missing value for regex clause");
+    }
   }
 
   @Override
-  public void appendTo(StringBuilder sb) {
-    Appender.appendName(name, sb).append(" ").append(Operations.EQR).append(" ");
-    Appender.appendValue(value, sb);
+  public void appendTo(final StringBuilder stringBuilder) {
+    Appender.appendName(name, stringBuilder).append(" ").append(Operations.EQR).append(" ");
+    Appender.appendValue(value, stringBuilder);
   }
 }

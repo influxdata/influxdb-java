@@ -3,41 +3,50 @@ package org.influxdb.querybuilder;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class Appender {
+public final class Appender {
 
-  private static final Pattern columnNamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
+  private static final Pattern COLUMN_NAME_PATTERN = Pattern.compile("\\w+(?:\\[.+\\])?");
+
+  private Appender() {
+  }
 
   public static StringBuilder joinAndAppend(
-      StringBuilder stringBuilder, String separator, List<? extends Appendable> values) {
+      final StringBuilder stringBuilder, final String separator, final List<? extends Appendable> values) {
     for (int i = 0; i < values.size(); i++) {
-      if (i > 0) stringBuilder.append(separator);
+      if (i > 0) {
+        stringBuilder.append(separator);
+      }
       values.get(i).appendTo(stringBuilder);
     }
     return stringBuilder;
   }
 
-  public static StringBuilder joinAndAppendNames(StringBuilder stringBuilder, List<?> values) {
+  public static StringBuilder joinAndAppendNames(final StringBuilder stringBuilder, final List<?> values) {
     for (int i = 0; i < values.size(); i++) {
-      if (i > 0) stringBuilder.append(",");
+      if (i > 0) {
+        stringBuilder.append(",");
+      }
       appendName(values.get(i), stringBuilder);
     }
     return stringBuilder;
   }
 
-  public static StringBuilder appendValue(Object value, StringBuilder stringBuilder) {
+  public static StringBuilder appendValue(final Object value, final StringBuilder stringBuilder) {
     if (value == null) {
       stringBuilder.append("null");
     } else if (value instanceof Function) {
       Function fcall = (Function) value;
       stringBuilder.append(fcall.getName()).append('(');
       for (int i = 0; i < fcall.getParameters().length; i++) {
-        if (i > 0) stringBuilder.append(',');
+        if (i > 0) {
+          stringBuilder.append(',');
+        }
         appendValue(fcall.getParameters()[i], stringBuilder);
       }
       stringBuilder.append(')');
     } else if (value instanceof Column) {
       appendName(((Column) value).getName(), stringBuilder);
-    } else if (value instanceof RawString) {
+    } else if (value instanceof RawText) {
       stringBuilder.append(value.toString());
     } else if (value instanceof String) {
       stringBuilder.append("'").append(value).append("'");
@@ -50,17 +59,17 @@ public class Appender {
     return stringBuilder;
   }
 
-  public static StringBuilder appendName(String name, StringBuilder stringBuilder) {
-    name = name.trim();
-    if (name.startsWith("\"") || columnNamePattern.matcher(name).matches()) {
-      stringBuilder.append(name);
+  public static StringBuilder appendName(final String name, final StringBuilder stringBuilder) {
+    String trimmedName = name.trim();
+    if (trimmedName.startsWith("\"") || COLUMN_NAME_PATTERN.matcher(trimmedName).matches()) {
+      stringBuilder.append(trimmedName);
     } else {
-      stringBuilder.append('"').append(name).append('"');
+      stringBuilder.append('"').append(trimmedName).append('"');
     }
     return stringBuilder;
   }
 
-  public static StringBuilder appendName(Object name, StringBuilder stringBuilder) {
+  public static StringBuilder appendName(final Object name, final StringBuilder stringBuilder) {
     if (name instanceof String) {
       appendName((String) name, stringBuilder);
     } else if (name instanceof Column) {
@@ -69,7 +78,9 @@ public class Appender {
       Function functionCall = (Function) name;
       stringBuilder.append(functionCall.getName()).append('(');
       for (int i = 0; i < functionCall.getParameters().length; i++) {
-        if (i > 0) stringBuilder.append(',');
+        if (i > 0) {
+          stringBuilder.append(',');
+        }
         appendValue(functionCall.getParameters()[i], stringBuilder);
       }
       stringBuilder.append(')');
@@ -77,7 +88,7 @@ public class Appender {
       Alias alias = (Alias) name;
       appendName(alias.getColumn(), stringBuilder);
       stringBuilder.append(" AS ").append(alias.getAlias());
-    } else if (name instanceof RawString) {
+    } else if (name instanceof RawText) {
       stringBuilder.append(name);
     } else if (name instanceof Distinct) {
       Distinct distinct = (Distinct) name;

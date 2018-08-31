@@ -7,17 +7,20 @@ public class Ordering implements Appendable {
   private static final String TIME_KEY = "time";
 
   /**
-   * Influxdb ordering currently supports onlye time
-   *
+   * Influxdb ordering currently supports only time.
    * @param isDesc
    */
-  public Ordering(boolean isDesc) {
+  public Ordering(final boolean isDesc) {
     this.isDesc = isDesc;
   }
 
   @Override
-  public void appendTo(StringBuilder sb) {
-    Appender.appendName(TIME_KEY, sb);
-    sb.append(isDesc ? " DESC" : " ASC");
+  public void appendTo(final StringBuilder stringBuilder) {
+    Appender.appendName(TIME_KEY, stringBuilder);
+    if (isDesc) {
+      stringBuilder.append(" DESC");
+    } else {
+      stringBuilder.append(" ASC");
+    }
   }
 }

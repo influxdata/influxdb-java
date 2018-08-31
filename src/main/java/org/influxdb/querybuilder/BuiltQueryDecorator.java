@@ -4,7 +4,7 @@ public class BuiltQueryDecorator<T extends BuiltQuery> extends BuiltQuery {
 
   T query;
 
-  BuiltQueryDecorator(T query) {
+  BuiltQueryDecorator(final T query) {
     super(null);
     this.query = query;
   }

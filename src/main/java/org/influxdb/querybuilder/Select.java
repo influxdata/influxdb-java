@@ -19,11 +19,11 @@ public class Select extends BuiltQuery {
   private Long offSet;
 
   Select(
-      String database,
-      String table,
-      List<Object> columns,
-      boolean isDistinct,
-      boolean requiresPost) {
+      final String database,
+      final String table,
+      final List<Object> columns,
+      final boolean isDistinct,
+      final boolean requiresPost) {
     super(database, requiresPost);
     this.table = table;
     this.columns = columns;
@@ -37,10 +37,11 @@ public class Select extends BuiltQuery {
 
     builder.append("SELECT ");
 
-    if (isDistinct)
+    if (isDistinct) {
       if (columns.size() > 1) {
         throw new IllegalStateException("DISTINCT function can only be used with one column");
       }
+    }
 
     if (columns == null) {
       builder.append('*');
@@ -77,11 +78,11 @@ public class Select extends BuiltQuery {
     return builder;
   }
 
-  public Where where(Clause clause) {
+  public Where where(final Clause clause) {
     return where.and(clause);
   }
 
-  public Where where(String text) {
+  public Where where(final String text) {
     return where.and(new RawTextClause(text));
   }
 
@@ -89,32 +90,35 @@ public class Select extends BuiltQuery {
     return where;
   }
 
-  public Select orderBy(Ordering ordering) {
+  public Select orderBy(final Ordering ordering) {
 
     this.ordering = ordering;
     return this;
   }
 
-  public Select groupBy(Object... columns) {
+  public Select groupBy(final Object... columns) {
     this.groupByColumns = Arrays.asList(columns);
     return this;
   }
 
-  public Select limit(int limit) {
-    if (limit <= 0)
+  public Select limit(final int limit) {
+    if (limit <= 0) {
       throw new IllegalArgumentException("Invalid LIMIT value, must be strictly positive");
+    }
 
-    if (this.limit != null)
+    if (this.limit != null) {
       throw new IllegalStateException("A LIMIT value has already been provided");
+    }
 
     this.limit = limit;
     return this;
   }
 
-  public Select limit(int limit, long offSet) {
-    if (limit <= 0 || offSet <= 0)
+  public Select limit(final int limit, final long offSet) {
+    if (limit <= 0 || offSet <= 0) {
       throw new IllegalArgumentException(
-          "Invalid LIMIT and OFFSET Value, must be strictly positive");
+              "Invalid LIMIT and OFFSET Value, must be strictly positive");
+    }
 
     this.limit = limit;
     this.offSet = offSet;
@@ -125,28 +129,28 @@ public class Select extends BuiltQuery {
 
     private final List<Clause> clauses = new ArrayList<Clause>();
 
-    Where(Select statement) {
+    Where(final Select statement) {
       super(statement);
     }
 
-    public Where and(Clause clause) {
+    public Where and(final Clause clause) {
       clauses.add(clause);
       return this;
     }
 
-    public Select orderBy(Ordering orderings) {
+    public Select orderBy(final Ordering orderings) {
       return query.orderBy(orderings);
     }
 
-    public Select groupBy(Object... columns) {
+    public Select groupBy(final Object... columns) {
       return query.groupBy(columns);
     }
 
-    public Select limit(int limit) {
+    public Select limit(final int limit) {
       return query.limit(limit);
     }
 
-    public Select limit(int limit, long offSet) {
+    public Select limit(final int limit, final long offSet) {
       return query.limit(limit, offSet);
     }
   }
@@ -157,9 +161,10 @@ public class Select extends BuiltQuery {
     protected boolean requiresPost;
     protected boolean isDistinct;
 
-    Builder() {}
+    Builder() {
+    }
 
-    public Builder(List<Object> columns) {
+    public Builder(final List<Object> columns) {
       this.columns = columns;
     }
 
@@ -168,11 +173,11 @@ public class Select extends BuiltQuery {
       return this;
     }
 
-    public Select from(String table) {
+    public Select from(final String table) {
       return from(null, table);
     }
 
-    public Select from(String database, String table) {
+    public Select from(final String database, final String table) {
       return new Select(database, table, columns, isDistinct, requiresPost);
     }
   }
