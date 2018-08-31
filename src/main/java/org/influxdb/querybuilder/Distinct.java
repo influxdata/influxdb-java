@@ -13,8 +13,4 @@ public class Distinct {
     return expression;
   }
 
-  @Override
-  public String toString() {
-    return String.format("DISTINCT %s", expression);
-  }
 }
