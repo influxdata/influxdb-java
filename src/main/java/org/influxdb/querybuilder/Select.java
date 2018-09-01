@@ -87,6 +87,10 @@ public class Select extends BuiltQuery {
     return builder;
   }
 
+  public Where where() {
+    return where;
+  }
+
   public Where where(final Clause clause) {
     return where.and(clause);
   }
