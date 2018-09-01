@@ -2,12 +2,24 @@ package org.influxdb.querybuilder;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import org.influxdb.querybuilder.clauses.ConjunctionClause;
 
 public final class Appender {
 
   private static final Pattern COLUMN_NAME_PATTERN = Pattern.compile("\\w+(?:\\[.+\\])?");
 
   private Appender() {
+  }
+
+  public static StringBuilder joinAndAppend(
+      final StringBuilder stringBuilder, final List<? extends ConjunctionClause> clauses) {
+    for (int i = 0; i < clauses.size(); i++) {
+      if (i > 0) {
+        clauses.get(i).join(stringBuilder);
+      }
+      clauses.get(i).appendTo(stringBuilder);
+    }
+    return stringBuilder;
   }
 
   public static StringBuilder joinAndAppend(

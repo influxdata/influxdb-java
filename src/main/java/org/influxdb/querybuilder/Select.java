@@ -1,11 +1,20 @@
 package org.influxdb.querybuilder;
 
+import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.RawTextClause;
+import org.influxdb.querybuilder.clauses.ConjunctionClause;
+import org.influxdb.querybuilder.clauses.AndConjunction;
+import org.influxdb.querybuilder.clauses.OrConjunction;
+
+
+import static org.influxdb.querybuilder.Appender.appendName;
+import static org.influxdb.querybuilder.Appender.joinAndAppend;
+import static org.influxdb.querybuilder.Appender.joinAndAppendNames;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.influxdb.querybuilder.clauses.Clause;
-import org.influxdb.querybuilder.clauses.RawTextClause;
 
 public class Select extends BuiltQuery {
 
@@ -46,25 +55,25 @@ public class Select extends BuiltQuery {
     if (columns == null) {
       builder.append('*');
     } else {
-      Appender.joinAndAppendNames(builder, columns);
+      joinAndAppendNames(builder, columns);
     }
     builder.append(" FROM ");
 
-    Appender.appendName(table, builder);
+    appendName(table, builder);
 
     if (!where.clauses.isEmpty()) {
       builder.append(" WHERE ");
-      Appender.joinAndAppend(builder, " AND ", where.clauses);
+      joinAndAppend(builder, where.clauses);
     }
 
     if (groupByColumns != null) {
       builder.append(" GROUP BY ");
-      Appender.joinAndAppendNames(builder, groupByColumns);
+      joinAndAppendNames(builder, groupByColumns);
     }
 
     if (ordering != null) {
       builder.append(" ORDER BY ");
-      Appender.joinAndAppend(builder, ",", Collections.singletonList(ordering));
+      joinAndAppend(builder, ",", Collections.singletonList(ordering));
     }
 
     if (limit != null) {
@@ -123,14 +132,19 @@ public class Select extends BuiltQuery {
 
   public static class Where extends BuiltQueryDecorator<Select> {
 
-    private final List<Clause> clauses = new ArrayList<Clause>();
+    private final List<ConjunctionClause> clauses = new ArrayList<ConjunctionClause>();
 
     Where(final Select statement) {
       super(statement);
     }
 
     public Where and(final Clause clause) {
-      clauses.add(clause);
+      clauses.add(new AndConjunction(clause));
+      return this;
+    }
+
+    public Where or(final Clause clause) {
+      clauses.add(new OrConjunction(clause));
       return this;
     }
 

@@ -339,6 +339,55 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testWhereConjunction() {
+    Query query = new Query("SELECT test1 FROM foobar WHERE test1=1 OR test2='a';", DATABASE);
+    Query select =
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .where(eq("test1", 1))
+            .or(eq("test2", "a"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testMultipleOrConjunction() {
+    Query query =
+        new Query("SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b';", DATABASE);
+    Query select =
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .where(eq("test1", 1))
+            .or(eq("test2", "a"))
+            .or(eq("test3", "b"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testOrAndConjunction() {
+    Query query =
+        new Query(
+            "SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b' AND test4='c';",
+            DATABASE);
+    Query select =
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .where(eq("test1", 1))
+            .or(eq("test2", "a"))
+            .or(eq("test3", "b"))
+            .and(eq("test4", "c"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testWhereGroupBy() {
     Query query =
         new Query("SELECT test1 FROM foobar WHERE test4=1 GROUP BY test2,test3;", DATABASE);
