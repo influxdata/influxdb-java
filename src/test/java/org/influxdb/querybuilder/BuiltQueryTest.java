@@ -387,42 +387,52 @@ public class BuiltQueryTest {
     assertEquals(query.getDatabase(), select.getDatabase());
   }
 
-    @Test
-    public void testNestedClauses() {
-        Query query =
-                new Query(
-                        "SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b' " +
-                                "AND (test2='b' OR test3='a') " +
-                                "OR (test1=2 AND test2='y' AND test3='z') " +
-                                "AND (test1=8 OR test2='g' OR test3='j') " +
-                                "AND test4='c';",
-                        DATABASE);
-        Query select =
-                select()
-                        .column("test1")
-                        .from(DATABASE, "foobar")
-                        .where(eq("test1", 1))
-                        .or(eq("test2", "a"))
-                        .or(eq("test3", "b"))
-                        .andNested()
-                          .and(eq("test2","b"))
-                          .or(eq("test3","a"))
-                        .close()
-                        .orNested()
-                          .and(eq("test1",2))
-                          .and(eq("test2","y"))
-                          .and(eq("test3","z"))
-                        .close()
-                        .andNested()
-                          .or(eq("test1",8))
-                          .or(eq("test2","g"))
-                          .or(eq("test3","j"))
-                        .close()
-                        .and(eq("test4", "c"));
+  @Test
+  public void testNestedClauses() {
+    Query query =
+        new Query(
+            "SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b' "
+                + "AND (test2='b' OR test3='a') "
+                + "OR (test1=2 AND test2='y' AND test3='z') "
+                + "AND (test1=8 OR test2='g' OR test3='j') "
+                + "AND test4='c';",
+            DATABASE);
+    Query select =
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .where(eq("test1", 1))
+            .or(eq("test2", "a"))
+            .or(eq("test3", "b"))
+            .andNested()
+            .and(eq("test2", "b"))
+            .or(eq("test3", "a"))
+            .close()
+            .orNested()
+            .and(eq("test1", 2))
+            .and(eq("test2", "y"))
+            .and(eq("test3", "z"))
+            .close()
+            .andNested()
+            .or(eq("test1", 8))
+            .or(eq("test2", "g"))
+            .or(eq("test3", "j"))
+            .close()
+            .and(eq("test4", "c"));
 
-        assertEquals(query.getCommand(), select.getCommand());
-        assertEquals(query.getDatabase(), select.getDatabase());
-    }
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testWhere() {
+    Query query = new Query("SELECT test1 FROM foobar WHERE test4=1;", DATABASE);
+    Select.Where where = select().column("test1").from(DATABASE, "foobar").where();
+    Query select = where.and(eq("test4", 1));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
 
   @Test
   public void testWhereGroupBy() {
