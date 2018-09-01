@@ -119,5 +119,4 @@ public class Selection extends Select.Builder {
     currentSelection = null;
     return super.from(database, table);
   }
-
 }

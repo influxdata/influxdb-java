@@ -12,5 +12,4 @@ public class Distinct {
   public Object getExpression() {
     return expression;
   }
-
 }

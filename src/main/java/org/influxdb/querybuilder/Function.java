@@ -17,5 +17,4 @@ public class Function {
   public Object[] getParameters() {
     return parameters;
   }
-
 }

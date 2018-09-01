@@ -23,5 +23,4 @@ public class BuiltQueryDecorator<T extends BuiltQuery> extends BuiltQuery {
   public String getDatabase() {
     return query.getDatabase();
   }
-
 }

@@ -14,16 +14,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testCommandWithUrlEncoded() {
-    Query select = select().max("k").as("hello").from(DATABASE, "foobar");
+    Query select = select().max("test1").as("hello").from(DATABASE, "foobar");
     String encoded = select.getCommandWithUrlEncoded();
 
-    assertEquals("SELECT+MAX%28k%29+AS+hello+FROM+foobar%3B", encoded);
+    assertEquals("SELECT+MAX%28test1%29+AS+hello+FROM+foobar%3B", encoded);
   }
 
   @Test
   public void testAlias() {
-    Query query = new Query("SELECT MAX(k) AS hello FROM foobar;", DATABASE);
-    Query select = select().max("k").as("hello").from(DATABASE, "foobar");
+    Query query = new Query("SELECT MAX(test1) AS hello FROM foobar;", DATABASE);
+    Query select = select().max("test1").as("hello").from(DATABASE, "foobar");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -31,8 +31,8 @@ public class BuiltQueryTest {
 
   @Test
   public void testRegex() {
-    Query query = new Query("SELECT MAX(k) FROM foobar WHERE k =~ /[0-9]/;", DATABASE);
-    Query select = select().max("k").from(DATABASE, "foobar").where(regex("k", "/[0-9]/"));
+    Query query = new Query("SELECT MAX(test1) FROM foobar WHERE test1 =~ /[0-9]/;", DATABASE);
+    Query select = select().max("test1").from(DATABASE, "foobar").where(regex("test1", "/[0-9]/"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -40,13 +40,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testInvalidRegex() {
-    assertThrows(IllegalArgumentException.class, () -> select().max("k").from(DATABASE, "foobar").where(regex("k", null)),"Missing text for expression");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> select().max("test1").from(DATABASE, "foobar").where(regex("test1", null)),
+        "Missing text for expression");
   }
 
   @Test
   public void testNegativeRegex() {
-    Query query = new Query("SELECT MAX(k) FROM foobar WHERE k !~ /[0-9]/;", DATABASE);
-    Query select = select().max("k").from(DATABASE, "foobar").where(nregex("k", "/[0-9]/"));
+    Query query = new Query("SELECT MAX(test1) FROM foobar WHERE test1 !~ /[0-9]/;", DATABASE);
+    Query select = select().max("test1").from(DATABASE, "foobar").where(nregex("test1", "/[0-9]/"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -54,13 +57,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testInvalidNegativeRegex() {
-    assertThrows(IllegalArgumentException.class, () -> select().max("k").from(DATABASE, "foobar").where(nregex("k", null)),"Missing text for expression");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> select().max("test1").from(DATABASE, "foobar").where(nregex("test1", null)),
+        "Missing text for expression");
   }
 
   @Test
   public void testContains() {
-    Query query = new Query("SELECT MAX(k) FROM foobar WHERE k =~ /text/;", DATABASE);
-    Query select = select().max("k").from(DATABASE, "foobar").where(contains("k", "text"));
+    Query query = new Query("SELECT MAX(test1) FROM foobar WHERE test1 =~ /text/;", DATABASE);
+    Query select = select().max("test1").from(DATABASE, "foobar").where(contains("test1", "text"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -68,8 +74,8 @@ public class BuiltQueryTest {
 
   @Test
   public void testDistinct() {
-    Query query = new Query("SELECT DISTINCT k FROM foobar;", DATABASE);
-    Query select = select().column("k").distinct().from(DATABASE, "foobar");
+    Query query = new Query("SELECT DISTINCT test1 FROM foobar;", DATABASE);
+    Query select = select().column("test1").distinct().from(DATABASE, "foobar");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -87,20 +93,21 @@ public class BuiltQueryTest {
 
   @Test
   public void testDistinctWithMultipleSelectedColumns() {
-    Query select = select().column("test1").column("test2").distinct().from(DATABASE, "foobar").limit(1, 20);
+    Query select =
+        select().column("test1").column("test2").distinct().from(DATABASE, "foobar").limit(1, 20);
 
     assertThrows(
-            IllegalStateException.class,
-            () -> select.getCommand(),
-            "DISTINCT function can only be used with one column");
+        IllegalStateException.class,
+        () -> select.getCommand(),
+        "DISTINCT function can only be used with one column");
   }
 
   @Test
   public void testDistinctWithoutSelectedColumns() {
     assertThrows(
-            IllegalStateException.class,
-            () -> select().distinct().from(DATABASE, "foobar").limit(1, 20),
-            "DISTINCT function can only be used with one column");
+        IllegalStateException.class,
+        () -> select().distinct().from(DATABASE, "foobar").limit(1, 20),
+        "DISTINCT function can only be used with one column");
   }
 
   @Test
@@ -123,23 +130,50 @@ public class BuiltQueryTest {
 
   @Test
   public void testSelectAllWithColumn() {
-    assertThrows(IllegalStateException.class, () -> select().column("test1").all().from(DATABASE, "foobar").where(ne("k", raw("raw expression"))),"Can't select all columns over columns selected previously");
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            select()
+                .column("test1")
+                .all()
+                .from(DATABASE, "foobar")
+                .where(ne("test1", raw("raw expression"))),
+        "Can't select all columns over columns selected previously");
   }
 
   @Test
   public void testSelectAllWithColumns() {
-    assertThrows(IllegalStateException.class, () -> select().column("test1").column("test2").all().from(DATABASE, "foobar").where(ne("k", raw("raw expression"))),"Can't select all columns over columns selected previously");
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            select()
+                .column("test1")
+                .column("test2")
+                .all()
+                .from(DATABASE, "foobar")
+                .where(ne("test1", raw("raw expression"))),
+        "Can't select all columns over columns selected previously");
   }
 
   @Test
   public void testSelectAllWithDistinct() {
-    assertThrows(IllegalStateException.class, () -> select().column("test1").distinct().all().from(DATABASE, "foobar").where(ne("k", raw("raw expression"))),"Can't select all columns over columns selected previously");
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            select()
+                .column("test1")
+                .distinct()
+                .all()
+                .from(DATABASE, "foobar")
+                .where(ne("test1", raw("raw expression"))),
+        "Can't select all columns over columns selected previously");
   }
 
   @Test
   public void testRawExpressionInWhere() {
-    Query query = new Query("SELECT * FROM foobar WHERE k!=raw expression;", DATABASE);
-    Query select = select().all().from(DATABASE, "foobar").where(ne("k", raw("raw expression")));
+    Query query = new Query("SELECT * FROM foobar WHERE test1!=raw expression;", DATABASE);
+    Query select =
+        select().all().from(DATABASE, "foobar").where(ne("test1", raw("raw expression")));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -148,21 +182,25 @@ public class BuiltQueryTest {
   @Test
   public void testRawExpressionEmptyValue() {
     String rawTextClause = null;
-    assertThrows(IllegalArgumentException.class, () -> select().all().from(DATABASE, "foobar").where(rawTextClause), "Missing text for expression");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> select().all().from(DATABASE, "foobar").where(rawTextClause),
+        "Missing text for expression");
   }
 
   @Test
   public void testOrderingAsc() {
     Query query =
         new Query(
-            "SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time ASC;", DATABASE);
+            "SELECT * FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z' ORDER BY time ASC;",
+            DATABASE);
     Query select =
         select()
             .all()
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"))
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"))
             .orderBy(asc());
 
     assertEquals(query.getCommand(), select.getCommand());
@@ -173,14 +211,15 @@ public class BuiltQueryTest {
   public void testOrderingDesc() {
     Query query =
         new Query(
-            "SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z' ORDER BY time DESC;", DATABASE);
+            "SELECT * FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z' ORDER BY time DESC;",
+            DATABASE);
     Query select =
         select()
             .all()
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"))
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"))
             .orderBy(desc());
 
     assertEquals(query.getCommand(), select.getCommand());
@@ -189,14 +228,15 @@ public class BuiltQueryTest {
 
   @Test
   public void testSelect() {
-    Query query = new Query("SELECT * FROM foobar WHERE k=4 AND c>'a' AND c<='z';", DATABASE);
+    Query query =
+        new Query("SELECT * FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
     Query select =
         select()
             .all()
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"));
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -204,13 +244,9 @@ public class BuiltQueryTest {
 
   @Test
   public void testSelectLtGte() {
-    Query query = new Query("SELECT * FROM foobar WHERE k<4 AND c>='a';", DATABASE);
+    Query query = new Query("SELECT * FROM foobar WHERE test1<4 AND test2>='a';", DATABASE);
     Query select =
-            select()
-                    .all()
-                    .from(DATABASE, "foobar")
-                    .where(lt("k", 4))
-                    .and(gte("c", "a"));
+        select().all().from(DATABASE, "foobar").where(lt("test1", 4)).and(gte("test2", "a"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -218,14 +254,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testMean() {
-    Query query = new Query("SELECT MEAN(k) FROM foobar WHERE k=4 AND c>'a' AND c<='z';", DATABASE);
+    Query query =
+        new Query(
+            "SELECT MEAN(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
     Query select =
         select()
-            .mean("k")
+            .mean("test1")
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"));
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -233,14 +271,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testSum() {
-    Query query = new Query("SELECT SUM(k) FROM foobar WHERE k=4 AND c>'a' AND c<='z';", DATABASE);
+    Query query =
+        new Query(
+            "SELECT SUM(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
     Query select =
         select()
-            .sum("k")
+            .sum("test1")
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"));
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -248,14 +288,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testMin() {
-    Query query = new Query("SELECT MIN(k) FROM foobar WHERE k=4 AND c>'a' AND c<='z';", DATABASE);
+    Query query =
+        new Query(
+            "SELECT MIN(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
     Query select =
         select()
-            .min("k")
+            .min("test1")
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"));
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -263,14 +305,16 @@ public class BuiltQueryTest {
 
   @Test
   public void testMax() {
-    Query query = new Query("SELECT MAX(k) FROM foobar WHERE k=4 AND c>'a' AND c<='z';", DATABASE);
+    Query query =
+        new Query(
+            "SELECT MAX(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
     Query select =
         select()
-            .max("k")
+            .max("test1")
             .from(DATABASE, "foobar")
-            .where(eq("k", 4))
-            .and(gt("c", "a"))
-            .and(lte("c", "z"));
+            .where(eq("test1", 4))
+            .and(gt("test2", "a"))
+            .and(lte("test2", "z"));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -319,13 +363,13 @@ public class BuiltQueryTest {
     assertEquals(query.getDatabase(), select.getDatabase());
   }
 
-    @Test
-    public void testInvalidLimit() {
-      assertThrows(
-              IllegalArgumentException.class,
-              () -> select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(-1),
-              "Invalid LIMIT value, must be strictly positive");
-    }
+  @Test
+  public void testInvalidLimit() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(-1),
+        "Invalid LIMIT value, must be strictly positive");
+  }
 
   @Test
   public void testLimitOffset() {
@@ -452,12 +496,18 @@ public class BuiltQueryTest {
 
   @Test
   public void testCountAllWithColumn() {
-    assertThrows(IllegalStateException.class, () -> select().column("test1").countAll().from(DATABASE, "foobar"),"Can't count all with previously selected columns");
+    assertThrows(
+        IllegalStateException.class,
+        () -> select().column("test1").countAll().from(DATABASE, "foobar"),
+        "Can't count all with previously selected columns");
   }
 
   @Test
   public void testCountAllWithColumns() {
-    assertThrows(IllegalStateException.class, () -> select().column("test1").column("test2").countAll().from(DATABASE, "foobar"),"Can't count all with previously selected columns");
+    assertThrows(
+        IllegalStateException.class,
+        () -> select().column("test1").column("test2").countAll().from(DATABASE, "foobar"),
+        "Can't count all with previously selected columns");
   }
 
   @Test

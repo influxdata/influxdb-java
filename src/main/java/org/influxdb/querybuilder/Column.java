@@ -11,5 +11,4 @@ public class Column {
   public String getName() {
     return name;
   }
-
 }
