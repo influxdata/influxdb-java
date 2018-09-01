@@ -5,7 +5,7 @@ import org.influxdb.querybuilder.clauses.RawTextClause;
 import org.influxdb.querybuilder.clauses.ConjunctionClause;
 import org.influxdb.querybuilder.clauses.AndConjunction;
 import org.influxdb.querybuilder.clauses.OrConjunction;
-
+import org.influxdb.querybuilder.clauses.NestedClause;
 
 import static org.influxdb.querybuilder.Appender.appendName;
 import static org.influxdb.querybuilder.Appender.joinAndAppend;
@@ -132,7 +132,7 @@ public class Select extends BuiltQuery {
 
   public static class Where extends BuiltQueryDecorator<Select> {
 
-    private final List<ConjunctionClause> clauses = new ArrayList<ConjunctionClause>();
+    private final List<ConjunctionClause> clauses = new ArrayList<>();
 
     Where(final Select statement) {
       super(statement);
@@ -146,6 +146,14 @@ public class Select extends BuiltQuery {
     public Where or(final Clause clause) {
       clauses.add(new OrConjunction(clause));
       return this;
+    }
+
+    public WhereNested andNested() {
+      return new WhereNested(this, false);
+    }
+
+    public WhereNested orNested() {
+      return new WhereNested(this, true);
     }
 
     public Select orderBy(final Ordering orderings) {
@@ -162,6 +170,36 @@ public class Select extends BuiltQuery {
 
     public Select limit(final int limit, final long offSet) {
       return query.limit(limit, offSet);
+    }
+  }
+
+  public static class WhereNested {
+
+    private final List<ConjunctionClause> clauses = new ArrayList<>();
+    private final boolean orConjunction;
+    private final Where where;
+
+    public WhereNested(final Where where, final boolean orConjunction) {
+      this.where = where;
+      this.orConjunction = orConjunction;
+    }
+
+    public WhereNested and(final Clause clause) {
+      clauses.add(new AndConjunction(clause));
+      return this;
+    }
+
+    public WhereNested or(final Clause clause) {
+      clauses.add(new OrConjunction(clause));
+      return this;
+    }
+
+    public Where close() {
+      if (orConjunction) {
+        return where.or(new NestedClause(clauses));
+      } else {
+        return where.and(new NestedClause(clauses));
+      }
     }
   }
 

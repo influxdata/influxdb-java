@@ -9,7 +9,7 @@ public abstract class ConjunctionClause implements Conjunction, Clause {
   }
 
   @Override
-  public void appendTo(final StringBuilder sb) {
-    clause.appendTo(sb);
+  public void appendTo(final StringBuilder stringBuilder) {
+    clause.appendTo(stringBuilder);
   }
 }
