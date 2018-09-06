@@ -842,6 +842,8 @@ public class InfluxDBImpl implements InfluxDB {
         QueryResult queryResult = new QueryResult();
         queryResult.setError("DONE");
         consumer.accept(queryResult);
+      } finally {
+        chunkedBody.close();
       }
     }
   }
