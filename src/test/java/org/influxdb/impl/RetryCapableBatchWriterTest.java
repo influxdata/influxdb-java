@@ -107,9 +107,11 @@ public class RetryCapableBatchWriterTest {
     InfluxDBException nonRecoverable5 = InfluxDBException.buildExceptionForErrorState(createErrorBody("field type conflict 'abc'"));
     InfluxDBException nonRecoverable6 = new InfluxDBException.RetryBufferOverrunException(createErrorBody("Retry BufferOverrun Exception"));
     InfluxDBException nonRecoverable7 = InfluxDBException.buildExceptionForErrorState(createErrorBody("user is not authorized to write to database"));
-    
+    InfluxDBException nonRecoverable8 = InfluxDBException.buildExceptionForErrorState(createErrorBody("authorization failed"));
+    InfluxDBException nonRecoverable9 = InfluxDBException.buildExceptionForErrorState(createErrorBody("username required"));
+
     List<InfluxDBException> exceptions = Arrays.asList(nonRecoverable1, nonRecoverable2, nonRecoverable3,
-        nonRecoverable4, nonRecoverable5, nonRecoverable6, nonRecoverable7);
+        nonRecoverable4, nonRecoverable5, nonRecoverable6, nonRecoverable7, nonRecoverable8, nonRecoverable9);
     int size = exceptions.size();
     doAnswer(new TestAnswer() {
       int i = 0;
@@ -224,8 +226,15 @@ public class RetryCapableBatchWriterTest {
     Assertions.assertEquals(bp1, captor4Write.getAllValues().get(1));
     //bp2 written
     Assertions.assertEquals(bp2, captor4Write.getAllValues().get(2));
-    
   }
+
+  @Test
+  void defaultExceptionIsRecoverable() {
+    InfluxDBException unknownError = InfluxDBException.buildExceptionForErrorState(createErrorBody("unknown error"));
+
+    Assertions.assertTrue(unknownError.isRetryWorth());
+  }
+
   private static String createErrorBody(String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
