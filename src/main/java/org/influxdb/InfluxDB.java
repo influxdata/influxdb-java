@@ -451,10 +451,24 @@ public interface InfluxDB {
    *            the query to execute.
    * @param chunkSize
    *            the number of QueryResults to process in one chunk.
-   * @param consumer
+   * @param onNext
    *            the consumer to invoke for each received QueryResult
    */
-  public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
+  public void query(Query query, int chunkSize, Consumer<QueryResult> onNext);
+
+  /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param onNext
+   *            the consumer to invoke for each received QueryResult
+   * @param onComplete
+   *            the onComplete to invoke for successfully end of stream
+   */
+  public void query(Query query, int chunkSize, Consumer<QueryResult> onNext, Runnable onComplete);
 
   /**
    * Execute a query against a database.

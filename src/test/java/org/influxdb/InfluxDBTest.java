@@ -827,6 +827,55 @@ public class InfluxDBTest {
         }
     }
 
+	@Test
+	public void testChunkingOnComplete() throws InterruptedException {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+		Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+		Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
+		batchPoints.point(point3);
+		this.influxDB.write(batchPoints);
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		Thread.sleep(2000);
+		Query query = new Query("SELECT * FROM disk", dbName);
+		this.influxDB.query(query, 2, result -> {}, countDownLatch::countDown);
+
+		Thread.sleep(2000);
+		this.influxDB.deleteDatabase(dbName);
+
+		boolean await = countDownLatch.await(10, TimeUnit.SECONDS);
+		Assertions.assertTrue(await, "The onComplete action did not arrive!");
+	}
+
+	@Test
+	public void testChunkingFailOnComplete() throws InterruptedException {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		Query query = new Query("UNKNOWN_QUERY", dbName);
+		this.influxDB.query(query, 10, result -> {}, countDownLatch::countDown);
+		this.influxDB.deleteDatabase(dbName);
+
+		boolean await = countDownLatch.await(5, TimeUnit.SECONDS);
+		Assertions.assertFalse(await, "The onComplete action arrive!");
+	}
+
     @Test
     public void testFlushPendingWritesWhenBatchingEnabled() {
         String dbName = "flush_tests_" + System.currentTimeMillis();

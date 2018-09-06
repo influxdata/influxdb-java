@@ -566,7 +566,16 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext) {
+    query(query, chunkSize, onNext, () -> { });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext,
+                    final Runnable onComplete) {
         Call<ResponseBody> call = null;
         if (query instanceof BoundParameterQuery) {
             BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
@@ -582,7 +591,7 @@ public class InfluxDBImpl implements InfluxDB {
         try {
           if (response.isSuccessful()) {
             ResponseBody chunkedBody = response.body();
-            chunkProccesor.process(chunkedBody, consumer);
+            chunkProccesor.process(chunkedBody, onNext, onComplete);
           } else {
             // REVIEW: must be handled consistently with IOException.
             ResponseBody errorBody = response.errorBody();
@@ -593,7 +602,7 @@ public class InfluxDBImpl implements InfluxDB {
         } catch (IOException e) {
           QueryResult queryResult = new QueryResult();
           queryResult.setError(e.toString());
-          consumer.accept(queryResult);
+          onNext.accept(queryResult);
         }
       }
 
@@ -852,18 +861,20 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   private interface ChunkProccesor {
-    void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer) throws IOException;
+    void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer, Runnable onComplete) throws IOException;
   }
 
   private class MessagePackChunkProccesor implements ChunkProccesor {
     @Override
-    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer, final Runnable onComplete)
+            throws IOException {
       MessagePackTraverser traverser = new MessagePackTraverser();
       try (InputStream is = chunkedBody.byteStream()) {
         for (QueryResult result : traverser.traverse(is)) {
           consumer.accept(result);
         }
       }
+      onComplete.run();
     }
   }
 
@@ -875,7 +886,8 @@ public class InfluxDBImpl implements InfluxDB {
     }
 
     @Override
-    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer, final Runnable onComplete)
+            throws IOException {
       try {
         BufferedSource source = chunkedBody.source();
         while (true) {
@@ -888,6 +900,7 @@ public class InfluxDBImpl implements InfluxDB {
         QueryResult queryResult = new QueryResult();
         queryResult.setError("DONE");
         consumer.accept(queryResult);
+        onComplete.run();
       } finally {
         chunkedBody.close();
       }
