@@ -8,6 +8,7 @@
 - [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client-)
 - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server-)
 - [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived-)
+- [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for-)
 
 ## Security
 
@@ -66,12 +67,28 @@ So in case the number of write requests exceeds Concurrent write setting at serv
 Yes, there is __onComplete__ action that is invoked after successfully end of stream.
 ```java
 influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000,
-        queryResult -> {
-            System.out.println("result = " + queryResult);
-        }, 
-        () -> {
-            System.out.println("The query successfully finished.");
-        });
+    queryResult -> {
+        System.out.println("result = " + queryResult);
+    }, 
+    () -> {
+        System.out.println("The query successfully finished.");
+    });
+```
+
+## Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?
+Yes, there is __onNext__ bi-consumer with capability to discontinue a streaming query.
+```java
+influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000, (cancellable, queryResult) -> {
+
+    // found what I'm looking for ?
+    if (foundRequest(queryResult)) {
+        // yes => cancel query
+        cancellable.cancel();
+    }
+
+    // no => process next result
+    processResult(queryResult);
+});
 ```
 
 ## Is default config security setup TLS 1.2 ?

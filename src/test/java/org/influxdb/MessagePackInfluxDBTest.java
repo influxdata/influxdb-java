@@ -8,7 +8,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.BatchPoints;
@@ -205,6 +208,51 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     Assertions.assertEquals(bySecond, timeP3);
 
     this.influxDB.deleteDatabase(dbName);
+  }
+
+  @Override
+  @Test
+  public void testChunking() throws InterruptedException {
+    if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+      // do not test version 0.13 and 1.0
+      return;
+    }
+    String dbName = "write_unittest_" + System.currentTimeMillis();
+    this.influxDB.createDatabase(dbName);
+    String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+    BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+    Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+    Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+    Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+    batchPoints.point(point1);
+    batchPoints.point(point2);
+    batchPoints.point(point3);
+    this.influxDB.write(batchPoints);
+
+    Thread.sleep(2000);
+    final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+    Query query = new Query("SELECT * FROM disk", dbName);
+    this.influxDB.query(query, 2, new Consumer<QueryResult>() {
+      @Override
+      public void accept(QueryResult result) {
+        queue.add(result);
+      }});
+
+    Thread.sleep(2000);
+    this.influxDB.deleteDatabase(dbName);
+
+    QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+    Assertions.assertNotNull(result);
+    System.out.println(result);
+    Assertions.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+    result = queue.poll(20, TimeUnit.SECONDS);
+    Assertions.assertNotNull(result);
+    System.out.println(result);
+    Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+    result = queue.poll(5, TimeUnit.SECONDS);
+    Assertions.assertNull(result);
   }
 
   @Test

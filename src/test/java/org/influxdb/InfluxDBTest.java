@@ -36,6 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -780,6 +782,11 @@ public class InfluxDBTest {
       Assertions.assertNotNull(result);
       System.out.println(result);
       Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+      result = queue.poll(20, TimeUnit.SECONDS);
+      Assertions.assertNotNull(result);
+      System.out.println(result);
+      Assertions.assertEquals("DONE", result.getError());
   }
 
     /**
@@ -870,6 +877,86 @@ public class InfluxDBTest {
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		Query query = new Query("UNKNOWN_QUERY", dbName);
 		this.influxDB.query(query, 10, result -> {}, countDownLatch::countDown);
+		this.influxDB.deleteDatabase(dbName);
+
+		boolean await = countDownLatch.await(5, TimeUnit.SECONDS);
+		Assertions.assertFalse(await, "The onComplete action arrive!");
+	}
+
+	@Test
+	public void testChunkingCancelQuery() throws InterruptedException {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+		for (int i = 0; i < 10; i++)
+		{
+			Point point = Point.measurement("disk")
+					.tag("atag", "a")
+					.addField("used", 60L + (i * 10))
+					.addField("free", 1L + i)
+					.time(i, TimeUnit.SECONDS)
+					.build();
+
+			batchPoints.point(point);
+		}
+
+		Assertions.assertEquals(batchPoints.getPoints().size(), 10);
+		this.influxDB.write(batchPoints);
+		Thread.sleep(2000);
+
+		LongAdder chunkCount = new LongAdder();
+
+		Query query = new Query("SELECT * FROM disk", dbName);
+		this.influxDB.query(query, 2, (cancellable, queryResult) -> {
+
+			chunkCount.increment();
+
+			// after three chunks stop stream ("free" field == 5)
+			Number free = (Number) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(2);
+			if (free.intValue() == 5) {
+
+				cancellable.cancel();
+			}
+		});
+
+		Thread.sleep(5_000);
+
+		Assertions.assertEquals(3, chunkCount.intValue());
+	}
+
+	@Test
+	public void testChunkingCancelQueryOnComplete() throws InterruptedException {
+
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.createDatabase(dbName);
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+		Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+		Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
+		batchPoints.point(point3);
+		this.influxDB.write(batchPoints);
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		Thread.sleep(2000);
+		Query query = new Query("SELECT * FROM disk", dbName);
+		this.influxDB.query(query, 2, (cancellable, queryResult) -> cancellable.cancel(), countDownLatch::countDown);
+
+		Thread.sleep(2000);
 		this.influxDB.deleteDatabase(dbName);
 
 		boolean await = countDownLatch.await(5, TimeUnit.SECONDS);

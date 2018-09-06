@@ -5,6 +5,7 @@ import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import retrofit2.Call;
 
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -103,6 +104,28 @@ public interface InfluxDB {
     /** application/x-msgpack format. */
     MSGPACK
   }
+
+  /**
+   * A cancelable allows to discontinue a streaming query.
+   */
+  public interface Cancellable {
+
+    /**
+     * Cancel the streaming query call.
+     *
+     * @see Call#cancel()
+     */
+    void cancel();
+
+    /**
+     * Return {@code true} if the {@link Cancellable#cancel()} was called.
+     *
+     * @return {@code true} if the {@link Cancellable#cancel()} was called
+     * @see Call#isCanceled()
+     */
+    boolean isCanceled();
+  }
+
   /**
    * Set the loglevel which is used for REST related actions.
    *
@@ -464,11 +487,37 @@ public interface InfluxDB {
    * @param chunkSize
    *            the number of QueryResults to process in one chunk.
    * @param onNext
+   *            the consumer to invoke for each received QueryResult; with capability to discontinue a streaming query
+   */
+  public void query(Query query, int chunkSize, BiConsumer<Cancellable, QueryResult> onNext);
+
+  /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param onNext
    *            the consumer to invoke for each received QueryResult
    * @param onComplete
    *            the onComplete to invoke for successfully end of stream
    */
   public void query(Query query, int chunkSize, Consumer<QueryResult> onNext, Runnable onComplete);
+
+  /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param onNext
+   *            the consumer to invoke for each received QueryResult; with capability to discontinue a streaming query
+   * @param onComplete
+   *            the onComplete to invoke for successfully end of stream
+   */
+  public void query(Query query, int chunkSize, BiConsumer<Cancellable, QueryResult> onNext, Runnable onComplete);
 
   /**
    * Execute a query against a database.
