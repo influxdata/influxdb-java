@@ -4,7 +4,6 @@ package org.influxdb.impl;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,7 +41,10 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -78,7 +80,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
-  private final InetAddress hostAddress;
+  private final String hostName;
   private String version;
   private final Retrofit retrofit;
   private final InfluxDBService influxDBService;
@@ -116,7 +118,7 @@ public class InfluxDBImpl implements InfluxDB {
   public InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
       final ResponseFormat responseFormat) {
     this.messagePack = ResponseFormat.MSGPACK.equals(responseFormat);
-    this.hostAddress = parseHostAddress(url);
+    this.hostName = parseHost(url);
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
     setLogLevel(LOG_LEVEL);
@@ -162,7 +164,7 @@ public class InfluxDBImpl implements InfluxDB {
       final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
     super();
     this.messagePack = false;
-    this.hostAddress = parseHostAddress(url);
+    this.hostName = parseHost(url);
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
     setLogLevel(LOG_LEVEL);
@@ -187,18 +189,25 @@ public class InfluxDBImpl implements InfluxDB {
     setRetentionPolicy(retentionPolicy);
   }
 
-  private InetAddress parseHostAddress(final String url) {
-      HttpUrl httpUrl = HttpUrl.parse(url);
+  private String parseHost(final String url) {
+    String hostName;
+    try {
+      URI uri = new URI(url);
+      hostName = uri.getHost();
+    } catch (URISyntaxException e1) {
+      throw new IllegalArgumentException("Unable to parse url: " + url, e1);
+    }
 
-      if (httpUrl == null) {
-          throw new IllegalArgumentException("Unable to parse url: " + url);
-      }
+    if (hostName == null) {
+      throw new IllegalArgumentException("Unable to parse url: " + url);
+    }
 
-      try {
-          return InetAddress.getByName(httpUrl.host());
-      } catch (UnknownHostException e) {
-          throw new InfluxDBIOException(e);
-      }
+    try {
+      InetAddress.getByName(hostName);
+    } catch (UnknownHostException e) {
+      throw new InfluxDBIOException(e);
+    }
+    return hostName;
   }
 
   @Override
@@ -465,7 +474,7 @@ public class InfluxDBImpl implements InfluxDB {
     initialDatagramSocket();
     byte[] bytes = records.getBytes(StandardCharsets.UTF_8);
     try {
-        datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
+        datagramSocket.send(new DatagramPacket(bytes, bytes.length, new InetSocketAddress(hostName, udpPort)));
     } catch (IOException e) {
         throw new InfluxDBIOException(e);
     }

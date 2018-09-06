@@ -645,7 +645,23 @@ public class InfluxDBTest {
 		Assertions.assertThrows(RuntimeException.class, () -> {
 			InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
 		});
+		
+		String unresolvableHost = "a.b.c";
+		Assertions.assertThrows(InfluxDBIOException.class, () -> {
+		  InfluxDBFactory.connect("http://" + unresolvableHost + ":" + TestUtils.getInfluxPORT(true));
+		});
 	}
+
+	@Test
+  public void testInvalidUrlHandling(){
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      InfluxDBFactory.connect("@@@http://@@@");
+    });
+    
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      InfluxDBFactory.connect("http://@@@abc");
+    });
+  }
 
 	@Test
 	public void testBatchEnabledTwice() {
