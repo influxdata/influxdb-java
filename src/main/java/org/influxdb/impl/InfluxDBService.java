@@ -76,7 +76,18 @@ interface InfluxDBService {
       @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
+  @GET("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
+          @Query(EPOCH) String epoch, @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
   @POST("query?chunked=true")
   public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
           @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+
+  @Streaming
+  @POST("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
+          @Query(EPOCH) String precision, @Query(CHUNK_SIZE) int chunkSize,
+          @Query(value = PARAMS, encoded = true) String params);
 }

@@ -457,6 +457,37 @@ public interface InfluxDB {
   public void query(Query query, int chunkSize, Consumer<QueryResult> consumer);
 
   /**
+   * Execute a streaming postQuery against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param consumer
+   *            the consumer to invoke for each received QueryResult
+   * @param timeUnit
+   *            the time unit of the results.
+   */
+  public void query(Query query, TimeUnit timeUnit, int chunkSize, Consumer<QueryResult> consumer);
+
+  /**
+   * Execute a streaming postQuery against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param timeUnit
+   *            the time unit of the results.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param onSuccess
+   *            the consumer to invoke when result is received
+   * @param onFailure
+   *            the consumer to invoke when error is thrown
+   */
+  public void query(Query query, TimeUnit timeUnit, int chunkSize,
+          Consumer<QueryResult> onSuccess, Consumer<Throwable> onFailure);
+
+  /**
    * Execute a query against a database.
    *
    * @param query

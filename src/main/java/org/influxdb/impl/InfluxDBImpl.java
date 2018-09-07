@@ -566,42 +566,81 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
-        Call<ResponseBody> call = null;
-        if (query instanceof BoundParameterQuery) {
-            BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
-                    boundParameterQuery.getParameterJsonWithUrlEncoded());
-        } else {
-            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
-        }
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
+    query(query, null, chunkSize, consumer, null);
+  }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final TimeUnit timeUnit,
+      final int chunkSize, final Consumer<QueryResult> consumer) {
+    query(query, timeUnit, chunkSize, consumer, null);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final TimeUnit timeUnit, final int chunkSize,
+      final Consumer<QueryResult> onSuccess, final Consumer<Throwable> onFailure) {
+    Call<ResponseBody> call = makeResponseBodyCall(query, timeUnit, chunkSize);
     call.enqueue(new Callback<ResponseBody>() {
       @Override
       public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
         try {
           if (response.isSuccessful()) {
             ResponseBody chunkedBody = response.body();
-            chunkProccesor.process(chunkedBody, consumer);
+            chunkProccesor.process(chunkedBody, onSuccess);
           } else {
             // REVIEW: must be handled consistently with IOException.
             ResponseBody errorBody = response.errorBody();
             if (errorBody != null) {
-              throw new InfluxDBException(errorBody.string());
+              InfluxDBException errorBodyException = new InfluxDBException(errorBody.string());
+              if (onFailure != null) {
+                onFailure.accept(errorBodyException);
+              } else {
+                throw errorBodyException;
+              }
             }
           }
         } catch (IOException e) {
           QueryResult queryResult = new QueryResult();
           queryResult.setError(e.toString());
-          consumer.accept(queryResult);
+          onSuccess.accept(queryResult);
         }
       }
 
-            @Override
-            public void onFailure(final Call<ResponseBody> call, final Throwable t) {
-                throw new InfluxDBException(t);
-            }
-        });
+      @Override
+      public void onFailure(final Call<ResponseBody> call, final Throwable t) {
+        if (onFailure != null) {
+          onFailure.accept(t);
+        } else {
+          throw new InfluxDBException(t);
+        }
+      }
+    });
+  }
+
+  private Call<ResponseBody> makeResponseBodyCall(final Query query, final TimeUnit timeUnit, final int chunkSize) {
+    if (query instanceof BoundParameterQuery) {
+      BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+      if (timeUnit == null) {
+        return this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+                                          boundParameterQuery.getParameterJsonWithUrlEncoded());
+      }
+      return this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(),
+                                        TimeUtil.toTimePrecision(timeUnit),
+                                        chunkSize, boundParameterQuery.getParameterJsonWithUrlEncoded());
+    } else {
+      if (timeUnit == null) {
+        return this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+      }
+
+      return this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(),
+                                               TimeUtil.toTimePrecision(timeUnit), chunkSize);
+    }
   }
 
   /**
