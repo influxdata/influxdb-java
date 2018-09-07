@@ -3,13 +3,17 @@
 ## 2.13 [unreleased]
 
 ### Fixes
-
+- MessagePack queries: Exception during parsing InfluxDB version [macOS] [PR #487](https://github.com/influxdata/influxdb-java/issues/487)
 - The InfluxDBResultMapper is able to handle results with a different time precision [PR #501](https://github.com/influxdata/influxdb-java/pull/501)
+- UDP target host address is cached [PR #502](https://github.com/influxdata/influxdb-java/issues/502)
+- Error messages from server not parsed correctly when using msgpack [PR #506](https://github.com/influxdata/influxdb-java/issues/506)
+- Response body must be closed properly in case of JSON response [PR #514](https://github.com/influxdata/influxdb-java/issues/514)
 
 ### Features
 
 - Support for Basic Authentication [PR #492](https://github.com/influxdata/influxdb-java/pull/492)
 - Added possibility to reuse client as a core part of [influxdb-java-reactive](https://github.com/bonitoo-io/influxdb-java-reactive) client [PR #493](https://github.com/influxdata/influxdb-java/pull/493)
+- Retry capability for writing of BatchPoints [PR #503](https://github.com/influxdata/influxdb-java/issues/503)
 
 ## 2.12 [2018-07-31]
 
