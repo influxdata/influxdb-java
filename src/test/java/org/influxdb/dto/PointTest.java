@@ -1,19 +1,21 @@
 package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.junit.jupiter.api.Test;
+import org.influxdb.BuilderException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
@@ -190,7 +192,7 @@ public class PointTest {
 
 		pointBuilder.field("field1", "value1");
 		pointBuilder.field("field2", (Number) null);
-		pointBuilder.field("field3", (Integer) 1);
+		pointBuilder.field("field3", 1);
 
 		Point point = pointBuilder.build();
 
@@ -477,4 +479,269 @@ public class PointTest {
       String tags = lineProtocol.substring(lineProtocol.indexOf(',') + 1, lineProtocol.indexOf(' '));
       assertThat(tags).isEqualTo(correctOrder);
     }
+
+
+  @Test
+  public void testAddFieldsFromPOJONullCheck() {
+    Assertions.assertThrows(NullPointerException.class, () -> {
+      Point.measurementByPOJO(null);
+    });
+  }
+
+  @Test
+  public void testAddFieldsFromPOJOWithoutAnnotation() {
+    PojoWithoutAnnotation pojo = new PojoWithoutAnnotation();
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      Point.measurementByPOJO(pojo.getClass());
+    });
+  }
+
+  @Test
+  public void testAddFieldsFromPOJOWithoutColumnAnnotation() {
+    PojoWithMeasurement pojo = new PojoWithMeasurement();
+    Assertions.assertThrows(BuilderException.class, () -> {
+      Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo);
+    });
+  }
+
+  @Test
+  public void testAddFieldsFromPOJOWithoutData() {
+    Pojo pojo = new Pojo();
+    Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+  }
+
+  @Test
+  public void testAddFieldsFromPOJOWithData() {
+    Pojo pojo = new Pojo();
+    pojo.booleanObject = true;
+    pojo.booleanPrimitive = false;
+    pojo.doubleObject = 2.0;
+    pojo.doublePrimitive = 3.1;
+    pojo.integerObject = 32;
+    pojo.integerPrimitive = 64;
+    pojo.longObject = 1L;
+    pojo.longPrimitive = 2L;
+    pojo.time = Instant.now();
+    pojo.uuid = "TEST";
+
+    Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+
+    Assertions.assertEquals(pojo.booleanObject, p.getFields().get("booleanObject"));
+    Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+    Assertions.assertEquals(pojo.doubleObject, p.getFields().get("doubleObject"));
+    Assertions.assertEquals(pojo.doublePrimitive, p.getFields().get("doublePrimitive"));
+    Assertions.assertEquals(pojo.integerObject, p.getFields().get("integerObject"));
+    Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
+    Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
+    Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
+    Assertions.assertEquals(pojo.time, p.getFields().get("time"));
+    Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
+  }
+
+  @Test
+  public void testAddFieldsFromPOJOWithPublicAttributes() {
+
+    PojoWithPublicAttributes pojo = new PojoWithPublicAttributes();
+    pojo.booleanObject = true;
+    pojo.booleanPrimitive = false;
+    pojo.doubleObject = 2.0;
+    pojo.doublePrimitive = 3.1;
+    pojo.integerObject = 32;
+    pojo.integerPrimitive = 64;
+    pojo.longObject = 1L;
+    pojo.longPrimitive = 2L;
+    pojo.time = Instant.now();
+    pojo.uuid = "TEST";
+
+    Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+
+    Assertions.assertEquals(pojo.booleanObject, p.getFields().get("booleanObject"));
+    Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+    Assertions.assertEquals(pojo.doubleObject, p.getFields().get("doubleObject"));
+    Assertions.assertEquals(pojo.doublePrimitive, p.getFields().get("doublePrimitive"));
+    Assertions.assertEquals(pojo.integerObject, p.getFields().get("integerObject"));
+    Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
+    Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
+    Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
+    Assertions.assertEquals(pojo.time, p.getFields().get("time"));
+    Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
+  }
+
+  static class PojoWithoutAnnotation {
+
+    private String id;
+
+    public String getId() {
+      return id;
+    }
+
+    public void setId(String id) {
+      this.id = id;
+    }
+  }
+
+  @Measurement(name = "mymeasurement")
+  static class PojoWithMeasurement {
+
+    private String id;
+
+    public String getId() {
+      return id;
+    }
+
+    public void setId(String id) {
+      this.id = id;
+    }
+  }
+
+
+  @Measurement(name = "mymeasurement")
+  static class Pojo {
+
+    @Column(name = "booleanPrimitive")
+    private boolean booleanPrimitive;
+
+    @Column(name = "time")
+    private Instant time;
+
+    @Column(name = "uuid", tag = true)
+    private String uuid;
+
+    @Column(name = "doubleObject")
+    private Double doubleObject;
+
+    @Column(name = "longObject")
+    private Long longObject;
+
+    @Column(name = "integerObject")
+    private Integer integerObject;
+
+    @Column(name = "doublePrimitive")
+    private double doublePrimitive;
+
+    @Column(name = "longPrimitive")
+    private long longPrimitive;
+
+    @Column(name = "integerPrimitive")
+    private int integerPrimitive;
+
+    @Column(name = "booleanObject")
+    private Boolean booleanObject;
+
+
+    public Instant getTime() {
+      return time;
+    }
+
+    public void setTime(Instant time) {
+      this.time = time;
+    }
+
+    public String getUuid() {
+      return uuid;
+    }
+
+    public void setUuid(String uuid) {
+      this.uuid = uuid;
+    }
+
+    public Double getDoubleObject() {
+      return doubleObject;
+    }
+
+    public void setDoubleObject(Double doubleObject) {
+      this.doubleObject = doubleObject;
+    }
+
+    public Long getLongObject() {
+      return longObject;
+    }
+
+    public void setLongObject(Long longObject) {
+      this.longObject = longObject;
+    }
+
+    public Integer getIntegerObject() {
+      return integerObject;
+    }
+
+    public void setIntegerObject(Integer integerObject) {
+      this.integerObject = integerObject;
+    }
+
+    public double getDoublePrimitive() {
+      return doublePrimitive;
+    }
+
+    public void setDoublePrimitive(double doublePrimitive) {
+      this.doublePrimitive = doublePrimitive;
+    }
+
+    public long getLongPrimitive() {
+      return longPrimitive;
+    }
+
+    public void setLongPrimitive(long longPrimitive) {
+      this.longPrimitive = longPrimitive;
+    }
+
+    public int getIntegerPrimitive() {
+      return integerPrimitive;
+    }
+
+    public void setIntegerPrimitive(int integerPrimitive) {
+      this.integerPrimitive = integerPrimitive;
+    }
+
+    public Boolean getBooleanObject() {
+      return booleanObject;
+    }
+
+    public void setBooleanObject(Boolean booleanObject) {
+      this.booleanObject = booleanObject;
+    }
+
+    public boolean isBooleanPrimitive() {
+      return booleanPrimitive;
+    }
+
+    public void setBooleanPrimitive(boolean booleanPrimitive) {
+      this.booleanPrimitive = booleanPrimitive;
+    }
+
+  }
+
+  @Measurement(name = "mymeasurement")
+  static class PojoWithPublicAttributes {
+
+    @Column(name = "booleanPrimitive")
+    public boolean booleanPrimitive;
+
+    @Column(name = "time")
+    public Instant time;
+
+    @Column(name = "uuid", tag = true)
+    public String uuid;
+
+    @Column(name = "doubleObject")
+    public Double doubleObject;
+
+    @Column(name = "longObject")
+    public Long longObject;
+
+    @Column(name = "integerObject")
+    public Integer integerObject;
+
+    @Column(name = "doublePrimitive")
+    public double doublePrimitive;
+
+    @Column(name = "longPrimitive")
+    public long longPrimitive;
+
+    @Column(name = "integerPrimitive")
+    public int integerPrimitive;
+
+    @Column(name = "booleanObject")
+    public Boolean booleanObject;
+  }
 }

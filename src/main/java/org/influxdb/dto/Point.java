@@ -1,5 +1,10 @@
 package org.influxdb.dto;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
@@ -10,7 +15,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
+import org.influxdb.BuilderException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
 import org.influxdb.impl.Preconditions;
 
 /**
@@ -51,6 +58,28 @@ public class Point {
 
   public static Builder measurement(final String measurement) {
     return new Builder(measurement);
+  }
+
+  /**
+   * Create a new Point Build build to create a new Point in a fluent manner from a POJO.
+   *
+   * @param clazz Class of the POJO
+   * @return the Builder instance
+   */
+
+  public static Builder measurementByPOJO(final Class<?> clazz) {
+    Objects.requireNonNull(clazz, "clazz");
+    throwExceptionIfMissingAnnotation(clazz, Measurement.class);
+    String measurementName = findMeasurementName(clazz);
+    return new Builder(measurementName);
+  }
+
+  private static void throwExceptionIfMissingAnnotation(final Class<?> clazz,
+      final Class<? extends Annotation> expectedClass) {
+    if (!clazz.isAnnotationPresent(expectedClass)) {
+      throw new IllegalArgumentException("Class " + clazz.getName() + " is not annotated with @"
+          + Measurement.class.getSimpleName());
+    }
   }
 
   /**
@@ -197,6 +226,104 @@ public class Point {
     }
 
     /**
+     * Adds field map from object by reflection using {@link org.influxdb.annotation.Column}
+     * annotation.
+     *
+     * @param pojo POJO Object with annotation {@link org.influxdb.annotation.Column} on fields
+     * @return the Builder instance
+     */
+    public Builder addFieldsFromPOJO(final Object pojo) {
+
+      Class<? extends Object> clazz = pojo.getClass();
+
+      for (Field field : clazz.getDeclaredFields()) {
+
+        Column column = field.getAnnotation(Column.class);
+
+        if (column == null) {
+          continue;
+        }
+
+        String fieldName = column.name();
+
+        if (isPublic(field)) {
+          addFieldByAttribute(pojo, field, column, fieldName);
+        } else {
+          addFieldByMethod(pojo, clazz, field, column, fieldName);
+        }
+      }
+
+      if (this.fields.isEmpty()) {
+        throw new BuilderException("Class " + pojo.getClass().getName()
+            + " has no @" + Column.class.getSimpleName() + " annotation");
+      }
+
+      return this;
+    }
+
+    private boolean isPublic(final Field field) {
+      int modifiers = field.getModifiers();
+      return Modifier.isPublic(modifiers);
+    }
+
+    private void addFieldByMethod(final Object pojo, final Class<? extends Object> clazz,
+        final Field field, final Column column, final String fieldName) {
+      String getterName = guessGetterName(field, fieldName);
+
+      try {
+        Class<?>[] methodArgs = null;
+        Method getter = clazz.getMethod(getterName, methodArgs);
+        Object fieldValue = getter.invoke(pojo);
+
+        if (column.tag()) {
+          this.tags.put(fieldName, (String) fieldValue);
+        } else {
+          this.fields.put(fieldName, fieldValue);
+        }
+
+      } catch (NoSuchMethodException | SecurityException | IllegalAccessException
+          | IllegalArgumentException | InvocationTargetException e) {
+
+        throw new BuilderException(
+            "Method " + getterName + " could not found on class " + clazz.getSimpleName());
+
+      }
+    }
+
+    private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
+        final String fieldName) {
+      try {
+        Object fieldValue = field.get(pojo);
+
+        if (column.tag()) {
+          this.tags.put(fieldName, (String) fieldValue);
+        } else {
+          this.fields.put(fieldName, fieldValue);
+        }
+
+      } catch (IllegalArgumentException | IllegalAccessException e) {
+        // Can not happen since we use metadata got from the object
+        throw new BuilderException(
+            "Field " + fieldName + " could not found on class " + pojo.getClass().getSimpleName());
+      }
+    }
+
+    private String guessGetterName(final Field field, final String fieldName) {
+      StringBuilder stringBuilder = new StringBuilder();
+
+      if (field.getType().isAssignableFrom(boolean.class)) {
+        stringBuilder.append("is");
+      } else {
+        stringBuilder.append("get");
+      }
+
+      stringBuilder.append(fieldName.substring(0, 1).toUpperCase());
+      stringBuilder.append(fieldName.substring(1));
+
+      return stringBuilder.toString();
+    }
+
+    /**
      * Create a new Point.
      *
      * @return the newly created Point.
@@ -253,6 +380,13 @@ public class Point {
    */
   void setPrecision(final TimeUnit precision) {
     this.precision = precision;
+  }
+
+  /**
+   * @return the fields
+   */
+  Map<String, Object> getFields() {
+    return this.fields;
   }
 
   /**
@@ -443,5 +577,9 @@ public class Point {
       sb.setLength(length);
       return sb;
     }
+  }
+
+  private static String findMeasurementName(final Class<?> clazz) {
+    return clazz.getAnnotation(Measurement.class).name();
   }
 }
