@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -91,9 +92,17 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
 
     // THEN the measure points have a timestamp with second precision
     QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
-    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), t1);
-    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), t2);
-    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), t3);
+    long bySecond = TimeUnit.NANOSECONDS.toSeconds(
+        (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0));
+    Assertions.assertEquals(bySecond, t1);
+    
+    bySecond = TimeUnit.NANOSECONDS.toSeconds(
+        (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0));
+    Assertions.assertEquals(bySecond, t2);
+    
+    bySecond = TimeUnit.NANOSECONDS.toSeconds(
+        (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0));
+    Assertions.assertEquals(bySecond, t3);
 
     this.influxDB.deleteDatabase(dbName);
   }
@@ -182,9 +191,19 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     // THEN the measure points have a timestamp with second precision
     QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
-    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
-    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
+    
+    long bySecond = TimeUnit.NANOSECONDS.toSeconds(
+        (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0));
+    Assertions.assertEquals(bySecond, timeP1);
+
+    bySecond = TimeUnit.NANOSECONDS.toSeconds(
+        (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0));
+    Assertions.assertEquals(bySecond, timeP2);
+    
+    bySecond = TimeUnit.NANOSECONDS.toSeconds(
+        (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0));
+    Assertions.assertEquals(bySecond, timeP3);
+
     this.influxDB.deleteDatabase(dbName);
   }
 
