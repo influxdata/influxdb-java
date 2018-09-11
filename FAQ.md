@@ -8,10 +8,10 @@
 - [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client-)
 - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server-)
 
-
 ## Security
 
 - [Is default config security setup TLS 1.2 ?](#is-default-config-security-setup-tls-12-)
+- [How to use SSL client certificate authentication](#how-to-use-ssl-client-certificate-authentication-)
 
 ## Is the batch part of the client thread safe ?
 
@@ -73,3 +73,37 @@ SSLv3/TLSv1/TLSv1.1/TLSv1.2
 
 So if the server supports TLS1.2, the communication should be encrypted by TLS 1.2 (during the handshake the client will provide the list of accepted security protocols and the server will pick one, so this case the server would pick TLS 1.2)
 
+## How to use SSL client certificate authentication
+
+To use SSL certificate authentication you need to setup `SslSocketFactory` on OkHttpClient.Builder.
+
+Here is the example, how to create InfluxDB client with the new SSLContext with custom identity keystore (p12) and truststore (jks):
+
+```java
+KeyStore keyStore = KeyStore.getInstance("PKCS12");
+keyStore.load(new FileInputStream("conf/keystore.p12"), "changeme".toCharArray());
+
+KeyStore trustStore = KeyStore.getInstance("JKS");
+trustStore.load(new FileInputStream("conf/trustStore.jks"), "changeme".toCharArray());
+
+SSLContext sslContext = SSLContext.getInstance("SSL");
+
+KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+keyManagerFactory.init(keyStore, "changeme".toCharArray());
+
+TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+trustManagerFactory.init(trustStore);
+
+TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+
+sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
+sslContext.getDefaultSSLParameters().setNeedClientAuth(true);
+
+OkHttpClient.Builder okhttpClientBuilder = new OkHttpClient.Builder();
+okhttpClientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustManagers[0]);
+
+InfluxDB influxDB = InfluxDBFactory.connect("https://proxy_host:9086", okhttpClientBuilder);
+
+```
+InfluxDB (v1.6.2) does not have built-in support for client certificate ssl authentication. 
+SSL must be handled by http proxy such as Haproxy, nginx...
