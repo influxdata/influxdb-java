@@ -8,6 +8,7 @@
 - UDP target host address is cached [PR #502](https://github.com/influxdata/influxdb-java/issues/502)
 - Error messages from server not parsed correctly when using msgpack [PR #506](https://github.com/influxdata/influxdb-java/issues/506)
 - Response body must be closed properly in case of JSON response [PR #514](https://github.com/influxdata/influxdb-java/issues/514)
+- Time is serialized not consistently in MsgPack and Json, missing millis and nanos in MsgPack[PR #517](https://github.com/influxdata/influxdb-java/issues/517)
 
 ### Features
 
