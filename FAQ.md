@@ -7,6 +7,8 @@
 - [And if so, is there a single thread in the background that is emptying batch to the server ?](#and-if-so-is-there-a-single-thread-in-the-background-that-is-emptying-batch-to-the-server-)
 - [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client-)
 - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server-)
+- [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived-)
+- [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for-)
 
 ## Security
 
@@ -60,6 +62,34 @@ org.influxdb.InfluxDBIOException: java.net.SocketException: Connection reset by 
 Form version 2.9, influxdb-java introduces new error handling feature, the client will try to back off and rewrite failed wites on some recoverable errors (list of recoverable error : [Handling-errors-of-InfluxDB-under-high-load](https://github.com/influxdata/influxdb-java/wiki/Handling-errors-of-InfluxDB-under-high-load))
 
 So in case the number of write requests exceeds Concurrent write setting at server side, influxdb-java can try to make sure no writing points get lost (due to rejection from server)
+
+## Is there a way to tell that all query chunks have arrived ?
+Yes, there is __onComplete__ action that is invoked after successfully end of stream.
+```java
+influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000,
+    queryResult -> {
+        System.out.println("result = " + queryResult);
+    }, 
+    () -> {
+        System.out.println("The query successfully finished.");
+    });
+```
+
+## Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?
+Yes, there is __onNext__ bi-consumer with capability to discontinue a streaming query.
+```java
+influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000, (cancellable, queryResult) -> {
+
+    // found what I'm looking for ?
+    if (foundRequest(queryResult)) {
+        // yes => cancel query
+        cancellable.cancel();
+    }
+
+    // no => process next result
+    processResult(queryResult);
+});
+```
 
 ## Is default config security setup TLS 1.2 ?
 

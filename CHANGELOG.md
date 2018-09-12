@@ -14,6 +14,8 @@
 - Support for Basic Authentication [PR #492](https://github.com/influxdata/influxdb-java/pull/492)
 - Added possibility to reuse client as a core part of [influxdb-java-reactive](https://github.com/bonitoo-io/influxdb-java-reactive) client [PR #493](https://github.com/influxdata/influxdb-java/pull/493)
 - Retry capability for writing of BatchPoints [PR #503](https://github.com/influxdata/influxdb-java/issues/503)
+- Added `BiConsumer` with capability to discontinue a streaming query [Issue #515](https://github.com/influxdata/influxdb-java/issues/515)
+- Added `onComplete` action that is invoked after successfully end of streaming query [Issue #515](https://github.com/influxdata/influxdb-java/issues/515)
 
 ## 2.12 [2018-07-31]
 

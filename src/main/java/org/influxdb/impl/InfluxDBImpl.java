@@ -48,6 +48,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -77,7 +78,7 @@ public class InfluxDBImpl implements InfluxDB {
    * This static constant holds the http logging log level expected in DEBUG mode
    * It is set by System property {@code org.influxdb.InfluxDB.logLevel}.
    *
-   * @see org.influxdb.impl.LOG_LEVEL_PROPERTY
+   * @see org.influxdb.InfluxDB#LOG_LEVEL_PROPERTY
    */
   private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
@@ -566,7 +567,33 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext) {
+    query(query, chunkSize, onNext, () -> { });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext) {
+    query(query, chunkSize, onNext, () -> { });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext,
+                    final Runnable onComplete) {
+    query(query, chunkSize, (cancellable, queryResult) -> onNext.accept(queryResult), onComplete);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
+                    final Runnable onComplete) {
         Call<ResponseBody> call = null;
         if (query instanceof BoundParameterQuery) {
             BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
@@ -579,10 +606,23 @@ public class InfluxDBImpl implements InfluxDB {
     call.enqueue(new Callback<ResponseBody>() {
       @Override
       public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
+
+        Cancellable cancellable = new Cancellable() {
+          @Override
+          public void cancel() {
+            call.cancel();
+          }
+
+          @Override
+          public boolean isCanceled() {
+            return call.isCanceled();
+          }
+        };
+
         try {
           if (response.isSuccessful()) {
             ResponseBody chunkedBody = response.body();
-            chunkProccesor.process(chunkedBody, consumer);
+            chunkProccesor.process(chunkedBody, cancellable, onNext, onComplete);
           } else {
             // REVIEW: must be handled consistently with IOException.
             ResponseBody errorBody = response.errorBody();
@@ -593,7 +633,7 @@ public class InfluxDBImpl implements InfluxDB {
         } catch (IOException e) {
           QueryResult queryResult = new QueryResult();
           queryResult.setError(e.toString());
-          consumer.accept(queryResult);
+          onNext.accept(cancellable, queryResult);
         }
       }
 
@@ -852,17 +892,24 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   private interface ChunkProccesor {
-    void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer) throws IOException;
+    void process(ResponseBody chunkedBody, Cancellable cancellable,
+                 BiConsumer<Cancellable, QueryResult> consumer, Runnable onComplete) throws IOException;
   }
 
   private class MessagePackChunkProccesor implements ChunkProccesor {
     @Override
-    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+    public void process(final ResponseBody chunkedBody, final Cancellable cancellable,
+                        final BiConsumer<Cancellable, QueryResult> consumer, final Runnable onComplete)
+            throws IOException {
       MessagePackTraverser traverser = new MessagePackTraverser();
       try (InputStream is = chunkedBody.byteStream()) {
-        for (QueryResult result : traverser.traverse(is)) {
-          consumer.accept(result);
+        for (Iterator<QueryResult> it = traverser.traverse(is).iterator(); it.hasNext() && !cancellable.isCanceled();) {
+          QueryResult result = it.next();
+          consumer.accept(cancellable, result);
         }
+      }
+      if (!cancellable.isCanceled()) {
+        onComplete.run();
       }
     }
   }
@@ -875,19 +922,24 @@ public class InfluxDBImpl implements InfluxDB {
     }
 
     @Override
-    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+    public void process(final ResponseBody chunkedBody, final Cancellable cancellable,
+                        final BiConsumer<Cancellable, QueryResult> consumer, final Runnable onComplete)
+            throws IOException {
       try {
         BufferedSource source = chunkedBody.source();
-        while (true) {
+        while (!cancellable.isCanceled()) {
           QueryResult result = adapter.fromJson(source);
           if (result != null) {
-            consumer.accept(result);
+            consumer.accept(cancellable, result);
           }
         }
       } catch (EOFException e) {
         QueryResult queryResult = new QueryResult();
         queryResult.setError("DONE");
-        consumer.accept(queryResult);
+        consumer.accept(cancellable, queryResult);
+        if (!cancellable.isCanceled()) {
+          onComplete.run();
+        }
       } finally {
         chunkedBody.close();
       }
