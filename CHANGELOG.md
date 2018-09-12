@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.13 [unreleased]
+## 2.13 [2018-09-12]
 
 ### Fixes
 - MessagePack queries: Exception during parsing InfluxDB version [macOS] [PR #487](https://github.com/influxdata/influxdb-java/issues/487)
