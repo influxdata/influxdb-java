@@ -3,6 +3,7 @@ package org.influxdb.querybuilder;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.influxdb.querybuilder.clauses.ConjunctionClause;
+import org.influxdb.querybuilder.clauses.SelectRegexClause;
 
 public final class Appender {
 
@@ -89,6 +90,9 @@ public final class Appender {
       appendName((String) name, stringBuilder);
     } else if (name instanceof Column) {
       appendName(((Column) name).getName(), stringBuilder);
+    } else if (name instanceof SelectRegexClause) {
+      SelectRegexClause selectRegexClause = (SelectRegexClause) name;
+      selectRegexClause.appendTo(stringBuilder);
     } else if (name instanceof Function) {
       Function functionCall = (Function) name;
       stringBuilder.append(functionCall.getName()).append('(');

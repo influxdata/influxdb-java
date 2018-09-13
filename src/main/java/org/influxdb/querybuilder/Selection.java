@@ -1,122 +1,30 @@
 package org.influxdb.querybuilder;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+public interface Selection {
 
-public class Selection extends Select.Builder {
+  Selection distinct();
 
-  private static final List<Object> COUNT_ALL =
-      Collections.singletonList(new Function("COUNT", new RawText("*")));
+  Selection as(final String aliasName);
 
-  private Object currentSelection;
+  Selection all();
 
-  public Selection distinct() {
-    assertColumnIsSelected();
-    this.isDistinct = true;
-    Object distinct = new Distinct(currentSelection);
-    currentSelection = null;
-    return moveToColumns(distinct);
-  }
+  Selection countAll();
 
-  public Selection requiresPost() {
-    requiresPost = true;
-    return this;
-  }
+  Selection regex(final String clause);
 
-  public Selection as(final String aliasName) {
-    assertColumnIsSelected();
-    Object alias = new Alias(currentSelection, aliasName);
-    currentSelection = null;
-    return moveToColumns(alias);
-  }
+  Selection column(final String name);
 
-  private void assertColumnIsSelected() {
-    if (currentSelection == null) {
-      throw new IllegalStateException("You need to select a column prior to calling distinct");
-    }
-  }
+  Selection function(final String name, final Object... parameters);
 
-  private Selection moveToColumns(final Object name) {
-    if (columns == null) {
-      columns = new ArrayList<>();
-    }
+  Selection raw(final String text);
 
-    columns.add(name);
-    return this;
-  }
+  Selection count(final Object column);
 
-  private Selection addToCurrentColumn(final Object name) {
-    if (currentSelection != null) {
-      moveToColumns(currentSelection);
-    }
+  Selection max(final Object column);
 
-    currentSelection = name;
-    return this;
-  }
+  Selection min(final Object column);
 
-  public Select.Builder all() {
-    if (isDistinct) {
-      throw new IllegalStateException("DISTINCT function can only be used with one column");
-    }
-    if (columns != null) {
-      throw new IllegalStateException("Can't select all columns over columns selected previously");
-    }
-    if (currentSelection != null) {
-      throw new IllegalStateException("Can't select all columns over columns selected previously");
-    }
-    return this;
-  }
+  Selection sum(final Object column);
 
-  public Select.Builder countAll() {
-    if (columns != null) {
-      throw new IllegalStateException("Can't select all columns over columns selected previously");
-    }
-    if (currentSelection != null) {
-      throw new IllegalStateException("Can't select all columns over columns selected previously");
-    }
-    columns = COUNT_ALL;
-    return this;
-  }
-
-  public Selection column(final String name) {
-    return addToCurrentColumn(name);
-  }
-
-  public Selection function(final String name, final Object... parameters) {
-    return addToCurrentColumn(FunctionFactory.function(name, parameters));
-  }
-
-  public Selection raw(final String text) {
-    return addToCurrentColumn(new RawText(text));
-  }
-
-  public Selection count(final Object column) {
-    return addToCurrentColumn(FunctionFactory.count(column));
-  }
-
-  public Selection max(final Object column) {
-    return addToCurrentColumn(FunctionFactory.max(column));
-  }
-
-  public Selection min(final Object column) {
-    return addToCurrentColumn(FunctionFactory.min(column));
-  }
-
-  public Selection sum(final Object column) {
-    return addToCurrentColumn(FunctionFactory.sum(column));
-  }
-
-  public Selection mean(final Object column) {
-    return addToCurrentColumn(FunctionFactory.mean(column));
-  }
-
-  @Override
-  public Select from(final String database, final String table) {
-    if (currentSelection != null) {
-      moveToColumns(currentSelection);
-    }
-    currentSelection = null;
-    return super.from(database, table);
-  }
+  Selection mean(final Object column);
 }

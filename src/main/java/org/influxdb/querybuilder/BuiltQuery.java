@@ -15,7 +15,7 @@ import org.influxdb.querybuilder.clauses.NegativeRegexClause;
 import org.influxdb.querybuilder.clauses.RegexClause;
 import org.influxdb.querybuilder.clauses.SimpleClause;
 
-public abstract class BuiltQuery extends Query {
+public abstract class BuiltQuery extends Query implements QueryStringBuilder {
 
   public BuiltQuery(final String database) {
     super(null, database);
@@ -25,17 +25,15 @@ public abstract class BuiltQuery extends Query {
     super(null, database, requiresPost);
   }
 
-  abstract StringBuilder buildQueryString();
-
-  static StringBuilder addSemicolonIfNeeded(final StringBuilder stringBuilder) {
-    int length = moveToEndOfText(stringBuilder);
+  static StringBuilder addSemicolonIfMissing(final StringBuilder stringBuilder) {
+    int length = trimLast(stringBuilder);
     if (length == 0 || stringBuilder.charAt(length - 1) != ';') {
       stringBuilder.append(';');
     }
     return stringBuilder;
   }
 
-  private static int moveToEndOfText(final StringBuilder stringBuilder) {
+  static int trimLast(final StringBuilder stringBuilder) {
     int length = stringBuilder.length();
     while (length > 0 && stringBuilder.charAt(length - 1) <= ' ') {
       length -= 1;
@@ -49,7 +47,7 @@ public abstract class BuiltQuery extends Query {
   @Override
   public String getCommand() {
     StringBuilder sb = buildQueryString();
-    addSemicolonIfNeeded(sb);
+    addSemicolonIfMissing(sb);
     return sb.toString();
   }
 
@@ -67,16 +65,16 @@ public abstract class BuiltQuery extends Query {
     private QueryBuilder() {
     }
 
-    public static Select.Builder select(final String... columns) {
+    public static SelectionQueryImpl select(final String... columns) {
       return select((Object[]) columns);
     }
 
-    public static Select.Builder select(final Object... columns) {
-      return new Select.Builder(Arrays.asList(columns));
-    }
-
-    public static Selection select() {
-      return new Selection();
+    public static SelectionQueryImpl select(final Object... columns) {
+      WhereCoreImpl whereCore = new WhereCoreImpl();
+      SelectCoreImpl selectCore =
+          new SelectCoreImpl(null, Arrays.asList(columns), false, whereCore);
+      whereCore.setStatement(selectCore);
+      return new SelectionQueryImpl(new SelectionCoreImpl());
     }
 
     public static Clause eq(final String name, final Object value) {

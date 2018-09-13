@@ -427,7 +427,7 @@ public class BuiltQueryTest {
   @Test
   public void testWhere() {
     Query query = new Query("SELECT test1 FROM foobar WHERE test4=1;", DATABASE);
-    Select.Where where = select().column("test1").from(DATABASE, "foobar").where();
+    Where where = select().column("test1").from(DATABASE, "foobar").where();
     Query select = where.and(eq("test4", 1));
 
     assertEquals(query.getCommand(), select.getCommand());
@@ -479,9 +479,75 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testSLimit() {
+    Query query = new Query("SELECT test1 FROM foobar GROUP BY test2,test3 SLIMIT 1;", DATABASE);
+    Query select =
+        select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").sLimit(1);
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testInvalidSLimit() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").sLimit(-1),
+        "Invalid LIMIT value, must be strictly positive");
+  }
+
+  @Test
+  public void testSLimitSOffset() {
+    Query query =
+        new Query("SELECT test1 FROM foobar GROUP BY test2,test3 SLIMIT 1 SOFFSET 20;", DATABASE);
+    Query select =
+        select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").sLimit(1, 20);
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testLimitAndSLimitOffset() {
+    Query query =
+        new Query(
+            "SELECT test1 FROM foobar GROUP BY test2,test3 LIMIT 1 OFFSET 20 SLIMIT 1 SOFFSET 20;",
+            DATABASE);
+    Query select =
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .groupBy("test2", "test3")
+            .limit(1, 20)
+            .sLimit(1, 20);
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testCount() {
     Query query = new Query("SELECT COUNT(test1) FROM foobar LIMIT 1 OFFSET 20;", DATABASE);
     Query select = select().count("test1").from(DATABASE, "foobar").limit(1, 20);
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testTimezone() {
+    Query query =
+        new Query(
+            "SELECT test1 FROM foobar GROUP BY test2,test3 SLIMIT 1 tz('America/Chicago');",
+            DATABASE);
+    Query select =
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .groupBy("test2", "test3")
+            .sLimit(1)
+            .tz("America/Chicago");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -576,6 +642,15 @@ public class BuiltQueryTest {
     Query query = new Query("SELECT * FROM foobar WHERE time>now() AND time<=now();", DATABASE);
     Query select =
         select().from(DATABASE, "foobar").where(gt("time", now())).and(lte("time", now()));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSelectRegex() {
+    Query query = new Query("SELECT /k/ FROM foobar;", DATABASE);
+    Query select = select().regex("k").from(DATABASE, "foobar");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
