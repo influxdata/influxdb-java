@@ -82,12 +82,12 @@ public class SelectSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   }
 
   @Override
-  public void setSubQuery(QueryStringBuilder query) {
+  public void setSubQuery(final QueryStringBuilder query) {
     selectCore.setSubQuery(query);
   }
 
   @Override
-  void setParent(T parent) {
+  void setParent(final T parent) {
     whereSubQuery.setParent(parent);
     super.setParent(parent);
   }

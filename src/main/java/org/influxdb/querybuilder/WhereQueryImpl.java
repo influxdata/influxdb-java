@@ -71,7 +71,7 @@ public class WhereQueryImpl extends BuiltQueryDecorator<SelectQueryImpl> impleme
   }
 
   @Override
-  public SelectQueryImpl tz(String timezone) {
+  public SelectQueryImpl tz(final String timezone) {
     return query.tz(timezone);
   }
 }

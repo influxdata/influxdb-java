@@ -2,12 +2,12 @@ package org.influxdb.querybuilder.clauses;
 
 public class SelectRegexClause extends AbstractClause {
 
-  public SelectRegexClause(String clause) {
+  public SelectRegexClause(final String clause) {
     super(clause);
   }
 
   @Override
-  public void appendTo(StringBuilder stringBuilder) {
+  public void appendTo(final StringBuilder stringBuilder) {
     stringBuilder.append("/").append(name).append("/");
   }
 }

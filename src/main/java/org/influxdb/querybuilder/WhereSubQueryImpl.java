@@ -53,12 +53,12 @@ public class WhereSubQueryImpl<T extends SelectWithSubquery, E extends WithSubqu
   }
 
   @Override
-  public T limit(int limit) {
+  public T limit(final int limit) {
     return selectQuery.limit(limit);
   }
 
   @Override
-  public T limit(int limit, long offSet) {
+  public T limit(final int limit, final long offSet) {
     return selectQuery.limit(limit, offSet);
   }
 
@@ -73,7 +73,7 @@ public class WhereSubQueryImpl<T extends SelectWithSubquery, E extends WithSubqu
   }
 
   @Override
-  public T tz(String timezone) {
+  public T tz(final String timezone) {
     return selectQuery.tz(timezone);
   }
 
@@ -93,12 +93,12 @@ public class WhereSubQueryImpl<T extends SelectWithSubquery, E extends WithSubqu
   }
 
   @Override
-  public WhereSubQueryImpl<T, E> where(Clause clause) {
+  public WhereSubQueryImpl<T, E> where(final Clause clause) {
     return selectQuery.where(clause);
   }
 
   @Override
-  public WhereSubQueryImpl<T, E> where(String text) {
+  public WhereSubQueryImpl<T, E> where(final String text) {
     return selectQuery.where(text);
   }
 }

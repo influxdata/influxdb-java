@@ -47,7 +47,7 @@ public class SelectionQueryImpl implements Selection {
   }
 
   @Override
-  public SelectionQueryImpl regex(String clause) {
+  public SelectionQueryImpl regex(final String clause) {
     selectionCore.regex(clause);
     return this;
   }
@@ -107,7 +107,7 @@ public class SelectionQueryImpl implements Selection {
     return subSelect;
   }
 
-  public SelectionSubQueryImpl<SelectQueryImpl> fromSubQuery(String database) {
+  public SelectionSubQueryImpl<SelectQueryImpl> fromSubQuery(final String database) {
     SelectQueryImpl selectQuery = from(database, null);
     return new SelectionSubQueryImpl(selectQuery);
   }

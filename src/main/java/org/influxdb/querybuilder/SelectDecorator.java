@@ -7,7 +7,7 @@ public abstract class SelectDecorator<T extends Select, E extends Where> impleme
   T statement;
 
   /**
-   * builder
+   * TODO constructor builder?
    *
    * @param statement
    */

@@ -31,7 +31,7 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
   }
 
   @Override
-  public void setSubQuery(QueryStringBuilder query) {
+  public void setSubQuery(final QueryStringBuilder query) {
     selectCore.setSubQuery(query);
   }
 
@@ -87,7 +87,7 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
   }
 
   @Override
-  public SelectQueryImpl tz(String timezone) {
+  public SelectQueryImpl tz(final String timezone) {
     selectCore.tz(timezone);
     return this;
   }

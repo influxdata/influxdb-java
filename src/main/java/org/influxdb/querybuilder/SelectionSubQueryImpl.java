@@ -41,7 +41,7 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   }
 
   @Override
-  public SelectionSubQueryImpl<T> regex(String clause) {
+  public SelectionSubQueryImpl<T> regex(final String clause) {
     selectionCore.regex(clause);
     return this;
   }
@@ -106,7 +106,7 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   }
 
   @Override
-  public void setSubQuery(QueryStringBuilder query) {
+  public void setSubQuery(final QueryStringBuilder query) {
   }
 
   @Override
@@ -115,7 +115,7 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   }
 
   @Override
-  public StringBuilder buildQueryString(StringBuilder stringBuilder) {
+  public StringBuilder buildQueryString(final StringBuilder stringBuilder) {
     return null;
   }
 }

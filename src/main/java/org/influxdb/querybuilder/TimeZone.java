@@ -9,7 +9,7 @@ public class TimeZone implements Appendable {
   }
 
   @Override
-  public void appendTo(StringBuilder stringBuilder) {
+  public void appendTo(final StringBuilder stringBuilder) {
     stringBuilder
         .append(" ")
         .append("tz")

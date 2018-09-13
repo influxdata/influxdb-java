@@ -87,7 +87,7 @@ public class SelectionCoreImpl implements Selection {
   }
 
   @Override
-  public SelectionCoreImpl regex(String clause) {
+  public SelectionCoreImpl regex(final String clause) {
     return addToCurrentColumn(new SelectRegexClause(clause));
   }
 

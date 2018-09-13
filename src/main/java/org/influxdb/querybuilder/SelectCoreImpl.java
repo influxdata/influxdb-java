@@ -30,7 +30,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   private Optional<TimeZone> timeZone = Optional.empty();
 
   SelectCoreImpl(
-      final String table, final List<Object> columns, final boolean isDistinct, T where) {
+      final String table, final List<Object> columns, final boolean isDistinct, final T where) {
     this.table = table;
     this.columns = columns;
     this.isDistinct = isDistinct;
@@ -117,7 +117,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   }
 
   @Override
-  public Select tz(String timezone) {
+  public Select tz(final String timezone) {
     this.timeZone = Optional.of(new TimeZone(timezone));
     return this;
   }
