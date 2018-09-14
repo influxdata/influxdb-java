@@ -7,7 +7,6 @@ import static org.influxdb.querybuilder.Operations.LT;
 import static org.influxdb.querybuilder.Operations.LTE;
 import static org.influxdb.querybuilder.Operations.NE;
 
-import java.util.Arrays;
 import org.influxdb.dto.Query;
 import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.ContainsClause;
@@ -70,11 +69,7 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
     }
 
     public static SelectionQueryImpl select(final Object... columns) {
-      WhereCoreImpl whereCore = new WhereCoreImpl();
-      SelectCoreImpl selectCore =
-          new SelectCoreImpl(null, Arrays.asList(columns), false, whereCore);
-      whereCore.setStatement(selectCore);
-      return new SelectionQueryImpl(new SelectionCoreImpl());
+      return new SelectionQueryImpl(new SelectionCoreImpl(columns));
     }
 
     public static Clause eq(final String name, final Object value) {
@@ -144,7 +139,10 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
     }
 
     public static Object time(
-        final Long timeInterval, final String durationLiteral, final Long offsetInterval, final String offSetLiteral) {
+        final Long timeInterval,
+        final String durationLiteral,
+        final Long offsetInterval,
+        final String offSetLiteral) {
       return FunctionFactory.time(timeInterval, durationLiteral, offsetInterval, offSetLiteral);
     }
 

@@ -357,7 +357,8 @@ public class BuiltQueryTest {
   @Test
   public void testGroupByTimeOffset() {
     Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h,5w);", DATABASE);
-    Query select = select().column("test1").from(DATABASE, "foobar").groupBy(time(1l, HOUR, 5l, WEEK));
+    Query select =
+        select().column("test1").from(DATABASE, "foobar").groupBy(time(1l, HOUR, 5l, WEEK));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -367,7 +368,10 @@ public class BuiltQueryTest {
   public void testGroupByTimeOffsetMultiples() {
     Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h,5w),test1;", DATABASE);
     Query select =
-        select().column("test1").from(DATABASE, "foobar").groupBy(time(1l, HOUR, 5l, WEEK), "test1");
+        select()
+            .column("test1")
+            .from(DATABASE, "foobar")
+            .groupBy(time(1l, HOUR, 5l, WEEK), "test1");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -497,9 +501,15 @@ public class BuiltQueryTest {
   @Test
   public void testLimitTwice() {
     assertThrows(
-            IllegalStateException.class,
-            () -> select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(1).limit(1),
-            "Cannot use limit twice");
+        IllegalStateException.class,
+        () ->
+            select()
+                .column("test1")
+                .from(DATABASE, "foobar")
+                .groupBy("test2", "test3")
+                .limit(1)
+                .limit(1),
+        "Cannot use limit twice");
   }
 
   @Test
@@ -734,5 +744,40 @@ public class BuiltQueryTest {
     assertTrue(select.requiresPost());
     assertTrue(selectColumns.requiresPost());
     assertTrue(selectColumnsAndAggregations.requiresPost());
+  }
+
+  @Test
+  public void testInto() {
+    Query query =
+        new Query(
+            "SELECT * INTO \"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT FROM \"NOAA_water_database\".\"autogen\"./.*/ GROUP BY *;",
+            DATABASE);
+    Query select =
+        select()
+            .into("\"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT")
+            .from(DATABASE, "\"NOAA_water_database\".\"autogen\"./.*/")
+            .groupBy(new RawText("*"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testIntoWithSelection() {
+    Query query =
+        new Query(
+            "SELECT column1,MAX(column2),MAX(column3) INTO \"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT FROM \"NOAA_water_database\".\"autogen\"./.*/ GROUP BY *;",
+            DATABASE);
+    Query select =
+        select()
+            .column("column1")
+            .max("column2")
+            .max("column3")
+            .into("\"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT")
+            .from(DATABASE, "\"NOAA_water_database\".\"autogen\"./.*/")
+            .groupBy(new RawText("*"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
   }
 }

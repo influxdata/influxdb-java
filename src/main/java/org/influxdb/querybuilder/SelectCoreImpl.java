@@ -19,6 +19,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   private final boolean isDistinct;
   private final List<Object> columns;
   protected final T where;
+  private final Optional<String> intoMeasurement;
   private Optional<Ordering> ordering = Optional.empty();
   private List<Object> groupByColumns;
   private QueryStringBuilder subQuery;
@@ -35,6 +36,24 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
     this.columns = columns;
     this.isDistinct = isDistinct;
     this.where = where;
+    this.intoMeasurement = Optional.empty();
+  }
+
+  SelectCoreImpl(
+      final String table,
+      final List<Object> columns,
+      final boolean isDistinct,
+      final T where,
+      final String intoMeasurement) {
+    this.table = table;
+    this.columns = columns;
+    this.isDistinct = isDistinct;
+    this.where = where;
+    if (intoMeasurement != null) {
+      this.intoMeasurement = Optional.of(intoMeasurement);
+    } else {
+      this.intoMeasurement = Optional.empty();
+    }
   }
 
   @Override
@@ -147,6 +166,11 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
     } else {
       joinAndAppendNames(builder, columns);
     }
+
+    if (intoMeasurement.isPresent()) {
+      builder.append(" INTO ").append(intoMeasurement.get());
+    }
+
     builder.append(" FROM ");
 
     if (table != null) {

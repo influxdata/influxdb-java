@@ -2,7 +2,7 @@ package org.influxdb.querybuilder;
 
 import java.util.ArrayList;
 
-public class SelectionQueryImpl implements Selection {
+public class SelectionQueryImpl implements Selection, WithInto {
 
   private final SelectionCoreImpl selectionCore;
   private boolean requiresPost;
@@ -91,6 +91,12 @@ public class SelectionQueryImpl implements Selection {
   @Override
   public SelectionQueryImpl mean(final Object column) {
     selectionCore.mean(column);
+    return this;
+  }
+
+  @Override
+  public SelectionQueryImpl into(final String measurement) {
+    selectionCore.into(measurement);
     return this;
   }
 

@@ -14,7 +14,7 @@ public class SelectionSubQueryImplTest {
 
   @Test
   public void testSubQueryWithoutTable() {
-    Query select = select().max("test1").as("hello").fromSubQuery(DATABASE ).from(null).close();
+    Query select = select().max("test1").as("hello").fromSubQuery(DATABASE).from(null).close();
     assertThrows(IllegalArgumentException.class, () -> select.getCommand());
   }
 
@@ -41,19 +41,19 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryWithTextOnWhere() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE arbitrary text) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE arbitrary text) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE, "foobar")
-                    .where("arbitrary text")
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE, "foobar")
+            .where("arbitrary text")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -62,19 +62,19 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryWithLimit() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar LIMIT 1) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar LIMIT 1) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE, "foobar")
-                    .limit(1)
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE, "foobar")
+            .limit(1)
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -83,28 +83,28 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryWhereNestedOrderByLimit() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE (test1=2) AND test1=1 ORDER BY time ASC LIMIT 1 OFFSET 1 SLIMIT 1 SOFFSET 1) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE (test1=2) AND test1=1 ORDER BY time ASC LIMIT 1 OFFSET 1 SLIMIT 1 SOFFSET 1) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE, "foobar")
-                    .where()
-                    .orNested()
-                    .or(eq("test1",2))
-                    .close()
-                    .where(eq("test1",1))
-                    .orderBy(asc())
-                    .limit(1)
-                    .limit(1,1)
-                    .sLimit(1)
-                    .sLimit(1,1)
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE, "foobar")
+            .where()
+            .orNested()
+            .or(eq("test1", 2))
+            .close()
+            .where(eq("test1", 1))
+            .orderBy(asc())
+            .limit(1)
+            .limit(1, 1)
+            .sLimit(1)
+            .sLimit(1, 1)
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -113,19 +113,19 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryWithLimitOFFSET() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar LIMIT 1 OFFSET 2) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar LIMIT 1 OFFSET 2) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE, "foobar")
-                    .limit(1,2)
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE, "foobar")
+            .limit(1, 2)
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -134,20 +134,20 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryCountAll() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT COUNT(*) FROM foobar) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT COUNT(*) FROM foobar) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .countAll()
-                    .from("foobar")
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .countAll()
+            .from("foobar")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -156,21 +156,21 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryAs() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT column1 AS newname FROM foobar) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT column1 AS newname FROM foobar) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .column("column1")
-                    .as("newname")
-                    .from("foobar")
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .column("column1")
+            .as("newname")
+            .from("foobar")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -292,10 +292,10 @@ public class SelectionSubQueryImplTest {
             .orderBy(desc())
             .close()
             .where(eq("column1", 4))
-            .or(eq("column1",7))
+            .or(eq("column1", 7))
             .sLimit(3)
             .orderBy(asc())
-            .groupBy(time(4l,HOUR))
+            .groupBy(time(4l, HOUR))
             .close()
             .where(eq("column3", 5))
             .limit(5, 10);
@@ -354,30 +354,30 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryNested() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT /k/ FROM foobar WHERE (column1=2 OR column1=3) OR (column2=5 AND column2=7) tz('America/Chicago')) WHERE column1=1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT /k/ FROM foobar WHERE (column1=2 OR column1=3) OR (column2=5 AND column2=7) tz('America/Chicago')) WHERE column1=1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .regex("k")
-                    .from("foobar")
-                    .where()
-                    .andNested()
-                    .and(eq("column1",2))
-                    .or(eq("column1",3))
-                    .close()
-                    .orNested()
-                    .and(eq("column2",5))
-                    .and(eq("column2",7))
-                    .close()
-                    .tz("America/Chicago")
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .regex("k")
+            .from("foobar")
+            .where()
+            .andNested()
+            .and(eq("column1", 2))
+            .or(eq("column1", 3))
+            .close()
+            .orNested()
+            .and(eq("column2", 5))
+            .and(eq("column2", 7))
+            .close()
+            .tz("America/Chicago")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());

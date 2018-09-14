@@ -47,7 +47,10 @@ public final class FunctionFactory {
   }
 
   public static Object time(
-      final Long timeInterval, final String durationLiteral, final Long offsetInterval, final String offSetLiteral) {
+      final Long timeInterval,
+      final String durationLiteral,
+      final Long offsetInterval,
+      final String offSetLiteral) {
     return new Function(
         "time",
         new TimeInterval(timeInterval, durationLiteral),

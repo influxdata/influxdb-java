@@ -5,14 +5,24 @@ import java.util.Collections;
 import java.util.List;
 import org.influxdb.querybuilder.clauses.SelectRegexClause;
 
-public class SelectionCoreImpl implements Selection {
+class SelectionCoreImpl implements Selection, WithInto {
 
   protected List<Object> columns;
   protected boolean isDistinct;
+  private String intoMeasurement;
   private static final List<Object> COUNT_ALL =
       Collections.singletonList(new Function("COUNT", new RawText("*")));
 
   private Object currentSelection;
+
+  SelectionCoreImpl() {
+  }
+
+  SelectionCoreImpl(final Object[] columns) {
+    for (Object column : columns) {
+      addToCurrentColumn(column);
+    }
+  }
 
   @Override
   public Selection distinct() {
@@ -126,9 +136,15 @@ public class SelectionCoreImpl implements Selection {
     return addToCurrentColumn(FunctionFactory.mean(column));
   }
 
+  @Override
+  public SelectionCoreImpl into(final String measurement) {
+    this.intoMeasurement = measurement;
+    return this;
+  }
+
   <E extends Where> SelectCoreImpl<E> from(final String table, final E where) {
     clearSelection();
-    return new SelectCoreImpl(table, columns, isDistinct, where);
+    return new SelectCoreImpl(table, columns, isDistinct, where, intoMeasurement);
   }
 
   protected SelectionCoreImpl clearSelection() {
