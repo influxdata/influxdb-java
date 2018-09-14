@@ -1,8 +1,7 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.eq;
-import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.gt;
-import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.select;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
+import static org.influxdb.querybuilder.time.DurationLiteral.HOUR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.influxdb.dto.Query;
@@ -116,7 +115,7 @@ public class SelectionSubQueryImplTest {
                 + "SELECT DISTINCT test1 FROM foobar WHERE column1>3 GROUP BY column2 LIMIT 1 OFFSET 20 SLIMIT 2 SOFFSET 10"
                 + ")"
                 + ") WHERE column1=5 GROUP BY column2 LIMIT 50 OFFSET 10"
-                + ") WHERE column1=4 SLIMIT 3"
+                + ") WHERE column1=4 OR column1=7 GROUP BY time(4h) SLIMIT 3"
                 + ") WHERE column3=5 LIMIT 5 OFFSET 10;",
             DATABASE);
     Query select =
@@ -147,7 +146,9 @@ public class SelectionSubQueryImplTest {
             .limit(50, 10)
             .close()
             .where(eq("column1", 4))
+            .or(eq("column1",7))
             .sLimit(3)
+            .groupBy(time(4l,HOUR))
             .close()
             .where(eq("column3", 5))
             .limit(5, 10);
