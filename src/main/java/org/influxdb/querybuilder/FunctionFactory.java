@@ -42,12 +42,12 @@ public final class FunctionFactory {
     return new Function(MEAN, convertToColumn(column));
   }
 
-  public static Object time(Long timeInterval, String durationLiteral) {
+  public static Object time(final Long timeInterval, final String durationLiteral) {
     return new Function("time", new TimeInterval(timeInterval, durationLiteral));
   }
 
   public static Object time(
-      Long timeInterval, String durationLiteral, Long offsetInterval, String offSetLiteral) {
+      final Long timeInterval, final String durationLiteral, final Long offsetInterval, final String offSetLiteral) {
     return new Function(
         "time",
         new TimeInterval(timeInterval, durationLiteral),

@@ -13,7 +13,7 @@ public class TimeInterval implements Appendable {
   }
 
   @Override
-  public void appendTo(StringBuilder stringBuilder) {
+  public void appendTo(final StringBuilder stringBuilder) {
     stringBuilder.append(measure).append(literal);
   }
 }

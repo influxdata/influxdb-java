@@ -1,6 +1,6 @@
 package org.influxdb.querybuilder.time;
 
-public class DurationLiteral {
+public final class DurationLiteral {
 
   private DurationLiteral() {
   }
