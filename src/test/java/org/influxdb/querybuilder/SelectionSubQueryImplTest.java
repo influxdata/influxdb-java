@@ -81,6 +81,36 @@ public class SelectionSubQueryImplTest {
   }
 
   @Test
+  public void testSubQueryWhereNestedOrderByLimit() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE (test1=2) AND test1=1 ORDER BY time ASC LIMIT 1 OFFSET 1 SLIMIT 1 SOFFSET 1) WHERE column1=1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE, "foobar")
+                    .where()
+                    .orNested()
+                    .or(eq("test1",2))
+                    .close()
+                    .where(eq("test1",1))
+                    .orderBy(asc())
+                    .limit(1)
+                    .limit(1,1)
+                    .sLimit(1)
+                    .sLimit(1,1)
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testSubQueryWithLimitOFFSET() {
     Query query =
             new Query(
