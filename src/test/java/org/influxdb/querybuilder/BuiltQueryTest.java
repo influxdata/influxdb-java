@@ -495,6 +495,14 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testLimitTwice() {
+    assertThrows(
+            IllegalStateException.class,
+            () -> select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3").limit(1).limit(1),
+            "Cannot use limit twice");
+  }
+
+  @Test
   public void testInvalidLimit() {
     assertThrows(
         IllegalArgumentException.class,
