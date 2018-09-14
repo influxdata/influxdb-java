@@ -22,6 +22,12 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testQueryWithoutTable() {
+    Query select = select().max("test1").as("hello").from(DATABASE, null);
+    assertThrows(IllegalArgumentException.class, () -> select.getCommand());
+  }
+
+  @Test
   public void testAlias() {
     Query query = new Query("SELECT MAX(test1) AS hello FROM foobar;", DATABASE);
     Query select = select().max("test1").as("hello").from(DATABASE, "foobar");

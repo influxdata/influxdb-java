@@ -3,6 +3,7 @@ package org.influxdb.querybuilder;
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
 import static org.influxdb.querybuilder.time.DurationLiteral.HOUR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.influxdb.dto.Query;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,12 @@ import org.junit.jupiter.api.Test;
 public class SelectionSubQueryImplTest {
 
   private static final String DATABASE = "testdb";
+
+  @Test
+  public void testSubQueryWithoutTable() {
+    Query select = select().max("test1").as("hello").fromSubQuery(DATABASE ).from(null).close();
+    assertThrows(IllegalArgumentException.class, () -> select.getCommand());
+  }
 
   @Test
   public void testSubQuery() {
