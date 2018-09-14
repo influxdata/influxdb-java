@@ -54,6 +54,29 @@ public class SelectionSubQueryImplTest {
   }
 
   @Test
+  public void testSubQueryAs() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT column1 AS newname FROM foobar) WHERE column1=1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE)
+                    .column("column1")
+                    .as("newname")
+                    .from("foobar")
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testSubQueryColumns() {
     Query query =
         new Query(
