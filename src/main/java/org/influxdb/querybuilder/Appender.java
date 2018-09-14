@@ -50,7 +50,7 @@ public final class Appender {
   public static StringBuilder appendValue(final Object value, final StringBuilder stringBuilder) {
     if (value == null) {
       stringBuilder.append("null");
-    } else if(value instanceof Appendable) {
+    } else if (value instanceof Appendable) {
       Appendable appendable = (Appendable) value;
       appendable.appendTo(stringBuilder);
     } else if (value instanceof Function) {
