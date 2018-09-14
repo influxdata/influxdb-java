@@ -39,6 +39,69 @@ public class SelectionSubQueryImplTest {
   }
 
   @Test
+  public void testSubQueryWithTextOnWhere() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE arbitrary text) WHERE column1=1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE, "foobar")
+                    .where("arbitrary text")
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryWithLimit() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT * FROM foobar LIMIT 1) WHERE column1=1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE, "foobar")
+                    .limit(1)
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryWithLimitOFFSET() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT * FROM foobar LIMIT 1 OFFSET 2) WHERE column1=1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE, "foobar")
+                    .limit(1,2)
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testSubQueryCountAll() {
     Query query =
             new Query(
