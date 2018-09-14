@@ -1,11 +1,14 @@
 package org.influxdb.querybuilder;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
+import static org.influxdb.querybuilder.time.DurationLiteral.h;
+import static org.influxdb.querybuilder.time.DurationLiteral.w;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.influxdb.dto.Query;
+import org.influxdb.querybuilder.time.DurationLiteral;
 import org.junit.jupiter.api.Test;
 
 public class BuiltQueryTest {
@@ -333,6 +336,33 @@ public class BuiltQueryTest {
   public void testGroupBy() {
     Query query = new Query("SELECT test1 FROM foobar GROUP BY test2,test3;", DATABASE);
     Query select = select().column("test1").from(DATABASE, "foobar").groupBy("test2", "test3");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testGroupByTime() {
+    Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h);", DATABASE);
+    Query select = select().column("test1").from(DATABASE, "foobar").groupBy(time(1l,h));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testGroupByTimeOffset() {
+    Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h,5w);", DATABASE);
+    Query select = select().column("test1").from(DATABASE, "foobar").groupBy(time(1l,h,5l,w));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testGroupByTimeOffsetMultiples() {
+    Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h,5w),test1;", DATABASE);
+    Query select = select().column("test1").from(DATABASE, "foobar").groupBy(time(1l,h,5l,w),"test1");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());

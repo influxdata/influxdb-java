@@ -139,6 +139,14 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return FunctionFactory.min(column);
     }
 
+    public static Object time(Long timeInterval,String durationLiteral) {
+      return FunctionFactory.time(timeInterval,durationLiteral);
+    }
+
+    public static Object time(Long timeInterval,String durationLiteral,Long offsetInterval,String offSetLiteral) {
+      return FunctionFactory.time(timeInterval,durationLiteral,offsetInterval,offSetLiteral);
+    }
+
     public static Object now() {
       return FunctionFactory.now();
     }

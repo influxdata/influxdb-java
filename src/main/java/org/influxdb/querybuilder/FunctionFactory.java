@@ -1,5 +1,7 @@
 package org.influxdb.querybuilder;
 
+import org.influxdb.querybuilder.time.TimeInterval;
+
 import static org.influxdb.querybuilder.Aggregations.COUNT;
 import static org.influxdb.querybuilder.Aggregations.MAX;
 import static org.influxdb.querybuilder.Aggregations.MEAN;
@@ -38,6 +40,14 @@ public final class FunctionFactory {
 
   public static Object mean(final Object column) {
     return new Function(MEAN, convertToColumn(column));
+  }
+
+  public static Object time(Long timeInterval,String durationLiteral) {
+    return new Function("time",new TimeInterval(timeInterval,durationLiteral));
+  }
+
+  public static Object time(Long timeInterval,String durationLiteral,Long offsetInterval,String offSetLiteral) {
+    return new Function("time",new TimeInterval(timeInterval,durationLiteral),new TimeInterval(offsetInterval,offSetLiteral));
   }
 
   public static Object column(final String name) {
