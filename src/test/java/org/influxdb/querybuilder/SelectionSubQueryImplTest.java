@@ -114,8 +114,8 @@ public class SelectionSubQueryImplTest {
                 + "SELECT MAX(column1),MEAN(column2) FROM ("
                 + "SELECT DISTINCT test1 FROM foobar WHERE column1>3 GROUP BY column2 LIMIT 1 OFFSET 20 SLIMIT 2 SOFFSET 10"
                 + ")"
-                + ") WHERE column1=5 GROUP BY column2 LIMIT 50 OFFSET 10"
-                + ") WHERE column1=4 OR column1=7 GROUP BY time(4h) SLIMIT 3"
+                + ") WHERE column1=5 GROUP BY column2 ORDER BY time DESC LIMIT 50 OFFSET 10"
+                + ") WHERE column1=4 OR column1=7 GROUP BY time(4h) ORDER BY time ASC SLIMIT 3"
                 + ") WHERE column3=5 LIMIT 5 OFFSET 10;",
             DATABASE);
     Query select =
