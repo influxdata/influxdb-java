@@ -205,4 +205,36 @@ public class SelectionSubQueryImplTest {
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
   }
+
+  @Test
+  public void testSubQueryNested() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT /k/ FROM foobar WHERE (column1=2 OR column1=3) OR (column2=5 AND column2=7) tz('America/Chicago')) WHERE column1=1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE)
+                    .regex("k")
+                    .from("foobar")
+                    .where()
+                    .andNested()
+                    .and(eq("column1",2))
+                    .or(eq("column1",3))
+                    .close()
+                    .orNested()
+                    .and(eq("column2",5))
+                    .and(eq("column2",7))
+                    .close()
+                    .tz("America/Chicago")
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
 }
