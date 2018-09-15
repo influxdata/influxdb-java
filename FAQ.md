@@ -2,24 +2,29 @@
 
 ## Functionality
 
-- [Is the batch part of the client thread safe ?](#is-the-batch-part-of-the-client-thread-safe-)
-- [If multiple threads are accessing it, are they all adding Points to the same batch ?](#if-multiple-threads-are-accessing-it-are-they-all-adding-points-to-the-same-batch-)
-- [And if so, is there a single thread in the background that is emptying batch to the server ?](#and-if-so-is-there-a-single-thread-in-the-background-that-is-emptying-batch-to-the-server-)
-- [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client-)
-- [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server-)
-- [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived-)
-- [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for-)
+- [Frequently Asked Questions](#frequently-asked-questions)
+    - [Functionality](#functionality)
+    - [Security](#security)
+    - [Is the batch part of the client thread safe](#is-the-batch-part-of-the-client-thread-safe)
+    - [If multiple threads are accessing it, are they all adding Points to the same batch ?](#if-multiple-threads-are-accessing-it-are-they-all-adding-points-to-the-same-batch)
+    - [And if so, is there a single thread in the background that is emptying batch to the server ?](#and-if-so-is-there-a-single-thread-in-the-background-that-is-emptying-batch-to-the-server)
+    - [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client)
+    - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server)
+    - [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived)
+    - [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for)
+    - [Is default config security setup TLS 1.2 ?](#is-default-config-security-setup-tls-12)
+    - [How to use SSL client certificate authentication](#how-to-use-ssl-client-certificate-authentication)
 
 ## Security
 
 - [Is default config security setup TLS 1.2 ?](#is-default-config-security-setup-tls-12-)
 - [How to use SSL client certificate authentication](#how-to-use-ssl-client-certificate-authentication-)
 
-## Is the batch part of the client thread safe ?
+## Is the batch part of the client thread safe
 
 Yes, the __BatchProcessor__ uses a __BlockingQueue__ and the __RetryCapableBatchWriter__ is synchronized on its __write__ method
 
-```
+```java
 org.influxdb.impl.RetryCapableBatchWriter.write(Collection<BatchPoints>)
 
 ```
@@ -39,9 +44,11 @@ Yes, on initializing BatchOptions, you can pass an exceptionHandler, this handle
 (list of non-recoverable error : [Handling-errors-of-InfluxDB-under-high-load](https://github.com/influxdata/influxdb-java/wiki/Handling-errors-of-InfluxDB-under-high-load))
 
 ## How the client responds to concurrent write backpressure from server ?
+
 Concurrent WRITE throttling at server side is controlled by the trio (__max-concurrent-write-limit__, __max-enqueued-write-limit__, __enqueued-write-timeout__)
 for example, you can have these in influxdb.conf
-```
+
+```properties
 max-concurrent-write-limit = 2
 max-enqueued-write-limit = 1
 enqueued-write-timeout = 1000
@@ -52,7 +59,7 @@ enqueued-write-timeout = 1000
 
 If the number of concurrent writes reach the threshold, then any further write will be immidiately returned with
 
-```
+```bash
 org.influxdb.InfluxDBIOException: java.net.SocketException: Connection reset by peer: socket write error
                at org.influxdb.impl.InfluxDBImpl.execute(InfluxDBImpl.java:692)
                at org.influxdb.impl.InfluxDBImpl.write(InfluxDBImpl.java:428)
@@ -64,19 +71,23 @@ Form version 2.9, influxdb-java introduces new error handling feature, the clien
 So in case the number of write requests exceeds Concurrent write setting at server side, influxdb-java can try to make sure no writing points get lost (due to rejection from server)
 
 ## Is there a way to tell that all query chunks have arrived ?
+
 Yes, there is __onComplete__ action that is invoked after successfully end of stream.
+
 ```java
 influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000,
     queryResult -> {
         System.out.println("result = " + queryResult);
-    }, 
+    },
     () -> {
         System.out.println("The query successfully finished.");
     });
 ```
 
 ## Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?
+
 Yes, there is __onNext__ bi-consumer with capability to discontinue a streaming query.
+
 ```java
 influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000, (cancellable, queryResult) -> {
 
@@ -133,7 +144,7 @@ OkHttpClient.Builder okhttpClientBuilder = new OkHttpClient.Builder();
 okhttpClientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustManagers[0]);
 
 InfluxDB influxDB = InfluxDBFactory.connect("https://proxy_host:9086", okhttpClientBuilder);
-
 ```
-InfluxDB (v1.6.2) does not have built-in support for client certificate ssl authentication. 
+
+InfluxDB (v1.6.2) does not have built-in support for client certificate ssl authentication.
 SSL must be handled by http proxy such as Haproxy, nginx...
