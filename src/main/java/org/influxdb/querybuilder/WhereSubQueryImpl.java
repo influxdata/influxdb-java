@@ -53,6 +53,16 @@ public class WhereSubQueryImpl<T extends SelectWithSubquery, E extends WithSubqu
   }
 
   @Override
+  public T fill(final Number value) {
+    return selectQuery.fill(value);
+  }
+
+  @Override
+  public T fill(final String value) {
+    return selectQuery.fill(value);
+  }
+
+  @Override
   public T limit(final int limit) {
     return selectQuery.limit(limit);
   }

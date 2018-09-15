@@ -13,7 +13,7 @@ public final class FunctionFactory {
   private FunctionFactory() {
   }
 
-  public static Object function(final String name, final Object... parameters) {
+  public static Function function(final String name, final Object... parameters) {
     convertToColumns(parameters);
     return new Function(name, parameters);
   }

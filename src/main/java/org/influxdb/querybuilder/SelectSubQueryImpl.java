@@ -42,6 +42,18 @@ public class SelectSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   }
 
   @Override
+  public SelectSubQueryImpl<T> fill(final Number value) {
+    selectCore.fill(value);
+    return this;
+  }
+
+  @Override
+  public SelectSubQueryImpl<T> fill(final String value) {
+    selectCore.fill(value);
+    return this;
+  }
+
+  @Override
   public SelectSubQueryImpl<T> limit(final int limit) {
     selectCore.limit(limit);
     return this;

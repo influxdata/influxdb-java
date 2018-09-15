@@ -49,6 +49,16 @@ public class WhereCoreImpl extends SelectDecorator implements Where {
   }
 
   @Override
+  public SelectCoreImpl fill(final Number value) {
+    return statement.fill(value);
+  }
+
+  @Override
+  public SelectCoreImpl fill(final String value) {
+    return statement.fill(value);
+  }
+
+  @Override
   public SelectCoreImpl limit(final int limit) {
     return statement.limit(limit);
   }

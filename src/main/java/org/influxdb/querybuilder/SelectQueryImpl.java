@@ -63,6 +63,18 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
   }
 
   @Override
+  public SelectQueryImpl fill(final Number value) {
+    selectCore.fill(value);
+    return this;
+  }
+
+  @Override
+  public SelectQueryImpl fill(final String value) {
+    selectCore.fill(value);
+    return this;
+  }
+
+  @Override
   public SelectQueryImpl limit(final int limit) {
     selectCore.limit(limit);
     return this;

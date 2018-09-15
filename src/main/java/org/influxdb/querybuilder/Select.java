@@ -14,6 +14,10 @@ public interface Select {
 
   <T extends Select> T groupBy(final Object... columns);
 
+  <T extends Select> T fill(final Number value);
+
+  <T extends Select> T fill(final String value);
+
   <T extends Select> T limit(final int limit);
 
   <T extends Select> T limit(final int limit, final long offSet);

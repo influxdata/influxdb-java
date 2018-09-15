@@ -1,9 +1,8 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.Appender.appendName;
-import static org.influxdb.querybuilder.Appender.joinAndAppend;
-import static org.influxdb.querybuilder.Appender.joinAndAppendNames;
+import static org.influxdb.querybuilder.Appender.*;
 import static org.influxdb.querybuilder.BuiltQuery.trimLast;
+import static org.influxdb.querybuilder.FunctionFactory.function;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +21,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   private final Optional<String> intoMeasurement;
   private Optional<Ordering> ordering = Optional.empty();
   private List<Object> groupByColumns;
+  private Optional<Function> fill = Optional.empty();
   private QueryStringBuilder subQuery;
   private SelectRegexClause fromRegex;
   private Optional<Integer> limit = Optional.empty();
@@ -81,6 +81,22 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   public Select groupBy(final Object... columns) {
     this.groupByColumns = Arrays.asList(columns);
     return this;
+  }
+
+  @Override
+  public Select fill(final Number value) {
+    this.fill = Optional.of(function("fill",value));
+    return this;
+  }
+
+  @Override
+  public Select fill(final String value) {
+    if (value.equals("linear") || value.equals("none") || value.equals("null") || value.equals("previous")) {
+      this.fill = Optional.of(function("fill",value));
+      return this;
+    } else {
+      throw new IllegalArgumentException("Please give a numeric value or linear, none, null, previous");
+    }
   }
 
   @Override
@@ -189,6 +205,12 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
     if (groupByColumns != null) {
       builder.append(" GROUP BY ");
       joinAndAppendNames(builder, groupByColumns);
+    }
+
+    if (fill.isPresent()) {
+      builder.append(" ");
+      appendValue(fill.get(),builder);
+      builder.append(" ");
     }
 
     if (ordering.isPresent()) {

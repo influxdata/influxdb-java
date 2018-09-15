@@ -51,6 +51,16 @@ public class WhereQueryImpl extends BuiltQueryDecorator<SelectQueryImpl> impleme
   }
 
   @Override
+  public SelectQueryImpl fill(final Number value) {
+    return query.fill(value);
+  }
+
+  @Override
+  public SelectQueryImpl fill(final String value) {
+    return query.fill(value);
+  }
+
+  @Override
   public SelectQueryImpl limit(final int limit) {
     return query.limit(limit);
   }

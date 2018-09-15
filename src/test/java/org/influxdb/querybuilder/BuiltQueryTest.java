@@ -852,4 +852,34 @@ public class BuiltQueryTest {
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
   }
+
+    @Test
+    public void testFill() {
+        Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(100);", DATABASE);
+        Query select =
+                select()
+                        .column("water_level")
+                        .from(DATABASE, "h2o_feet")
+                        .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+                        .groupBy("water_level")
+                        .fill(100);
+
+        assertEquals(query.getCommand(), select.getCommand());
+        assertEquals(query.getDatabase(), select.getDatabase());
+    }
+
+  @Test
+  public void testFillLinear() {
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(linear);", DATABASE);
+    Query select =
+            select()
+                    .column("water_level")
+                    .from(DATABASE, "h2o_feet")
+                    .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+                    .groupBy("water_level")
+                    .fill("linear");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
 }
