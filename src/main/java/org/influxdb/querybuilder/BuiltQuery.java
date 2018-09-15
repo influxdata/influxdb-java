@@ -9,10 +9,16 @@ import static org.influxdb.querybuilder.Operations.NE;
 
 import org.influxdb.dto.Query;
 import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.AddRelativeTimeClause;
+import org.influxdb.querybuilder.clauses.SubRelativeTimeClause;
 import org.influxdb.querybuilder.clauses.ContainsClause;
-import org.influxdb.querybuilder.clauses.NegativeRegexClause;
-import org.influxdb.querybuilder.clauses.RegexClause;
 import org.influxdb.querybuilder.clauses.SimpleClause;
+import org.influxdb.querybuilder.clauses.RegexClause;
+import org.influxdb.querybuilder.clauses.NegativeRegexClause;
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.time.TimeInterval;
+
+
 
 public abstract class BuiltQuery extends Query implements QueryStringBuilder {
 
@@ -108,6 +114,14 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return new SimpleClause(name, GTE, value);
     }
 
+    public static Clause addTime(final long interval, final String literal) {
+      return new AddRelativeTimeClause(new TimeInterval(interval, literal));
+    }
+
+    public static Clause subTime(final long interval, final String literal) {
+      return new SubRelativeTimeClause(new TimeInterval(interval, literal));
+    }
+
     /** @return */
     public static Ordering asc() {
       return new Ordering(false);
@@ -136,6 +150,18 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
 
     public static Object time(final Long timeInterval, final String durationLiteral) {
       return FunctionFactory.time(timeInterval, durationLiteral);
+    }
+
+    public static TimeInterval ti(final Long timeInterval, final String durationLiteral) {
+      return new TimeInterval(timeInterval, durationLiteral);
+    }
+
+    public static Object cop(final String column, final String op, final Object arg2) {
+      return new SimpleClause(column, op, arg2);
+    }
+
+    public static Object op(final Object arg1, final String op, final Object arg2) {
+      return new OperationClause(arg1, op, arg2);
     }
 
     public static Object time(

@@ -1,6 +1,8 @@
 package org.influxdb.querybuilder;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
+import static org.influxdb.querybuilder.Operations.ADD;
+import static org.influxdb.querybuilder.Operations.SUB;
 import static org.influxdb.querybuilder.time.DurationLiteral.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -776,6 +778,76 @@ public class BuiltQueryTest {
             .into("\"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT")
             .from(DATABASE, "\"NOAA_water_database\".\"autogen\"./.*/")
             .groupBy(new RawText("*"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubRelativeTimeSelection() {
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time>now() - 1h;", DATABASE);
+    Query select =
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", subTime(1l, HOUR)));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testAddRelativeTimeSelection() {
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time>now() + 1w;", DATABASE);
+    Query select =
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", addTime(1l, WEEK)));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testDateTimeString() {
+    Query query =
+        new Query(
+            "SELECT water_level FROM h2o_feet WHERE time>'2015-08-18T00:00:00.000000000Z';",
+            DATABASE);
+    Query select =
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", "2015-08-18T00:00:00.000000000Z"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testDateTimeStringOperation() {
+    Query query =
+        new Query(
+            "SELECT water_level FROM h2o_feet WHERE time>'2015-09-18T21:24:00Z'+6m;", DATABASE);
+    Query select =
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", op("2015-09-18T21:24:00Z", ADD, ti(6l, MINUTE))));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testDateTimeEpochOperation() {
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time>24043524m-6m;", DATABASE);
+    Query select =
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
