@@ -109,7 +109,7 @@ public class SelectionQueryImpl implements Selection, WithInto {
   }
 
   @Override
-  public SelectionQueryImpl op(final Object arg1, final String op, Object arg2) {
+  public SelectionQueryImpl op(final Object arg1, final String op, final Object arg2) {
     selectionCore.op(arg1, op, arg2);
     return this;
   }
@@ -121,7 +121,7 @@ public class SelectionQueryImpl implements Selection, WithInto {
   }
 
   @Override
-  public SelectionQueryImpl cop(String column, String op, Object arg2) {
+  public SelectionQueryImpl cop(final String column, final String op, final Object arg2) {
     selectionCore.cop(column, op, arg2);
     return this;
   }

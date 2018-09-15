@@ -145,22 +145,22 @@ class SelectionCoreImpl implements Selection, WithInto {
   }
 
   @Override
-  public Selection op(OperationClause operationClause) {
+  public Selection op(final OperationClause operationClause) {
     return addToCurrentColumn(operationClause);
   }
 
   @Override
-  public Selection op(Object arg1, String op, Object arg2) {
+  public Selection op(final Object arg1, final String op, final Object arg2) {
     return addToCurrentColumn(new OperationClause(arg1, op, arg2));
   }
 
   @Override
-  public Selection cop(SimpleClause simpleClause) {
+  public Selection cop(final SimpleClause simpleClause) {
     return addToCurrentColumn(simpleClause);
   }
 
   @Override
-  public Selection cop(String column, String op, Object arg2) {
+  public Selection cop(final String column, final String op, final Object arg2) {
     return addToCurrentColumn(new SimpleClause(column, op, arg2));
   }
 

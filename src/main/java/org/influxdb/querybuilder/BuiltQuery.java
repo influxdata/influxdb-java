@@ -1,6 +1,12 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.Operations.*;
+import static org.influxdb.querybuilder.Operations.EQ;
+import static org.influxdb.querybuilder.Operations.GT;
+import static org.influxdb.querybuilder.Operations.GTE;
+import static org.influxdb.querybuilder.Operations.LT;
+import static org.influxdb.querybuilder.Operations.LTE;
+import static org.influxdb.querybuilder.Operations.NE;
+import static org.influxdb.querybuilder.Operations.NEQ;
 
 import org.influxdb.dto.Query;
 import org.influxdb.querybuilder.clauses.AddRelativeTimeClause;
