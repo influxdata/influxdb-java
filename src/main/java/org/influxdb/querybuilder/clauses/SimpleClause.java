@@ -15,7 +15,7 @@ public class SimpleClause extends AbstractClause {
 
   @Override
   public void appendTo(final StringBuilder stringBuilder) {
-    Appender.appendName(name, stringBuilder).append(op);
+    Appender.appendName(name, stringBuilder).append(" ").append(op).append(" ");
     Appender.appendValue(value, stringBuilder);
   }
 }

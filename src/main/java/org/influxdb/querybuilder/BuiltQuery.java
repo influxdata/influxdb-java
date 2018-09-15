@@ -1,24 +1,17 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.Operations.EQ;
-import static org.influxdb.querybuilder.Operations.GT;
-import static org.influxdb.querybuilder.Operations.GTE;
-import static org.influxdb.querybuilder.Operations.LT;
-import static org.influxdb.querybuilder.Operations.LTE;
-import static org.influxdb.querybuilder.Operations.NE;
+import static org.influxdb.querybuilder.Operations.*;
 
 import org.influxdb.dto.Query;
-import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.AddRelativeTimeClause;
-import org.influxdb.querybuilder.clauses.SubRelativeTimeClause;
+import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.ContainsClause;
-import org.influxdb.querybuilder.clauses.SimpleClause;
-import org.influxdb.querybuilder.clauses.RegexClause;
 import org.influxdb.querybuilder.clauses.NegativeRegexClause;
 import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.RegexClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
+import org.influxdb.querybuilder.clauses.SubRelativeTimeClause;
 import org.influxdb.querybuilder.time.TimeInterval;
-
-
 
 public abstract class BuiltQuery extends Query implements QueryStringBuilder {
 
@@ -82,8 +75,24 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return new SimpleClause(name, EQ, value);
     }
 
+    public static Clause eq(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, EQ, arg2);
+    }
+
     public static Clause ne(final String name, final Object value) {
       return new SimpleClause(name, NE, value);
+    }
+
+    public static Clause neq(final String name, final Object value) {
+      return new SimpleClause(name, NEQ, value);
+    }
+
+    public static Clause neq(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, NEQ, arg2);
+    }
+
+    public static Clause ne(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, NE, arg2);
     }
 
     public static Clause contains(final String name, final String value) {
@@ -102,16 +111,32 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return new SimpleClause(name, LT, value);
     }
 
+    public static Clause lt(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, LT, arg2);
+    }
+
     public static Clause lte(final String name, final Object value) {
       return new SimpleClause(name, LTE, value);
+    }
+
+    public static Clause lte(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, LTE, arg2);
     }
 
     public static Clause gt(final String name, final Object value) {
       return new SimpleClause(name, GT, value);
     }
 
+    public static Clause gt(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, GT, arg2);
+    }
+
     public static Clause gte(final String name, final Object value) {
       return new SimpleClause(name, GTE, value);
+    }
+
+    public static Clause gte(final Object arg1, final Object arg2) {
+      return new OperationClause(arg1, GTE, arg2);
     }
 
     public static Clause addTime(final long interval, final String literal) {
@@ -156,11 +181,11 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return new TimeInterval(timeInterval, durationLiteral);
     }
 
-    public static Object cop(final String column, final String op, final Object arg2) {
+    public static SimpleClause cop(final String column, final String op, final Object arg2) {
       return new SimpleClause(column, op, arg2);
     }
 
-    public static Object op(final Object arg1, final String op, final Object arg2) {
+    public static OperationClause op(final Object arg1, final String op, final Object arg2) {
       return new OperationClause(arg1, op, arg2);
     }
 

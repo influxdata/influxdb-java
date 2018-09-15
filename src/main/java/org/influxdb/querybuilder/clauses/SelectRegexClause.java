@@ -8,6 +8,6 @@ public class SelectRegexClause extends AbstractClause {
 
   @Override
   public void appendTo(final StringBuilder stringBuilder) {
-    stringBuilder.append("/").append(name).append("/");
+    stringBuilder.append(name);
   }
 }

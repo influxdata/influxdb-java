@@ -116,6 +116,9 @@ public final class Appender {
       Distinct distinct = (Distinct) name;
       stringBuilder.append("DISTINCT ");
       appendName(distinct.getExpression(), stringBuilder);
+    } else if (name instanceof Appendable) {
+      Appendable appendable = (Appendable) name;
+      appendable.appendTo(stringBuilder);
     } else {
       throw new IllegalArgumentException("Invalid type");
     }

@@ -1,6 +1,8 @@
 package org.influxdb.querybuilder;
 
 import java.util.ArrayList;
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
 
 public class SelectionQueryImpl implements Selection, WithInto {
 
@@ -97,6 +99,30 @@ public class SelectionQueryImpl implements Selection, WithInto {
   @Override
   public SelectionQueryImpl into(final String measurement) {
     selectionCore.into(measurement);
+    return this;
+  }
+
+  @Override
+  public SelectionQueryImpl op(final OperationClause operationClause) {
+    selectionCore.op(operationClause);
+    return this;
+  }
+
+  @Override
+  public SelectionQueryImpl op(final Object arg1, final String op, Object arg2) {
+    selectionCore.op(arg1, op, arg2);
+    return this;
+  }
+
+  @Override
+  public SelectionQueryImpl cop(final SimpleClause simpleClause) {
+    selectionCore.cop(simpleClause);
+    return this;
+  }
+
+  @Override
+  public SelectionQueryImpl cop(String column, String op, Object arg2) {
+    selectionCore.cop(column, op, arg2);
     return this;
   }
 

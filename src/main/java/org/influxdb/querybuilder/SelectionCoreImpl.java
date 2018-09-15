@@ -3,7 +3,9 @@ package org.influxdb.querybuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.influxdb.querybuilder.clauses.OperationClause;
 import org.influxdb.querybuilder.clauses.SelectRegexClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
 
 class SelectionCoreImpl implements Selection, WithInto {
 
@@ -140,6 +142,26 @@ class SelectionCoreImpl implements Selection, WithInto {
   public SelectionCoreImpl into(final String measurement) {
     this.intoMeasurement = measurement;
     return this;
+  }
+
+  @Override
+  public Selection op(OperationClause operationClause) {
+    return addToCurrentColumn(operationClause);
+  }
+
+  @Override
+  public Selection op(Object arg1, String op, Object arg2) {
+    return addToCurrentColumn(new OperationClause(arg1, op, arg2));
+  }
+
+  @Override
+  public Selection cop(SimpleClause simpleClause) {
+    return addToCurrentColumn(simpleClause);
+  }
+
+  @Override
+  public Selection cop(String column, String op, Object arg2) {
+    return addToCurrentColumn(new SimpleClause(column, op, arg2));
   }
 
   <E extends Where> SelectCoreImpl<E> from(final String table, final E where) {

@@ -130,7 +130,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testNonEqual() {
-    Query query = new Query("SELECT * FROM foobar WHERE test1!=4;", DATABASE);
+    Query query = new Query("SELECT * FROM foobar WHERE test1 != 4;", DATABASE);
     Query select = select().all().from(DATABASE, "foobar").where(ne("test1", 4));
 
     assertEquals(query.getCommand(), select.getCommand());
@@ -180,7 +180,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testRawExpressionInWhere() {
-    Query query = new Query("SELECT * FROM foobar WHERE test1!=raw expression;", DATABASE);
+    Query query = new Query("SELECT * FROM foobar WHERE test1 != raw expression;", DATABASE);
     Query select =
         select().all().from(DATABASE, "foobar").where(ne("test1", raw("raw expression")));
 
@@ -201,7 +201,7 @@ public class BuiltQueryTest {
   public void testOrderingAsc() {
     Query query =
         new Query(
-            "SELECT * FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z' ORDER BY time ASC;",
+            "SELECT * FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z' ORDER BY time ASC;",
             DATABASE);
     Query select =
         select()
@@ -220,7 +220,7 @@ public class BuiltQueryTest {
   public void testOrderingDesc() {
     Query query =
         new Query(
-            "SELECT * FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z' ORDER BY time DESC;",
+            "SELECT * FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z' ORDER BY time DESC;",
             DATABASE);
     Query select =
         select()
@@ -238,7 +238,7 @@ public class BuiltQueryTest {
   @Test
   public void testSelect() {
     Query query =
-        new Query("SELECT * FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
+        new Query("SELECT * FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
     Query select =
         select()
             .all()
@@ -253,7 +253,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testSelectLtGte() {
-    Query query = new Query("SELECT * FROM foobar WHERE test1<4 AND test2>='a';", DATABASE);
+    Query query = new Query("SELECT * FROM foobar WHERE test1 < 4 AND test2 >= 'a';", DATABASE);
     Query select =
         select().all().from(DATABASE, "foobar").where(lt("test1", 4)).and(gte("test2", "a"));
 
@@ -265,7 +265,7 @@ public class BuiltQueryTest {
   public void testMean() {
     Query query =
         new Query(
-            "SELECT MEAN(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
+            "SELECT MEAN(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
     Query select =
         select()
             .mean("test1")
@@ -282,7 +282,7 @@ public class BuiltQueryTest {
   public void testSum() {
     Query query =
         new Query(
-            "SELECT SUM(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
+            "SELECT SUM(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
     Query select =
         select()
             .sum("test1")
@@ -299,7 +299,7 @@ public class BuiltQueryTest {
   public void testMin() {
     Query query =
         new Query(
-            "SELECT MIN(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
+            "SELECT MIN(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
     Query select =
         select()
             .min("test1")
@@ -316,7 +316,7 @@ public class BuiltQueryTest {
   public void testMax() {
     Query query =
         new Query(
-            "SELECT MAX(test1) FROM foobar WHERE test1=4 AND test2>'a' AND test2<='z';", DATABASE);
+            "SELECT MAX(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
     Query select =
         select()
             .max("test1")
@@ -381,7 +381,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testWhereConjunction() {
-    Query query = new Query("SELECT test1 FROM foobar WHERE test1=1 OR test2='a';", DATABASE);
+    Query query = new Query("SELECT test1 FROM foobar WHERE test1 = 1 OR test2 = 'a';", DATABASE);
     Query select =
         select()
             .column("test1")
@@ -396,7 +396,7 @@ public class BuiltQueryTest {
   @Test
   public void testMultipleOrConjunction() {
     Query query =
-        new Query("SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b';", DATABASE);
+        new Query("SELECT test1 FROM foobar WHERE test1 = 1 OR test2 = 'a' OR test3 = 'b';", DATABASE);
     Query select =
         select()
             .column("test1")
@@ -413,7 +413,7 @@ public class BuiltQueryTest {
   public void testOrAndConjunction() {
     Query query =
         new Query(
-            "SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b' AND test4='c';",
+            "SELECT test1 FROM foobar WHERE test1 = 1 OR test2 = 'a' OR test3 = 'b' AND test4 = 'c';",
             DATABASE);
     Query select =
         select()
@@ -432,11 +432,11 @@ public class BuiltQueryTest {
   public void testNestedClauses() {
     Query query =
         new Query(
-            "SELECT test1 FROM foobar WHERE test1=1 OR test2='a' OR test3='b' "
-                + "AND (test2='b' OR test3='a') "
-                + "OR (test1=2 AND test2='y' AND test3='z') "
-                + "AND (test1=8 OR test2='g' OR test3='j') "
-                + "AND test4='c';",
+            "SELECT test1 FROM foobar WHERE test1 = 1 OR test2 = 'a' OR test3 = 'b' "
+                + "AND (test2 = 'b' OR test3 = 'a') "
+                + "OR (test1 = 2 AND test2 = 'y' AND test3 = 'z') "
+                + "AND (test1 = 8 OR test2 = 'g' OR test3 = 'j') "
+                + "AND test4 = 'c';",
             DATABASE);
     Query select =
         select()
@@ -467,7 +467,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testWhere() {
-    Query query = new Query("SELECT test1 FROM foobar WHERE test4=1;", DATABASE);
+    Query query = new Query("SELECT test1 FROM foobar WHERE test4 = 1;", DATABASE);
     Where where = select().column("test1").from(DATABASE, "foobar").where();
     Query select = where.and(eq("test4", 1));
 
@@ -478,7 +478,7 @@ public class BuiltQueryTest {
   @Test
   public void testWhereGroupBy() {
     Query query =
-        new Query("SELECT test1 FROM foobar WHERE test4=1 GROUP BY test2,test3;", DATABASE);
+        new Query("SELECT test1 FROM foobar WHERE test4 = 1 GROUP BY test2,test3;", DATABASE);
     Query select =
         select()
             .column("test1")
@@ -694,7 +694,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testNowOnCondition() {
-    Query query = new Query("SELECT * FROM foobar WHERE time>now() AND time<=now();", DATABASE);
+    Query query = new Query("SELECT * FROM foobar WHERE time > now() AND time <= now();", DATABASE);
     Query select =
         select().from(DATABASE, "foobar").where(gt("time", now())).and(lte("time", now()));
 
@@ -705,7 +705,7 @@ public class BuiltQueryTest {
   @Test
   public void testSelectRegex() {
     Query query = new Query("SELECT /k/ FROM foobar;", DATABASE);
-    Query select = select().regex("k").from(DATABASE, "foobar");
+    Query select = select().regex("/k/").from(DATABASE, "foobar");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -785,7 +785,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testSubRelativeTimeSelection() {
-    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time>now() - 1h;", DATABASE);
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > now() - 1h;", DATABASE);
     Query select =
         select()
             .column("water_level")
@@ -798,7 +798,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testAddRelativeTimeSelection() {
-    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time>now() + 1w;", DATABASE);
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > now() + 1w;", DATABASE);
     Query select =
         select()
             .column("water_level")
@@ -813,7 +813,7 @@ public class BuiltQueryTest {
   public void testDateTimeString() {
     Query query =
         new Query(
-            "SELECT water_level FROM h2o_feet WHERE time>'2015-08-18T00:00:00.000000000Z';",
+            "SELECT water_level FROM h2o_feet WHERE time > '2015-08-18T00:00:00.000000000Z';",
             DATABASE);
     Query select =
         select()
@@ -829,7 +829,7 @@ public class BuiltQueryTest {
   public void testDateTimeStringOperation() {
     Query query =
         new Query(
-            "SELECT water_level FROM h2o_feet WHERE time>'2015-09-18T21:24:00Z'+6m;", DATABASE);
+            "SELECT water_level FROM h2o_feet WHERE time > '2015-09-18T21:24:00Z' + 6m;", DATABASE);
     Query select =
         select()
             .column("water_level")
@@ -842,7 +842,7 @@ public class BuiltQueryTest {
 
   @Test
   public void testDateTimeEpochOperation() {
-    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time>24043524m-6m;", DATABASE);
+    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m;", DATABASE);
     Query select =
         select()
             .column("water_level")

@@ -1,5 +1,8 @@
 package org.influxdb.querybuilder;
 
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
+
 public interface Selection {
 
   Selection distinct();
@@ -27,4 +30,12 @@ public interface Selection {
   Selection sum(final Object column);
 
   Selection mean(final Object column);
+
+  Selection op(final OperationClause operationClause);
+
+  Selection op(final Object arg1, final String op, final Object arg2);
+
+  Selection cop(final SimpleClause simpleClause);
+
+  Selection cop(final String column, final String op, final Object arg2);
 }

@@ -17,7 +17,18 @@ public class OperationClause extends AbstractClause {
 
   @Override
   public void appendTo(final StringBuilder stringBuilder) {
-    appendValue(arg1, stringBuilder).append(op);
-    appendValue(arg2, stringBuilder);
+    appendArg(arg1, stringBuilder);
+    stringBuilder.append(" ").append(op).append(" ");
+    appendArg(arg2, stringBuilder);
+  }
+
+  private void appendArg(final Object arg, final StringBuilder stringBuilder) {
+    if (arg instanceof OperationClause || arg instanceof SimpleClause) {
+      stringBuilder.append("(");
+      appendValue(arg, stringBuilder);
+      stringBuilder.append(")");
+    } else {
+      appendValue(arg, stringBuilder);
+    }
   }
 }

@@ -13,6 +13,6 @@ public class AppenderTest {
     StringBuilder builder = new StringBuilder();
     builder.append("SELECT test1,test2 FROM foo WHERE ");
     Appender.joinAndAppend(builder, " AND ", Collections.singletonList(eq("testval", "test1")));
-    assertEquals("SELECT test1,test2 FROM foo WHERE testval='test1'", builder.toString());
+    assertEquals("SELECT test1,test2 FROM foo WHERE testval = 'test1'", builder.toString());
   }
 }

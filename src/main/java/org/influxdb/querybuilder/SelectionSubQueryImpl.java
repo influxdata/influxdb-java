@@ -1,5 +1,8 @@
 package org.influxdb.querybuilder;
 
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
+
 public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
     implements Selection, WithSubquery {
 
@@ -85,6 +88,30 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   @Override
   public SelectionSubQueryImpl<T> mean(final Object column) {
     selectionCore.mean(column);
+    return this;
+  }
+
+  @Override
+  public SelectionSubQueryImpl<T> op(final OperationClause operationClause) {
+    selectionCore.op(operationClause);
+    return this;
+  }
+
+  @Override
+  public SelectionSubQueryImpl<T> op(final Object arg1, final String op, final Object arg2) {
+    selectionCore.op(arg1, op, arg2);
+    return this;
+  }
+
+  @Override
+  public SelectionSubQueryImpl<T> cop(final SimpleClause simpleClause) {
+    selectionCore.cop(simpleClause);
+    return this;
+  }
+
+  @Override
+  public SelectionSubQueryImpl<T> cop(final String column, final String op, final Object arg2) {
+    selectionCore.cop(column, op, arg2);
     return this;
   }
 
