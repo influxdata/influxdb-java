@@ -7,9 +7,15 @@ import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.ConjunctionClause;
 import org.influxdb.querybuilder.clauses.OrConjunction;
 
-public class WhereCoreImpl extends SelectDecorator implements Where {
+public class WhereCoreImpl<T extends Select> implements Select, Where {
 
   private final List<ConjunctionClause> clauses = new ArrayList<>();
+
+  private final T statement;
+
+  public WhereCoreImpl(T statement) {
+    this.statement = statement;
+  }
 
   @Override
   public WhereCoreImpl and(final Clause clause) {
@@ -21,6 +27,21 @@ public class WhereCoreImpl extends SelectDecorator implements Where {
   public WhereCoreImpl or(final Clause clause) {
     clauses.add(new OrConjunction(clause));
     return this;
+  }
+
+  @Override
+  public WhereCoreImpl where() {
+    return statement.where();
+  }
+
+  @Override
+  public WhereCoreImpl where(Clause clause) {
+    return statement.where(clause);
+  }
+
+  @Override
+  public WhereCoreImpl where(String text) {
+    return statement.where(text);
   }
 
   @Override

@@ -4,13 +4,30 @@ import java.util.List;
 import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.ConjunctionClause;
 
-public class WhereQueryImpl extends BuiltQueryDecorator<SelectQueryImpl> implements Where {
+public class WhereQueryImpl<T extends SelectQueryImpl> extends BuiltQuery implements Where, Select {
 
+  private final T query;
   private final WhereCoreImpl whereCore;
 
-  WhereQueryImpl(final WhereCoreImpl whereCore) {
-    super();
+  WhereQueryImpl(final T query, final WhereCoreImpl whereCore) {
+    super(null);
+    this.query = query;
     this.whereCore = whereCore;
+  }
+
+  @Override
+  public WhereQueryImpl where() {
+    return query.where();
+  }
+
+  @Override
+  public WhereQueryImpl where(Clause clause) {
+    return query.where(clause);
+  }
+
+  @Override
+  public WhereQueryImpl where(String text) {
+    return query.where(text);
   }
 
   @Override
@@ -31,12 +48,12 @@ public class WhereQueryImpl extends BuiltQueryDecorator<SelectQueryImpl> impleme
   }
 
   @Override
-  public WhereNested<WhereQueryImpl> andNested() {
+  public WhereNested<WhereQueryImpl<T>> andNested() {
     return new WhereNested(this, false);
   }
 
   @Override
-  public WhereNested<WhereQueryImpl> orNested() {
+  public WhereNested<WhereQueryImpl<T>> orNested() {
     return new WhereNested(this, true);
   }
 
@@ -83,5 +100,20 @@ public class WhereQueryImpl extends BuiltQueryDecorator<SelectQueryImpl> impleme
   @Override
   public SelectQueryImpl tz(final String timezone) {
     return query.tz(timezone);
+  }
+
+  @Override
+  public String getDatabase() {
+    return query.getDatabase();
+  }
+
+  @Override
+  public StringBuilder buildQueryString(StringBuilder stringBuilder) {
+    return query.buildQueryString(stringBuilder);
+  }
+
+  @Override
+  public StringBuilder buildQueryString() {
+    return query.buildQueryString();
   }
 }

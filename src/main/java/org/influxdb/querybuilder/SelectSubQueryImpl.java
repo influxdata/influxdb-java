@@ -10,7 +10,7 @@ public class SelectSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   private WhereSubQueryImpl<SelectSubQueryImpl<T>, T> whereSubQuery;
 
   SelectSubQueryImpl(final String table, final List<Object> columns, final boolean isDistinct) {
-    whereSubQuery = new WhereSubQueryImpl<>(this, new WhereCoreImpl());
+    whereSubQuery = new WhereSubQueryImpl<>(this, new WhereCoreImpl(this));
     this.selectCore = new SelectCoreImpl<>(table, columns, isDistinct, whereSubQuery);
   }
 

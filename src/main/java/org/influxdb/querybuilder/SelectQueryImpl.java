@@ -13,10 +13,8 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
       final boolean requiresPost,
       final SelectionCoreImpl selectionCore) {
     super(database, requiresPost);
-    WhereCoreImpl whereCore = new WhereCoreImpl();
-    whereCore.setStatement(this);
-    WhereQueryImpl whereQuery = new WhereQueryImpl(whereCore);
-    whereQuery.setQuery(this);
+    WhereCoreImpl whereCore = new WhereCoreImpl(this);
+    WhereQueryImpl whereQuery = new WhereQueryImpl(this,whereCore);
     this.selectCore = selectionCore.from(table, whereQuery);
   }
 
@@ -36,12 +34,12 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
   }
 
   @Override
-  public WhereQueryImpl where() {
+  public WhereQueryImpl<SelectQueryImpl> where() {
     return selectCore.where();
   }
 
   @Override
-  public WhereQueryImpl where(final Clause clause) {
+  public WhereQueryImpl<SelectQueryImpl> where(final Clause clause) {
     return selectCore.where().and(clause);
   }
 
