@@ -21,12 +21,12 @@ public class WhereQueryImpl<T extends SelectQueryImpl> extends BuiltQuery implem
   }
 
   @Override
-  public WhereQueryImpl where(Clause clause) {
+  public WhereQueryImpl where(final Clause clause) {
     return query.where(clause);
   }
 
   @Override
-  public WhereQueryImpl where(String text) {
+  public WhereQueryImpl where(final String text) {
     return query.where(text);
   }
 
@@ -108,7 +108,7 @@ public class WhereQueryImpl<T extends SelectQueryImpl> extends BuiltQuery implem
   }
 
   @Override
-  public StringBuilder buildQueryString(StringBuilder stringBuilder) {
+  public StringBuilder buildQueryString(final StringBuilder stringBuilder) {
     return query.buildQueryString(stringBuilder);
   }
 

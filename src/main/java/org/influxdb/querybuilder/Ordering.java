@@ -11,7 +11,7 @@ public class Ordering implements Appendable {
    *
    * @param isDesc
    */
-  public Ordering(final boolean isDesc) {
+  Ordering(final boolean isDesc) {
     this.isDesc = isDesc;
   }
 

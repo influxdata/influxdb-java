@@ -1,6 +1,9 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.Appender.*;
+import static org.influxdb.querybuilder.Appender.appendName;
+import static org.influxdb.querybuilder.Appender.joinAndAppend;
+import static org.influxdb.querybuilder.Appender.joinAndAppendNames;
+import static org.influxdb.querybuilder.Appender.appendValue;
 import static org.influxdb.querybuilder.BuiltQuery.trimLast;
 import static org.influxdb.querybuilder.FunctionFactory.function;
 
@@ -85,17 +88,21 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
 
   @Override
   public Select fill(final Number value) {
-    this.fill = Optional.of(function("fill",value));
+    this.fill = Optional.of(function("fill", value));
     return this;
   }
 
   @Override
   public Select fill(final String value) {
-    if (value.equals("linear") || value.equals("none") || value.equals("null") || value.equals("previous")) {
-      this.fill = Optional.of(function("fill",value));
+    if ("linear".equals(value)
+        || "none".equals(value)
+        || "null".equals(value)
+        || "previous".equals(value)) {
+      this.fill = Optional.of(function("fill", value));
       return this;
     } else {
-      throw new IllegalArgumentException("Please give a numeric value or linear, none, null, previous");
+      throw new IllegalArgumentException(
+          "Please give a numeric value or linear, none, null, previous");
     }
   }
 
@@ -209,7 +216,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
 
     if (fill.isPresent()) {
       builder.append(" ");
-      appendValue(fill.get(),builder);
+      appendValue(fill.get(), builder);
       builder.append(" ");
     }
 

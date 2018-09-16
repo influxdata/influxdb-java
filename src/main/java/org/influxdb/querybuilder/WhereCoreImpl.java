@@ -13,7 +13,7 @@ public class WhereCoreImpl<T extends Select> implements Select, Where {
 
   private final T statement;
 
-  public WhereCoreImpl(T statement) {
+  public WhereCoreImpl(final T statement) {
     this.statement = statement;
   }
 
@@ -35,12 +35,12 @@ public class WhereCoreImpl<T extends Select> implements Select, Where {
   }
 
   @Override
-  public WhereCoreImpl where(Clause clause) {
+  public WhereCoreImpl where(final Clause clause) {
     return statement.where(clause);
   }
 
   @Override
-  public WhereCoreImpl where(String text) {
+  public WhereCoreImpl where(final String text) {
     return statement.where(text);
   }
 
