@@ -1,7 +1,12 @@
 package org.influxdb.querybuilder;
 
 import java.util.Arrays;
-import org.influxdb.querybuilder.clauses.*;
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
+import org.influxdb.querybuilder.clauses.RawFromClause;
+import org.influxdb.querybuilder.clauses.SimpleFromClause;
+import org.influxdb.querybuilder.clauses.MultipleFromClause;
+import org.influxdb.querybuilder.clauses.FromClause;
 
 public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
     implements Selection, WithSubquery {

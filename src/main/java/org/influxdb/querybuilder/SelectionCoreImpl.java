@@ -3,7 +3,10 @@ package org.influxdb.querybuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.influxdb.querybuilder.clauses.*;
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
+import org.influxdb.querybuilder.clauses.SelectRegexClause;
+import org.influxdb.querybuilder.clauses.FromClause;
 
 class SelectionCoreImpl implements Selection, WithInto {
 
