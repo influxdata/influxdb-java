@@ -1,6 +1,6 @@
 package org.influxdb.querybuilder;
 
-public class RawText {
+public class RawText implements Appendable {
 
   private final String text;
 
@@ -11,5 +11,10 @@ public class RawText {
   @Override
   public String toString() {
     return text;
+  }
+
+  @Override
+  public void appendTo(StringBuilder stringBuilder) {
+    stringBuilder.append(text);
   }
 }

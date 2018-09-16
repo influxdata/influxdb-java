@@ -13,7 +13,7 @@ public class WhereCoreImpl<T extends Select> implements Select, Where {
 
   private final T statement;
 
-  public WhereCoreImpl(final T statement) {
+  WhereCoreImpl(final T statement) {
     this.statement = statement;
   }
 

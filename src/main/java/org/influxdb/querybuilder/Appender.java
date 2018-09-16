@@ -48,9 +48,7 @@ public final class Appender {
   }
 
   public static StringBuilder appendValue(final Object value, final StringBuilder stringBuilder) {
-    if (value == null) {
-      stringBuilder.append("null");
-    } else if (value instanceof Appendable) {
+    if (value instanceof Appendable) {
       Appendable appendable = (Appendable) value;
       appendable.appendTo(stringBuilder);
     } else if (value instanceof Function) {
@@ -65,8 +63,6 @@ public final class Appender {
       stringBuilder.append(')');
     } else if (value instanceof Column) {
       appendName(((Column) value).getName(), stringBuilder);
-    } else if (value instanceof RawText) {
-      stringBuilder.append(value.toString());
     } else if (value instanceof String) {
       stringBuilder.append("'").append(value).append("'");
     } else if (value != null) {
@@ -93,9 +89,6 @@ public final class Appender {
       appendName((String) name, stringBuilder);
     } else if (name instanceof Column) {
       appendName(((Column) name).getName(), stringBuilder);
-    } else if (name instanceof SelectRegexClause) {
-      SelectRegexClause selectRegexClause = (SelectRegexClause) name;
-      selectRegexClause.appendTo(stringBuilder);
     } else if (name instanceof Function) {
       Function functionCall = (Function) name;
       stringBuilder.append(functionCall.getName()).append('(');
@@ -110,8 +103,6 @@ public final class Appender {
       Alias alias = (Alias) name;
       appendName(alias.getColumn(), stringBuilder);
       stringBuilder.append(" AS ").append(alias.getAlias());
-    } else if (name instanceof RawText) {
-      stringBuilder.append(name);
     } else if (name instanceof Distinct) {
       Distinct distinct = (Distinct) name;
       stringBuilder.append("DISTINCT ");

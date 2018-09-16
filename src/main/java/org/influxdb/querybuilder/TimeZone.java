@@ -4,7 +4,7 @@ public class TimeZone implements Appendable {
 
   private final String timeZone;
 
-  public TimeZone(final String timeZone) {
+  TimeZone(final String timeZone) {
     this.timeZone = timeZone;
   }
 
