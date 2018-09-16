@@ -3,7 +3,6 @@ package org.influxdb.querybuilder;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.influxdb.querybuilder.clauses.ConjunctionClause;
-import org.influxdb.querybuilder.clauses.SelectRegexClause;
 
 public final class Appender {
 

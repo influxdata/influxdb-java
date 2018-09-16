@@ -899,14 +899,14 @@ public class BuiltQueryTest {
   @Test
   public void testFillLinearIllegalArgument() {
     assertThrows(
-            IllegalArgumentException.class,
-            () -> select()
-                    .column("water_level")
-                    .from(DATABASE, "h2o_feet")
-                    .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
-                    .groupBy("water_level")
-                    .fill("illegal argument"),
-            "Invalid argument for fill");
-
+        IllegalArgumentException.class,
+        () ->
+            select()
+                .column("water_level")
+                .from(DATABASE, "h2o_feet")
+                .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+                .groupBy("water_level")
+                .fill("illegal argument"),
+        "Invalid argument for fill");
   }
 }
