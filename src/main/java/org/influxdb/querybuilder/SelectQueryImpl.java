@@ -1,6 +1,7 @@
 package org.influxdb.querybuilder;
 
 import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.FromClause;
 import org.influxdb.querybuilder.clauses.RawTextClause;
 
 public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
@@ -17,13 +18,13 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
 
   SelectQueryImpl(
       final String database,
-      final String table,
+      final FromClause fromClause,
       final boolean requiresPost,
       final SelectionCoreImpl selectionCore) {
     super(database, requiresPost);
     WhereCoreImpl whereCore = new WhereCoreImpl(this);
     WhereQueryImpl whereQuery = new WhereQueryImpl(this, whereCore);
-    this.selectCore = selectionCore.from(table, whereQuery);
+    this.selectCore = selectionCore.from(fromClause, whereQuery);
   }
 
   @Override

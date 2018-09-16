@@ -10,10 +10,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import org.influxdb.querybuilder.clauses.FromClause;
 import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.FromClause;
 import org.influxdb.querybuilder.clauses.RawTextClause;
-import org.influxdb.querybuilder.clauses.SelectRegexClause;
 import org.influxdb.querybuilder.clauses.SubQueryFromClause;
 
 public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuilder, WithSubquery {
@@ -26,7 +25,6 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   private Optional<Ordering> ordering = Optional.empty();
   private List<Object> groupByColumns;
   private Optional<Function> fill = Optional.empty();
-  private SelectRegexClause fromRegex;
   private Optional<Integer> limit = Optional.empty();
   private Optional<Long> offSet = Optional.empty();
   private Optional<Integer> sLimit = Optional.empty();

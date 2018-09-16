@@ -1,7 +1,7 @@
 package org.influxdb.querybuilder;
 
-import org.influxdb.querybuilder.clauses.OperationClause;
-import org.influxdb.querybuilder.clauses.SimpleClause;
+import java.util.Arrays;
+import org.influxdb.querybuilder.clauses.*;
 
 public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
     implements Selection, WithSubquery {
@@ -115,10 +115,26 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
     return this;
   }
 
+  public SelectSubQueryImpl<T> fromRaw(final String text) {
+    return from(new RawFromClause(text));
+  }
+
+  public SelectSubQueryImpl<T> from(final String[] tables) {
+    if (tables == null) {
+      throw new IllegalArgumentException("Tables names should be specified");
+    }
+
+    return from(new MultipleFromClause(Arrays.asList(tables)));
+  }
+
   public SelectSubQueryImpl<T> from(final String table) {
+    return from(new SimpleFromClause(table));
+  }
+
+  private SelectSubQueryImpl<T> from(final FromClause fromClause) {
     selectionCore.clearSelection();
     SelectSubQueryImpl subSelect =
-        new SelectSubQueryImpl<>(table, selectionCore.columns, selectionCore.isDistinct);
+        new SelectSubQueryImpl(fromClause, selectionCore.columns, selectionCore.isDistinct);
     subSelect.setParent(getParent());
     return subSelect;
   }

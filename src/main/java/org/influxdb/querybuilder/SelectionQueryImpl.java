@@ -1,8 +1,8 @@
 package org.influxdb.querybuilder;
 
 import java.util.ArrayList;
-import org.influxdb.querybuilder.clauses.OperationClause;
-import org.influxdb.querybuilder.clauses.SimpleClause;
+import java.util.Arrays;
+import org.influxdb.querybuilder.clauses.*;
 
 public class SelectionQueryImpl implements Selection, WithInto {
 
@@ -127,7 +127,24 @@ public class SelectionQueryImpl implements Selection, WithInto {
   }
 
   public SelectQueryImpl from(final String database, final String table) {
-    SelectQueryImpl selectQuery = new SelectQueryImpl(database, table, requiresPost, selectionCore);
+    SelectQueryImpl selectQuery =
+        new SelectQueryImpl(database, new SimpleFromClause(table), requiresPost, selectionCore);
+    return selectQuery;
+  }
+
+  public SelectQueryImpl from(final String database, final String[] table) {
+    if (table == null) {
+      throw new IllegalArgumentException("Tables names should be specified");
+    }
+    SelectQueryImpl selectQuery =
+        new SelectQueryImpl(
+            database, new MultipleFromClause(Arrays.asList(table)), requiresPost, selectionCore);
+    return selectQuery;
+  }
+
+  public SelectQueryImpl fromRaw(final String database, final String text) {
+    SelectQueryImpl selectQuery =
+        new SelectQueryImpl(database, new RawFromClause(text), requiresPost, selectionCore);
     return selectQuery;
   }
 
@@ -139,7 +156,28 @@ public class SelectionQueryImpl implements Selection, WithInto {
   public SelectSubQueryImpl<SelectQueryImpl> fromSubQuery(
       final String database, final String table) {
     SelectSubQueryImpl<SelectQueryImpl> subSelect =
-        new SelectSubQueryImpl<>(table, new ArrayList<>(), selectionCore.isDistinct);
+        new SelectSubQueryImpl<>(
+            new SimpleFromClause(table), new ArrayList<>(), selectionCore.isDistinct);
+    subSelect.setParent(from(database));
+    return subSelect;
+  }
+
+  public SelectSubQueryImpl<SelectQueryImpl> fromSubQuery(
+      final String database, final String[] tables) {
+    SelectSubQueryImpl<SelectQueryImpl> subSelect =
+        new SelectSubQueryImpl<>(
+            new MultipleFromClause(Arrays.asList(tables)),
+            new ArrayList<>(),
+            selectionCore.isDistinct);
+    subSelect.setParent(from(database));
+    return subSelect;
+  }
+
+  public SelectSubQueryImpl<SelectQueryImpl> fromSubQueryRaw(
+      final String database, final String text) {
+    SelectSubQueryImpl<SelectQueryImpl> subSelect =
+        new SelectSubQueryImpl<>(
+            new RawFromClause(text), new ArrayList<>(), selectionCore.isDistinct);
     subSelect.setParent(from(database));
     return subSelect;
   }
