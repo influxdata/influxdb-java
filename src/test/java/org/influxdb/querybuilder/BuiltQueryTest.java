@@ -238,7 +238,8 @@ public class BuiltQueryTest {
   @Test
   public void testSelect() {
     Query query =
-        new Query("SELECT * FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
+        new Query(
+            "SELECT * FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
     Query select =
         select()
             .all()
@@ -265,7 +266,8 @@ public class BuiltQueryTest {
   public void testMean() {
     Query query =
         new Query(
-            "SELECT MEAN(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
+            "SELECT MEAN(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';",
+            DATABASE);
     Query select =
         select()
             .mean("test1")
@@ -282,7 +284,8 @@ public class BuiltQueryTest {
   public void testSum() {
     Query query =
         new Query(
-            "SELECT SUM(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
+            "SELECT SUM(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';",
+            DATABASE);
     Query select =
         select()
             .sum("test1")
@@ -299,7 +302,8 @@ public class BuiltQueryTest {
   public void testMin() {
     Query query =
         new Query(
-            "SELECT MIN(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
+            "SELECT MIN(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';",
+            DATABASE);
     Query select =
         select()
             .min("test1")
@@ -316,7 +320,8 @@ public class BuiltQueryTest {
   public void testMax() {
     Query query =
         new Query(
-            "SELECT MAX(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';", DATABASE);
+            "SELECT MAX(test1) FROM foobar WHERE test1 = 4 AND test2 > 'a' AND test2 <= 'z';",
+            DATABASE);
     Query select =
         select()
             .max("test1")
@@ -396,7 +401,8 @@ public class BuiltQueryTest {
   @Test
   public void testMultipleOrConjunction() {
     Query query =
-        new Query("SELECT test1 FROM foobar WHERE test1 = 1 OR test2 = 'a' OR test3 = 'b';", DATABASE);
+        new Query(
+            "SELECT test1 FROM foobar WHERE test1 = 1 OR test2 = 'a' OR test3 = 'b';", DATABASE);
     Query select =
         select()
             .column("test1")
@@ -842,7 +848,8 @@ public class BuiltQueryTest {
 
   @Test
   public void testDateTimeEpochOperation() {
-    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m;", DATABASE);
+    Query query =
+        new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m;", DATABASE);
     Query select =
         select()
             .column("water_level")
@@ -853,33 +860,53 @@ public class BuiltQueryTest {
     assertEquals(query.getDatabase(), select.getDatabase());
   }
 
-    @Test
-    public void testFill() {
-        Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(100);", DATABASE);
-        Query select =
-                select()
-                        .column("water_level")
-                        .from(DATABASE, "h2o_feet")
-                        .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
-                        .groupBy("water_level")
-                        .fill(100);
+  @Test
+  public void testFill() {
+    Query query =
+        new Query(
+            "SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(100);",
+            DATABASE);
+    Query select =
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+            .groupBy("water_level")
+            .fill(100);
 
-        assertEquals(query.getCommand(), select.getCommand());
-        assertEquals(query.getDatabase(), select.getDatabase());
-    }
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
 
   @Test
   public void testFillLinear() {
-    Query query = new Query("SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(linear);", DATABASE);
+    Query query =
+        new Query(
+            "SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(linear);",
+            DATABASE);
     Query select =
-            select()
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+            .groupBy("water_level")
+            .fill("linear");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testFillLinearIllegalArgument() {
+    assertThrows(
+            IllegalArgumentException.class,
+            () -> select()
                     .column("water_level")
                     .from(DATABASE, "h2o_feet")
                     .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
                     .groupBy("water_level")
-                    .fill("linear");
+                    .fill("illegal argument"),
+            "Invalid argument for fill");
 
-    assertEquals(query.getCommand(), select.getCommand());
-    assertEquals(query.getDatabase(), select.getDatabase());
   }
 }
