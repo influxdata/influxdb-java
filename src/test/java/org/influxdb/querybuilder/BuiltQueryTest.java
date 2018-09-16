@@ -25,9 +25,10 @@ public class BuiltQueryTest {
 
   @Test
   public void testQueryWithoutTable() {
+    final String[] tables = null;
     assertThrows(
         IllegalArgumentException.class,
-        () -> select().max("test1").as("hello").from(DATABASE, null));
+        () -> select().max("test1").as("hello").from(DATABASE, tables));
   }
 
   @Test
@@ -86,6 +87,25 @@ public class BuiltQueryTest {
   public void testDistinct() {
     Query query = new Query("SELECT DISTINCT test1 FROM foobar;", DATABASE);
     Query select = select().column("test1").distinct().from(DATABASE, "foobar");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testMultipleTables() {
+    Query query = new Query("SELECT DISTINCT test1 FROM foobar,foobar2;", DATABASE);
+    Query select =
+        select().column("test1").distinct().from(DATABASE, new String[] {"foobar", "foobar2"});
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testRawTexTable() {
+    Query query = new Query("SELECT DISTINCT test1 FROM /*/;", DATABASE);
+    Query select = select().column("test1").distinct().fromRaw(DATABASE, "/*/");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());

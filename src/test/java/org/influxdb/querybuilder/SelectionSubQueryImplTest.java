@@ -14,9 +14,10 @@ public class SelectionSubQueryImplTest {
 
   @Test
   public void testSubQueryWithoutTable() {
+    String[] tables = null;
     assertThrows(
         IllegalArgumentException.class,
-        () -> select().max("test1").as("hello").fromSubQuery(DATABASE).from(null).close());
+        () -> select().max("test1").as("hello").fromSubQuery(DATABASE).from(tables).close());
   }
 
   @Test
@@ -31,6 +32,46 @@ public class SelectionSubQueryImplTest {
             .column("column1")
             .column("column2")
             .fromSubQuery(DATABASE, "foobar")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryMultipleTables() {
+    Query query =
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar,second_table) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
+    Query select =
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE, new String[] {"foobar", "second_table"})
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryRawTable() {
+    Query query =
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM /*/) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
+    Query select =
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQueryRaw(DATABASE, "/*/")
             .close()
             .where(eq("column1", 1))
             .groupBy("time");
@@ -146,6 +187,50 @@ public class SelectionSubQueryImplTest {
             .fromSubQuery(DATABASE)
             .countAll()
             .from("foobar")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryWithTables() {
+    Query query =
+        new Query(
+            "SELECT column1,column2 FROM (SELECT COUNT(*) FROM foobar,foobar2) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
+    Query select =
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .countAll()
+            .from(new String[] {"foobar", "foobar2"})
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryWithRawString() {
+    Query query =
+        new Query(
+            "SELECT column1,column2 FROM (SELECT COUNT(*) FROM /*/) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
+    Query select =
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .countAll()
+            .fromRaw("/*/")
             .close()
             .where(eq("column1", 1))
             .groupBy("time");
