@@ -1,6 +1,6 @@
 package org.influxdb.querybuilder;
 
-interface QueryStringBuilder {
+public interface QueryStringBuilder {
 
   StringBuilder buildQueryString(final StringBuilder stringBuilder);
 

@@ -126,7 +126,7 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   public SelectionSubQueryImpl<SelectSubQueryImpl<T>> fromSubQuery() {
     selectionCore.clearSelection();
     SelectSubQueryImpl selectSubQuery =
-        new SelectSubQueryImpl(null, selectionCore.columns, selectionCore.isDistinct);
+        new SelectSubQueryImpl(selectionCore.columns, selectionCore.isDistinct);
     selectSubQuery.setParent(this.getParent());
     SelectionSubQueryImpl selectionSubQuery = new SelectionSubQueryImpl(selectSubQuery);
     return selectionSubQuery;

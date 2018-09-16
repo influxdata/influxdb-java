@@ -6,6 +6,7 @@ import java.util.List;
 import org.influxdb.querybuilder.clauses.OperationClause;
 import org.influxdb.querybuilder.clauses.SelectRegexClause;
 import org.influxdb.querybuilder.clauses.SimpleClause;
+import org.influxdb.querybuilder.clauses.SimpleFromClause;
 
 class SelectionCoreImpl implements Selection, WithInto {
 
@@ -166,7 +167,13 @@ class SelectionCoreImpl implements Selection, WithInto {
 
   <E extends Where> SelectCoreImpl<E> from(final String table, final E where) {
     clearSelection();
-    return new SelectCoreImpl(table, columns, isDistinct, where, intoMeasurement);
+    return new SelectCoreImpl(
+        new SimpleFromClause(table), columns, isDistinct, where, intoMeasurement);
+  }
+
+  <E extends Where> SelectCoreImpl<E> from(final E where) {
+    clearSelection();
+    return new SelectCoreImpl(columns, isDistinct, where, intoMeasurement);
   }
 
   protected SelectionCoreImpl clearSelection() {

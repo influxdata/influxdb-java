@@ -14,7 +14,7 @@ public class RawText implements Appendable {
   }
 
   @Override
-  public void appendTo(StringBuilder stringBuilder) {
+  public void appendTo(final StringBuilder stringBuilder) {
     stringBuilder.append(text);
   }
 }

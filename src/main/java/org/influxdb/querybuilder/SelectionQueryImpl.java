@@ -131,16 +131,21 @@ public class SelectionQueryImpl implements Selection, WithInto {
     return selectQuery;
   }
 
+  public SelectQueryImpl from(final String database) {
+    SelectQueryImpl selectQuery = new SelectQueryImpl(database, requiresPost, selectionCore);
+    return selectQuery;
+  }
+
   public SelectSubQueryImpl<SelectQueryImpl> fromSubQuery(
       final String database, final String table) {
     SelectSubQueryImpl<SelectQueryImpl> subSelect =
         new SelectSubQueryImpl<>(table, new ArrayList<>(), selectionCore.isDistinct);
-    subSelect.setParent(from(database, null));
+    subSelect.setParent(from(database));
     return subSelect;
   }
 
   public SelectionSubQueryImpl<SelectQueryImpl> fromSubQuery(final String database) {
-    SelectQueryImpl selectQuery = from(database, null);
+    SelectQueryImpl selectQuery = from(database);
     return new SelectionSubQueryImpl(selectQuery);
   }
 }

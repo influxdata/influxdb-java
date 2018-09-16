@@ -8,6 +8,14 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
   private final SelectCoreImpl<WhereQueryImpl> selectCore;
 
   SelectQueryImpl(
+      final String database, final boolean requiresPost, final SelectionCoreImpl selectionCore) {
+    super(database, requiresPost);
+    WhereCoreImpl whereCore = new WhereCoreImpl(this);
+    WhereQueryImpl whereQuery = new WhereQueryImpl(this, whereCore);
+    this.selectCore = selectionCore.from(whereQuery);
+  }
+
+  SelectQueryImpl(
       final String database,
       final String table,
       final boolean requiresPost,

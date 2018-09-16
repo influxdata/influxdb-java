@@ -2,6 +2,7 @@ package org.influxdb.querybuilder;
 
 import java.util.List;
 import org.influxdb.querybuilder.clauses.Clause;
+import org.influxdb.querybuilder.clauses.SimpleFromClause;
 
 public class SelectSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
     implements SelectWithSubquery {
@@ -9,9 +10,15 @@ public class SelectSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   private SelectCoreImpl<WhereSubQueryImpl<SelectSubQueryImpl<T>, T>> selectCore;
   private WhereSubQueryImpl<SelectSubQueryImpl<T>, T> whereSubQuery;
 
+  SelectSubQueryImpl(final List<Object> columns, final boolean isDistinct) {
+    whereSubQuery = new WhereSubQueryImpl<>(this, new WhereCoreImpl(this));
+    this.selectCore = new SelectCoreImpl<>(columns, isDistinct, whereSubQuery);
+  }
+
   SelectSubQueryImpl(final String table, final List<Object> columns, final boolean isDistinct) {
     whereSubQuery = new WhereSubQueryImpl<>(this, new WhereCoreImpl(this));
-    this.selectCore = new SelectCoreImpl<>(table, columns, isDistinct, whereSubQuery);
+    this.selectCore =
+        new SelectCoreImpl<>(new SimpleFromClause(table), columns, isDistinct, whereSubQuery);
   }
 
   @Override

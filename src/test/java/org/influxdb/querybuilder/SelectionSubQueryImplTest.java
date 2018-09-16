@@ -14,8 +14,9 @@ public class SelectionSubQueryImplTest {
 
   @Test
   public void testSubQueryWithoutTable() {
-    Query select = select().max("test1").as("hello").fromSubQuery(DATABASE).from(null).close();
-    assertThrows(IllegalArgumentException.class, () -> select.getCommand());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> select().max("test1").as("hello").fromSubQuery(DATABASE).from(null).close());
   }
 
   @Test

@@ -1,9 +1,8 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.Appender.appendName;
+import static org.influxdb.querybuilder.Appender.appendValue;
 import static org.influxdb.querybuilder.Appender.joinAndAppend;
 import static org.influxdb.querybuilder.Appender.joinAndAppendNames;
-import static org.influxdb.querybuilder.Appender.appendValue;
 import static org.influxdb.querybuilder.BuiltQuery.trimLast;
 import static org.influxdb.querybuilder.FunctionFactory.function;
 
@@ -11,13 +10,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.influxdb.querybuilder.clauses.FromClause;
 import org.influxdb.querybuilder.clauses.Clause;
 import org.influxdb.querybuilder.clauses.RawTextClause;
 import org.influxdb.querybuilder.clauses.SelectRegexClause;
+import org.influxdb.querybuilder.clauses.SubQueryFromClause;
 
 public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuilder, WithSubquery {
 
-  private final String table;
+  private FromClause table;
   private final boolean isDistinct;
   private final List<Object> columns;
   protected final T where;
@@ -25,7 +26,6 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   private Optional<Ordering> ordering = Optional.empty();
   private List<Object> groupByColumns;
   private Optional<Function> fill = Optional.empty();
-  private QueryStringBuilder subQuery;
   private SelectRegexClause fromRegex;
   private Optional<Integer> limit = Optional.empty();
   private Optional<Long> offSet = Optional.empty();
@@ -33,8 +33,30 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   private Optional<Long> sOffSet = Optional.empty();
   private Optional<TimeZone> timeZone = Optional.empty();
 
+  SelectCoreImpl(final List<Object> columns, final boolean isDistinct, final T where) {
+    this.columns = columns;
+    this.isDistinct = isDistinct;
+    this.where = where;
+    this.intoMeasurement = Optional.empty();
+  }
+
   SelectCoreImpl(
-      final String table, final List<Object> columns, final boolean isDistinct, final T where) {
+      final List<Object> columns,
+      final boolean isDistinct,
+      final T where,
+      final String intoMeasurement) {
+    this.columns = columns;
+    this.isDistinct = isDistinct;
+    this.where = where;
+    if (intoMeasurement != null) {
+      this.intoMeasurement = Optional.of(intoMeasurement);
+    } else {
+      this.intoMeasurement = Optional.empty();
+    }
+  }
+
+  SelectCoreImpl(
+      final FromClause table, final List<Object> columns, final boolean isDistinct, final T where) {
     this.table = table;
     this.columns = columns;
     this.isDistinct = isDistinct;
@@ -43,7 +65,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
   }
 
   SelectCoreImpl(
-      final String table,
+      final FromClause table,
       final List<Object> columns,
       final boolean isDistinct,
       final T where,
@@ -166,7 +188,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
 
   @Override
   public void setSubQuery(final QueryStringBuilder query) {
-    this.subQuery = query;
+    this.table = new SubQueryFromClause(query);
   }
 
   @Override
@@ -197,9 +219,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
     builder.append(" FROM ");
 
     if (table != null) {
-      appendName(table, builder);
-    } else if (subQuery != null) {
-      builder.append("(").append(subQuery.buildQueryString()).append(")");
+      table.appendTo(builder);
     } else {
       throw new IllegalArgumentException();
     }
