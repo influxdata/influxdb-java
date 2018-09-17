@@ -930,4 +930,21 @@ public class BuiltQueryTest {
                 .fill("illegal argument"),
         "Invalid argument for fill");
   }
+
+  @Test
+  public void multipleDatabaseBackReferenceing() {
+    Query query =
+            new Query("SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);",DATABASE);
+    Query select =
+            select()
+                    .mean(raw("*"))
+                    .into("\"where_else\".\"autogen\".:MEASUREMENT")
+                    .fromRaw(DATABASE, "/.*/")
+                    .where(gte("time","2015-08-18T00:00:00Z"))
+                    .and(lte("time","2015-08-18T00:06:00Z"))
+                    .groupBy(time(12l,MINUTE));
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
 }

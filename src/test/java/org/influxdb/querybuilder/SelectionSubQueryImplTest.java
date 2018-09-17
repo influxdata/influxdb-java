@@ -1,6 +1,8 @@
 package org.influxdb.querybuilder;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
+import static org.influxdb.querybuilder.Operations.ADD;
+import static org.influxdb.querybuilder.Operations.SUB;
 import static org.influxdb.querybuilder.time.DurationLiteral.HOUR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -280,6 +282,84 @@ public class SelectionSubQueryImplTest {
             .close()
             .where(eq("column1", 1))
             .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+
+  @Test
+  public void testSubQueryWhereOr() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar WHERE column1 > 1 + 2 OR column2 < column1 - 3) WHERE column1 = 1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE)
+                    .column("column1")
+                    .column("column2")
+                    .from("foobar")
+                    .where()
+                    .or(gt("column1",op(1,ADD,2)))
+                    .or(lt("column2",cop("column1",SUB,3)))
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryGroupByFill() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE)
+                    .column("column1")
+                    .column("column2")
+                    .from("foobar")
+                    .groupBy("column1")
+                    .fill(100)
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testSubQueryWithSLimit() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100) SLIMIT 100 SOFFSET 120) WHERE column1 = 1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE)
+                    .column("column1")
+                    .column("column2")
+                    .from("foobar")
+                    .groupBy("column1")
+                    .sLimit(100,120)
+                    .fill(100)
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
