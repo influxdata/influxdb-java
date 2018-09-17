@@ -235,7 +235,6 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
     if (fill.isPresent()) {
       builder.append(" ");
       appendValue(fill.get(), builder);
-      builder.append(" ");
     }
 
     if (ordering.isPresent()) {
