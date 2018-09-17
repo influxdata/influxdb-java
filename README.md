@@ -267,7 +267,9 @@ time                   level description      location       water_level
 2015-09-18T21:42:00Z   between 3 and 6 feet   santa_monica   4.938
 ```
 
+
 #####The basic SELECT statement
+
 
 Issue simple select statements
 
