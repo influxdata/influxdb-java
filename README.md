@@ -267,7 +267,7 @@ time                   level description      location       water_level
 2015-09-18T21:42:00Z   between 3 and 6 feet   santa_monica   4.938
 ```
 
-***The basic SELECT statement***
+#####The basic SELECT statement
 
 Issue simple select statements
 
@@ -412,7 +412,7 @@ Query query = select().from(DATABASE,"h2o_feet")
 SELECT * FROM h2o_feet WHERE time > now() - 7d;
 ```
 
-***The GROUP BY clause***
+#####The GROUP BY clause
 
 Group query results by a single tag
 
@@ -476,7 +476,7 @@ Group query results into 12 minutes intervals and by a tag key
 SELECT COUNT(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:30:00Z'' GROUP BY time(12m),location;
 ```
 
-***Advanced GROUP BY time() syntax***
+#####Advanced GROUP BY time() syntax
 
 Group query results into 18 minute intervals and shift the preset time boundaries forward
 
@@ -506,32 +506,30 @@ Query query = select().mean("water_level").from(DATABASE,"h2o_feet")
 SELECT MEAN(water_level) FROM h2o_feet WHERE location = 'coyote_creek' AND time >= '2015-08-18T00:06:00Z' AND time <= '2015-08-18T00:54:00Z' GROUP BY time(18m,-12m);
 ```
 
-***GROUP BY time intervals and fill()***
+#####GROUP BY time intervals and fill()
 
 ```java
-    Query select =
-        select()
-            .column("water_level")
-            .from(DATABASE, "h2o_feet")
-            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
-            .groupBy("water_level")
-            .fill(100);
+Query select = select()
+                .column("water_level")
+                .from(DATABASE, "h2o_feet")
+                .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+                .groupBy("water_level")
+                .fill(100);
 ```
 
 ```sqlite-psql
 SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(100);"
 ```
 
-***The INTO clause***
+#####The INTO clause
 
 Rename a database
 
 ```java
-Query select =
-                select()
-                        .into("\"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT")
-                        .from(DATABASE, "\"NOAA_water_database\".\"autogen\"./.*/")
-                        .groupBy(new RawText("*"));
+Query select = select()
+                .into("\"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT")
+                .from(DATABASE, "\"NOAA_water_database\".\"autogen\"./.*/")
+                .groupBy(new RawText("*"));
 ```
 
 ```sqlite-psql
@@ -568,13 +566,12 @@ SELECT MEAN(water_level) INTO all_my_averages FROM h2o_feet WHERE location = 'co
 Write aggregated results for more than one measurement to a different database (downsampling with backreferencing)
 
 ```java
-    Query select =
-            select()
-                    .mean(raw("*"))
-                    .into("\"where_else\".\"autogen\".:MEASUREMENT")
-                    .fromRaw(DATABASE, "/.*/")
-                    .where(gte("time","2015-08-18T00:00:00Z"))
-                    .and(lte("time","2015-08-18T00:06:00Z"))
+Query select = select()
+                .mean(raw("*"))
+                .into("\"where_else\".\"autogen\".:MEASUREMENT")
+                .fromRaw(DATABASE, "/.*/")
+                .where(gte("time","2015-08-18T00:00:00Z"))
+                .and(lte("time","2015-08-18T00:06:00Z"))
                     .groupBy(time(12l,MINUTE));
 ```
 
@@ -582,7 +579,7 @@ Write aggregated results for more than one measurement to a different database (
 SELECT MEAN(*) INTO "where_else"."autogen".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);
 ```
 
-***ORDER BY time DESC***
+#####ORDER BY time DESC
 
 Return the newest points first
 
@@ -611,7 +608,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY time(12m) ORDER BY time DESC;
 ```
 
-***The LIMIT clause***
+#####The LIMIT clause
 
 Limit the number of points returned
 
@@ -640,7 +637,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) LIMIT 2;
 ```
 
-***The SLIMIT clause***
+#####The SLIMIT clause
 
 Limit the number of series returned
 
@@ -671,7 +668,7 @@ Query select = select().column("water_level")
 SELECT water_level FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) SLIMIT 1;
 ```
 
-***The OFFSET clause***
+#####The OFFSET clause
 
 Paginate points
 
@@ -683,7 +680,7 @@ Query select = select("water_level","location").from(DATABASE,"h2o_feet").limit(
 SELECT water_level,location FROM h2o_feet LIMIT 3 OFFSET 3;
 ```
 
-***The SOFFSET clause***
+#####The SOFFSET clause
 
 Paginate series and include all clauses
 
@@ -703,25 +700,24 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) ORDER BY time DESC LIMIT 2 OFFSET 2 SLIMIT 1 SOFFSET 1;
 ```
 
-***The Time Zone clause***
+#####The Time Zone clause
 
 Return the UTC offset for Chicago’s time zone
 
 ```java
-Query select =
-        select()
-            .column("test1")
-            .from(DATABASE, "h2o_feet")
-            .groupBy("test2", "test3")
-            .sLimit(1)
-            .tz("America/Chicago");
+Query select = select()
+                .column("test1")
+                .from(DATABASE, "h2o_feet")
+                .groupBy("test2", "test3")
+                .sLimit(1)
+                .tz("America/Chicago");
 ```
 
 ```sqlite-psql
 SELECT test1 FROM foobar GROUP BY test2,test3 SLIMIT 1 tz('America/Chicago');
 ```
 
-***Time Syntax***
+#####Time Syntax
 
 Specify a time range with RFC3339 date-time strings
 
@@ -790,7 +786,7 @@ Query select = select().column("water_level")
 SELECT water_level FROM h2o_feet WHERE location = 'santa_monica' AND time >= now() - 1h;
 ```
 
-***Regular expressions***
+#####Regular expressions
 
 Use a regular expression to specify field keys and tag keys in the SELECT clause
 
