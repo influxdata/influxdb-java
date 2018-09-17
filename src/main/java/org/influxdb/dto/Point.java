@@ -3,14 +3,12 @@ package org.influxdb.dto;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
 import org.influxdb.impl.Preconditions;
 
 /**
@@ -35,8 +33,9 @@ public class Point {
             return numberFormat;
           });
 
-  private static final ThreadLocal<Map<String, MeasurementStringBuilder>> CACHED_STRINGBUILDERS =
-          ThreadLocal.withInitial(HashMap::new);
+  private static final int DEFAULT_STRING_BUILDER_SIZE = 1024;
+  private static final ThreadLocal<StringBuilder> CACHED_STRINGBUILDERS =
+          ThreadLocal.withInitial(() -> new StringBuilder(DEFAULT_STRING_BUILDER_SIZE));
 
   Point() {
   }
@@ -318,16 +317,7 @@ public class Point {
    * @return the String without newLine.
    */
   public String lineProtocol() {
-    final StringBuilder sb = CACHED_STRINGBUILDERS
-            .get()
-            .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
-            .resetForUse();
-
-    concatenatedTags(sb);
-    concatenatedFields(sb);
-    formatedTime(sb);
-
-    return sb.toString();
+    return lineProtocol(null);
   }
 
     /**
@@ -336,15 +326,18 @@ public class Point {
      * @return the String without newLine
      */
     public String lineProtocol(final TimeUnit precision) {
-      final StringBuilder sb = CACHED_STRINGBUILDERS
-              .get()
-              .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
-              .resetForUse();
+      final StringBuilder sb = CACHED_STRINGBUILDERS.get();
+      sb.setLength(0);
 
-        concatenatedTags(sb);
-        concatenatedFields(sb);
+      escapeKey(sb, measurement);
+      concatenatedTags(sb);
+      concatenatedFields(sb);
+      if (precision != null) {
         formatedTime(sb, precision);
-        return sb.toString();
+      } else {
+        formatedTime(sb);
+      }
+      return sb.toString();
     }
 
   private void concatenatedTags(final StringBuilder sb) {
@@ -428,20 +421,5 @@ public class Point {
     }
     sb.append(" ").append(precision.convert(this.time, this.precision));
     return sb;
-  }
-
-  private static class MeasurementStringBuilder {
-    private final StringBuilder sb = new StringBuilder(128);
-    private final int length;
-
-    MeasurementStringBuilder(final String measurement) {
-      escapeKey(this.sb, measurement);
-      this.length = sb.length();
-    }
-
-    StringBuilder resetForUse() {
-      sb.setLength(length);
-      return sb;
-    }
   }
 }
