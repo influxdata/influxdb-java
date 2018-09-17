@@ -2,6 +2,7 @@ package org.influxdb.querybuilder;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
 import static org.influxdb.querybuilder.Operations.ADD;
+import static org.influxdb.querybuilder.Operations.MUL;
 import static org.influxdb.querybuilder.Operations.SUB;
 import static org.influxdb.querybuilder.time.DurationLiteral.HOUR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,13 +47,15 @@ public class SelectionSubQueryImplTest {
   public void testSubQuerySelectOperations() {
     Query query =
             new Query(
-                    "SELECT * FROM (SELECT column1,/*/,COUNT(column3),MIN(column1),SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT * FROM (SELECT column1,column1 * 2,2 + 2,/*/,COUNT(column3),MIN(column1),SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
                     .requiresPost()
                     .fromSubQuery(DATABASE)
                     .column("column1")
+                    .cop("column1",MUL,2)
+                    .op(2,ADD,2)
                     .raw("/*/")
                     .count("column3")
                     .min("column1")
