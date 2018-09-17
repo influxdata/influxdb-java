@@ -268,7 +268,7 @@ time                   level description      location       water_level
 ```
 
 
-#####The basic SELECT statement
+##### The basic SELECT statement
 
 
 Issue simple select statements
@@ -414,7 +414,7 @@ Query query = select().from(DATABASE,"h2o_feet")
 SELECT * FROM h2o_feet WHERE time > now() - 7d;
 ```
 
-#####The GROUP BY clause
+##### The GROUP BY clause
 
 Group query results by a single tag
 
@@ -478,7 +478,7 @@ Group query results into 12 minutes intervals and by a tag key
 SELECT COUNT(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:30:00Z'' GROUP BY time(12m),location;
 ```
 
-#####Advanced GROUP BY time() syntax
+##### Advanced GROUP BY time() syntax
 
 Group query results into 18 minute intervals and shift the preset time boundaries forward
 
@@ -508,7 +508,7 @@ Query query = select().mean("water_level").from(DATABASE,"h2o_feet")
 SELECT MEAN(water_level) FROM h2o_feet WHERE location = 'coyote_creek' AND time >= '2015-08-18T00:06:00Z' AND time <= '2015-08-18T00:54:00Z' GROUP BY time(18m,-12m);
 ```
 
-#####GROUP BY time intervals and fill()
+##### GROUP BY time intervals and fill()
 
 ```java
 Query select = select()
@@ -523,7 +523,7 @@ Query select = select()
 SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(100);"
 ```
 
-#####The INTO clause
+##### The INTO clause
 
 Rename a database
 
@@ -581,7 +581,7 @@ Query select = select()
 SELECT MEAN(*) INTO "where_else"."autogen".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);
 ```
 
-#####ORDER BY time DESC
+##### ORDER BY time DESC
 
 Return the newest points first
 
@@ -610,7 +610,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY time(12m) ORDER BY time DESC;
 ```
 
-#####The LIMIT clause
+##### The LIMIT clause
 
 Limit the number of points returned
 
@@ -639,7 +639,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) LIMIT 2;
 ```
 
-#####The SLIMIT clause
+##### The SLIMIT clause
 
 Limit the number of series returned
 
@@ -670,7 +670,7 @@ Query select = select().column("water_level")
 SELECT water_level FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) SLIMIT 1;
 ```
 
-#####The OFFSET clause
+##### The OFFSET clause
 
 Paginate points
 
@@ -682,7 +682,7 @@ Query select = select("water_level","location").from(DATABASE,"h2o_feet").limit(
 SELECT water_level,location FROM h2o_feet LIMIT 3 OFFSET 3;
 ```
 
-#####The SOFFSET clause
+##### The SOFFSET clause
 
 Paginate series and include all clauses
 
@@ -702,7 +702,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) ORDER BY time DESC LIMIT 2 OFFSET 2 SLIMIT 1 SOFFSET 1;
 ```
 
-#####The Time Zone clause
+##### The Time Zone clause
 
 Return the UTC offset for Chicago’s time zone
 
@@ -719,7 +719,7 @@ Query select = select()
 SELECT test1 FROM foobar GROUP BY test2,test3 SLIMIT 1 tz('America/Chicago');
 ```
 
-#####Time Syntax
+##### Time Syntax
 
 Specify a time range with RFC3339 date-time strings
 
@@ -788,7 +788,7 @@ Query select = select().column("water_level")
 SELECT water_level FROM h2o_feet WHERE location = 'santa_monica' AND time >= now() - 1h;
 ```
 
-#####Regular expressions
+##### Regular expressions
 
 Use a regular expression to specify field keys and tag keys in the SELECT clause
 
