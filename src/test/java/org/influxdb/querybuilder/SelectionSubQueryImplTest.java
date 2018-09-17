@@ -43,6 +43,31 @@ public class SelectionSubQueryImplTest {
   }
 
   @Test
+  public void testSubQuerySelectOperations() {
+    Query query =
+            new Query(
+                    "SELECT * FROM (SELECT column1,/*/,COUNT(column3),MIN(column1),SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) WHERE column1 = 1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .fromSubQuery(DATABASE)
+                    .column("column1")
+                    .raw("/*/")
+                    .count("column3")
+                    .min("column1")
+                    .sum(op(cop("column2",ADD,1),SUB,4))
+                    .function("testFunction","column1","column2")
+                    .from("foobar")
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testSubQueryMultipleTables() {
     Query query =
         new Query(
