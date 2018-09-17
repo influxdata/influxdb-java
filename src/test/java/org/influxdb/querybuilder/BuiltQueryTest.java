@@ -2,6 +2,7 @@ package org.influxdb.querybuilder;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
 import static org.influxdb.querybuilder.Operations.ADD;
+import static org.influxdb.querybuilder.Operations.MUL;
 import static org.influxdb.querybuilder.Operations.SUB;
 import static org.influxdb.querybuilder.time.DurationLiteral.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -847,6 +848,21 @@ public class BuiltQueryTest {
             .column("water_level")
             .from(DATABASE, "h2o_feet")
             .where(gt("time", "2015-08-18T00:00:00.000000000Z"));
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
+  public void testNestedOperations() {
+    Query query =
+            new Query(
+                    "SELECT water_level FROM h2o_feet WHERE column1 > 3 * ((column2 + 3) + 4);", DATABASE);
+    Query select =
+            select()
+                    .column("water_level")
+                    .from(DATABASE, "h2o_feet")
+                    .where(gt("column1", op(3,MUL,op(cop("column2",ADD,3), ADD, 4))));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());

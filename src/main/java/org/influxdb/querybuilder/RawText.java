@@ -9,11 +9,6 @@ public class RawText implements Appendable {
   }
 
   @Override
-  public String toString() {
-    return text;
-  }
-
-  @Override
   public void appendTo(final StringBuilder stringBuilder) {
     stringBuilder.append(text);
   }

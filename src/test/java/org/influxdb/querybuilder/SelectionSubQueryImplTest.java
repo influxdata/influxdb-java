@@ -340,6 +340,31 @@ public class SelectionSubQueryImplTest {
   }
 
   @Test
+  public void testSubQueryGroupByFillFromSelect() {
+    Query query =
+            new Query(
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
+                    DATABASE);
+    Query select =
+            select()
+                    .requiresPost()
+                    .column("column1")
+                    .column("column2")
+                    .fromSubQuery(DATABASE)
+                    .column("column1")
+                    .column("column2")
+                    .from("foobar")
+                    .groupBy("column1")
+                    .fill(100)
+                    .close()
+                    .where(eq("column1", 1))
+                    .groupBy("time");
+
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
+
+  @Test
   public void testSubQueryWithSLimit() {
     Query query =
             new Query(
