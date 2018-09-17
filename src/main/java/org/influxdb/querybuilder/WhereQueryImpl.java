@@ -114,6 +114,6 @@ public class WhereQueryImpl<T extends SelectQueryImpl> extends BuiltQuery implem
 
   @Override
   public StringBuilder buildQueryString() {
-    return query.buildQueryString();
+    return query.buildQueryString(new StringBuilder());
   }
 }

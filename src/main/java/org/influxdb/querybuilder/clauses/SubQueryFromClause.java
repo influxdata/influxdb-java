@@ -15,6 +15,8 @@ public class SubQueryFromClause extends FromClause {
 
   @Override
   public void appendTo(final StringBuilder stringBuilder) {
-    stringBuilder.append("(").append(queryStringBuilder.buildQueryString()).append(")");
+    stringBuilder.append("(");
+    queryStringBuilder.buildQueryString(stringBuilder);
+    stringBuilder.append(")");
   }
 }

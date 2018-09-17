@@ -219,7 +219,7 @@ public class SelectCoreImpl<T extends Where> implements Select, QueryStringBuild
     if (table != null) {
       table.appendTo(builder);
     } else {
-      throw new IllegalArgumentException();
+      throw new IllegalStateException();
     }
 
     if (!where.getClauses().isEmpty()) {

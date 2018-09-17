@@ -50,7 +50,7 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
 
   @Override
   public String getCommand() {
-    StringBuilder sb = buildQueryString();
+    StringBuilder sb = buildQueryString(new StringBuilder());
     addSemicolonIfMissing(sb);
     return sb.toString();
   }

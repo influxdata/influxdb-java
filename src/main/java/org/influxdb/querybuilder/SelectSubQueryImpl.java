@@ -92,7 +92,7 @@ public class SelectSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
 
   @Override
   public StringBuilder buildQueryString() {
-    return selectCore.buildQueryString();
+    return selectCore.buildQueryString(new StringBuilder());
   }
 
   @Override

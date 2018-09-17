@@ -29,7 +29,7 @@ public class SelectQueryImpl extends BuiltQuery implements SelectWithSubquery {
 
   @Override
   public StringBuilder buildQueryString() {
-    return selectCore.buildQueryString();
+    return selectCore.buildQueryString(new StringBuilder());
   }
 
   @Override
