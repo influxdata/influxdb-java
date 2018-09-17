@@ -740,6 +740,14 @@ public class BuiltQueryTest {
   }
 
   @Test
+  public void testNullFromClause() {
+    String from = null;
+    assertThrows(
+            IllegalArgumentException.class,
+            () -> select().from(DATABASE, from));
+  }
+
+  @Test
   public void testCountAll() {
     Query query = new Query("SELECT COUNT(*) FROM foobar;", DATABASE);
     Query select = select().countAll().from(DATABASE, "foobar");
