@@ -320,25 +320,25 @@ public class Point {
     return lineProtocol(null);
   }
 
-    /**
-     * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
-     * @param precision the time precision unit for this point
-     * @return the String without newLine
-     */
-    public String lineProtocol(final TimeUnit precision) {
-      final StringBuilder sb = CACHED_STRINGBUILDERS.get();
-      sb.setLength(0);
+  /**
+   * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
+   * @param precision the time precision unit for this point
+   * @return the String without newLine
+   */
+  public String lineProtocol(final TimeUnit precision) {
 
-      escapeKey(sb, measurement);
-      concatenatedTags(sb);
-      concatenatedFields(sb);
-      if (precision != null) {
-        formatedTime(sb, precision);
-      } else {
-        formatedTime(sb);
-      }
-      return sb.toString();
-    }
+    // setLength(0) is used for reusing cached StringBuilder instance per thread
+    // it reduces GC activity and performs better then new StringBuilder()
+    StringBuilder sb = CACHED_STRINGBUILDERS.get();
+    sb.setLength(0);
+
+    escapeKey(sb, measurement);
+    concatenatedTags(sb);
+    concatenatedFields(sb);
+    formatedTime(sb, precision);
+
+    return sb.toString();
+  }
 
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
@@ -408,18 +408,14 @@ public class Point {
     }
   }
 
-  private void formatedTime(final StringBuilder sb) {
-    if (this.time == null || this.precision == null) {
+  private void formatedTime(final StringBuilder sb, final TimeUnit precision) {
+    if (this.time == null) {
       return;
     }
-    sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-  }
-
-  private StringBuilder formatedTime(final StringBuilder sb, final TimeUnit precision) {
-    if (this.time == null || this.precision == null) {
-      return sb;
+    if (precision == null) {
+      sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
+      return;
     }
     sb.append(" ").append(precision.convert(this.time, this.precision));
-    return sb;
   }
 }
