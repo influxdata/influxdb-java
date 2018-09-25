@@ -3,14 +3,12 @@ package org.influxdb.dto;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
 import org.influxdb.impl.Preconditions;
 
 /**
@@ -35,8 +33,9 @@ public class Point {
             return numberFormat;
           });
 
-  private static final ThreadLocal<Map<String, MeasurementStringBuilder>> CACHED_STRINGBUILDERS =
-          ThreadLocal.withInitial(HashMap::new);
+  private static final int DEFAULT_STRING_BUILDER_SIZE = 1024;
+  private static final ThreadLocal<StringBuilder> CACHED_STRINGBUILDERS =
+          ThreadLocal.withInitial(() -> new StringBuilder(DEFAULT_STRING_BUILDER_SIZE));
 
   Point() {
   }
@@ -318,34 +317,28 @@ public class Point {
    * @return the String without newLine.
    */
   public String lineProtocol() {
-    final StringBuilder sb = CACHED_STRINGBUILDERS
-            .get()
-            .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
-            .resetForUse();
+    return lineProtocol(null);
+  }
 
+  /**
+   * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
+   * @param precision the time precision unit for this point
+   * @return the String without newLine
+   */
+  public String lineProtocol(final TimeUnit precision) {
+
+    // setLength(0) is used for reusing cached StringBuilder instance per thread
+    // it reduces GC activity and performs better then new StringBuilder()
+    StringBuilder sb = CACHED_STRINGBUILDERS.get();
+    sb.setLength(0);
+
+    escapeKey(sb, measurement);
     concatenatedTags(sb);
     concatenatedFields(sb);
-    formatedTime(sb);
+    formatedTime(sb, precision);
 
     return sb.toString();
   }
-
-    /**
-     * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
-     * @param precision the time precision unit for this point
-     * @return the String without newLine
-     */
-    public String lineProtocol(final TimeUnit precision) {
-      final StringBuilder sb = CACHED_STRINGBUILDERS
-              .get()
-              .computeIfAbsent(this.measurement, MeasurementStringBuilder::new)
-              .resetForUse();
-
-        concatenatedTags(sb);
-        concatenatedFields(sb);
-        formatedTime(sb, precision);
-        return sb.toString();
-    }
 
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
@@ -415,33 +408,14 @@ public class Point {
     }
   }
 
-  private void formatedTime(final StringBuilder sb) {
-    if (this.time == null || this.precision == null) {
+  private void formatedTime(final StringBuilder sb, final TimeUnit precision) {
+    if (this.time == null) {
       return;
     }
-    sb.append(' ').append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-  }
-
-  private StringBuilder formatedTime(final StringBuilder sb, final TimeUnit precision) {
-    if (this.time == null || this.precision == null) {
-      return sb;
+    if (precision == null) {
+      sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
+      return;
     }
     sb.append(" ").append(precision.convert(this.time, this.precision));
-    return sb;
-  }
-
-  private static class MeasurementStringBuilder {
-    private final StringBuilder sb = new StringBuilder(128);
-    private final int length;
-
-    MeasurementStringBuilder(final String measurement) {
-      escapeKey(this.sb, measurement);
-      this.length = sb.length();
-    }
-
-    StringBuilder resetForUse() {
-      sb.setLength(length);
-      return sb;
-    }
   }
 }
