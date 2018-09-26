@@ -643,13 +643,12 @@ public class InfluxDBImpl implements InfluxDB {
             }
           }
         } catch (IOException e) {
+          QueryResult queryResult = new QueryResult();
+          queryResult.setError(e.toString());
+          onNext.accept(cancellable, queryResult);
           //passing null onFailure consumer is here for backward compatibility
           //where the empty queryResult containing error is propagating into onNext consumer
-          if (onFailure == null) {
-            QueryResult queryResult = new QueryResult();
-            queryResult.setError(e.toString());
-            onNext.accept(cancellable, queryResult);
-          } else {
+          if (onFailure != null) {
             onFailure.accept(e);
           }
         }
