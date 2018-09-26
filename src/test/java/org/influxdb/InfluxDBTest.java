@@ -36,8 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -963,7 +963,45 @@ public class InfluxDBTest {
 		Assertions.assertFalse(await, "The onComplete action arrive!");
 	}
 
-    @Test
+	@Test
+	public void testChunkingOnFailure() throws InterruptedException {
+
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		final Throwable[] errors = {null};
+		AtomicBoolean onNextExecuted = new AtomicBoolean(false);
+
+		String dbName = "not-existing-db";
+		Query query = new Query("XXXSELECT * FROM disk", dbName);
+		this.influxDB.query(query, 2,
+				//onNext - process result
+				(cancellable, queryResult) -> {
+					//assert that this is not executed in this test case
+					onNextExecuted.set(true);
+					System.out.println(queryResult);
+
+				},
+				//onComplet
+				countDownLatch::countDown,
+				//onFailure
+				throwable -> {
+					errors[0] = throwable;
+					countDownLatch.countDown();
+				});
+
+		countDownLatch.await(2, TimeUnit.SECONDS);
+		Throwable error = errors[0];
+		System.out.println("onFailure: " + error.getLocalizedMessage());
+		Assertions.assertNotNull(error);
+		Assertions.assertTrue(error.getLocalizedMessage().contains("error parsing query: found XXXSELECT"));
+		Assertions.assertFalse(onNextExecuted.get(), "onNext() is invoked!");
+	}
+
+	@Test
     public void testFlushPendingWritesWhenBatchingEnabled() {
         String dbName = "flush_tests_" + System.currentTimeMillis();
         try {

@@ -520,6 +520,23 @@ public interface InfluxDB {
   public void query(Query query, int chunkSize, BiConsumer<Cancellable, QueryResult> onNext, Runnable onComplete);
 
   /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param onNext
+   *            the consumer to invoke for each received QueryResult; with capability to discontinue a streaming query
+   * @param onComplete
+   *            the onComplete to invoke for successfully end of stream
+   * @param onFailure
+   *            the consumer for error handling
+   */
+  public void query(Query query, int chunkSize, BiConsumer<Cancellable, QueryResult> onNext, Runnable onComplete,
+                    Consumer<Throwable> onFailure);
+
+  /**
    * Execute a query against a database.
    *
    * @param query

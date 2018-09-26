@@ -588,20 +588,27 @@ public class InfluxDBImpl implements InfluxDB {
     query(query, chunkSize, (cancellable, queryResult) -> onNext.accept(queryResult), onComplete);
   }
 
+  @Override
+  public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
+                    final Runnable onComplete) {
+    query(query, chunkSize, onNext, onComplete, null);
+  }
+
   /**
    * {@inheritDoc}
    */
   @Override
   public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
-                    final Runnable onComplete) {
-        Call<ResponseBody> call = null;
-        if (query instanceof BoundParameterQuery) {
-            BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
-                    boundParameterQuery.getParameterJsonWithUrlEncoded());
-        } else {
-            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
-        }
+                    final Runnable onComplete, final Consumer<Throwable> onFailure) {
+
+    Call<ResponseBody> call;
+    if (query instanceof BoundParameterQuery) {
+      BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+      call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+          boundParameterQuery.getParameterJsonWithUrlEncoded());
+    } else {
+      call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+    }
 
     call.enqueue(new Callback<ResponseBody>() {
       @Override
@@ -627,21 +634,36 @@ public class InfluxDBImpl implements InfluxDB {
             // REVIEW: must be handled consistently with IOException.
             ResponseBody errorBody = response.errorBody();
             if (errorBody != null) {
-              throw new InfluxDBException(errorBody.string());
+              InfluxDBException influxDBException = new InfluxDBException(errorBody.string());
+              if (onFailure == null) {
+                throw influxDBException;
+              } else {
+                onFailure.accept(influxDBException);
+              }
             }
           }
         } catch (IOException e) {
-          QueryResult queryResult = new QueryResult();
-          queryResult.setError(e.toString());
-          onNext.accept(cancellable, queryResult);
+          //passing null onFailure consumer is here for backward compatibility
+          //where the empty queryResult containing error is propagating into onNext consumer
+          if (onFailure == null) {
+            QueryResult queryResult = new QueryResult();
+            queryResult.setError(e.toString());
+            onNext.accept(cancellable, queryResult);
+          } else {
+            onFailure.accept(e);
+          }
         }
       }
 
-            @Override
-            public void onFailure(final Call<ResponseBody> call, final Throwable t) {
-                throw new InfluxDBException(t);
-            }
-        });
+      @Override
+      public void onFailure(final Call<ResponseBody> call, final Throwable t) {
+        if (onFailure == null) {
+          throw new InfluxDBException(t);
+        } else {
+          onFailure.accept(t);
+        }
+      }
+    });
   }
 
   /**
