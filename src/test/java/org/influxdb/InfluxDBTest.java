@@ -972,33 +972,23 @@ public class InfluxDBTest {
 		}
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
-		final Throwable[] errors = {null};
-		AtomicBoolean onNextExecuted = new AtomicBoolean(false);
-
-		String dbName = "not-existing-db";
-		Query query = new Query("XXXSELECT * FROM disk", dbName);
+		Query query = new Query("XXXSELECT * FROM disk", "not-existing-db");
 		this.influxDB.query(query, 2,
-				//onNext - process result
-				(cancellable, queryResult) -> {
-					//assert that this is not executed in this test case
-					onNextExecuted.set(true);
-					System.out.println(queryResult);
-
-				},
-				//onComplet
-				countDownLatch::countDown,
+        //onNext - process result
+        (cancellable, queryResult) -> {
+          //assert that this is not executed in this test case
+          Assertions.fail("onNext() is executed!");
+        },
+        //onComplete
+        () -> Assertions.fail("onComplete() is executed !"),
 				//onFailure
 				throwable -> {
-					errors[0] = throwable;
+          Assertions.assertTrue(throwable.getLocalizedMessage().contains("error parsing query: found XXXSELECT"));
 					countDownLatch.countDown();
 				});
 
-		countDownLatch.await(2, TimeUnit.SECONDS);
-		Throwable error = errors[0];
-		System.out.println("onFailure: " + error.getLocalizedMessage());
-		Assertions.assertNotNull(error);
-		Assertions.assertTrue(error.getLocalizedMessage().contains("error parsing query: found XXXSELECT"));
-		Assertions.assertFalse(onNextExecuted.get(), "onNext() is invoked!");
+		Assertions.assertTrue(countDownLatch.await(2, TimeUnit.SECONDS));
+
 	}
 
 	@Test
