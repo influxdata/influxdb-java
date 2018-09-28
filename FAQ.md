@@ -12,6 +12,7 @@
     - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server)
     - [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived)
     - [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for)
+    - [How to handle exceptions while using async chunked queries ?](#how-to-handle-exceptions-while-using-async-chunked-queries)
     - [Is default config security setup TLS 1.2 ?](#is-default-config-security-setup-tls-12)
     - [How to use SSL client certificate authentication](#how-to-use-ssl-client-certificate-authentication)
 
@@ -82,6 +83,28 @@ influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000,
     () -> {
         System.out.println("The query successfully finished.");
     });
+```
+## How to handle exceptions while using async chunked queries ?
+
+Exception handling for chunked queries can be handled by __onFailure__ error 
+consumer. 
+   
+```java
+
+influxDB.query(query, chunksize,
+        //onNext result consumer
+        (cancellable, queryResult) -> {
+            System.out.println("Process queryResult - " + queryResult.toString());
+        }
+        //onComplete executable
+        , () -> {
+            System.out.println("On Complete - the query finished successfully.");
+        },
+        //onFailure error handler
+        throwable -> {
+            System.out.println("On Failure - " + throwable.getLocalizedMessage());
+        });
+    
 ```
 
 ## Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?

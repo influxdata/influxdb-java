@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -36,8 +37,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -963,7 +964,65 @@ public class InfluxDBTest {
 		Assertions.assertFalse(await, "The onComplete action arrive!");
 	}
 
-    @Test
+	@Test
+	public void testChunkingOnFailure() throws InterruptedException {
+
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		Query query = new Query("XXXSELECT * FROM disk", "not-existing-db");
+		this.influxDB.query(query, 2,
+        //onNext - process result
+        (cancellable, queryResult) -> {
+          //assert that this is not executed in this test case
+          Assertions.fail("onNext() is executed!");
+        },
+        //onComplete
+        () -> Assertions.fail("onComplete() is executed !"),
+				//onFailure
+				throwable -> {
+          Assertions.assertTrue(throwable.getLocalizedMessage().contains("error parsing query: found XXXSELECT"));
+					countDownLatch.countDown();
+				});
+
+		Assertions.assertTrue(countDownLatch.await(2, TimeUnit.SECONDS));
+
+	}
+
+  @Test
+  public void testChunkingOnFailureConnectionError() throws InterruptedException {
+
+    if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+      // do not test version 0.13 and 1.0
+      return;
+    }
+    //connect to non existing port
+    InfluxDB influxDB = InfluxDBFactory.connect("http://"+TestUtils.getInfluxIP()+":12345");
+
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    Query query = new Query("SELECT * FROM disk", "not-existing-db");
+    influxDB.query(query, 2,
+        //onNext - process result
+        (cancellable, queryResult) -> {
+          //assert that this is not executed in this test case
+          Assertions.fail("onNext() is executed!");
+        },
+        //onComplete
+        () -> Assertions.fail("onComplete() is executed !"),
+        //onFailure
+        throwable -> {
+          Assertions.assertTrue(throwable instanceof ConnectException);
+          countDownLatch.countDown();
+        });
+
+    Assertions.assertTrue(countDownLatch.await(2, TimeUnit.SECONDS));
+
+  }
+
+  @Test
     public void testFlushPendingWritesWhenBatchingEnabled() {
         String dbName = "flush_tests_" + System.currentTimeMillis();
         try {
