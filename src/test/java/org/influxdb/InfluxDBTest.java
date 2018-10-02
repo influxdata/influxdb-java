@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.net.ConnectException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -664,7 +665,12 @@ public class InfluxDBTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       InfluxDBFactory.connect("http://@@@abc");
     });
-  }
+
+		Throwable cause = Assertions.assertThrows(InfluxDBIOException.class, () -> {
+			InfluxDBFactory.connect("http://a_bc:8086");
+		}).getCause();
+		Assertions.assertTrue(cause instanceof UnknownHostException);
+	}
 
 	@Test
 	public void testBatchEnabledTwice() {

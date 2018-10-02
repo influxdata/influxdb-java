@@ -42,9 +42,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -218,13 +218,12 @@ public class InfluxDBImpl implements InfluxDB {
   private String parseHost(final String url) {
     String hostName;
     try {
-      URI uri = new URI(url);
-      hostName = uri.getHost();
-    } catch (URISyntaxException e1) {
+      hostName = new URL(url).getHost();
+    } catch (MalformedURLException e1) {
       throw new IllegalArgumentException("Unable to parse url: " + url, e1);
     }
 
-    if (hostName == null) {
+    if (hostName == null || "".equals(hostName)) {
       throw new IllegalArgumentException("Unable to parse url: " + url);
     }
 
