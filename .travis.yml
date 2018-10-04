@@ -3,6 +3,10 @@ sudo: required
 services:
   - docker
 
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libxml2-utils
+
 # We test against all influxdb versions with the most actual JDK.
 # Test only the most recent influxdb version with JDK8 which will be legacy soon.
 env:
