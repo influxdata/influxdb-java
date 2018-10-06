@@ -66,7 +66,7 @@ import java.util.regex.Pattern;
  *
  * @author stefan.majer [at] gmail.com
  */
-public class InfluxDBImpl implements InfluxDB, AutoCloseable {
+public class InfluxDBImpl implements InfluxDB {
 
   private static final String APPLICATION_MSGPACK = "application/x-msgpack";
 
