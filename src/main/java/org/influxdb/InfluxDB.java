@@ -25,7 +25,7 @@ import java.util.function.Consumer;
  * @author stefan.majer [at] gmail.com
  *
  */
-public interface InfluxDB {
+public interface InfluxDB extends AutoCloseable {
 
   /**
    * The system property key to set the http logging level across the JVM.

@@ -151,6 +151,15 @@ influxDB.dropRetentionPolicy(rpName, dbName);
 influxDB.deleteDatabase(dbName);
 ```
 
+#### Try-with-resources
+Try-with-resources is a new feature in JDK7, InfluxDB support this feature, you can use it just like the following example:
+
+```java
+try (InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root")) {
+        // Read or Write, do any thing you want
+}
+```
+
 ### Advanced Usage
 
 #### Gzip's support (version 2.5+ required)
