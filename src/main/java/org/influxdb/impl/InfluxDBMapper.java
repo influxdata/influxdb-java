@@ -16,7 +16,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
 
   private final InfluxDB influxDB;
 
-  public InfluxDBMapper(InfluxDB influxDB) {
+  public InfluxDBMapper(final InfluxDB influxDB) {
     this.influxDB = influxDB;
   }
 
@@ -32,7 +32,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
     String measurement = getMeasurementName(clazz);
     String database = getDatabaseName(clazz);
 
-    if (database.equals("[unassigned]")) {
+    if ("[unassigned]".equals(database)) {
       throw new IllegalArgumentException(
           Measurement.class.getSimpleName()
               + " of class "
@@ -44,7 +44,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
     return toPOJO(queryResult, clazz);
   }
 
-  public <T> void save(T model) {
+  public <T> void save(final T model) {
     throwExceptionIfMissingAnnotation(model.getClass());
     cacheMeasurementClass(model.getClass());
 
