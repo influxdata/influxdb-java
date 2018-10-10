@@ -35,5 +35,7 @@ public @interface Measurement {
 
   String name();
 
+  String database() default "[unassigned]";
+
   TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
 }
