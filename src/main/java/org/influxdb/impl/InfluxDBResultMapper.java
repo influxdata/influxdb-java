@@ -33,9 +33,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
+import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 
 /**
@@ -202,6 +204,10 @@ public class InfluxDBResultMapper {
     });
   }
 
+  ConcurrentMap<String, Field> getColNameAndFieldMap(Class<?> clazz) {
+    return CLASS_FIELD_CACHE.get(clazz.getName());
+  }
+
   void cacheMeasurementClass(final Class<?>... classVarAgrs) {
     for (Class<?> clazz : classVarAgrs) {
       if (CLASS_FIELD_CACHE.containsKey(clazz.getName())) {
@@ -224,6 +230,14 @@ public class InfluxDBResultMapper {
 
   String getMeasurementName(final Class<?> clazz) {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).name();
+  }
+
+  String getDatabaseName(final Class<?> clazz) {
+    return ((Measurement) clazz.getAnnotation(Measurement.class)).database();
+  }
+
+  TimeUnit getTimeUnit(final Class<?> clazz) {
+    return ((Measurement) clazz.getAnnotation(Measurement.class)).timeUnit();
   }
 
   <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
