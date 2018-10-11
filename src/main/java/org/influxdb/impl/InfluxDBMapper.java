@@ -51,10 +51,11 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
     ConcurrentMap<String, Field> colNameAndFieldMap = getColNameAndFieldMap(model.getClass());
 
     try {
-
-      String measurement = getMeasurementName(model.getClass());
-      String database = getDatabaseName(model.getClass());
-      TimeUnit timeUnit = getTimeUnit(model.getClass());
+      Class<?> modelType = model.getClass();
+      String measurement = getMeasurementName(modelType);
+      String database = getDatabaseName(modelType);
+      String retentionPolicy = getDatabaseName(modelType);
+      TimeUnit timeUnit = getTimeUnit(modelType);
       long time = timeUnit.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
       Point.Builder pointBuilder = Point.measurement(measurement).time(time, timeUnit);
 
@@ -64,33 +65,52 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
         Column column = field.getAnnotation(Column.class);
 
         String columnName = column.name();
-        Object value = field.get(model).toString();
+        Class<?> fieldType = field.getType();
 
-        if (column.tag()) {
-          /** Tags are strings either way */
-          pointBuilder.tag(columnName, value.toString());
-        } else {
-
-          /** Check the primitives, and check what happens on double vs Double */
-          if (field.getType().equals(Boolean.TYPE)) {
-            pointBuilder.addField(columnName, (boolean) value);
-          } else if (field.getType().equals(Long.TYPE)) {
-            pointBuilder.addField(columnName, (long) value);
-          } else if (field.getType().equals(Double.TYPE)) {
-            pointBuilder.addField(columnName, (double) value);
-          } else if (field.getType().equals(Number.class)) {
-            pointBuilder.addField(columnName, (Number) value);
-          } else if (field.getType().equals(String.class)) {
-            pointBuilder.addField(columnName, (String) value);
-          } else {
-            throw new IllegalArgumentException("Argument does not apply");
-          }
+        if (!field.isAccessible()) {
+          field.setAccessible(true);
         }
 
-        influxDB.write(pointBuilder.build());
+        Object value = field.get(model);
+
+        if (column.tag()) {
+          /**
+           * Tags are strings either way.
+           */
+          pointBuilder.tag(columnName, value.toString());
+        } else if ("time".equals(columnName)) {
+
+        } else {
+          setField(pointBuilder,fieldType,columnName,value);
+       }
       }
+
+      Point point = pointBuilder.build();
+
+      if ("[unassigned]".equals(database)) {
+        influxDB.write(point);
+      } else {
+        influxDB.write(database,retentionPolicy,point);
+      }
+
     } catch (IllegalAccessException e) {
       throw new InfluxDBMapperException(e);
+    }
+  }
+
+  private void setField(final Point.Builder pointBuilder, final Class<?> fieldType, final String columnName, final Object value) {
+    if (boolean.class.isAssignableFrom(fieldType) || Boolean.class.isAssignableFrom(fieldType)) {
+      pointBuilder.addField(columnName, (boolean) value);
+    } else if (long.class.isAssignableFrom(fieldType) || Long.class.isAssignableFrom(fieldType)) {
+      pointBuilder.addField(columnName, (long) value);
+    } else if (double.class.isAssignableFrom(fieldType) || Double.class.isAssignableFrom(fieldType)) {
+      pointBuilder.addField(columnName, (double) value);
+    } else if (int.class.isAssignableFrom(fieldType) || Integer.class.isAssignableFrom(fieldType)) {
+      pointBuilder.addField(columnName, (int) value);
+    } else if (String.class.isAssignableFrom(fieldType)) {
+      pointBuilder.addField(columnName, (String) value);
+    } else {
+      throw new InfluxDBMapperException("Unsupported type " + fieldType + " for column" + columnName);
     }
   }
 }

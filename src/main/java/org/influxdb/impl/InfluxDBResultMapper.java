@@ -234,6 +234,10 @@ public class InfluxDBResultMapper {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).database();
   }
 
+  String getRetentionPolicy(final Class<?> clazz) {
+    return ((Measurement) clazz.getAnnotation(Measurement.class)).retentionPolicy();
+  }
+
   TimeUnit getTimeUnit(final Class<?> clazz) {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).timeUnit();
   }
