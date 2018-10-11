@@ -3,14 +3,17 @@ package org.influxdb.impl;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBMapperException;
 import org.influxdb.TestUtils;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.Query;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class InfluxDBMapperTest {
 
@@ -18,9 +21,11 @@ public class InfluxDBMapperTest {
   private InfluxDBMapper influxDBMapper;
   static final String UDP_DATABASE = "udp";
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     this.influxDB = TestUtils.connectToInfluxDB();
+    this.influxDB.query(new Query("CREATE DATABASE "+UDP_DATABASE,UDP_DATABASE));
+    this.influxDB.setDatabase(UDP_DATABASE);
     this.influxDBMapper = new InfluxDBMapper(influxDB);
   }
 
@@ -31,7 +36,8 @@ public class InfluxDBMapperTest {
     serverMeasure.setCpu(4.3d);
     serverMeasure.setHealthy(true);
     serverMeasure.setUptime(1234l);
-    serverMeasure.setMemoryUtilization(new BigDecimal("34.5"));
+    serverMeasure.setMemoryUtilization(new Double(34.5));
+    serverMeasure.setBigDecimal(new BigDecimal("1.2"));
 
     influxDBMapper.save(serverMeasure);
 
@@ -44,13 +50,21 @@ public class InfluxDBMapperTest {
         serverMeasure.getMemoryUtilization(), persistedMeasure.getMemoryUtilization());
   }
 
-  @After
+  @Test
+  public void testIllegalField() {
+    InvalidMeasure invalidMeasure = new InvalidMeasure();
+    invalidMeasure.setVal(new BigDecimal("2.3"));
+    assertThrows(
+            InfluxDBMapperException.class, () -> influxDBMapper.save(invalidMeasure),"Non supported field");
+  }
+
+  @AfterEach
   public void cleanUp() throws Exception {
     influxDB.query(new Query("DROP DATABASE udp", UDP_DATABASE));
   }
 
-  @Measurement(name = "server_measure")
-  private static class ServerMeasure {
+  @Measurement(name = "server_measure", database = UDP_DATABASE)
+  static class ServerMeasure {
 
     /** Check the instant convertions */
     @Column(name = "time")
@@ -59,7 +73,7 @@ public class InfluxDBMapperTest {
     @Column(name = "name", tag = true)
     private String name;
 
-    @Column(name = "cpu", tag = true)
+    @Column(name = "cpu")
     private double cpu;
 
     @Column(name = "healthy")
@@ -68,8 +82,14 @@ public class InfluxDBMapperTest {
     @Column(name = "min")
     private long uptime;
 
+    @Column(name = "test_dec")
+    private BigDecimal bigDecimal;
+
+    /**
+     * TODO bigdecimal unsupported?
+     */
     @Column(name = "memory_utilization")
-    private BigDecimal memoryUtilization;
+    private Double memoryUtilization;
 
     public Instant getTime() {
       return time;
@@ -111,12 +131,39 @@ public class InfluxDBMapperTest {
       this.uptime = uptime;
     }
 
-    public BigDecimal getMemoryUtilization() {
+    public Double getMemoryUtilization() {
       return memoryUtilization;
     }
 
-    public void setMemoryUtilization(BigDecimal memoryUtilization) {
+    public void setMemoryUtilization(Double memoryUtilization) {
       this.memoryUtilization = memoryUtilization;
     }
+
+    public BigDecimal getBigDecimal() {
+      return bigDecimal;
+    }
+
+    public void setBigDecimal(BigDecimal bigDecimal) {
+      this.bigDecimal = bigDecimal;
+    }
   }
+
+  @Measurement(name = "invalid_measure", database = UDP_DATABASE)
+  static class InvalidMeasure {
+
+    /**
+     * Check the instant convertions
+     */
+    @Column(name = "illegal_val")
+    private BigDecimal val;
+
+    public BigDecimal getVal() {
+      return val;
+    }
+
+    public void setVal(BigDecimal val) {
+      this.val = val;
+    }
+  }
+
 }

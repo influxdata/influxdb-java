@@ -1,6 +1,7 @@
 package org.influxdb.impl;
 
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -60,10 +61,8 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
       Point.Builder pointBuilder = Point.measurement(measurement).time(time, timeUnit);
 
       for (String key : colNameAndFieldMap.keySet()) {
-
         Field field = colNameAndFieldMap.get(key);
         Column column = field.getAnnotation(Column.class);
-
         String columnName = column.name();
         Class<?> fieldType = field.getType();
 
@@ -79,9 +78,9 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
            */
           pointBuilder.tag(columnName, value.toString());
         } else if ("time".equals(columnName)) {
-
+          setTime(pointBuilder, fieldType, timeUnit, value);
         } else {
-          setField(pointBuilder,fieldType,columnName,value);
+          setField(pointBuilder, fieldType, columnName, value);
        }
       }
 
@@ -95,6 +94,17 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
 
     } catch (IllegalAccessException e) {
       throw new InfluxDBMapperException(e);
+    }
+  }
+
+  private void setTime(final Point.Builder pointBuilder,final Class<?> fieldType, final TimeUnit timeUnit,final Object value) {
+    if (Instant.class.isAssignableFrom(fieldType)) {
+      Instant instant = (Instant) value;
+      long millis = instant.toEpochMilli();
+      long time = timeUnit.convert(millis, TimeUnit.MILLISECONDS);
+      pointBuilder.time(time,timeUnit);
+    } else {
+      throw new InfluxDBMapperException("Unsupported type " + fieldType + " for time: should be of Instant type");
     }
   }
 
