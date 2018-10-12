@@ -55,7 +55,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
       Class<?> modelType = model.getClass();
       String measurement = getMeasurementName(modelType);
       String database = getDatabaseName(modelType);
-      String retentionPolicy = getDatabaseName(modelType);
+      String retentionPolicy = getRetentionPolicy(modelType);
       TimeUnit timeUnit = getTimeUnit(modelType);
       long time = timeUnit.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
       Point.Builder pointBuilder = Point.measurement(measurement).time(time, timeUnit);
@@ -78,10 +78,12 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
            */
           pointBuilder.tag(columnName, value.toString());
         } else if ("time".equals(columnName)) {
-          setTime(pointBuilder, fieldType, timeUnit, value);
+          if( value !=null) {
+            setTime(pointBuilder, fieldType, timeUnit, value);
+          }
         } else {
           setField(pointBuilder, fieldType, columnName, value);
-       }
+        }
       }
 
       Point point = pointBuilder.build();
@@ -100,8 +102,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
   private void setTime(final Point.Builder pointBuilder,final Class<?> fieldType, final TimeUnit timeUnit,final Object value) {
     if (Instant.class.isAssignableFrom(fieldType)) {
       Instant instant = (Instant) value;
-      long millis = instant.toEpochMilli();
-      long time = timeUnit.convert(millis, TimeUnit.MILLISECONDS);
+      long time = timeUnit.convert(instantToNano(instant), TimeUnit.MILLISECONDS);
       pointBuilder.time(time,timeUnit);
     } else {
       throw new InfluxDBMapperException("Unsupported type " + fieldType + " for time: should be of Instant type");
@@ -120,7 +121,16 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
     } else if (String.class.isAssignableFrom(fieldType)) {
       pointBuilder.addField(columnName, (String) value);
     } else {
-      throw new InfluxDBMapperException("Unsupported type " + fieldType + " for column" + columnName);
+      throw new InfluxDBMapperException("Unsupported type " + fieldType + " for column " + columnName);
     }
   }
+
+  private long instantToNano(Instant instant) {
+    Instant inst = Instant.now();
+    long time = inst.getEpochSecond();
+    time *= 1000000000l; //convert to nanoseconds
+    time += inst.getNano();
+    return time;
+  }
+
 }

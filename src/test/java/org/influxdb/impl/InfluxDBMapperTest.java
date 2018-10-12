@@ -37,7 +37,6 @@ public class InfluxDBMapperTest {
     serverMeasure.setHealthy(true);
     serverMeasure.setUptime(1234l);
     serverMeasure.setMemoryUtilization(new Double(34.5));
-    serverMeasure.setBigDecimal(new BigDecimal("1.2"));
 
     influxDBMapper.save(serverMeasure);
 
@@ -81,9 +80,6 @@ public class InfluxDBMapperTest {
 
     @Column(name = "min")
     private long uptime;
-
-    @Column(name = "test_dec")
-    private BigDecimal bigDecimal;
 
     /**
      * TODO bigdecimal unsupported?
@@ -139,13 +135,6 @@ public class InfluxDBMapperTest {
       this.memoryUtilization = memoryUtilization;
     }
 
-    public BigDecimal getBigDecimal() {
-      return bigDecimal;
-    }
-
-    public void setBigDecimal(BigDecimal bigDecimal) {
-      this.bigDecimal = bigDecimal;
-    }
   }
 
   @Measurement(name = "invalid_measure", database = UDP_DATABASE)
