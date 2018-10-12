@@ -271,6 +271,44 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 
 -- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
 
+### InfluxDBMapper
+
+In case you want to use models only you can use the InfluxDBMapper to save and load measurements.
+You can create models that specify the database the measurement and the retention policy.
+
+```Java
+@Measurement(name = "cpu",database="servers", retentionPolicy="autogen",timeUnit = TimeUnit.MILLISECONDS)
+public class Cpu {
+    @Column(name = "time")
+    private Instant time;
+    @Column(name = "host", tag = true)
+    private String hostname;
+    @Column(name = "region", tag = true)
+    private String region;
+    @Column(name = "idle")
+    private Double idle;
+    @Column(name = "happydevop")
+    private Boolean happydevop;
+    @Column(name = "uptimesecs")
+    private Long uptimeSecs;
+    // getters (and setters if you need)
+}
+```
+
+The save them and load them by using the model.
+
+```Java
+influxDBMapper.save(cpu);
+Cpu persistedCpu = influxDBMapper.query(Cpu.class).get(0);
+```
+
+#### InfluxDBMapper limitations
+
+Tags are automatically converted to strings, since tags are strings to influxdb
+Supported values for fields are boolean, int, long, double, Boolean, Integer, Long, Double.
+The time field should be of type instant. 
+If you do not specify the time or set a value then the current system time shall be used with the timeunit specified.
+
 #### Query using Callbacks (version 2.8+ required)
 
 influxdb-java now supports returning results of a query via callbacks. Only one
