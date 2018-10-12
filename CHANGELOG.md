@@ -6,8 +6,10 @@
 
 ## 2.14 [2018-10-12]
 
-- Fixed chunked query exception handling [Issue #523](https://github.com/influxdata/influxdb-java/issues/523)
+### Fixes
 
+- Fixed chunked query exception handling [Issue #523](https://github.com/influxdata/influxdb-java/issues/523)
+- Memory leak in StringBuilder cache for Point.lineprotocol() [Issue #526](https://github.com/influxdata/influxdb-java/issues/521)
 
 ## 2.13 [2018-09-12]
 
