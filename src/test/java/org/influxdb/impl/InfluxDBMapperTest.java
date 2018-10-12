@@ -1,5 +1,7 @@
 package org.influxdb.impl;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.influxdb.InfluxDB;
@@ -13,8 +15,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 public class InfluxDBMapperTest {
 
   private InfluxDB influxDB;
@@ -24,7 +24,7 @@ public class InfluxDBMapperTest {
   @BeforeEach
   public void setUp() throws Exception {
     this.influxDB = TestUtils.connectToInfluxDB();
-    this.influxDB.query(new Query("CREATE DATABASE "+UDP_DATABASE,UDP_DATABASE));
+    this.influxDB.query(new Query("CREATE DATABASE " + UDP_DATABASE, UDP_DATABASE));
     this.influxDB.setDatabase(UDP_DATABASE);
     this.influxDBMapper = new InfluxDBMapper(influxDB);
   }
@@ -54,7 +54,9 @@ public class InfluxDBMapperTest {
     InvalidMeasure invalidMeasure = new InvalidMeasure();
     invalidMeasure.setVal(new BigDecimal("2.3"));
     assertThrows(
-            InfluxDBMapperException.class, () -> influxDBMapper.save(invalidMeasure),"Non supported field");
+        InfluxDBMapperException.class,
+        () -> influxDBMapper.save(invalidMeasure),
+        "Non supported field");
   }
 
   @AfterEach
@@ -81,9 +83,7 @@ public class InfluxDBMapperTest {
     @Column(name = "min")
     private long uptime;
 
-    /**
-     * TODO bigdecimal unsupported?
-     */
+    /** TODO bigdecimal unsupported? */
     @Column(name = "memory_utilization")
     private Double memoryUtilization;
 
@@ -134,15 +134,12 @@ public class InfluxDBMapperTest {
     public void setMemoryUtilization(Double memoryUtilization) {
       this.memoryUtilization = memoryUtilization;
     }
-
   }
 
   @Measurement(name = "invalid_measure", database = UDP_DATABASE)
   static class InvalidMeasure {
 
-    /**
-     * Check the instant convertions
-     */
+    /** Check the instant convertions */
     @Column(name = "illegal_val")
     private BigDecimal val;
 
@@ -154,5 +151,4 @@ public class InfluxDBMapperTest {
       this.val = val;
     }
   }
-
 }
