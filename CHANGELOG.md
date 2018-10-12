@@ -1,6 +1,10 @@
 # Changelog
 
-## 2.14
+## 2.15 [unreleased]
+
+
+
+## 2.14 [2018-10-12]
 
 - Fixed chunked query exception handling [Issue #523](https://github.com/influxdata/influxdb-java/issues/523)
 
