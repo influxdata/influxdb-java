@@ -16,7 +16,6 @@ import org.influxdb.dto.QueryResult;
 public class InfluxDBMapper extends InfluxDBResultMapper {
 
   private final InfluxDB influxDB;
-  private final long nanoConstant = 1000000000L;
 
   public InfluxDBMapper(final InfluxDB influxDB) {
     this.influxDB = influxDB;
@@ -105,7 +104,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
       final Object value) {
     if (Instant.class.isAssignableFrom(fieldType)) {
       Instant instant = (Instant) value;
-      long time = timeUnit.convert(instantToNano(instant), TimeUnit.MILLISECONDS);
+      long time = timeUnit.convert(instant.toEpochMilli(), TimeUnit.MILLISECONDS);
       pointBuilder.time(time, timeUnit);
     } else {
       throw new InfluxDBMapperException(
@@ -135,16 +134,4 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
     }
   }
 
-  /**
-   * Converts instant to nanoseconds.
-   * @param instant
-   * @return
-   */
-  private long instantToNano(final Instant instant) {
-    Instant inst = instant.now();
-    long time = inst.getEpochSecond();
-    time *= nanoConstant;
-    time += inst.getNano();
-    return time;
-  }
 }

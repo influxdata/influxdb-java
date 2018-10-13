@@ -76,7 +76,7 @@ public class InfluxDBMapperTest {
     );
   }
 
-  /*
+
   @Test
   public void testInstantOnTime() {
     ServerMeasure serverMeasure = createMeasure();
@@ -86,7 +86,7 @@ public class InfluxDBMapperTest {
     ServerMeasure persistedMeasure = influxDBMapper.query(ServerMeasure.class).get(0);
     Assert.assertEquals(instant,persistedMeasure.getTime());
   }
-  */
+
 
   @AfterEach
   public void cleanUp() throws Exception {
