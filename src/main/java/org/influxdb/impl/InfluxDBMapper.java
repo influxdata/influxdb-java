@@ -41,7 +41,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
               + " should specify a database value for this operation");
     }
 
-    QueryResult queryResult = influxDB.query(new Query("SELECT * FROM " + measurement,database));
+    QueryResult queryResult = influxDB.query(new Query("SELECT * FROM " + measurement, database));
     return toPOJO(queryResult, clazz);
   }
 
