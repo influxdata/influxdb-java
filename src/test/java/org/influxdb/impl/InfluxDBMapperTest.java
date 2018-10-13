@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBMapperException;
 import org.influxdb.TestUtils;
@@ -31,13 +34,7 @@ public class InfluxDBMapperTest {
 
   @Test
   public void testSave() {
-    ServerMeasure serverMeasure = new ServerMeasure();
-    serverMeasure.setName("maverick");
-    serverMeasure.setCpu(4.3d);
-    serverMeasure.setHealthy(true);
-    serverMeasure.setUptime(1234l);
-    serverMeasure.setMemoryUtilization(new Double(34.5));
-
+    ServerMeasure serverMeasure = createMeasure();
     influxDBMapper.save(serverMeasure);
 
     ServerMeasure persistedMeasure = influxDBMapper.query(ServerMeasure.class).get(0);
@@ -50,6 +47,15 @@ public class InfluxDBMapperTest {
   }
 
   @Test
+  public void testQuery() {
+    ServerMeasure serverMeasure = createMeasure();
+    influxDBMapper.save(serverMeasure);
+
+    List<ServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure",UDP_DATABASE),ServerMeasure.class);
+    Assert.assertTrue(persistedMeasures.size()>0);
+  }
+
+  @Test
   public void testIllegalField() {
     InvalidMeasure invalidMeasure = new InvalidMeasure();
     invalidMeasure.setVal(new BigDecimal("2.3"));
@@ -58,6 +64,29 @@ public class InfluxDBMapperTest {
         () -> influxDBMapper.save(invalidMeasure),
         "Non supported field");
   }
+
+  @Test
+  public void testNoDatabaseSpecified() {
+    NoDatabaseMeasure noDatabaseMeasure = new NoDatabaseMeasure();
+    noDatabaseMeasure.setField(Integer.valueOf(12));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> influxDBMapper.query(NoDatabaseMeasure.class),
+        "Should specify database for this query"
+    );
+  }
+
+  /*
+  @Test
+  public void testInstantOnTime() {
+    ServerMeasure serverMeasure = createMeasure();
+    Instant instant = Instant.ofEpochMilli(System.currentTimeMillis());
+    serverMeasure.setTime(instant);
+    influxDBMapper.save(serverMeasure);
+    ServerMeasure persistedMeasure = influxDBMapper.query(ServerMeasure.class).get(0);
+    Assert.assertEquals(instant,persistedMeasure.getTime());
+  }
+  */
 
   @AfterEach
   public void cleanUp() throws Exception {
@@ -151,4 +180,30 @@ public class InfluxDBMapperTest {
       this.val = val;
     }
   }
+
+  @Measurement(name = "no_database_measure")
+  static class NoDatabaseMeasure {
+
+    @Column(name = "field")
+    private Integer field;
+
+    public Integer getField() {
+      return field;
+    }
+
+    public void setField(Integer field) {
+      this.field = field;
+    }
+  }
+
+  private ServerMeasure createMeasure() {
+    ServerMeasure serverMeasure = new ServerMeasure();
+    serverMeasure.setName("maverick");
+    serverMeasure.setCpu(4.3d);
+    serverMeasure.setHealthy(true);
+    serverMeasure.setUptime(1234l);
+    serverMeasure.setMemoryUtilization(new Double(34.5));
+    return serverMeasure;
+  }
+
 }

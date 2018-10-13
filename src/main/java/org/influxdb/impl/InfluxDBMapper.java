@@ -42,7 +42,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
               + " should specify a database value for this operation");
     }
 
-    QueryResult queryResult = influxDB.query(new Query("SELECT * FROM " + measurement, database));
+    QueryResult queryResult = influxDB.query(new Query("SELECT * FROM " + measurement,database));
     return toPOJO(queryResult, clazz);
   }
 
@@ -58,7 +58,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
       String database = getDatabaseName(modelType);
       String retentionPolicy = getRetentionPolicy(modelType);
       TimeUnit timeUnit = getTimeUnit(modelType);
-      long time = timeUnit.convert(System.nanoTime(), TimeUnit.NANOSECONDS);
+      long time = timeUnit.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
       Point.Builder pointBuilder = Point.measurement(measurement).time(time, timeUnit);
 
       for (String key : colNameAndFieldMap.keySet()) {
