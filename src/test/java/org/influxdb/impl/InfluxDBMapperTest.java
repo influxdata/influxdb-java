@@ -42,6 +42,7 @@ public class InfluxDBMapperTest {
     Assert.assertEquals(serverMeasure.getCpu(), persistedMeasure.getCpu(), 0);
     Assert.assertEquals(serverMeasure.isHealthy(), persistedMeasure.isHealthy());
     Assert.assertEquals(serverMeasure.getUptime(), persistedMeasure.getUptime());
+    Assert.assertEquals(serverMeasure.getIp(),persistedMeasure.getIp());
     Assert.assertEquals(
         serverMeasure.getMemoryUtilization(), persistedMeasure.getMemoryUtilization());
   }
@@ -76,6 +77,16 @@ public class InfluxDBMapperTest {
     );
   }
 
+  @Test
+  public void testNonInstantTime() {
+    NonInstantTime nonInstantTime = new NonInstantTime();
+    nonInstantTime.setTime(1234566l);
+    assertThrows(
+        InfluxDBMapperException.class,
+        () -> influxDBMapper.save(nonInstantTime),
+        "time should be of type Instant"
+    );
+  }
 
   @Test
   public void testInstantOnTime() {
@@ -112,9 +123,11 @@ public class InfluxDBMapperTest {
     @Column(name = "min")
     private long uptime;
 
-    /** TODO bigdecimal unsupported? */
     @Column(name = "memory_utilization")
     private Double memoryUtilization;
+
+    @Column(name = "ip")
+    private String ip;
 
     public Instant getTime() {
       return time;
@@ -163,6 +176,14 @@ public class InfluxDBMapperTest {
     public void setMemoryUtilization(Double memoryUtilization) {
       this.memoryUtilization = memoryUtilization;
     }
+
+    public String getIp() {
+      return ip;
+    }
+
+    public void setIp(String ip) {
+      this.ip = ip;
+    }
   }
 
   @Measurement(name = "invalid_measure", database = UDP_DATABASE)
@@ -196,6 +217,21 @@ public class InfluxDBMapperTest {
     }
   }
 
+  @Measurement(name = "non_instant_time")
+  static class NonInstantTime {
+
+    @Column(name = "time")
+    private long time;
+
+    public long getTime() {
+      return time;
+    }
+
+    public void setTime(long time) {
+      this.time = time;
+    }
+  }
+
   private ServerMeasure createMeasure() {
     ServerMeasure serverMeasure = new ServerMeasure();
     serverMeasure.setName("maverick");
@@ -203,6 +239,7 @@ public class InfluxDBMapperTest {
     serverMeasure.setHealthy(true);
     serverMeasure.setUptime(1234l);
     serverMeasure.setMemoryUtilization(new Double(34.5));
+    serverMeasure.setIp("19.087.4.5");
     return serverMeasure;
   }
 
