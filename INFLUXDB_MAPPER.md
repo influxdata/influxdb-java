@@ -1,6 +1,6 @@
 ### InfluxDBMapper
 
-In case you want to use models only you can use the InfluxDBMapper to save and load measurements.
+In case you want to use models only, you can use the InfluxDBMapper to save and load measurements.
 You can create models that specify the database the measurement and the retention policy.
 
 ```Java
@@ -25,7 +25,7 @@ public class Cpu {
 Save operation using a model.
 
 ```Java
-Cpu cpu = ..create the cpu measure
+Cpu cpu = .., create the cpu measure
 influxDBMapper.save(cpu);
 ```
 
@@ -35,10 +35,10 @@ Load data using a model.
 Cpu persistedCpu = influxDBMapper.query(Cpu.class).get(0);
 ```
 
-Load data using a query and specify the model fro mapping.
+Load data using a query and specify the model for mapping.
 
 ```java
-Query query = ..create your query
+Query query = ... create your query
 List<Cpu> persistedMeasure = influxDBMapper.query(query,Cpu.class);
 ```
 
