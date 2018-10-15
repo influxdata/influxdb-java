@@ -35,5 +35,9 @@ public @interface Measurement {
 
   String name();
 
+  String database() default "[unassigned]";
+
+  String retentionPolicy() default "autogen";
+
   TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
 }

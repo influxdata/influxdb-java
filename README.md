@@ -271,6 +271,10 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 
 -- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
 
+### InfluxDBMapper
+
+In case you want to save and load data using models you can use the [InfluxDBMapper](INFLUXDB_MAPPER.md).
+
 #### Query using Callbacks (version 2.8+ required)
 
 influxdb-java now supports returning results of a query via callbacks. Only one
