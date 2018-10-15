@@ -4,7 +4,6 @@ package org.influxdb.impl;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,10 +41,15 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -74,11 +78,11 @@ public class InfluxDBImpl implements InfluxDB {
    * This static constant holds the http logging log level expected in DEBUG mode
    * It is set by System property {@code org.influxdb.InfluxDB.logLevel}.
    *
-   * @see org.influxdb.impl.LOG_LEVEL_PROPERTY
+   * @see org.influxdb.InfluxDB#LOG_LEVEL_PROPERTY
    */
   private static final LogLevel LOG_LEVEL = LogLevel.parseLogLevel(System.getProperty(LOG_LEVEL_PROPERTY));
 
-  private final InetAddress hostAddress;
+  private final String hostName;
   private String version;
   private final Retrofit retrofit;
   private final InfluxDBService influxDBService;
@@ -107,28 +111,51 @@ public class InfluxDBImpl implements InfluxDB {
    *          The InfluxDB user name
    * @param password
    *          The InfluxDB user password
-   * @param client
+   * @param okHttpBuilder
    *          The OkHttp Client Builder
    * @param responseFormat
    *          The {@code ResponseFormat} to use for response from InfluxDB
    *          server
    */
-  public InfluxDBImpl(final String url, final String username, final String password, final OkHttpClient.Builder client,
-      final ResponseFormat responseFormat) {
+  public InfluxDBImpl(final String url, final String username, final String password,
+                      final OkHttpClient.Builder okHttpBuilder, final ResponseFormat responseFormat) {
+    this(url, username, password, okHttpBuilder, new Retrofit.Builder(), responseFormat);
+  }
+
+  /**
+   * Constructs a new {@code InfluxDBImpl}.
+   *
+   * @param url
+   *          The InfluxDB server API URL
+   * @param username
+   *          The InfluxDB user name
+   * @param password
+   *          The InfluxDB user password
+   * @param okHttpBuilder
+   *          The OkHttp Client Builder
+   * @param retrofitBuilder
+   *          The Retrofit Builder
+   * @param responseFormat
+   *          The {@code ResponseFormat} to use for response from InfluxDB
+   *          server
+   */
+  public InfluxDBImpl(final String url, final String username, final String password,
+                      final OkHttpClient.Builder okHttpBuilder, final Retrofit.Builder retrofitBuilder,
+                      final ResponseFormat responseFormat) {
     this.messagePack = ResponseFormat.MSGPACK.equals(responseFormat);
-    this.hostAddress = parseHostAddress(url);
+    this.hostName = parseHost(url);
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
-    clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
+    OkHttpClient.Builder clonedOkHttpBuilder = okHttpBuilder.build().newBuilder();
+    clonedOkHttpBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
       addInterceptor(new BasicAuthInterceptor(username, password));
     Factory converterFactory = null;
     switch (responseFormat) {
     case MSGPACK:
-      clonedBuilder.addInterceptor(chain -> {
+      clonedOkHttpBuilder.addInterceptor(chain -> {
         Request request = chain.request().newBuilder().addHeader("Accept", APPLICATION_MSGPACK).build();
         return chain.proceed(request);
       });
@@ -146,8 +173,9 @@ public class InfluxDBImpl implements InfluxDB {
       break;
     }
 
-    this.retrofit = new Retrofit.Builder().baseUrl(url).client(
-        clonedBuilder.build()).addConverterFactory(converterFactory).build();
+    Retrofit.Builder clonedRetrofitBuilder = retrofitBuilder.baseUrl(url).build().newBuilder();
+    this.retrofit = clonedRetrofitBuilder.client(clonedOkHttpBuilder.build())
+            .addConverterFactory(converterFactory).build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
   }
@@ -162,7 +190,7 @@ public class InfluxDBImpl implements InfluxDB {
       final InfluxDBService influxDBService, final JsonAdapter<QueryResult> adapter) {
     super();
     this.messagePack = false;
-    this.hostAddress = parseHostAddress(url);
+    this.hostName = parseHost(url);
 
     this.loggingInterceptor = new HttpLoggingInterceptor();
     setLogLevel(LOG_LEVEL);
@@ -187,18 +215,25 @@ public class InfluxDBImpl implements InfluxDB {
     setRetentionPolicy(retentionPolicy);
   }
 
-  private InetAddress parseHostAddress(final String url) {
-      HttpUrl httpUrl = HttpUrl.parse(url);
+  private String parseHost(final String url) {
+    String hostName;
+    try {
+      URI uri = new URI(url);
+      hostName = uri.getHost();
+    } catch (URISyntaxException e1) {
+      throw new IllegalArgumentException("Unable to parse url: " + url, e1);
+    }
 
-      if (httpUrl == null) {
-          throw new IllegalArgumentException("Unable to parse url: " + url);
-      }
+    if (hostName == null) {
+      throw new IllegalArgumentException("Unable to parse url: " + url);
+    }
 
-      try {
-          return InetAddress.getByName(httpUrl.host());
-      } catch (UnknownHostException e) {
-          throw new InfluxDBIOException(e);
-      }
+    try {
+      InetAddress.getByName(hostName);
+    } catch (UnknownHostException e) {
+      throw new InfluxDBIOException(e);
+    }
+    return hostName;
   }
 
   @Override
@@ -425,6 +460,14 @@ public class InfluxDBImpl implements InfluxDB {
         lineProtocol));
   }
 
+  @Override
+  public void writeWithRetry(final BatchPoints batchPoints) {
+    if (isBatchEnabled()) {
+      batchProcessor.getBatchWriter().write(Collections.singleton(batchPoints));
+    } else {
+      write(batchPoints);
+    }
+  }
 
   @Override
   public void write(final String database, final String retentionPolicy, final ConsistencyLevel consistency,
@@ -465,7 +508,7 @@ public class InfluxDBImpl implements InfluxDB {
     initialDatagramSocket();
     byte[] bytes = records.getBytes(StandardCharsets.UTF_8);
     try {
-        datagramSocket.send(new DatagramPacket(bytes, bytes.length, hostAddress, udpPort));
+        datagramSocket.send(new DatagramPacket(bytes, bytes.length, new InetSocketAddress(hostName, udpPort)));
     } catch (IOException e) {
         throw new InfluxDBIOException(e);
     }
@@ -524,42 +567,102 @@ public class InfluxDBImpl implements InfluxDB {
    * {@inheritDoc}
    */
   @Override
-    public void query(final Query query, final int chunkSize, final Consumer<QueryResult> consumer) {
-        Call<ResponseBody> call = null;
-        if (query instanceof BoundParameterQuery) {
-            BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
-                    boundParameterQuery.getParameterJsonWithUrlEncoded());
-        } else {
-            call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
-        }
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext) {
+    query(query, chunkSize, onNext, () -> { });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext) {
+    query(query, chunkSize, onNext, () -> { });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext,
+                    final Runnable onComplete) {
+    query(query, chunkSize, (cancellable, queryResult) -> onNext.accept(queryResult), onComplete);
+  }
+
+  @Override
+  public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
+                    final Runnable onComplete) {
+    query(query, chunkSize, onNext, onComplete, null);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
+                    final Runnable onComplete, final Consumer<Throwable> onFailure) {
+
+    Call<ResponseBody> call;
+    if (query instanceof BoundParameterQuery) {
+      BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+      call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+          boundParameterQuery.getParameterJsonWithUrlEncoded());
+    } else {
+      call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+    }
 
     call.enqueue(new Callback<ResponseBody>() {
       @Override
       public void onResponse(final Call<ResponseBody> call, final Response<ResponseBody> response) {
+
+        Cancellable cancellable = new Cancellable() {
+          @Override
+          public void cancel() {
+            call.cancel();
+          }
+
+          @Override
+          public boolean isCanceled() {
+            return call.isCanceled();
+          }
+        };
+
         try {
           if (response.isSuccessful()) {
             ResponseBody chunkedBody = response.body();
-            chunkProccesor.process(chunkedBody, consumer);
+            chunkProccesor.process(chunkedBody, cancellable, onNext, onComplete);
           } else {
             // REVIEW: must be handled consistently with IOException.
             ResponseBody errorBody = response.errorBody();
             if (errorBody != null) {
-              throw new InfluxDBException(errorBody.string());
+              InfluxDBException influxDBException = new InfluxDBException(errorBody.string());
+              if (onFailure == null) {
+                throw influxDBException;
+              } else {
+                onFailure.accept(influxDBException);
+              }
             }
           }
         } catch (IOException e) {
           QueryResult queryResult = new QueryResult();
           queryResult.setError(e.toString());
-          consumer.accept(queryResult);
+          onNext.accept(cancellable, queryResult);
+          //passing null onFailure consumer is here for backward compatibility
+          //where the empty queryResult containing error is propagating into onNext consumer
+          if (onFailure != null) {
+            onFailure.accept(e);
+          }
         }
       }
 
-            @Override
-            public void onFailure(final Call<ResponseBody> call, final Throwable t) {
-                throw new InfluxDBException(t);
-            }
-        });
+      @Override
+      public void onFailure(final Call<ResponseBody> call, final Throwable t) {
+        if (onFailure == null) {
+          throw new InfluxDBException(t);
+        } else {
+          onFailure.accept(t);
+        }
+      }
+    });
   }
 
   /**
@@ -687,7 +790,11 @@ public class InfluxDBImpl implements InfluxDB {
         return response.body();
       }
       try (ResponseBody errorBody = response.errorBody()) {
-        throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
+        if (messagePack) {
+          throw InfluxDBException.buildExceptionForErrorState(errorBody.byteStream());
+        } else {
+          throw InfluxDBException.buildExceptionForErrorState(errorBody.string());
+        }
       }
     } catch (IOException e) {
       throw new InfluxDBIOException(e);
@@ -806,17 +913,24 @@ public class InfluxDBImpl implements InfluxDB {
   }
 
   private interface ChunkProccesor {
-    void process(ResponseBody chunkedBody, Consumer<QueryResult> consumer) throws IOException;
+    void process(ResponseBody chunkedBody, Cancellable cancellable,
+                 BiConsumer<Cancellable, QueryResult> consumer, Runnable onComplete) throws IOException;
   }
 
   private class MessagePackChunkProccesor implements ChunkProccesor {
     @Override
-    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+    public void process(final ResponseBody chunkedBody, final Cancellable cancellable,
+                        final BiConsumer<Cancellable, QueryResult> consumer, final Runnable onComplete)
+            throws IOException {
       MessagePackTraverser traverser = new MessagePackTraverser();
       try (InputStream is = chunkedBody.byteStream()) {
-        for (QueryResult result : traverser.traverse(is)) {
-          consumer.accept(result);
+        for (Iterator<QueryResult> it = traverser.traverse(is).iterator(); it.hasNext() && !cancellable.isCanceled();) {
+          QueryResult result = it.next();
+          consumer.accept(cancellable, result);
         }
+      }
+      if (!cancellable.isCanceled()) {
+        onComplete.run();
       }
     }
   }
@@ -829,19 +943,26 @@ public class InfluxDBImpl implements InfluxDB {
     }
 
     @Override
-    public void process(final ResponseBody chunkedBody, final Consumer<QueryResult> consumer) throws IOException {
+    public void process(final ResponseBody chunkedBody, final Cancellable cancellable,
+                        final BiConsumer<Cancellable, QueryResult> consumer, final Runnable onComplete)
+            throws IOException {
       try {
         BufferedSource source = chunkedBody.source();
-        while (true) {
+        while (!cancellable.isCanceled()) {
           QueryResult result = adapter.fromJson(source);
           if (result != null) {
-            consumer.accept(result);
+            consumer.accept(cancellable, result);
           }
         }
       } catch (EOFException e) {
         QueryResult queryResult = new QueryResult();
         queryResult.setError("DONE");
-        consumer.accept(queryResult);
+        consumer.accept(cancellable, queryResult);
+        if (!cancellable.isCanceled()) {
+          onComplete.run();
+        }
+      } finally {
+        chunkedBody.close();
       }
     }
   }
