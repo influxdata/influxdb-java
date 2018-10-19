@@ -40,16 +40,28 @@ public class ChunkingExceptionTest {
     @Test
     public void testChunkingIOException() throws IOException, InterruptedException {
         
-        testChunkingException(new IOException(), "java.io.IOException");
+        testChunkingException(new IOException(), "java.io.IOException", null);
     }
 
     @Test
     public void testChunkingEOFException() throws IOException, InterruptedException {
 
-        testChunkingException(new EOFException(), "DONE");
+        testChunkingException(new EOFException(), "DONE", null);
     }
 
-    public void testChunkingException(Exception ex, String message) throws IOException, InterruptedException {
+    @Test
+    public void testChunkingIOExceptionOnFailure() throws IOException, InterruptedException {
+
+        testChunkingException(new IOException(), "java.io.IOException", Assertions::assertNotNull);
+    }
+
+    @Test
+    public void testChunkingEOFExceptionOnFailure() throws IOException, InterruptedException {
+
+        testChunkingException(new EOFException(), "DONE",  Assertions::assertNotNull);
+    }
+
+    public void testChunkingException(Exception ex, String message, Consumer<Throwable> onFailure) throws IOException, InterruptedException {
 
         InfluxDBService influxDBService = mock(InfluxDBService.class);
         JsonAdapter<QueryResult> adapter = mock(JsonAdapter.class);
@@ -71,12 +83,17 @@ public class ChunkingExceptionTest {
         String dbName = "write_unittest_" + System.currentTimeMillis();
         final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
         Query query = new Query("SELECT * FROM disk", dbName);
-        influxDB.query(query, 2, new Consumer<QueryResult>() {
-            @Override
-            public void accept(QueryResult result) {
-                queue.add(result);
-            }
-        });
+
+        if (onFailure == null) {
+            influxDB.query(query, 2, queue::add);
+        } else {
+            //test with onComplete and onFailure consumer
+            influxDB.query(query, 2, (cancellable, result) -> queue.add(result),
+                //on complete
+                () -> {  },
+                onFailure
+            );
+        }
 
         ArgumentCaptor<Callback<ResponseBody>> argumentCaptor = ArgumentCaptor.forClass(Callback.class);
         verify(call).enqueue(argumentCaptor.capture());

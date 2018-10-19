@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDBException;
 import org.influxdb.dto.QueryResult;
@@ -27,6 +28,7 @@ import org.msgpack.value.ValueType;
  */
 public class MessagePackTraverser {
 
+  private static final byte MSG_PACK_TIME_EXT_TYPE = 5;
   private String lastStringNode;
 
   /**
@@ -229,14 +231,17 @@ public class MessagePackTraverser {
         }
         break;
       case EXTENSION:
-        final byte msgPackTimeExtType = (byte) 5;
-        final int timeOffset = 0;
-        final int timeByteArrayLength = 8;
+        final int nanosStartIndex = 8;
         extension = unpacker.unpackExtensionTypeHeader();
-        if (extension.getType() == msgPackTimeExtType) {
+        if (extension.getType() == MSG_PACK_TIME_EXT_TYPE) {
+          //decode epoch nanos in accordance with https://github.com/tinylib/msgp/blob/master/msgp/write.go#L594
+
           dst = new byte[extension.getLength()];
           unpacker.readPayload(dst);
-          o = ByteBuffer.wrap(dst, timeOffset, timeByteArrayLength).getLong();
+          ByteBuffer bf = ByteBuffer.wrap(dst, 0, extension.getLength());
+          long epochSeconds = bf.getLong();
+          int nanosOffset = bf.getInt(nanosStartIndex);
+          o = TimeUnit.SECONDS.toNanos(epochSeconds) + nanosOffset;
         }
         break;
 

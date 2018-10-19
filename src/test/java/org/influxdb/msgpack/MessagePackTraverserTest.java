@@ -33,7 +33,8 @@ public class MessagePackTraverserTest {
     QueryResult result = iter.next();
     List<List<Object>> values = result.getResults().get(0).getSeries().get(0).getValues();
     Assertions.assertEquals(2, values.size());
-    assertEquals(1532325083L, values.get(0).get(0));
+    
+    assertEquals(1532325083803052600L, values.get(0).get(0));
     assertEquals("b", values.get(1).get(1));
     
     assertTrue(iter.hasNext());
@@ -56,7 +57,7 @@ public class MessagePackTraverserTest {
     QueryResult queryResult = traverser.parse(MessagePackTraverserTest.class.getResourceAsStream("msgpack_2.bin"));
     List<List<Object>> values = queryResult.getResults().get(0).getSeries().get(0).getValues();
     Assertions.assertEquals(3, values.size());
-    assertEquals(1485273600L, values.get(0).get(0));
+    assertEquals(1485273600000000000L, values.get(0).get(0));
     assertEquals("two", values.get(1).get(1));
     assertEquals(3.0, values.get(2).get(2));
   }

@@ -1,6 +1,17 @@
 # Changelog
 
-## 2.13 [unreleased]
+## 2.15 [unreleased]
+
+
+
+## 2.14 [2018-10-12]
+
+### Fixes
+
+- Fixed chunked query exception handling [Issue #523](https://github.com/influxdata/influxdb-java/issues/523)
+- Memory leak in StringBuilder cache for Point.lineprotocol() [Issue #526](https://github.com/influxdata/influxdb-java/issues/521)
+
+## 2.13 [2018-09-12]
 
 ### Fixes
 - MessagePack queries: Exception during parsing InfluxDB version [macOS] [PR #487](https://github.com/influxdata/influxdb-java/issues/487)
@@ -8,12 +19,15 @@
 - UDP target host address is cached [PR #502](https://github.com/influxdata/influxdb-java/issues/502)
 - Error messages from server not parsed correctly when using msgpack [PR #506](https://github.com/influxdata/influxdb-java/issues/506)
 - Response body must be closed properly in case of JSON response [PR #514](https://github.com/influxdata/influxdb-java/issues/514)
+- Time is serialized not consistently in MsgPack and Json, missing millis and nanos in MsgPack[PR #517](https://github.com/influxdata/influxdb-java/issues/517)
 
 ### Features
 
 - Support for Basic Authentication [PR #492](https://github.com/influxdata/influxdb-java/pull/492)
 - Added possibility to reuse client as a core part of [influxdb-java-reactive](https://github.com/bonitoo-io/influxdb-java-reactive) client [PR #493](https://github.com/influxdata/influxdb-java/pull/493)
 - Retry capability for writing of BatchPoints [PR #503](https://github.com/influxdata/influxdb-java/issues/503)
+- Added `BiConsumer` with capability to discontinue a streaming query [Issue #515](https://github.com/influxdata/influxdb-java/issues/515)
+- Added `onComplete` action that is invoked after successfully end of streaming query [Issue #515](https://github.com/influxdata/influxdb-java/issues/515)
 
 ## 2.12 [2018-07-31]
 
