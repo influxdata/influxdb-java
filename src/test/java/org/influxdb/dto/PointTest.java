@@ -507,7 +507,7 @@ public class PointTest {
   @Test
   public void testAddFieldsFromPOJOWithoutData() {
     Pojo pojo = new Pojo();
-    Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+    Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
   }
 
   @Test

@@ -2,9 +2,6 @@ package org.influxdb.dto;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
@@ -15,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
@@ -244,13 +242,9 @@ public class Point {
           continue;
         }
 
+        field.setAccessible(true);
         String fieldName = column.name();
-
-        if (isPublic(field)) {
-          addFieldByAttribute(pojo, field, column, fieldName);
-        } else {
-          addFieldByMethod(pojo, clazz, field, column, fieldName);
-        }
+        addFieldByAttribute(pojo, field, column, fieldName);
       }
 
       if (this.fields.isEmpty()) {
@@ -259,35 +253,6 @@ public class Point {
       }
 
       return this;
-    }
-
-    private boolean isPublic(final Field field) {
-      int modifiers = field.getModifiers();
-      return Modifier.isPublic(modifiers);
-    }
-
-    private void addFieldByMethod(final Object pojo, final Class<? extends Object> clazz,
-        final Field field, final Column column, final String fieldName) {
-      String getterName = guessGetterName(field, fieldName);
-
-      try {
-        Class<?>[] methodArgs = null;
-        Method getter = clazz.getMethod(getterName, methodArgs);
-        Object fieldValue = getter.invoke(pojo);
-
-        if (column.tag()) {
-          this.tags.put(fieldName, (String) fieldValue);
-        } else {
-          this.fields.put(fieldName, fieldValue);
-        }
-
-      } catch (NoSuchMethodException | SecurityException | IllegalAccessException
-          | IllegalArgumentException | InvocationTargetException e) {
-
-        throw new BuilderException(
-            "Method " + getterName + " could not found on class " + clazz.getSimpleName());
-
-      }
     }
 
     private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
