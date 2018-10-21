@@ -334,21 +334,21 @@ The latest version for maven dependence:
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.10</version>
+  <version>2.14</version>
 </dependency>
 ```
 
 Or when using with gradle:
 
 ```groovy
-compile 'org.influxdb:influxdb-java:2.10'
+compile 'org.influxdb:influxdb-java:2.14'
 ```
 
 For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
 
 ### Build Requirements
 
-* Java 1.8+ (tested with jdk8 and jdk9)
+* Java 1.8+ (tested with jdk8 and jdk11)
 * Maven 3.0+ (tested with maven 3.5.0)
 * Docker daemon running
 
