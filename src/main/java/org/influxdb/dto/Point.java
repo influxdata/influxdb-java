@@ -272,21 +272,6 @@ public class Point {
       }
     }
 
-    private String guessGetterName(final Field field, final String fieldName) {
-      StringBuilder stringBuilder = new StringBuilder();
-
-      if (field.getType().isAssignableFrom(boolean.class)) {
-        stringBuilder.append("is");
-      } else {
-        stringBuilder.append("get");
-      }
-
-      stringBuilder.append(fieldName.substring(0, 1).toUpperCase());
-      stringBuilder.append(fieldName.substring(1));
-
-      return stringBuilder.toString();
-    }
-
     /**
      * Create a new Point.
      *
