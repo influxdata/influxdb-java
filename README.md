@@ -263,6 +263,22 @@ InfluxDBResultMapper resultMapper = new InfluxDBResultMapper(); // thread-safe -
 List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 ```
 
+#### Writing using POJO
+The same way we use `annotations` to transform data to POJO, we can write data as POJO.
+Having the same POJO class Cpu
+
+```java
+String dbName = "myTimeseries";
+String rpName = "aRetentionPolicy";
+// Cpu has annotations @Measurement and @Column
+Cpu cpu = new Cpu();
+// ... setting data
+
+Point point = Point.measurementByPOJO(cpu.getClass()).addFieldsFromPOJO(cpu).build();
+
+influxDB.write(dbName, rpName, point);
+```
+
 #### QueryResult mapper limitations
 
 * If your InfluxDB query contains multiple SELECT clauses, you will have to call InfluxResultMapper#toPOJO() multiple times to map every measurement returned by QueryResult to the respective POJO;
