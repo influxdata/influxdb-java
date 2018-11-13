@@ -17,9 +17,11 @@ import org.mockito.invocation.InvocationOnMock;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.lang.reflect.Field;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.*;
@@ -233,6 +235,62 @@ public class RetryCapableBatchWriterTest {
     InfluxDBException unknownError = InfluxDBException.buildExceptionForErrorState(createErrorBody("unknown error"));
 
     Assertions.assertTrue(unknownError.isRetryWorth());
+  }
+
+  @Test
+  public void testBufferCountConsistency() throws Exception {
+    InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+    BiConsumer errorHandler = mock(BiConsumer.class);
+    int MAX_BUFFER_CAPACITY = 3000;
+    RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
+            MAX_BUFFER_CAPACITY, 1000);
+
+    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"database not found: cvfdgf\" }");
+    Exception recoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
+
+    // need access to private properties for quality testing
+    Field localUsedRetryBufferCapacity = RetryCapableBatchWriter.class.
+            getDeclaredField("usedRetryBufferCapacity");
+    Field localBatchQueue = RetryCapableBatchWriter.class.
+            getDeclaredField("batchQueue");
+
+    localUsedRetryBufferCapacity.setAccessible(true);
+    localBatchQueue.setAccessible(true);
+
+    // cycle test with all possible outcomes: non retry, with retry, write pass
+    // "with retry" will cover https://github.com/influxdata/influxdb-java/issues/541
+    Exception[] tryExceptionList = new Exception[]{nonRecoverable, recoverable, null};
+
+    for (Exception exception : tryExceptionList) {
+      // try for 100 times with random number of points each time
+      for (int i=0; i < 100; i++) {
+        int count = 200 + ((i * 777) & 511);
+        BatchPoints bps = getBP(count);
+        if (exception != null) {
+            Mockito.doThrow(exception).when(mockInfluxDB).write(bps);
+        }
+        else {
+            Mockito.reset(mockInfluxDB);
+        }
+        rw.write(Collections.singletonList(bps));
+
+        // count actual number of points in batchQueue
+        @SuppressWarnings("unchecked")
+        LinkedList<BatchPoints> batchQueue = (LinkedList<BatchPoints>)localBatchQueue.get(rw);
+        int sum = 0;
+        for (BatchPoints b : batchQueue) {
+          sum += b.getPoints().size();
+        }
+
+        // compare with usedRetryBufferCapacity
+        int localUsedRetryBufferCapacityVal = (int) localUsedRetryBufferCapacity.get(rw);
+
+        Assertions.assertTrue(sum == localUsedRetryBufferCapacityVal,
+                "batchSize usage counter mismatch UsedRetryBufferCapacityVal, "
+                + sum + " != " + localUsedRetryBufferCapacityVal);
+        Assertions.assertTrue(sum < MAX_BUFFER_CAPACITY, "batchSize usage outside of allowed range " + sum);
+      }
+    }
   }
 
   private static String createErrorBody(String errorMessage) {
