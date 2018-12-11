@@ -52,4 +52,11 @@ public class PreconditionsTest {
 		});
   }
 
+  @Test
+  public void testCheckDurationInf(){
+    final String duration = "inf";
+    Assertions.assertDoesNotThrow(()->{
+      Preconditions.checkDuration(duration, "duration");
+    });
+  }
 }
