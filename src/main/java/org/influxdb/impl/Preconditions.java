@@ -56,7 +56,7 @@ public final class Preconditions {
   public static void checkDuration(final String duration, final String name) throws IllegalArgumentException {
     if (!duration.matches("(\\d+[wdmhs])|inf+")) {
       throw new IllegalArgumentException("Invalid InfluxDB duration: " + duration
-         + "for " + name);
+         + " for " + name);
     }
   }
 }
