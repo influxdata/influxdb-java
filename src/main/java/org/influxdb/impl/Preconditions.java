@@ -54,7 +54,7 @@ public final class Preconditions {
    * @throws IllegalArgumentException if the given duration is not valid.
    */
   public static void checkDuration(final String duration, final String name) throws IllegalArgumentException {
-    if (!duration.matches("(\\d+[wdmhs])|inf+")) {
+    if (!duration.matches("(\\d+[wdmhs])+|inf")) {
       throw new IllegalArgumentException("Invalid InfluxDB duration: " + duration
          + " for " + name);
     }
