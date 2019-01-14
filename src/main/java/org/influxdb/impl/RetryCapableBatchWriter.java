@@ -144,16 +144,17 @@ class RetryCapableBatchWriter implements BatchWriter {
   }
 
   private void addToBatchQueue(final BatchPoints batchPoints) {
+    boolean hasBeenMergedIn = false;
     if (batchQueue.size() > 0) {
       BatchPoints last = batchQueue.getLast();
       if (last.getPoints().size() + batchPoints.getPoints().size() <= requestActionsLimit) {
-        boolean hasBeenMergedIn = last.mergeIn(batchPoints);
-        if (hasBeenMergedIn) {
-          return;
-        }
+        hasBeenMergedIn = last.mergeIn(batchPoints);
       }
     }
-    batchQueue.add(batchPoints);
+    if (!hasBeenMergedIn) {
+        batchQueue.add(batchPoints);
+    }
+    // recalculate local counter and evict old batches on merge as well
     usedRetryBufferCapacity += batchPoints.getPoints().size();
     evictTooOldFailedWrites();
   }
