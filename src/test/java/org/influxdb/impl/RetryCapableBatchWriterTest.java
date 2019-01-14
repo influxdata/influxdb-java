@@ -282,7 +282,7 @@ public class RetryCapableBatchWriterTest {
           sum += b.getPoints().size();
         }
 
-        // compare with usedRetryBufferCapacity
+        // compare with value of usedRetryBufferCapacity
         int localUsedRetryBufferCapacityVal = (int) localUsedRetryBufferCapacity.get(rw);
 
         Assertions.assertTrue(sum == localUsedRetryBufferCapacityVal,
