@@ -107,7 +107,7 @@ public class InfluxDBMapperTest {
   @Measurement(name = "server_measure", database = UDP_DATABASE)
   static class ServerMeasure {
 
-    /** Check the instant convertions */
+    /** Check the instant conversions */
     @Column(name = "time")
     private Instant time;
 
@@ -189,7 +189,7 @@ public class InfluxDBMapperTest {
   @Measurement(name = "invalid_measure", database = UDP_DATABASE)
   static class InvalidMeasure {
 
-    /** Check the instant convertions */
+    /** Check the instant conversions */
     @Column(name = "illegal_val")
     private BigDecimal val;
 
