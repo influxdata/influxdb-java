@@ -452,8 +452,12 @@ public class InfluxDBImpl implements InfluxDB {
   public void write(final BatchPoints batchPoints) {
     this.batchedCount.add(batchPoints.getPoints().size());
     RequestBody lineProtocol = RequestBody.create(MEDIA_TYPE_STRING, batchPoints.lineProtocol());
+    String db = batchPoints.getDatabase();
+    if (db == null) {
+        db = this.database;
+    }
     execute(this.influxDBService.writePoints(
-        batchPoints.getDatabase(),
+        db,
         batchPoints.getRetentionPolicy(),
         TimeUtil.toTimePrecision(batchPoints.getPrecision()),
         batchPoints.getConsistency().value(),
@@ -738,15 +742,19 @@ public class InfluxDBImpl implements InfluxDB {
    */
   private Call<QueryResult> callQuery(final Query query) {
     Call<QueryResult> call;
+    String db = query.getDatabase();
+    if (db == null) {
+        db = this.database;
+    }
     if (query instanceof BoundParameterQuery) {
         BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-        call = this.influxDBService.postQuery(query.getDatabase(), query.getCommandWithUrlEncoded(),
+        call = this.influxDBService.postQuery(db, query.getCommandWithUrlEncoded(),
                 boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
         if (query.requiresPost()) {
-          call = this.influxDBService.postQuery(query.getDatabase(), query.getCommandWithUrlEncoded());
+          call = this.influxDBService.postQuery(db, query.getCommandWithUrlEncoded());
         } else {
-          call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded());
+          call = this.influxDBService.query(db, query.getCommandWithUrlEncoded());
         }
     }
     return call;

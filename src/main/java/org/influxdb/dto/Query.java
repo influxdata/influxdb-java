@@ -18,6 +18,13 @@ public class Query {
 
   /**
    * @param command the query command
+   */
+  public Query(final String command) {
+    this(command, null);
+  }
+
+  /**
+   * @param command the query command
    * @param database the database to query
    */
   public Query(final String command, final String database) {
@@ -40,21 +47,21 @@ public class Query {
    * @return the command
    */
   public String getCommand() {
-    return this.command;
+    return command;
   }
 
   /**
    * @return url encoded command
    */
   public String getCommandWithUrlEncoded() {
-    return encode(this.command);
+    return encode(command);
   }
 
   /**
    * @return the database
    */
   public String getDatabase() {
-    return this.database;
+    return database;
   }
 
   public boolean requiresPost() {

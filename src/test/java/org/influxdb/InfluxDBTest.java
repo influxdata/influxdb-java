@@ -37,7 +37,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
@@ -103,7 +102,34 @@ public class InfluxDBTest {
 		this.influxDB.query(new Query("DROP DATABASE mydb2", "mydb"));
 	}
 
-  @Test
+    /**
+     * Simple Test for a query.
+     */
+    @Test
+    public void testQueryWithoutDatabase() {
+        influxDB.setDatabase(UDP_DATABASE);
+        influxDB.query(new Query("CREATE DATABASE mydb2"));
+        Point point = Point
+           .measurement("cpu")
+           .tag("atag", "test")
+           .addField("idle", 90L)
+           .addField("usertime", 9L)
+           .addField("system", 1L)
+           .build();
+        influxDB.write(point);
+
+        Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE atag = $atag")
+                .bind("atag", "test")
+                .create();
+            QueryResult result = influxDB.query(query);
+            Assertions.assertTrue(result.getResults().get(0).getSeries().size() == 1);
+            Series series = result.getResults().get(0).getSeries().get(0);
+            Assertions.assertTrue(series.getValues().size() == 1);
+
+        influxDB.query(new Query("DROP DATABASE mydb2"));
+    }
+
+    @Test
   public void testBoundParameterQuery() throws InterruptedException {
     // set up
     Point point = Point
