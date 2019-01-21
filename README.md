@@ -269,8 +269,6 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 * If your InfluxDB query contains multiple SELECT clauses **for the same measurement**, InfluxResultMapper will process all results because there is no way to distinguish which one should be mapped to your POJO. It may result in an invalid collection being returned;
 * A Class field annotated with _@Column(..., tag = true)_ (i.e. a [InfluxDB Tag](https://docs.influxdata.com/influxdb/v1.2/concepts/glossary/#tag-value)) must be declared as _String_.
 
--- _Note: With the current released version (2.7), InfluxDBResultMapper does not support QueryResult created by queries using the "GROUP BY" clause. This was fixed by [PR #345](https://github.com/influxdata/influxdb-java/pull/345)._
-
 #### QueryBuilder:
 
 An alternative way to create InfluxDB queries is available. By using the [QueryBuilder](QUERY_BUILDER.md) you can create queries using java instead of providing the influxdb queries as strings.
@@ -358,10 +356,10 @@ Then you can build influxdb-java with all tests with:
 mvn clean install
 ```
 
-If you don't have Docker running locally, you can skip tests with -DskipTests flag set to true:
+If you don't have Docker running locally, you can skip tests with `-DskipTests` flag:
 
 ```bash
-mvn clean install -DskipTests=true
+mvn clean install -DskipTests
 ```
 
 If you have Docker running, but it is not at localhost (e.g. you are on a Mac and using `docker-machine`) you can set an optional environment variable `INFLUXDB_IP` to point to the correct IP address:
