@@ -1,7 +1,5 @@
 package org.influxdb;
 
-import org.influxdb.dto.QueryResult;
-
 import java.util.function.Consumer;
 
 public class AsyncResult<T>  {
