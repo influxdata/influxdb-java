@@ -5,12 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
-
-import org.influxdb.impl.Preconditions;
 
 /**
  * {Purpose of This Type}.
