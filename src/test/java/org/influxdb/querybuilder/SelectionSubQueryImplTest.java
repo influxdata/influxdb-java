@@ -535,7 +535,7 @@ public class SelectionSubQueryImplTest {
             .or(eq("column1", 7))
             .sLimit(3)
             .orderBy(asc())
-            .groupBy(time(4l, HOUR))
+            .groupBy(time(4L, HOUR))
             .close()
             .where(eq("column3", 5))
             .limit(5, 10);

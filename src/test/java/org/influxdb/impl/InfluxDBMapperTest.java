@@ -79,7 +79,7 @@ public class InfluxDBMapperTest {
   @Test
   public void testNonInstantTime() {
     NonInstantTime nonInstantTime = new NonInstantTime();
-    nonInstantTime.setTime(1234566l);
+    nonInstantTime.setTime(1234566L);
     assertThrows(
         InfluxDBMapperException.class,
         () -> influxDBMapper.save(nonInstantTime),
@@ -236,7 +236,7 @@ public class InfluxDBMapperTest {
     serverMeasure.setName("maverick");
     serverMeasure.setCpu(4.3d);
     serverMeasure.setHealthy(true);
-    serverMeasure.setUptime(1234l);
+    serverMeasure.setUptime(1234L);
     serverMeasure.setMemoryUtilization(new Double(34.5));
     serverMeasure.setIp("19.087.4.5");
     return serverMeasure;
