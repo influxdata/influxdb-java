@@ -377,7 +377,7 @@ public class BuiltQueryTest {
   @Test
   public void testGroupByTime() {
     Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h);", DATABASE);
-    Query select = select().column("test1").from(DATABASE, "foobar").groupBy(time(1l, HOUR));
+    Query select = select().column("test1").from(DATABASE, "foobar").groupBy(time(1L, HOUR));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -387,7 +387,7 @@ public class BuiltQueryTest {
   public void testGroupByTimeOffset() {
     Query query = new Query("SELECT test1 FROM foobar GROUP BY time(1h,5w);", DATABASE);
     Query select =
-        select().column("test1").from(DATABASE, "foobar").groupBy(time(1l, HOUR, 5l, WEEK));
+        select().column("test1").from(DATABASE, "foobar").groupBy(time(1L, HOUR, 5L, WEEK));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -400,7 +400,7 @@ public class BuiltQueryTest {
         select()
             .column("test1")
             .from(DATABASE, "foobar")
-            .groupBy(time(1l, HOUR, 5l, WEEK), "test1");
+            .groupBy(time(1L, HOUR, 5L, WEEK), "test1");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -826,7 +826,7 @@ public class BuiltQueryTest {
         select()
             .column("water_level")
             .from(DATABASE, "h2o_feet")
-            .where(gt("time", subTime(1l, HOUR)));
+            .where(gt("time", subTime(1L, HOUR)));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -839,7 +839,7 @@ public class BuiltQueryTest {
         select()
             .column("water_level")
             .from(DATABASE, "h2o_feet")
-            .where(gt("time", addTime(1l, WEEK)));
+            .where(gt("time", addTime(1L, WEEK)));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -885,7 +885,7 @@ public class BuiltQueryTest {
         select()
             .column("water_level")
             .from(DATABASE, "h2o_feet")
-            .where(gt("time", op("2015-09-18T21:24:00Z", ADD, ti(6l, MINUTE))));
+            .where(gt("time", op("2015-09-18T21:24:00Z", ADD, ti(6L, MINUTE))));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -899,7 +899,7 @@ public class BuiltQueryTest {
         select()
             .column("water_level")
             .from(DATABASE, "h2o_feet")
-            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))));
+            .where(gt("time", op(ti(24043524L, MINUTE), SUB, ti(6L, MINUTE))));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -915,7 +915,7 @@ public class BuiltQueryTest {
         select()
             .column("water_level")
             .from(DATABASE, "h2o_feet")
-            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+            .where(gt("time", op(ti(24043524L, MINUTE), SUB, ti(6L, MINUTE))))
             .groupBy("water_level")
             .fill(100);
 
@@ -933,7 +933,7 @@ public class BuiltQueryTest {
         select()
             .column("water_level")
             .from(DATABASE, "h2o_feet")
-            .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+            .where(gt("time", op(ti(24043524L, MINUTE), SUB, ti(6L, MINUTE))))
             .groupBy("water_level")
             .fill("linear");
 
@@ -949,7 +949,7 @@ public class BuiltQueryTest {
             select()
                 .column("water_level")
                 .from(DATABASE, "h2o_feet")
-                .where(gt("time", op(ti(24043524l, MINUTE), SUB, ti(6l, MINUTE))))
+                .where(gt("time", op(ti(24043524L, MINUTE), SUB, ti(6L, MINUTE))))
                 .groupBy("water_level")
                 .fill("illegal argument"),
         "Invalid argument for fill");
@@ -966,7 +966,7 @@ public class BuiltQueryTest {
                     .fromRaw(DATABASE, "/.*/")
                     .where(gte("time","2015-08-18T00:00:00Z"))
                     .and(lte("time","2015-08-18T00:06:00Z"))
-                    .groupBy(time(12l,MINUTE));
+                    .groupBy(time(12L, MINUTE));
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
   }
