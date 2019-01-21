@@ -144,7 +144,6 @@ public class BatchPoints {
      * @return the created BatchPoints.
      */
     public BatchPoints build() {
-      Preconditions.checkNonEmptyString(this.database, "database");
       BatchPoints batchPoints = new BatchPoints();
       batchPoints.setDatabase(this.database);
       for (Point point : this.points) {

@@ -256,6 +256,34 @@ public class InfluxDBTest {
 	}
 
     /**
+     * Test that writing to the new lineprotocol, using {@link InfluxDB#setDatabase(String)} and not
+     * {@link BatchPoints#database(String)}.
+     */
+    @Test
+    public void testWriteNoDatabase() {
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.createDatabase(dbName);
+        this.influxDB.setDatabase(dbName);
+        String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+        BatchPoints batchPoints = BatchPoints.builder().tag("async", "true").retentionPolicy(rp).build();
+        Point point1 = Point
+                .measurement("cpu")
+                .tag("atag", "test")
+                .addField("idle", 90L)
+                .addField("usertime", 9L)
+                .addField("system", 1L)
+                .build();
+        Point point2 = Point.measurement("disk").tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+        batchPoints.point(point1);
+        batchPoints.point(point2);
+        this.influxDB.write(batchPoints);
+        Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
+        QueryResult result = this.influxDB.query(query);
+        Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
+        this.influxDB.deleteDatabase(dbName);
+    }
+
+    /**
      *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
      */
     @Test

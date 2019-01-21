@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -90,4 +91,17 @@ public class QueryTest {
 	private static String decode(String str) throws UnsupportedEncodingException {
 		return URLDecoder.decode(str, StandardCharsets.UTF_8.toString());
 	}
+
+    /**
+     * Test that equals does what it is supposed to do.
+     */
+    @Test
+    public void testDatabaseName() {
+        String command = "go";
+
+        Query query = new Query(command);
+
+        assertNull(query.getDatabase());
+    }
+
 }
