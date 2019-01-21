@@ -236,7 +236,8 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
       @Override
       public void accept(QueryResult result) {
         queue.add(result);
-      }});
+      }
+    });
 
     Thread.sleep(2000);
     this.influxDB.deleteDatabase(dbName);

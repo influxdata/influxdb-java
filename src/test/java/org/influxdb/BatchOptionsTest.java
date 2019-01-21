@@ -52,24 +52,24 @@ public class BatchOptionsTest {
   public void testParametersSet() {
     BatchOptions options = BatchOptions.DEFAULTS.actions(3);
     Assertions.assertEquals(3, options.getActions());
-    options=options.consistency(InfluxDB.ConsistencyLevel.ANY);
+    options = options.consistency(InfluxDB.ConsistencyLevel.ANY);
     Assertions.assertEquals(InfluxDB.ConsistencyLevel.ANY, options.getConsistency());
-    options=options.flushDuration(1001);
+    options = options.flushDuration(1001);
     Assertions.assertEquals(1001, options.getFlushDuration());
-    options=options.bufferLimit(7070);
+    options = options.bufferLimit(7070);
     Assertions.assertEquals(7070, options.getBufferLimit());
-    options=options.jitterDuration(104);
+    options = options.jitterDuration(104);
     Assertions.assertEquals(104, options.getJitterDuration());
-    BiConsumer<Iterable<Point>, Throwable> handler=new BiConsumer<Iterable<Point>, Throwable>() {
+    BiConsumer<Iterable<Point>, Throwable> handler = new BiConsumer<Iterable<Point>, Throwable>() {
       @Override
       public void accept(Iterable<Point> points, Throwable throwable) {
 
       }
     };
-    options=options.exceptionHandler(handler);
+    options = options.exceptionHandler(handler);
     Assertions.assertEquals(handler, options.getExceptionHandler());
-    ThreadFactory tf=Executors.defaultThreadFactory();
-    options=options.threadFactory(tf);
+    ThreadFactory tf = Executors.defaultThreadFactory();
+    options = options.threadFactory(tf);
     Assertions.assertEquals(tf, options.getThreadFactory());
   }
 

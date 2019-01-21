@@ -41,7 +41,7 @@ public class PreconditionsTest {
     final Number number = 0;
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Preconditions.checkPositiveNumber(number, "number");
-		});
+    });
   }
 
   @Test
@@ -49,13 +49,13 @@ public class PreconditionsTest {
     final Number number = null;
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Preconditions.checkPositiveNumber(number, "number");
-		});
+    });
   }
 
   @Test
-  public void testCheckDurationInf(){
+  public void testCheckDurationInf() {
     final String duration = "inf";
-    Assertions.assertDoesNotThrow(()->{
+    Assertions.assertDoesNotThrow(() -> {
       Preconditions.checkDuration(duration, "duration");
     });
   }

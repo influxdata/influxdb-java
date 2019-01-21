@@ -277,7 +277,7 @@ public class InfluxDBResultMapperTest {
     List<MyCustomMeasurement> myList = mapper.toPOJO(queryResult, MyCustomMeasurement.class);
 
     // Then...
-    Assertions.assertTrue( myList.isEmpty(), "there must NO entry in the result list");
+    Assertions.assertTrue(myList.isEmpty(), "there must NO entry in the result list");
   }
 
   @Test

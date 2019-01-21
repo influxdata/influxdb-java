@@ -263,7 +263,7 @@ public class RetryCapableBatchWriterTest {
 
     for (Exception exception : tryExceptionList) {
       // try for 100 times with random number of points each time
-      for (int i=0; i < 100; i++) {
+      for (int i = 0; i < 100; i++) {
         int count = 200 + ((i * 777) & 511);
         BatchPoints bps = getBP(count);
         if (exception != null) {

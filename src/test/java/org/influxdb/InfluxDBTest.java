@@ -70,7 +70,7 @@ public class InfluxDBTest {
 	 * delete UDP database after all tests end.
 	 */
 	@AfterEach
-	public void cleanup(){
+	public void cleanup() {
 		this.influxDB.deleteDatabase(UDP_DATABASE);
 	}
 
@@ -235,7 +235,7 @@ public class InfluxDBTest {
     @Test
     public void testAsyncWritePointThroughUDPFail() {
         this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-        try{
+        try {
             Assertions.assertTrue(this.influxDB.isBatchEnabled());
             String measurement = TestUtils.getRandomMeasurement();
             Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
@@ -243,7 +243,7 @@ public class InfluxDBTest {
             Assertions.assertThrows(RuntimeException.class, () -> {
 				this.influxDB.write(UDP_PORT, point);
 			});
-        }finally{
+        } finally {
             this.influxDB.disableBatch();
         }
     }
@@ -292,12 +292,12 @@ public class InfluxDBTest {
         List<String> lineProtocols = new ArrayList<String>();
         int i = 0;
         int length = 0;
-        while ( true ) {
+        while (true) {
             Point point = Point.measurement("udp_single_poit").addField("v", i).build();
             String lineProtocol = point.lineProtocol();
             length += (lineProtocol.getBytes("utf-8")).length;
             lineProtocols.add(lineProtocol);
-            if( length > 65535 ){
+            if (length > 65535) {
                 break;
             }
         }
@@ -621,12 +621,11 @@ public class InfluxDBTest {
 		});
 		Set<Thread> threads = Thread.getAllStackTraces().keySet();
 		boolean existThreadWithSettedName = false;
-		for(Thread thread: threads){
-			if(thread.getName().equalsIgnoreCase(threadName)){
+		for (Thread thread: threads) {
+			if (thread.getName().equalsIgnoreCase(threadName)) {
 				existThreadWithSettedName = true;
 				break;
 			}
-
 		}
 		Assertions.assertTrue(existThreadWithSettedName);
 		this.influxDB.disableBatch();
@@ -643,7 +642,7 @@ public class InfluxDBTest {
 	 * Test the implementation of {@link InfluxDBImpl#InfluxDBImpl(String, String, String, okhttp3.OkHttpClient.Builder)}.
 	 */
 	@Test
-	public void testWrongHostForInfluxdb(){
+	public void testWrongHostForInfluxdb() {
 		String errorHost = "10.224.2.122_error_host";
 		Assertions.assertThrows(RuntimeException.class, () -> {
 			InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
@@ -656,7 +655,7 @@ public class InfluxDBTest {
 	}
 
 	@Test
-  public void testInvalidUrlHandling(){
+  public void testInvalidUrlHandling() {
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       InfluxDBFactory.connect("@@@http://@@@");
     });
@@ -669,7 +668,7 @@ public class InfluxDBTest {
 	@Test
 	public void testBatchEnabledTwice() {
 		this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
-		try{
+		try {
 			Assertions.assertThrows(IllegalStateException.class, () -> {
 				this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
 			});
@@ -769,7 +768,8 @@ public class InfluxDBTest {
           @Override
           public void accept(QueryResult result) {
               queue.add(result);
-          }});
+          }
+      });
 
       Thread.sleep(2000);
       this.influxDB.deleteDatabase(dbName);
@@ -895,8 +895,7 @@ public class InfluxDBTest {
 		this.influxDB.createDatabase(dbName);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
-		for (int i = 0; i < 10; i++)
-		{
+		for (int i = 0; i < 10; i++) {
 			Point point = Point.measurement("disk")
 					.tag("atag", "a")
 					.addField("used", 60L + (i * 10))
@@ -1000,7 +999,7 @@ public class InfluxDBTest {
       return;
     }
     //connect to non existing port
-    InfluxDB influxDB = InfluxDBFactory.connect("http://"+TestUtils.getInfluxIP()+":12345");
+    InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":12345");
 
     CountDownLatch countDownLatch = new CountDownLatch(1);
     Query query = new Query("SELECT * FROM disk", "not-existing-db");

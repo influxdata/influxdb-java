@@ -29,7 +29,7 @@ public class TestUtils {
   }
   
   public static String getInfluxPORT(boolean apiPort) {
-    if(apiPort) {    
+    if (apiPort) {    
       return getEnv("INFLUXDB_PORT_API", "8086");
     }
     else {
@@ -46,7 +46,7 @@ public class TestUtils {
   }
 
   public static String defaultRetentionPolicy(String version) {
-    if (version.startsWith("0.") ) {
+    if (version.startsWith("0.")) {
       return "default";
     } else {
       return "autogen";

@@ -42,7 +42,7 @@ public class PerformanceTests {
 	 * delete UDP database after all tests end.
 	 */
 	@AfterEach
-	public void cleanup(){
+	public void cleanup() {
 		this.influxDB.deleteDatabase(UDP_DATABASE);
 	}
 

@@ -53,7 +53,7 @@ public class InfluxDBMapperTest {
     influxDBMapper.save(serverMeasure);
 
     List<ServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure",UDP_DATABASE),ServerMeasure.class);
-    Assert.assertTrue(persistedMeasures.size()>0);
+    Assert.assertTrue(persistedMeasures.size() > 0);
   }
 
   @Test
