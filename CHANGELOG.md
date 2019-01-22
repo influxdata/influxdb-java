@@ -2,7 +2,10 @@
 
 ## 2.15 [unreleased]
 
+### Features
 
+- Query and BatchPoints do not mandate a database name, in which case the InfluxDB database
+  would be used [Issue #548](https://github.com/influxdata/influxdb-java/issues/548)
 
 ## 2.14 [2018-10-12]
 
