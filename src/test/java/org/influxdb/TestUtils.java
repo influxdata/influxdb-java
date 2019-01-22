@@ -10,6 +10,8 @@ import java.util.Map;
 
 public final class TestUtils {
 
+  private static final long DEFAULT_SLEEP = 100L;
+
   private TestUtils() {
   }
 
@@ -95,7 +97,7 @@ public final class TestUtils {
         // NOOP intentional
         e.printStackTrace();
       }
-      Thread.sleep(100L);
+      Thread.sleep(DEFAULT_SLEEP);
     } while (!influxDBstarted);
     influxDB.setLogLevel(InfluxDB.LogLevel.NONE);
     System.out.println("##################################################################################");

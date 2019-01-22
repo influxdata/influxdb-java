@@ -4,6 +4,11 @@
     "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 
 <module name="Checker">
+
+  <module name="SuppressionFilter">
+    <property name="file" value="checkstyle_suppressions.xml"/>
+  </module>
+
   <module name="SuppressWarningsFilter"/>
   <module name="NewlineAtEndOfFile"/>
   <module name="FileLength"/>
