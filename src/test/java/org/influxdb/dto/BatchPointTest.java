@@ -1,9 +1,13 @@
 package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,5 +109,16 @@ public class BatchPointTest {
     public void emptyDatabase() throws Exception {
         BatchPoints b = BatchPoints.builder().build();
         assertNull(b.getDatabase());
+    }
+
+    @Test
+    public void pointsCollection() {
+      Point p1 = Point.measurement("something").build();
+      Point p2 = Point.measurement("something2").build();
+      Collection<Point> points = Arrays.asList(p1, p2);
+      BatchPoints b = BatchPoints.builder().points(points).build();
+      List<Point> returned = b.getPoints();
+      assertNotNull(returned);
+      assertEquals(2, returned.size());
     }
 }
