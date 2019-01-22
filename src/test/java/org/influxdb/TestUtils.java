@@ -34,8 +34,7 @@ public final class TestUtils {
   public static String getInfluxPORT(final boolean apiPort) {
     if (apiPort) {
       return getEnv("INFLUXDB_PORT_API", "8086");
-    }
-    else {
+    } else {
       return getEnv("INFLUXDB_PORT_COLLECTD", "8096");
     }
   }

@@ -285,8 +285,7 @@ public class RetryCapableBatchWriterTest {
         BatchPoints bps = getBP(count);
         if (exception != null) {
             Mockito.doThrow(exception).when(mockInfluxDB).write(bps);
-        }
-        else {
+        } else {
             Mockito.reset(mockInfluxDB);
         }
         rw.write(Collections.singletonList(bps));

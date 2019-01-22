@@ -50,8 +50,7 @@ public class BatchOptionsTest {
     try {
       this.influxDB.enableBatch();
 
-    }
-    finally {
+    } finally {
       this.influxDB.disableBatch();
     }
   }
@@ -115,8 +114,7 @@ public class BatchOptionsTest {
       //test all 5 points was written
       result = influxDB.query(new Query("select * from cpu", dbName));
       Assertions.assertEquals(5, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
+    } finally {
       this.influxDB.disableBatch();
       this.influxDB.deleteDatabase(dbName);
     }
@@ -147,8 +145,7 @@ public class BatchOptionsTest {
 
       //check points written already to DB
       Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
+    } finally {
       this.influxDB.disableBatch();
       this.influxDB.deleteDatabase(dbName);
     }
@@ -179,8 +176,7 @@ public class BatchOptionsTest {
       Thread.sleep(1000);
       result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
+    } finally {
       influxDB.disableBatch();
       influxDB.deleteDatabase(dbName);
     }
@@ -248,12 +244,10 @@ public class BatchOptionsTest {
       result = spy.query(new Query("select * from weather", dbName));
       //assert all 20 points written to DB due to no exception
       Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
+    } finally {
       spy.disableBatch();
       spy.deleteDatabase(dbName);
     }
-
   }
 
   /**
@@ -315,8 +309,7 @@ public class BatchOptionsTest {
       // assert all 6 point written
       // because of retry capable CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR and RetryCapableBatchWriter did retry
       Assertions.assertEquals(6, result.getResults().get(0).getSeries().get(0).getValues().size());
-    }
-    finally {
+    } finally {
       spy.disableBatch();
       spy.deleteDatabase(dbName);
     }
