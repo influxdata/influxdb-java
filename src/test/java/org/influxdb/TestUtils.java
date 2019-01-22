@@ -8,7 +8,10 @@ import org.influxdb.dto.Pong;
 import java.io.IOException;
 import java.util.Map;
 
-public class TestUtils {
+public final class TestUtils {
+
+  private TestUtils() {
+  }
 
   private static String getEnv(final String name, final String defaultValue) {
     Map<String, String> getenv = System.getenv();
