@@ -153,7 +153,8 @@ public class PointTest {
   @Test
   public void testEscapingOfKeysAndValues() {
     // Test escaping of spaces
-    Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar baz").addField("a", 1.0).build();
+    Point point = Point.measurement("test")
+        .time(1, TimeUnit.NANOSECONDS).tag("foo", "bar baz").addField("a", 1.0).build();
     assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\ baz a=1.0 1");
 
     // Test escaping of commas
@@ -473,7 +474,8 @@ public class PointTest {
           .build();
 
       String lineProtocol = p.lineProtocol();
-      String correctOrder = "env=prod,host=serverA,region=us-west,tag1=value1,tag2=value2,tag3=value3,tag4=value4,tag5=value5,target=servers,zone=1c";
+      String correctOrder = "env=prod,host=serverA,region=us-west,tag1=value1,tag2=value2,"
+          + "tag3=value3,tag4=value4,tag5=value5,target=servers,zone=1c";
       String tags = lineProtocol.substring(lineProtocol.indexOf(',') + 1, lineProtocol.indexOf(' '));
       assertThat(tags).isEqualTo(correctOrder);
     }

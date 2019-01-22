@@ -22,7 +22,8 @@ public class InfluxDBFactoryTest {
    */
   @Test
   public void testCreateInfluxDBInstanceWithoutUserNameAndPassword() {
-    InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true));
+    InfluxDB influxDB = InfluxDBFactory.connect(
+        "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true));
     verifyInfluxDBInstance(influxDB);
   }
 
@@ -38,7 +39,8 @@ public class InfluxDBFactoryTest {
    */
   @Test
   public void testCreateInfluxDBInstanceWithClientAndWithoutUserNameAndPassword() {
-    InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), new OkHttpClient.Builder());
+    InfluxDB influxDB = InfluxDBFactory.connect(
+        "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), new OkHttpClient.Builder());
     verifyInfluxDBInstance(influxDB);
   }
 

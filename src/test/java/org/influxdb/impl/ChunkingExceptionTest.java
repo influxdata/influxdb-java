@@ -61,7 +61,8 @@ public class ChunkingExceptionTest {
         testChunkingException(new EOFException(), "DONE",  Assertions::assertNotNull);
     }
 
-    public void testChunkingException(final Exception ex, final String message, final Consumer<Throwable> onFailure) throws IOException, InterruptedException {
+    public void testChunkingException(final Exception ex, final String message, final Consumer<Throwable> onFailure)
+        throws IOException, InterruptedException {
 
         InfluxDBService influxDBService = mock(InfluxDBService.class);
         JsonAdapter<QueryResult> adapter = mock(JsonAdapter.class);
@@ -73,11 +74,13 @@ public class ChunkingExceptionTest {
         doThrow(ex).when(adapter).fromJson(any(JsonReader.class));
 
         String url = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
-        InfluxDB influxDB = new InfluxDBImpl(url, "admin", "admin", new OkHttpClient.Builder(), influxDBService, adapter) {
-            @Override
-            public String version() {
-                return "9.99";
-            }
+        InfluxDB influxDB = new InfluxDBImpl(url, "admin", "admin", new OkHttpClient.Builder(),
+            influxDBService, adapter) {
+
+          @Override
+          public String version() {
+            return "9.99";
+          }
         };
 
         String dbName = "write_unittest_" + System.currentTimeMillis();

@@ -26,12 +26,15 @@ public class MessagePackTraverserTest {
     /*  a json-like view of msgpack_1.bin
 
     {"results":[{"statement_id":0,"series":[{"name":"disk","columns":["time","atag","free","used"],
-          "values":[[(5,0x00005b556c-252f-23-6438),"a",1,60],[(5,0x00005b556c-252f-23-6438),"b",2,70]],"partial":true}],"partial":true}]}
-    {"results":[{"statement_id":0,"series":[{"name":"disk","columns":["time","atag","free","used"],"values":[[(5,0x00005b556c-252f-23-6438),"c",3,80]]}]}]}
+          "values":[[(5,0x00005b556c-252f-23-6438),"a",1,60],[(5,0x00005b556c-252f-23-6438),"b",2,70]],"partial":true}],
+          "partial":true}]}
+    {"results":[{"statement_id":0,"series":[{"name":"disk","columns":["time","atag","free","used"],
+          "values":[[(5,0x00005b556c-252f-23-6438),"c",3,80]]}]}]}
 
     */
 
-    Iterator<QueryResult> iter = traverser.traverse(MessagePackTraverserTest.class.getResourceAsStream("msgpack_1.bin")).iterator();
+    Iterator<QueryResult> iter = traverser.traverse(
+        MessagePackTraverserTest.class.getResourceAsStream("msgpack_1.bin")).iterator();
     assertTrue(iter.hasNext());
     QueryResult result = iter.next();
     List<List<Object>> values = result.getResults().get(0).getSeries().get(0).getValues();
@@ -55,7 +58,8 @@ public class MessagePackTraverserTest {
     /* a json-like view of msgpack_2.bin
 
     {"results":[{"statement_id":0,"series":[{"name":"measurement_957996674028300","columns":["time","device","foo"],
-          "values":[[(5,0x000058-797a00000),"one",1.0],[(5,0x000058-79-78100000),"two",2.0],[(5,0x000058-79-6a200000),"three",3.0]]}]}]}
+          "values":[[(5,0x000058-797a00000),"one",1.0],[(5,0x000058-79-78100000),"two",2.0],
+          [(5,0x000058-79-6a200000),"three",3.0]]}]}]}
     */
     QueryResult queryResult = traverser.parse(MessagePackTraverserTest.class.getResourceAsStream("msgpack_2.bin"));
     List<List<Object>> values = queryResult.getResults().get(0).getSeries().get(0).getValues();

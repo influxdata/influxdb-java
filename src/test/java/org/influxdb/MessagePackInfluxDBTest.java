@@ -155,9 +155,11 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     this.influxDB.write(batchPoints);
 
     // THEN the measure points have a timestamp with second precision
-    QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
+    QueryResult queryResult = this.influxDB.query(new Query(
+        "SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-    Double value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0).toString());
+    Double value = Double.valueOf(queryResult.getResults().get(0).getSeries()
+        .get(0).getValues().get(0).get(0).toString());
     Assertions.assertEquals(value, timeP1);
     value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0).toString());
     Assertions.assertEquals(value, timeP2);

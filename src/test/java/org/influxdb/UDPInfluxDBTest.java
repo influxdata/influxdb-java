@@ -38,7 +38,8 @@ public class UDPInfluxDBTest {
      */
     @BeforeEach
     public void setUp() throws InterruptedException, IOException {
-        this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        this.influxDB = InfluxDBFactory.connect(
+            "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         boolean influxDBstarted = false;
         do {
             Pong response;
@@ -76,7 +77,8 @@ public class UDPInfluxDBTest {
     public void testSyncWritePointThroughUDP() throws InterruptedException {
         this.influxDB.disableBatch();
         String measurement = TestUtils.getRandomMeasurement();
-        Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+        Point point = Point.measurement(measurement).tag("atag", "test")
+            .addField("used", 80L).addField("free", 1L).build();
         this.influxDB.write(UDP_PORT, point);
         Thread.sleep(2000);
         Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
@@ -94,7 +96,8 @@ public class UDPInfluxDBTest {
         try {
             Assertions.assertTrue(this.influxDB.isBatchEnabled());
             String measurement = TestUtils.getRandomMeasurement();
-            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            Point point = Point.measurement(measurement).tag("atag", "test")
+                .addField("used", 80L).addField("free", 1L).build();
             this.influxDB.write(UDP_PORT, point);
             Thread.sleep(2000);
             Query query = new Query("SELECT * FROM " + measurement + " GROUP BY *", UDP_DATABASE);
@@ -115,7 +118,8 @@ public class UDPInfluxDBTest {
         try {
             Assertions.assertTrue(this.influxDB.isBatchEnabled());
             String measurement = TestUtils.getRandomMeasurement();
-            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            Point point = Point.measurement(measurement).tag("atag", "test")
+                .addField("used", 80L).addField("free", 1L).build();
             Thread.currentThread().interrupt();
             Assertions.assertThrows(RuntimeException.class, () -> {
                 this.influxDB.write(UDP_PORT, point);

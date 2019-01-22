@@ -60,9 +60,11 @@ public final class TestUtils {
     return connectToInfluxDB(null, null, ResponseFormat.JSON);
   }
 
-  public static InfluxDB connectToInfluxDB(final ResponseFormat responseFormat) throws InterruptedException, IOException {
+  public static InfluxDB connectToInfluxDB(final ResponseFormat responseFormat)
+      throws InterruptedException, IOException {
     return connectToInfluxDB(null, null, responseFormat);
   }
+
   public static InfluxDB connectToInfluxDB(final String apiUrl) throws InterruptedException, IOException {
     return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl, ResponseFormat.JSON);
   }

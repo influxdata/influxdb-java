@@ -811,7 +811,8 @@ public class BuiltQueryTest {
   public void testInto() {
     Query query =
         new Query(
-            "SELECT * INTO \"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT FROM \"NOAA_water_database\".\"autogen\"./.*/ GROUP BY *;",
+            "SELECT * INTO \"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT "
+            + "FROM \"NOAA_water_database\".\"autogen\"./.*/ GROUP BY *;",
             DATABASE);
     Query select =
         select()
@@ -827,7 +828,8 @@ public class BuiltQueryTest {
   public void testIntoWithSelection() {
     Query query =
         new Query(
-            "SELECT column1,MAX(column2),MAX(column3) INTO \"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT FROM \"NOAA_water_database\".\"autogen\"./.*/ GROUP BY *;",
+            "SELECT column1,MAX(column2),MAX(column3) INTO \"copy_NOAA_water_database\".\"autogen\".:MEASUREMENT "
+            + "FROM \"NOAA_water_database\".\"autogen\"./.*/ GROUP BY *;",
             DATABASE);
     Query select =
         select()
@@ -981,7 +983,9 @@ public class BuiltQueryTest {
   @Test
   public void multipleDatabaseBackReferenceing() {
     Query query =
-            new Query("SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);", DATABASE);
+            new Query("SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ "
+                + "WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' "
+                + "GROUP BY time(12m);", DATABASE);
     Query select =
             select()
                     .mean(raw("*"))

@@ -116,7 +116,8 @@ public class InfluxDBResultMapperTest {
     List<String> columnList = Arrays.asList("time", "uuid");
 
     List<Object> firstSeriesResult = Arrays.asList(Instant.now().toEpochMilli(), UUID.randomUUID().toString());
-    List<Object> secondSeriesResult = Arrays.asList(Instant.now().plusSeconds(1).toEpochMilli(), UUID.randomUUID().toString());
+    List<Object> secondSeriesResult = Arrays.asList(Instant.now().plusSeconds(1).toEpochMilli(),
+        UUID.randomUUID().toString());
 
     QueryResult.Series series = new QueryResult.Series();
     series.setColumns(columnList);
@@ -129,10 +130,12 @@ public class InfluxDBResultMapperTest {
     //Then...
     Assertions.assertTrue(result.size() == 2, "there must be two series in the result list");
 
-    Assertions.assertEquals(firstSeriesResult.get(0), result.get(0).time.toEpochMilli(), "Field 'time' (1st series) is not valid");
+    Assertions.assertEquals(firstSeriesResult.get(0), result.get(0).time.toEpochMilli(),
+        "Field 'time' (1st series) is not valid");
     Assertions.assertEquals(firstSeriesResult.get(1), result.get(0).uuid, "Field 'uuid' (1st series) is not valid");
 
-    Assertions.assertEquals(secondSeriesResult.get(0), result.get(1).time.toEpochMilli(), "Field 'time' (2nd series) is not valid");
+    Assertions.assertEquals(secondSeriesResult.get(0), result.get(1).time.toEpochMilli(),
+        "Field 'time' (2nd series) is not valid");
     Assertions.assertEquals(secondSeriesResult.get(1), result.get(1).uuid, "Field 'uuid' (2nd series) is not valid");
   }
 
@@ -171,9 +174,12 @@ public class InfluxDBResultMapperTest {
     Assertions.assertEquals(now.longValue(), myObject.time.toEpochMilli(), "field 'time' does not match");
     Assertions.assertEquals(uuidAsString, myObject.uuid, "field 'uuid' does not match");
 
-    Assertions.assertEquals(asDouble(seriesResult.get(2)), myObject.doubleObject, "field 'doubleObject' does not match");
-    Assertions.assertEquals(new Long(asDouble(seriesResult.get(3)).longValue()), myObject.longObject, "field 'longObject' does not match");
-    Assertions.assertEquals(new Integer(asDouble(seriesResult.get(4)).intValue()), myObject.integerObject, "field 'integerObject' does not match");
+    Assertions.assertEquals(asDouble(seriesResult.get(2)),
+        myObject.doubleObject, "field 'doubleObject' does not match");
+    Assertions.assertEquals(new Long(asDouble(seriesResult.get(3)).longValue()),
+        myObject.longObject, "field 'longObject' does not match");
+    Assertions.assertEquals(new Integer(asDouble(seriesResult.get(4)).intValue()),
+        myObject.integerObject, "field 'integerObject' does not match");
 
     Assertions.assertTrue(
       Double.compare(asDouble(seriesResult.get(5)).doubleValue(), myObject.doublePrimitive) == 0,
@@ -450,9 +456,12 @@ public class InfluxDBResultMapperTest {
 
     @Override
     public String toString() {
-      return "MyCustomMeasurement [time=" + time + ", uuid=" + uuid + ", doubleObject=" + doubleObject + ", longObject=" + longObject
-        + ", integerObject=" + integerObject + ", doublePrimitive=" + doublePrimitive + ", longPrimitive=" + longPrimitive
-        + ", integerPrimitive=" + integerPrimitive + ", booleanObject=" + booleanObject + ", booleanPrimitive=" + booleanPrimitive + "]";
+      return "MyCustomMeasurement [time=" + time + ", uuid=" + uuid + ", doubleObject=" + doubleObject
+        + ", longObject=" + longObject
+        + ", integerObject=" + integerObject + ", doublePrimitive=" + doublePrimitive
+        + ", longPrimitive=" + longPrimitive
+        + ", integerPrimitive=" + integerPrimitive + ", booleanObject=" + booleanObject
+        + ", booleanPrimitive=" + booleanPrimitive + "]";
     }
   }
 

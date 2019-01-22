@@ -55,7 +55,9 @@ public class SelectionSubQueryImplTest {
   public void testSubQuerySelectOperations() {
     Query query =
             new Query(
-                    "SELECT * FROM (SELECT column1,column1 * 2,2 + 2,/*/,COUNT(column3),MIN(column1),SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT * FROM (SELECT column1,column1 * 2,2 + 2,/*/,COUNT(column3),MIN(column1),"
+                      + "SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) "
+                      + "WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
@@ -164,7 +166,9 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryWhereNestedOrderByLimit() {
     Query query =
         new Query(
-            "SELECT column1,column2 FROM (SELECT * FROM foobar WHERE (test1 = 2) AND test1 = 1 ORDER BY time ASC LIMIT 1 OFFSET 1 SLIMIT 1 SOFFSET 1) WHERE column1 = 1 GROUP BY time;",
+            "SELECT column1,column2 FROM "
+            + "(SELECT * FROM foobar WHERE (test1 = 2) AND test1 = 1 "
+            + "ORDER BY time ASC LIMIT 1 OFFSET 1 SLIMIT 1 SOFFSET 1) WHERE column1 = 1 GROUP BY time;",
             DATABASE);
     Query select =
         select()
@@ -328,7 +332,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryWhereOr() {
     Query query =
             new Query(
-                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar WHERE column1 > 1 + 2 OR column2 < column1 - 3) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar "
+                    + "WHERE column1 > 1 + 2 OR column2 < column1 - 3) WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
@@ -354,7 +359,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryGroupByFill() {
     Query query =
             new Query(
-                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar "
+                        + "GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
@@ -379,7 +385,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryGroupByFillFromSelect() {
     Query query =
             new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(100)) "
+                        + "WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
@@ -402,7 +409,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryGroupByFillFromSelectString() {
     Query query =
             new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(null)) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(null)) "
+                    + "WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
@@ -425,7 +433,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryWithSLimit() {
     Query query =
             new Query(
-                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100) SLIMIT 100 SOFFSET 120) WHERE column1 = 1 GROUP BY time;",
+                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100) "
+                    + "SLIMIT 100 SOFFSET 120) WHERE column1 = 1 GROUP BY time;",
                     DATABASE);
     Query select =
             select()
@@ -505,7 +514,8 @@ public class SelectionSubQueryImplTest {
                 + "SELECT MAX(column1),MAX(column2) FROM ("
                 + "SELECT * FROM ("
                 + "SELECT MAX(column1),MEAN(column2) FROM ("
-                + "SELECT DISTINCT test1 FROM foobar WHERE column1 > 3 GROUP BY column2 LIMIT 1 OFFSET 20 SLIMIT 2 SOFFSET 10"
+                + "SELECT DISTINCT test1 FROM foobar WHERE column1 > 3 "
+                + "GROUP BY column2 LIMIT 1 OFFSET 20 SLIMIT 2 SOFFSET 10"
                 + ")"
                 + ") WHERE column1 = 5 GROUP BY column2 ORDER BY time DESC LIMIT 50 OFFSET 10"
                 + ") WHERE column1 = 4 OR column1 = 7 GROUP BY time(4h) ORDER BY time ASC SLIMIT 3"
@@ -556,7 +566,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryTimeZoneColumns() {
     Query query =
         new Query(
-            "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar tz('America/Chicago')) WHERE column1 = 1 GROUP BY time;",
+            "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar tz('America/Chicago')) "
+            + "WHERE column1 = 1 GROUP BY time;",
             DATABASE);
     Query select =
         select()
@@ -580,7 +591,8 @@ public class SelectionSubQueryImplTest {
   public void testSubQuerySelectRegexColumns() {
     Query query =
         new Query(
-            "SELECT column1,column2 FROM (SELECT /k/ FROM foobar tz('America/Chicago')) WHERE column1 = 1 GROUP BY time;",
+            "SELECT column1,column2 FROM (SELECT /k/ FROM foobar tz('America/Chicago')) "
+            + "WHERE column1 = 1 GROUP BY time;",
             DATABASE);
     Query select =
         select()
@@ -603,7 +615,9 @@ public class SelectionSubQueryImplTest {
   public void testSubQueryNested() {
     Query query =
         new Query(
-            "SELECT column1,column2 FROM (SELECT /k/ FROM foobar WHERE (column1 = 2 OR column1 = 3) OR (column2 = 5 AND column2 = 7) tz('America/Chicago')) WHERE column1 = 1 GROUP BY time;",
+            "SELECT column1,column2 FROM (SELECT /k/ FROM foobar "
+            + "WHERE (column1 = 2 OR column1 = 3) OR (column2 = 5 AND column2 = 7) tz('America/Chicago')) "
+            + "WHERE column1 = 1 GROUP BY time;",
             DATABASE);
     Query select =
         select()

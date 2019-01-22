@@ -35,7 +35,8 @@ public class PerformanceTests {
 
   @BeforeEach
   public void setUp() {
-    this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
+    this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true),
+        "root", "root");
     this.influxDB.setLogLevel(LogLevel.NONE);
     this.influxDB.createDatabase(UDP_DATABASE);
   }
@@ -63,7 +64,8 @@ public class PerformanceTests {
       this.influxDB.write(dbName, rp, point);
     }
     this.influxDB.disableBatch();
-    System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of Points took:" + (System.currentTimeMillis() - start));
+    System.out.println("Single Point Write for " + SINGLE_POINT_COUNT
+        + " writes of Points took:" + (System.currentTimeMillis() - start));
     this.influxDB.deleteDatabase(dbName);
   }
 
@@ -94,7 +96,8 @@ public class PerformanceTests {
 
       this.influxDB.write(batchPoints);
     }
-    System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + (System.currentTimeMillis() - start));
+    System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT
+        + " Points took:" + (System.currentTimeMillis() - start));
     this.influxDB.deleteDatabase(dbName);
   }
 
@@ -178,7 +181,8 @@ public class PerformanceTests {
     doAnswer(answer).when(spy).write(any(BatchPoints.class));
 
     spy.createDatabase(dbName);
-    BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(10000).flushDuration(2000).bufferLimit(300000).exceptionHandler((points, throwable) -> {
+    BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(10000).flushDuration(2000)
+        .bufferLimit(300000).exceptionHandler((points, throwable) -> {
       System.out.println("+++++++++++ exceptionHandler +++++++++++");
       System.out.println(throwable);
       System.out.println("++++++++++++++++++++++++++++++++++++++++");

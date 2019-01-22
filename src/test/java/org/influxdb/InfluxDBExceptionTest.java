@@ -22,7 +22,8 @@ public class InfluxDBExceptionTest {
 
     Assertions.assertEquals("database not found: \"abc\"", dbex.getMessage());
 
-    InfluxDBException ex = InfluxDBException.buildExceptionForErrorState(InfluxDBExceptionTest.class.getResourceAsStream("invalid_msgpack_errorBody.bin"));
+    InfluxDBException ex = InfluxDBException.buildExceptionForErrorState(
+        InfluxDBExceptionTest.class.getResourceAsStream("invalid_msgpack_errorBody.bin"));
     Assertions.assertTrue(ex.getCause() instanceof ClassCastException);
   }
 }

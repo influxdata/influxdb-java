@@ -223,9 +223,11 @@ public class InfluxDBTest {
     String notExistentdbName = "unittest_2";
     this.influxDB.createDatabase(existentdbName);
     boolean checkDbExistence = this.influxDB.databaseExists(existentdbName);
-    Assertions.assertTrue(checkDbExistence, "It is expected that databaseExists return true for " + existentdbName + " database");
+    Assertions.assertTrue(checkDbExistence,
+        "It is expected that databaseExists return true for " + existentdbName + " database");
     checkDbExistence = this.influxDB.databaseExists(notExistentdbName);
-    Assertions.assertFalse(checkDbExistence, "It is expected that databaseExists return false for " + notExistentdbName + " database");
+    Assertions.assertFalse(checkDbExistence,
+        "It is expected that databaseExists return false for " + notExistentdbName + " database");
     this.influxDB.deleteDatabase(existentdbName);
   }
 
@@ -292,7 +294,8 @@ public class InfluxDBTest {
         try {
             Assertions.assertTrue(this.influxDB.isBatchEnabled());
             String measurement = TestUtils.getRandomMeasurement();
-            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            Point point = Point.measurement(measurement).tag("atag", "test")
+                .addField("used", 80L).addField("free", 1L).build();
             Thread.currentThread().interrupt();
             Assertions.assertThrows(RuntimeException.class, () -> {
         this.influxDB.write(UDP_PORT, point);
@@ -370,7 +373,9 @@ public class InfluxDBTest {
         this.influxDB.createDatabase(dbName);
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
-        this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
+        this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE,
+            "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,"
+            + "usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
 
@@ -392,7 +397,8 @@ public class InfluxDBTest {
     this.influxDB.setDatabase(dbName);
     this.influxDB.setRetentionPolicy(rp);
 
-    this.influxDB.write("cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
+    this.influxDB.write("cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,"
+        + "system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
     Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
     QueryResult result = this.influxDB.query(query);
 
@@ -534,7 +540,8 @@ public class InfluxDBTest {
     this.influxDB.write(batchPoints);
 
     // THEN the measure points have a timestamp with second precision
-    QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
+    QueryResult queryResult = this.influxDB.query(new Query(
+        "SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
@@ -737,7 +744,8 @@ public class InfluxDBTest {
    */
   @Test
   public void testCloseInfluxDBClient() {
-    InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+    InfluxDB influxDB = InfluxDBFactory.connect(
+        "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
     influxDB.enableBatch(1, 1, TimeUnit.SECONDS);
     Assertions.assertTrue(influxDB.isBatchEnabled());
     influxDB.close();
@@ -749,7 +757,8 @@ public class InfluxDBTest {
      */
     @Test
     public void testWriteEnableGzip() {
-        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect(
+            "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         String dbName = "write_unittest_" + System.currentTimeMillis();
         try {
             influxDBForTestGzip.setLogLevel(LogLevel.NONE);
@@ -781,7 +790,8 @@ public class InfluxDBTest {
      */
     @Test
     public void testWriteEnableGzipAndDisableGzip() {
-        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
+        InfluxDB influxDBForTestGzip = InfluxDBFactory.connect(
+            "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", "admin");
         try {
             //test default: gzip is disable
             Assertions.assertFalse(influxDBForTestGzip.isGzipEnabled());
@@ -1081,11 +1091,13 @@ public class InfluxDBTest {
         try {
             this.influxDB.createDatabase(dbName);
 
-            // Enable batching with a very large buffer and flush interval so writes will be triggered by our call to flush().
+            // Enable batching with a very large buffer and flush interval
+            // so writes will be triggered by our call to flush().
             this.influxDB.enableBatch(Integer.MAX_VALUE, Integer.MAX_VALUE, TimeUnit.HOURS);
 
             String measurement = TestUtils.getRandomMeasurement();
-            Point point = Point.measurement(measurement).tag("atag", "test").addField("used", 80L).addField("free", 1L).build();
+            Point point = Point.measurement(measurement).tag("atag", "test")
+                .addField("used", 80L).addField("free", 1L).build();
             this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
             this.influxDB.flush();
 

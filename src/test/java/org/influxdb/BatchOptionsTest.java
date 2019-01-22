@@ -208,7 +208,8 @@ public class BatchOptionsTest {
 
     TestAnswer answer = new TestAnswer() {
 
-      InfluxDBException influxDBException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
+      InfluxDBException influxDBException = InfluxDBException.buildExceptionForErrorState(
+          createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
       @Override
       protected void check(final InvocationOnMock invocation) {
         if ((Boolean) params.get("throwException")) {
@@ -225,7 +226,8 @@ public class BatchOptionsTest {
     try {
       answer.params.put("throwException", true);
       BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
-      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(3).actions(4).flushDuration(100).exceptionHandler(mockHandler);
+      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(3).actions(4).flushDuration(100)
+          .exceptionHandler(mockHandler);
 
       spy.createDatabase(dbName);
       spy.setDatabase(dbName);
@@ -263,15 +265,19 @@ public class BatchOptionsTest {
     TestAnswer answer = new TestAnswer() {
 
       int nthCall = 0;
-      InfluxDBException cacheMaxMemorySizeExceededException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
+      InfluxDBException cacheMaxMemorySizeExceededException =
+          InfluxDBException.buildExceptionForErrorState(createErrorBody(
+              InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
       @Override
       protected void check(final InvocationOnMock invocation) {
 
         switch (nthCall++) {
         case 0:
-          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.DATABASE_NOT_FOUND_ERROR));
+          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(
+              InfluxDBException.DATABASE_NOT_FOUND_ERROR));
         case 1:
-          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
+          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(
+              InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
         default:
           break;
         }
@@ -284,7 +290,8 @@ public class BatchOptionsTest {
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
       BiConsumer<Iterable<Point>, Throwable> mockHandler = mock(BiConsumer.class);
-      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(10).actions(8).flushDuration(100).exceptionHandler(mockHandler);
+      BatchOptions options = BatchOptions.DEFAULTS.bufferLimit(10).actions(8)
+          .flushDuration(100).exceptionHandler(mockHandler);
 
       spy.createDatabase(dbName);
       spy.setDatabase(dbName);
@@ -295,7 +302,8 @@ public class BatchOptionsTest {
       verify(mockHandler, atLeastOnce()).accept(any(), any());
 
       QueryResult result = spy.query(new Query("select * from measurement1", dbName));
-      //assert 0 point written because of non-retry capable DATABASE_NOT_FOUND_ERROR and RetryCapableBatchWriter did not retry
+      // assert 0 point written
+      // because of non-retry capable DATABASE_NOT_FOUND_ERROR and RetryCapableBatchWriter did not retry
       Assertions.assertNull(result.getResults().get(0).getSeries());
       Assertions.assertNull(result.getResults().get(0).getError());
 
@@ -304,7 +312,8 @@ public class BatchOptionsTest {
       Thread.sleep(300);
 
       result = spy.query(new Query("select * from measurement2", dbName));
-      //assert all 6 point written because of retry capable CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR and RetryCapableBatchWriter did retry
+      // assert all 6 point written
+      // because of retry capable CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR and RetryCapableBatchWriter did retry
       Assertions.assertEquals(6, result.getResults().get(0).getSeries().get(0).getValues().size());
     }
     finally {

@@ -53,8 +53,10 @@ public class RetryCapableBatchWriterTest {
     BatchPoints bp3 = getBP(8);
     BatchPoints bp4 = getBP(100);
 
-    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"database not found: cvfdgf\" }");
-    Exception recoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
+    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState(
+        "{ \"error\": \"database not found: cvfdgf\" }");
+    Exception recoverable = InfluxDBException.buildExceptionForErrorState(
+        "{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
     Mockito.doThrow(nonRecoverable).when(mockInfluxDB).write(bp0);
     Mockito.doThrow(recoverable).when(mockInfluxDB).write(bp1);
     Mockito.doThrow(recoverable).when(mockInfluxDB).write(bp2);
@@ -106,15 +108,24 @@ public class RetryCapableBatchWriterTest {
     RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
             150, 100);
 
-    InfluxDBException nonRecoverable1 = InfluxDBException.buildExceptionForErrorState(createErrorBody("database not found: cvfdgf"));
-    InfluxDBException nonRecoverable2 = InfluxDBException.buildExceptionForErrorState(createErrorBody("points beyond retention policy 'abc'"));
-    InfluxDBException nonRecoverable3 = InfluxDBException.buildExceptionForErrorState(createErrorBody("unable to parse 'abc'"));
-    InfluxDBException nonRecoverable4 = InfluxDBException.buildExceptionForErrorState(createErrorBody("hinted handoff queue not empty service='abc'"));
-    InfluxDBException nonRecoverable5 = InfluxDBException.buildExceptionForErrorState(createErrorBody("field type conflict 'abc'"));
-    InfluxDBException nonRecoverable6 = new InfluxDBException.RetryBufferOverrunException(createErrorBody("Retry BufferOverrun Exception"));
-    InfluxDBException nonRecoverable7 = InfluxDBException.buildExceptionForErrorState(createErrorBody("user is not authorized to write to database"));
-    InfluxDBException nonRecoverable8 = InfluxDBException.buildExceptionForErrorState(createErrorBody("authorization failed"));
-    InfluxDBException nonRecoverable9 = InfluxDBException.buildExceptionForErrorState(createErrorBody("username required"));
+    InfluxDBException nonRecoverable1 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("database not found: cvfdgf"));
+    InfluxDBException nonRecoverable2 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("points beyond retention policy 'abc'"));
+    InfluxDBException nonRecoverable3 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("unable to parse 'abc'"));
+    InfluxDBException nonRecoverable4 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("hinted handoff queue not empty service='abc'"));
+    InfluxDBException nonRecoverable5 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("field type conflict 'abc'"));
+    InfluxDBException nonRecoverable6 = new InfluxDBException.RetryBufferOverrunException(
+        createErrorBody("Retry BufferOverrun Exception"));
+    InfluxDBException nonRecoverable7 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("user is not authorized to write to database"));
+    InfluxDBException nonRecoverable8 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("authorization failed"));
+    InfluxDBException nonRecoverable9 = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("username required"));
 
     List<InfluxDBException> exceptions = Arrays.asList(nonRecoverable1, nonRecoverable2, nonRecoverable3,
         nonRecoverable4, nonRecoverable5, nonRecoverable6, nonRecoverable7, nonRecoverable8, nonRecoverable9);
@@ -249,8 +260,10 @@ public class RetryCapableBatchWriterTest {
     RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
             maxBufferCapacity, 1000);
 
-    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"database not found: cvfdgf\" }");
-    Exception recoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
+    Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState(
+        "{ \"error\": \"database not found: cvfdgf\" }");
+    Exception recoverable = InfluxDBException.buildExceptionForErrorState(
+        "{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
 
     // need access to private properties for quality testing
     Field localUsedRetryBufferCapacity = RetryCapableBatchWriter.class.
