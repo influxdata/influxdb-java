@@ -6,6 +6,8 @@
 
 - Query and BatchPoints do not mandate a database name, in which case the InfluxDB database
   would be used [Issue #548](https://github.com/influxdata/influxdb-java/issues/548)
+- Add BatchPoints.Builder.points(Collection)
+  [Issue #451](https://github.com/influxdata/influxdb-java/issues/451)
 
 ## 2.14 [2018-10-12]
 
