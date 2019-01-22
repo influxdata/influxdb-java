@@ -19,7 +19,7 @@ public class PreconditionsTest {
     final String string = "";
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Preconditions.checkNonEmptyString(string, "string");
-		});
+    });
   }
 
   @Test
@@ -27,7 +27,7 @@ public class PreconditionsTest {
     final String string = null;
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Preconditions.checkNonEmptyString(string, "string");
-		});
+    });
   }
 
   @Test
@@ -41,7 +41,7 @@ public class PreconditionsTest {
     final Number number = 0;
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Preconditions.checkPositiveNumber(number, "number");
-		});
+    });
   }
 
   @Test
@@ -49,7 +49,7 @@ public class PreconditionsTest {
     final Number number = null;
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       Preconditions.checkPositiveNumber(number, "number");
-		});
+    });
   }
 
   @Test
