@@ -36,7 +36,7 @@ public class InfluxDBProxyTest {
   public void cleanup(){
     influxDB.close();
   }
-  
+
   @Test
   public void testWriteSomePointThroughTcpProxy() {
     influxDB.createDatabase(TEST_DB);
@@ -52,12 +52,12 @@ public class InfluxDBProxyTest {
     }
 
     QueryResult result = influxDB.query(new Query("select * from weather", TEST_DB));
-    //check points written already to DB 
+    //check points written already to DB
     Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
 
     influxDB.deleteDatabase(TEST_DB);
   }
-  
+
   @Test
   public void testWriteSomePointThroughUdpProxy() throws InterruptedException {
     influxDB.createDatabase(UDP_DB);
@@ -75,7 +75,7 @@ public class InfluxDBProxyTest {
 
     Thread.sleep(2000);
     QueryResult result = influxDB.query(new Query("select * from weather", UDP_DB));
-    //check points written already to DB 
+    //check points written already to DB
     Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
 
     influxDB.deleteDatabase(UDP_DB);

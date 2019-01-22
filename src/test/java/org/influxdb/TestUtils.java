@@ -19,22 +19,22 @@ public class TestUtils {
       return defaultValue;
     }
   }
-  
+
   public static String getInfluxIP() {
     return getEnv("INFLUXDB_IP", "127.0.0.1");
   }
-  
+
   public static String getRandomMeasurement() {
     return "measurement_" + System.nanoTime();
   }
-  
+
   public static String getInfluxPORT(boolean apiPort) {
-    if(apiPort) {    
+    if(apiPort) {
       return getEnv("INFLUXDB_PORT_API", "8086");
     }
     else {
       return getEnv("INFLUXDB_PORT_COLLECTD", "8096");
-    }      
+    }
   }
 
   public static String getProxyApiUrl() {
@@ -63,7 +63,7 @@ public class TestUtils {
   public static InfluxDB connectToInfluxDB(String apiUrl) throws InterruptedException, IOException {
     return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl, ResponseFormat.JSON);
   }
-  
+
   public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, String apiUrl,
       ResponseFormat responseFormat) throws InterruptedException, IOException {
     OkHttpClient.Builder clientToUse;
@@ -72,7 +72,7 @@ public class TestUtils {
     } else {
       clientToUse = client;
     }
-    String apiUrlToUse; 
+    String apiUrlToUse;
     if (apiUrl == null) {
       apiUrlToUse = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
     } else {

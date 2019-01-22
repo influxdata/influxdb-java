@@ -39,7 +39,7 @@ public class ChunkingExceptionTest {
 
     @Test
     public void testChunkingIOException() throws IOException, InterruptedException {
-        
+
         testChunkingException(new IOException(), "java.io.IOException", null);
     }
 

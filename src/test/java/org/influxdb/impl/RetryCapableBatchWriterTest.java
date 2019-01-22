@@ -93,10 +93,10 @@ public class RetryCapableBatchWriterTest {
     Assert.assertEquals(capturedArgument2.get(1).getPoints().size(), 100);
 
   }
-  
+
   @Test
   public void testAllNonRecoverableExceptions() {
-    
+
     InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
     BiConsumer errorHandler = mock(BiConsumer.class);
     RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
@@ -124,14 +124,14 @@ public class RetryCapableBatchWriterTest {
         }
       }
     }).when(mockInfluxDB).write(any(BatchPoints.class));
-    
+
     BatchPoints bp = getBP(8);
     for (int i = 0; i < size; i++) {
       rw.write(Collections.singletonList(bp));
     }
     verify(errorHandler, times(size)).accept(any(), any());;
   }
-  
+
   @Test
   public void testClosingWriter() {
     InfluxDB mockInfluxDB = mock(InfluxDB.class);
@@ -140,67 +140,67 @@ public class RetryCapableBatchWriterTest {
     BatchPoints bp5 = getBP(5);
     BatchPoints bp6 = getBP(6);
     BatchPoints bp90 = getBP(90);
-    
+
     doAnswer(new TestAnswer() {
       int i = 0;
       @Override
       protected void check(InvocationOnMock invocation) {
         //first 4 calls
         if (i++ < 4) {
-          throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400"); 
+          throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400");
         }
         return;
       }
     }).when(mockInfluxDB).write(any(BatchPoints.class));
-    
+
     RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
         150, 100);
-    
+
     rw.write(Collections.singletonList(bp5));
     rw.write(Collections.singletonList(bp6));
     rw.write(Collections.singletonList(bp90));
     //recoverable exception -> never errorHandler
     verify(errorHandler, never()).accept(any(), any());
     verify(mockInfluxDB, times(3)).write(any(BatchPoints.class));
-    
+
     rw.close();
-    
+
     ArgumentCaptor<BatchPoints> captor4Write = ArgumentCaptor.forClass(BatchPoints.class);
     ArgumentCaptor<List<Point>> captor4Accept = ArgumentCaptor.forClass(List.class);
     verify(errorHandler, times(1)).accept(captor4Accept.capture(), any());
     verify(mockInfluxDB, times(5)).write(captor4Write.capture());
-    
+
     //bp5 and bp6 were merged and writing of the merged batch points on closing should be failed
     Assertions.assertEquals(11, captor4Accept.getValue().size());
     //bp90 was written because no more exception thrown
     Assertions.assertEquals(90, captor4Write.getAllValues().get(4).getPoints().size());
   }
-  
+
   @Test
   public void testRetryingKeepChronologicalOrder() {
-    
+
     BatchPoints.Builder b = BatchPoints.database("d1");
     for (int i = 0; i < 200; i++) {
       b.point(Point.measurement("x1").time(1,TimeUnit.HOURS).
           addField("x", 1).
           tag("t", "v1").build()).build();
     }
-    
+
     BatchPoints bp1 = b.build();
-    
+
     b = BatchPoints.database("d1");
-    
+
     b.point(Point.measurement("x1").time(1,TimeUnit.HOURS).
         addField("x", 2).
         tag("t", "v2").build()).build();
-    
+
     for (int i = 0; i < 199; i++) {
       b.point(Point.measurement("x1").time(2,TimeUnit.HOURS).
           addField("x", 2).
           tag("t", "v2").build()).build();
     }
     BatchPoints bp2 = b.build();
-    
+
     InfluxDB mockInfluxDB = mock(InfluxDB.class);
     BiConsumer<Iterable<Point>, Throwable> errorHandler = mock(BiConsumer.class);
     RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
@@ -210,21 +210,21 @@ public class RetryCapableBatchWriterTest {
       @Override
       protected void check(InvocationOnMock invocation) {
         if (i++ < 1) {
-          throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400"); 
+          throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400");
         }
         return;
       }
     }).when(mockInfluxDB).write(any(BatchPoints.class));
-    
+
     rw.write(Collections.singletonList(bp1));
     rw.write(Collections.singletonList(bp2));
-    
+
     ArgumentCaptor<BatchPoints> captor4Write = ArgumentCaptor.forClass(BatchPoints.class);
     verify(mockInfluxDB, times(3)).write(captor4Write.capture());
-    
+
     //bp1 written but failed because of recoverable cache-max-memory-size error
     Assertions.assertEquals(bp1, captor4Write.getAllValues().get(0));
-    //bp1 rewritten on writing of bp2 
+    //bp1 rewritten on writing of bp2
     Assertions.assertEquals(bp1, captor4Write.getAllValues().get(1));
     //bp2 written
     Assertions.assertEquals(bp2, captor4Write.getAllValues().get(2));

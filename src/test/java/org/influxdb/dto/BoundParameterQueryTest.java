@@ -33,7 +33,7 @@ public class BoundParameterQueryTest {
         .bind("string", "test")
         .bind("object", new Object())
         .create();
-    
+
     Moshi moshi = new Moshi.Builder().build();
     JsonAdapter<Point> adapter = moshi.adapter(Point.class);
     Point point = adapter.fromJson(decode(query.getParameterJsonWithUrlEncoded()));
@@ -80,7 +80,7 @@ public class BoundParameterQueryTest {
   private static String decode(String str) throws UnsupportedEncodingException {
     return URLDecoder.decode(str, StandardCharsets.UTF_8.toString());
   }
-  
+
   private static class Point {
     int i;
     double d;

@@ -28,7 +28,7 @@ public class PointTest {
 
 	/**
 	 * Test that lineprotocol is conformant to:
-	 * 
+	 *
 	 * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md
 	 *
 	 */
@@ -149,13 +149,13 @@ public class PointTest {
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", bigDecimalNumber).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test a=100000000.00000001 1");
 	}
-	
+
 	@Test
 	public void testEscapingOfKeysAndValues() {
 		// Test escaping of spaces
 		Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar baz").addField( "a", 1.0 ).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\ baz a=1.0 1");
- 
+
 		// Test escaping of commas
 		point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag("foo", "bar,baz").addField( "a", 1.0 ).build();
 		assertThat(point.lineProtocol()).asString().isEqualTo("test,foo=bar\\,baz a=1.0 1");
@@ -171,9 +171,9 @@ public class PointTest {
 
 	@Test
 	public void testDeprecatedFieldMethodOnlyProducesFloatingPointValues() {
-		
+
 		Object[] ints = {(byte) 1, (short) 1, (int) 1, (long) 1, BigInteger.ONE};
-		
+
 		for (Object intExample : ints) {
 			Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).field("a", intExample ).build();
 			assertThat(point.lineProtocol()).asString().isEqualTo("test a=1.0 1");
@@ -206,7 +206,7 @@ public class PointTest {
 			Point.measurement("dontcare").tag(null, "DontCare");
 		});
 	}
-	
+
 	@Test
 	public void testAddingTagsWithNullValueThrowsAnError() {
 		Assertions.assertThrows(NullPointerException.class, () -> {
@@ -231,7 +231,7 @@ public class PointTest {
 			Point.measurement("dontcare").tag(map);
 		});
 	}
-	
+
 	@Test
 	public void testNullValueThrowsExceptionViaAddField() {
 		Assertions.assertThrows(NullPointerException.class, () -> {
@@ -450,7 +450,7 @@ public class PointTest {
         String expectedHourTimeStamp = String.valueOf(Math.round(pDate.getTime() / 3600000)); // 1000ms * 60s * 60m
         assertThat(hourTime).isEqualTo(expectedHourTimeStamp);
     }
-    
+
     /*
      * Test if representation of tags in line protocol format should be sorted by tag key
      */
@@ -471,7 +471,7 @@ public class PointTest {
           .tag("tag3", "value3")
           .tag("tag4", "value4")
           .build();
-      
+
       String lineProtocol = p.lineProtocol();
       String correctOrder = "env=prod,host=serverA,region=us-west,tag1=value1,tag2=value2,tag3=value3,tag4=value4,tag5=value5,target=servers,zone=1c";
       String tags = lineProtocol.substring(lineProtocol.indexOf(',') + 1, lineProtocol.indexOf(' '));

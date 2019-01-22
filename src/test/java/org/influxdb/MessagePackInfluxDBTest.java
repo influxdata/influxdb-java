@@ -45,7 +45,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     influxDB = TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
     influxDB.createDatabase(UDP_DATABASE);
   }
-  
+
   /**
    * Tests writing points using the time precision feature
    * @throws Exception
@@ -97,11 +97,11 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     long bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0));
     Assertions.assertEquals(bySecond, t1);
-    
+
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0));
     Assertions.assertEquals(bySecond, t2);
-    
+
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0));
     Assertions.assertEquals(bySecond, t3);
@@ -166,7 +166,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
 
     this.influxDB.deleteDatabase(dbName);
   }
-  
+
   @Override
   @Test
   public void testWriteRecordsWithPrecision() throws Exception {
@@ -193,7 +193,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     // THEN the measure points have a timestamp with second precision
     QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-    
+
     long bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0));
     Assertions.assertEquals(bySecond, timeP1);
@@ -201,7 +201,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0));
     Assertions.assertEquals(bySecond, timeP2);
-    
+
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0));
     Assertions.assertEquals(bySecond, timeP3);

@@ -67,7 +67,7 @@ public class UDPInfluxDBTest {
     public void cleanup() {
         this.influxDB.deleteDatabase(UDP_DATABASE);
     }
-    
+
     /**
      * Test the implementation of {@link InfluxDB#write(int, Point)}'s sync
      * support.
@@ -138,8 +138,6 @@ public class UDPInfluxDBTest {
         QueryResult result = this.influxDB.query(query);
         Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
     }
-
-   
 
     /**
      * When batch of points' size is over UDP limit, the expected exception is

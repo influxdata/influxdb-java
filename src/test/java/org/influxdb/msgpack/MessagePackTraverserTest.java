@@ -15,11 +15,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @RunWith(JUnitPlatform.class)
 @EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "1\\.6|1\\.5|1\\.4")
 public class MessagePackTraverserTest {
-  
+
   @Test
   public void testTraverseMethod() {
     MessagePackTraverser traverser = new MessagePackTraverser();
-    
+
     /*  a json-like view of msgpack_1.bin
 
     {"results":[{"statement_id":0,"series":[{"name":"disk","columns":["time","atag","free","used"],
@@ -33,19 +33,19 @@ public class MessagePackTraverserTest {
     QueryResult result = iter.next();
     List<List<Object>> values = result.getResults().get(0).getSeries().get(0).getValues();
     Assertions.assertEquals(2, values.size());
-    
+
     assertEquals(1532325083803052600L, values.get(0).get(0));
     assertEquals("b", values.get(1).get(1));
-    
+
     assertTrue(iter.hasNext());
     result = iter.next();
     values = result.getResults().get(0).getSeries().get(0).getValues();
     Assertions.assertEquals(1, values.size());
     assertEquals(3, values.get(0).get(2));
-    
+
     assertFalse(iter.hasNext());
   }
-  
+
   @Test
   public void testParseMethodOnNonEmptyResult() {
     MessagePackTraverser traverser = new MessagePackTraverser();
@@ -61,18 +61,18 @@ public class MessagePackTraverserTest {
     assertEquals("two", values.get(1).get(1));
     assertEquals(3.0, values.get(2).get(2));
   }
-  
+
   @Test
   public void testParseMethodOnEmptyResult() {
     MessagePackTraverser traverser = new MessagePackTraverser();
     /* a json-like view of msgpack_3.bin
 
       {"results":[{"statement_id":0,"series":[]}]}
-    
+
     */
     QueryResult queryResult = traverser.parse(MessagePackTraverserTest.class.getResourceAsStream("msgpack_3.bin"));
     System.out.println();
     assertNull(queryResult.getResults().get(0).getSeries());
-    
+
   }
 }

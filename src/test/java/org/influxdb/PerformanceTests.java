@@ -27,7 +27,7 @@ public class PerformanceTests {
 	private final static int COUNT = 1;
 	private final static int POINT_COUNT = 100000;
 	private final static int SINGLE_POINT_COUNT = 10000;
-	
+
 	private final static int UDP_PORT = 8089;
 	private final static String UDP_DATABASE = "udp";
 
@@ -37,7 +37,7 @@ public class PerformanceTests {
 		this.influxDB.setLogLevel(LogLevel.NONE);
 		this.influxDB.createDatabase(UDP_DATABASE);
 	}
-	
+
 	/**
 	 * delete UDP database after all tests end.
 	 */
@@ -150,11 +150,11 @@ public class PerformanceTests {
     this.influxDB.deleteDatabase(dbName);
     Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
   }
-	
+
   @Test
   public void testRetryWritePointsInBatch() throws InterruptedException {
     String dbName = "d";
-    
+
     InfluxDB spy = spy(influxDB);
     TestAnswer answer = new TestAnswer() {
       boolean started = false;
@@ -170,17 +170,17 @@ public class PerformanceTests {
         }
       }
     };
-    
+
     answer.params.put("startTime", System.currentTimeMillis() + 8000);
     doAnswer(answer).when(spy).write(any(BatchPoints.class));
-    
+
     spy.createDatabase(dbName);
     BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(10000).flushDuration(2000).bufferLimit(300000).exceptionHandler((points, throwable) -> {
       System.out.println("+++++++++++ exceptionHandler +++++++++++");
       System.out.println(throwable);
       System.out.println("++++++++++++++++++++++++++++++++++++++++");
     });
-    
+
     //this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
     spy.enableBatch(batchOptions);
     String rp = TestUtils.defaultRetentionPolicy(spy.version());
@@ -189,7 +189,7 @@ public class PerformanceTests {
       Point point = Point.measurement("s").time(i, TimeUnit.MILLISECONDS).addField("v", 1.0).build();
       spy.write(dbName, rp, point);
     }
-    
+
     System.out.println("sleep");
     Thread.sleep(12000);
     try {
@@ -200,7 +200,7 @@ public class PerformanceTests {
       System.out.println("+++++++++++++++++count() +++++++++++++++++++++");
       System.out.println(e);
       System.out.println("++++++++++++++++++++++++++++++++++++++++++++++");
-      
+
     }
 
     spy.disableBatch();
