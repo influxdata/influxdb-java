@@ -1,5 +1,10 @@
 package org.influxdb.msgpack;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,8 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(JUnitPlatform.class)
 @EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "1\\.6|1\\.5|1\\.4")

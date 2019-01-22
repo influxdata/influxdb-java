@@ -1,6 +1,14 @@
 package org.influxdb.querybuilder;
 
-import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.asc;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.cop;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.desc;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.eq;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.gt;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.lt;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.op;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.select;
+import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.time;
 import static org.influxdb.querybuilder.Operations.ADD;
 import static org.influxdb.querybuilder.Operations.MUL;
 import static org.influxdb.querybuilder.Operations.SUB;

@@ -1,18 +1,22 @@
 package org.influxdb.impl;
 
-import static org.mockito.Mockito.any;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
-import org.hamcrest.Matchers;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import org.hamcrest.Matchers;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
@@ -20,10 +24,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertNull;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
 
 
 @RunWith(JUnitPlatform.class)

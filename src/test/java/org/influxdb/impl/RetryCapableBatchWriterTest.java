@@ -1,5 +1,21 @@
 package org.influxdb.impl;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.lang.reflect.Field;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
 import org.influxdb.TestAnswer;
@@ -13,18 +29,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.lang.reflect.Field;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.*;
 
 @RunWith(JUnitPlatform.class)
 public class RetryCapableBatchWriterTest {

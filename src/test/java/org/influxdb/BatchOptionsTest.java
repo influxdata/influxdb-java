@@ -1,5 +1,22 @@
 package org.influxdb;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDBException.DatabaseNotFoundException;
 import org.influxdb.dto.BatchPoints;
@@ -13,15 +30,6 @@ import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import static org.mockito.Mockito.*;
-
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 
 @RunWith(JUnitPlatform.class)
