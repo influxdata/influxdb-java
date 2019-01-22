@@ -61,7 +61,7 @@ public class ChunkingExceptionTest {
         testChunkingException(new EOFException(), "DONE",  Assertions::assertNotNull);
     }
 
-    public void testChunkingException(Exception ex, String message, Consumer<Throwable> onFailure) throws IOException, InterruptedException {
+    public void testChunkingException(final Exception ex, final String message, final Consumer<Throwable> onFailure) throws IOException, InterruptedException {
 
         InfluxDBService influxDBService = mock(InfluxDBService.class);
         JsonAdapter<QueryResult> adapter = mock(JsonAdapter.class);

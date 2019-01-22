@@ -70,7 +70,7 @@ public class BatchOptionsTest {
     Assertions.assertEquals(104, options.getJitterDuration());
     BiConsumer<Iterable<Point>, Throwable> handler = new BiConsumer<Iterable<Point>, Throwable>() {
       @Override
-      public void accept(Iterable<Point> points, Throwable throwable) {
+      public void accept(final Iterable<Point> points, final Throwable throwable) {
 
       }
     };
@@ -210,7 +210,7 @@ public class BatchOptionsTest {
 
       InfluxDBException influxDBException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
       @Override
-      protected void check(InvocationOnMock invocation) {
+      protected void check(final InvocationOnMock invocation) {
         if ((Boolean) params.get("throwException")) {
           throw influxDBException;
         }
@@ -265,7 +265,7 @@ public class BatchOptionsTest {
       int nthCall = 0;
       InfluxDBException cacheMaxMemorySizeExceededException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
       @Override
-      protected void check(InvocationOnMock invocation) {
+      protected void check(final InvocationOnMock invocation) {
 
         switch (nthCall++) {
         case 0:
@@ -339,7 +339,7 @@ public class BatchOptionsTest {
 
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         @Override
-        public Thread newThread(Runnable r) {
+        public Thread newThread(final Runnable r) {
           return threadFactory.newThread(r);
         }
       });
@@ -402,7 +402,7 @@ public class BatchOptionsTest {
     doAnswer(new Answer<Object>() {
       boolean firstCall = true;
       @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
+      public Object answer(final InvocationOnMock invocation) throws Throwable {
         if (firstCall) {
           firstCall = false;
           throw new InfluxDBException("error");
@@ -452,7 +452,7 @@ public class BatchOptionsTest {
     try {
       TestAnswer answer = new TestAnswer() {
         @Override
-        protected void check(InvocationOnMock invocation) {
+        protected void check(final InvocationOnMock invocation) {
           BatchPoints batchPoints = (BatchPoints) invocation.getArgument(0);
           Assertions.assertEquals(params.get("consistencyLevel"), batchPoints.getConsistency());
 
@@ -492,7 +492,7 @@ public class BatchOptionsTest {
       boolean firstCall = true;
 
       @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
+      public Object answer(final InvocationOnMock invocation) throws Throwable {
         if (firstCall) {
           firstCall = false;
           throw new InfluxDBException("error");
@@ -576,7 +576,7 @@ public class BatchOptionsTest {
     }
   }
 
-  void writeSomePoints(InfluxDB influxDB, String measurement, int firstIndex, int lastIndex) {
+  void writeSomePoints(final InfluxDB influxDB, final String measurement, final int firstIndex, final int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement(measurement)
               .time(i, TimeUnit.HOURS)
@@ -587,7 +587,7 @@ public class BatchOptionsTest {
     }
   }
 
-  void writeSomePoints(InfluxDB influxDB, int firstIndex, int lastIndex) {
+  void writeSomePoints(final InfluxDB influxDB, final int firstIndex, final int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement("weather")
               .time(i, TimeUnit.HOURS)
@@ -598,15 +598,15 @@ public class BatchOptionsTest {
     }
   }
 
-  void write20Points(InfluxDB influxDB) {
+  void write20Points(final InfluxDB influxDB) {
     writeSomePoints(influxDB, 0, 19);
   }
 
-  void writeSomePoints(InfluxDB influxDB, int n) {
+  void writeSomePoints(final InfluxDB influxDB, final int n) {
     writeSomePoints(influxDB, 0, n - 1);
   }
 
-  private BatchPoints createBatchPoints(String dbName, String measurement, int n) {
+  private BatchPoints createBatchPoints(final String dbName, final String measurement, final int n) {
     BatchPoints batchPoints = BatchPoints.database(dbName).build();
     for (int i = 1; i <= n; i++) {
       Point point = Point.measurement(measurement)
@@ -620,7 +620,7 @@ public class BatchOptionsTest {
     return batchPoints;
   }
 
-  static String createErrorBody(String errorMessage) {
+  static String createErrorBody(final String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
 }

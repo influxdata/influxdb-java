@@ -33,7 +33,7 @@ import org.mockito.invocation.InvocationOnMock;
 @RunWith(JUnitPlatform.class)
 public class RetryCapableBatchWriterTest {
 
-  BatchPoints getBP(int count) {
+  BatchPoints getBP(final int count) {
     BatchPoints.Builder b = BatchPoints.database("d1");
     for (int i = 0; i < count; i++) {
       b.point(Point.measurement("x1").addField("x", 1).build()).build();
@@ -122,7 +122,7 @@ public class RetryCapableBatchWriterTest {
     doAnswer(new TestAnswer() {
       int i = 0;
       @Override
-      protected void check(InvocationOnMock invocation) {
+      protected void check(final InvocationOnMock invocation) {
         if (i < size) {
           throw exceptions.get(i++);
         }
@@ -148,7 +148,7 @@ public class RetryCapableBatchWriterTest {
     doAnswer(new TestAnswer() {
       int i = 0;
       @Override
-      protected void check(InvocationOnMock invocation) {
+      protected void check(final InvocationOnMock invocation) {
         //first 4 calls
         if (i++ < 4) {
           throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400");
@@ -212,7 +212,7 @@ public class RetryCapableBatchWriterTest {
     doAnswer(new TestAnswer() {
       int i = 0;
       @Override
-      protected void check(InvocationOnMock invocation) {
+      protected void check(final InvocationOnMock invocation) {
         if (i++ < 1) {
           throw InfluxDBException.buildExceptionForErrorState("cache-max-memory-size exceeded 104/1400");
         }
@@ -297,7 +297,7 @@ public class RetryCapableBatchWriterTest {
     }
   }
 
-  private static String createErrorBody(String errorMessage) {
+  private static String createErrorBody(final String errorMessage) {
     return MessageFormat.format("'{' \"error\": \"{0}\" '}'", errorMessage);
   }
 }

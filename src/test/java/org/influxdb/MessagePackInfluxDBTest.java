@@ -233,7 +233,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     Query query = new Query("SELECT * FROM disk", dbName);
     this.influxDB.query(query, 2, new Consumer<QueryResult>() {
       @Override
-      public void accept(QueryResult result) {
+      public void accept(final QueryResult result) {
         queue.add(result);
       }});
 

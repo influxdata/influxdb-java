@@ -88,7 +88,7 @@ public class QueryTest {
     assertThat(decode(query4.getCommandWithUrlEncoded())).isEqualTo(query4.getCommand());
   }
 
-  private static String decode(String str) throws UnsupportedEncodingException {
+  private static String decode(final String str) throws UnsupportedEncodingException {
     return URLDecoder.decode(str, StandardCharsets.UTF_8.toString());
   }
 

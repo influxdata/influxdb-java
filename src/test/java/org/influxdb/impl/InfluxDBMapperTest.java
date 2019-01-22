@@ -132,7 +132,7 @@ public class InfluxDBMapperTest {
       return time;
     }
 
-    public void setTime(Instant time) {
+    public void setTime(final Instant time) {
       this.time = time;
     }
 
@@ -140,7 +140,7 @@ public class InfluxDBMapperTest {
       return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
       this.name = name;
     }
 
@@ -148,7 +148,7 @@ public class InfluxDBMapperTest {
       return cpu;
     }
 
-    public void setCpu(double cpu) {
+    public void setCpu(final double cpu) {
       this.cpu = cpu;
     }
 
@@ -156,7 +156,7 @@ public class InfluxDBMapperTest {
       return healthy;
     }
 
-    public void setHealthy(boolean healthy) {
+    public void setHealthy(final boolean healthy) {
       this.healthy = healthy;
     }
 
@@ -164,7 +164,7 @@ public class InfluxDBMapperTest {
       return uptime;
     }
 
-    public void setUptime(long uptime) {
+    public void setUptime(final long uptime) {
       this.uptime = uptime;
     }
 
@@ -172,7 +172,7 @@ public class InfluxDBMapperTest {
       return memoryUtilization;
     }
 
-    public void setMemoryUtilization(Double memoryUtilization) {
+    public void setMemoryUtilization(final Double memoryUtilization) {
       this.memoryUtilization = memoryUtilization;
     }
 
@@ -180,7 +180,7 @@ public class InfluxDBMapperTest {
       return ip;
     }
 
-    public void setIp(String ip) {
+    public void setIp(final String ip) {
       this.ip = ip;
     }
   }
@@ -196,7 +196,7 @@ public class InfluxDBMapperTest {
       return val;
     }
 
-    public void setVal(BigDecimal val) {
+    public void setVal(final BigDecimal val) {
       this.val = val;
     }
   }
@@ -211,7 +211,7 @@ public class InfluxDBMapperTest {
       return field;
     }
 
-    public void setField(Integer field) {
+    public void setField(final Integer field) {
       this.field = field;
     }
   }
@@ -226,7 +226,7 @@ public class InfluxDBMapperTest {
       return time;
     }
 
-    public void setTime(long time) {
+    public void setTime(final long time) {
       this.time = time;
     }
   }

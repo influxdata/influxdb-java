@@ -26,7 +26,7 @@ public class AsyncResult<T>  {
 
     public final Consumer<T> resultConsumer = new Consumer<T>() {
         @Override
-        public void accept(T t) {
+        public void accept(final T t) {
             synchronized (syncObject) {
                 result = t;
                 gotResult = true;
@@ -37,7 +37,7 @@ public class AsyncResult<T>  {
 
     public final Consumer<Throwable> errorConsumer = new Consumer<Throwable>() {
         @Override
-        public void accept(Throwable t) {
+        public void accept(final Throwable t) {
             synchronized (syncObject) {
                 throwable = t;
                 gotResult = true;

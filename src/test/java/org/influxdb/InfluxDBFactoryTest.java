@@ -26,7 +26,7 @@ public class InfluxDBFactoryTest {
     verifyInfluxDBInstance(influxDB);
   }
 
-  private void verifyInfluxDBInstance(InfluxDB influxDB) {
+  private void verifyInfluxDBInstance(final InfluxDB influxDB) {
     Assertions.assertNotNull(influxDB);
     Pong pong = influxDB.ping();
     Assertions.assertNotNull(pong);

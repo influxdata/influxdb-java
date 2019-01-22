@@ -162,7 +162,7 @@ public class PerformanceTests {
       boolean started = false;
       InfluxDBException influxDBException = new InfluxDBException(new SocketTimeoutException());
       @Override
-      protected void check(InvocationOnMock invocation) {
+      protected void check(final InvocationOnMock invocation) {
         if (started || System.currentTimeMillis() >= (Long) params.get("startTime")) {
           System.out.println("call real");
           started = true;

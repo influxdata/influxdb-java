@@ -14,7 +14,7 @@ public abstract class TestAnswer implements Answer<Object> {
   protected abstract void check(InvocationOnMock invocation);
 
   @Override
-  public Object answer(InvocationOnMock invocation) throws Throwable {
+  public Object answer(final InvocationOnMock invocation) throws Throwable {
     check(invocation);
     //call only non-abstract real method
     if (Modifier.isAbstract(invocation.getMethod().getModifiers())) {

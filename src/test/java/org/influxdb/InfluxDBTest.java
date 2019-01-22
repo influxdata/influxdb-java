@@ -180,7 +180,7 @@ public class InfluxDBTest {
     final AsyncResult<QueryResult> result = new AsyncResult<>();
     final Consumer<QueryResult> firstQueryConsumer  = new Consumer<QueryResult>() {
       @Override
-      public void accept(QueryResult queryResult) {
+      public void accept(final QueryResult queryResult) {
         influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
       }
     };
@@ -667,7 +667,7 @@ public class InfluxDBTest {
     this.influxDB.enableBatch(1, 1, TimeUnit.SECONDS, new ThreadFactory() {
 
       @Override
-      public Thread newThread(Runnable r) {
+      public Thread newThread(final Runnable r) {
         Thread thread = new Thread(r);
         thread.setName(threadName);
         return thread;
@@ -821,7 +821,7 @@ public class InfluxDBTest {
       Query query = new Query("SELECT * FROM disk", dbName);
       this.influxDB.query(query, 2, new Consumer<QueryResult>() {
           @Override
-          public void accept(QueryResult result) {
+          public void accept(final QueryResult result) {
               queue.add(result);
           }});
 
@@ -860,7 +860,7 @@ public class InfluxDBTest {
         Query query = new Query("UNKNOWN_QUERY", dbName);
         this.influxDB.query(query, 10, new Consumer<QueryResult>() {
             @Override
-            public void accept(QueryResult result) {
+            public void accept(final QueryResult result) {
                 countDownLatch.countDown();
             }
         });
@@ -882,7 +882,7 @@ public class InfluxDBTest {
             Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
             this.influxDB.query(query, 10, new Consumer<QueryResult>() {
                 @Override
-                public void accept(QueryResult result) {
+                public void accept(final QueryResult result) {
                 }
       });
     });

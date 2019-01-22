@@ -196,7 +196,7 @@ public class InfluxDBResultMapperTest {
       "field 'booleanPrimitive' does not match");
   }
 
-  Double asDouble(Object obj) {
+  Double asDouble(final Object obj) {
     return (Double) obj;
   }
 

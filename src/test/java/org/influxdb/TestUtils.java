@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class TestUtils {
 
-  private static String getEnv(String name, String defaultValue) {
+  private static String getEnv(final String name, final String defaultValue) {
     Map<String, String> getenv = System.getenv();
 
     if (getenv.containsKey(name)) {
@@ -28,7 +28,7 @@ public class TestUtils {
     return "measurement_" + System.nanoTime();
   }
 
-  public static String getInfluxPORT(boolean apiPort) {
+  public static String getInfluxPORT(final boolean apiPort) {
     if (apiPort) {
       return getEnv("INFLUXDB_PORT_API", "8086");
     }
@@ -45,7 +45,7 @@ public class TestUtils {
     return getEnv("PROXY_UDP_PORT", "8089");
   }
 
-  public static String defaultRetentionPolicy(String version) {
+  public static String defaultRetentionPolicy(final String version) {
     if (version.startsWith("0.")) {
       return "default";
     } else {
@@ -57,15 +57,15 @@ public class TestUtils {
     return connectToInfluxDB(null, null, ResponseFormat.JSON);
   }
 
-  public static InfluxDB connectToInfluxDB(ResponseFormat responseFormat) throws InterruptedException, IOException {
+  public static InfluxDB connectToInfluxDB(final ResponseFormat responseFormat) throws InterruptedException, IOException {
     return connectToInfluxDB(null, null, responseFormat);
   }
-  public static InfluxDB connectToInfluxDB(String apiUrl) throws InterruptedException, IOException {
+  public static InfluxDB connectToInfluxDB(final String apiUrl) throws InterruptedException, IOException {
     return connectToInfluxDB(new OkHttpClient.Builder(), apiUrl, ResponseFormat.JSON);
   }
 
-  public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, String apiUrl,
-      ResponseFormat responseFormat) throws InterruptedException, IOException {
+  public static InfluxDB connectToInfluxDB(final OkHttpClient.Builder client, final String apiUrl,
+          final ResponseFormat responseFormat) throws InterruptedException, IOException {
     OkHttpClient.Builder clientToUse;
     if (client == null) {
       clientToUse = new OkHttpClient.Builder();
