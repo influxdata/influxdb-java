@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,5 +99,11 @@ public class BatchPointTest {
 
         // THEN equals returns true
         assertThat(equals).isEqualTo(false);
+    }
+
+    @Test
+    public void emptyDatabase() throws Exception {
+        BatchPoints b = BatchPoints.builder().build();
+        assertNull(b.getDatabase());
     }
 }

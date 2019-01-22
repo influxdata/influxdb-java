@@ -90,6 +90,9 @@ public final class BoundParameterQuery extends Query {
     }
 
     public QueryBuilder bind(final String placeholder, final Object value) {
+      if (query == null) {
+          query = new BoundParameterQuery(influxQL, null);
+      }
       query.params.put(placeholder, value);
       return this;
     }
