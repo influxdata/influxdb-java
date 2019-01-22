@@ -115,7 +115,8 @@ public class PerformanceTests {
   }
 
   /**
-   * states that String.join("\n", records)*/
+   * states that String.join("\n", records).
+   */
   @Test
   public void testWriteCompareUDPPerformanceForBatchWithSinglePoints() {
     //prepare data

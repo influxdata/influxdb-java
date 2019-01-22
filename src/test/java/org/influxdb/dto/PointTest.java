@@ -29,7 +29,7 @@ public class PointTest {
   /**
    * Test that lineprotocol is conformant to:
    *
-   * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md
+   * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md.
    *
    */
   @Test
@@ -75,7 +75,7 @@ public class PointTest {
   }
 
   /**
-   * Test for ticket #44
+   * Test for ticket #44.
    */
   @Test
   public void testTicket44() {
@@ -105,7 +105,7 @@ public class PointTest {
   }
 
   /**
-   * Test for ticket #54
+   * Test for ticket #54.
    */
   @Test
   public void testTicket54() {
@@ -198,7 +198,7 @@ public class PointTest {
   }
 
   /**
-   * Tests for issue #110
+   * Tests for issue #110.
    */
   @Test
   public void testAddingTagsWithNullNameThrowsAnError() {
@@ -255,7 +255,7 @@ public class PointTest {
   }
 
   /**
-   * Tests for issue #266
+   * Tests for issue #266.
    */
   @Test
   public void testEquals() throws Exception {
@@ -342,7 +342,7 @@ public class PointTest {
   }
 
     /**
-     * Tests for #182
+     * Tests for #182.
      *
      * @throws Exception
      */

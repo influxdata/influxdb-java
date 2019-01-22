@@ -36,7 +36,7 @@ public class TicketTest {
   }
 
   /**
-   * Test for ticket #38
+   * Test for ticket #38.
    *
    */
   @Test
@@ -57,7 +57,7 @@ public class TicketTest {
   }
 
   /**
-   * Test for ticket #39
+   * Test for ticket #39.
    *
    */
   @Test
@@ -79,7 +79,7 @@ public class TicketTest {
   }
 
   /**
-   * Test for ticket #40
+   * Test for ticket #40.
    */
   @Test
   public void testTicket40() {
@@ -94,7 +94,7 @@ public class TicketTest {
   }
 
   /**
-   * Test for ticket #303
+   * Test for ticket #303.
    *
    */
   @Test

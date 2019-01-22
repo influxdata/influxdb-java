@@ -464,7 +464,7 @@ public class InfluxDBResultMapperTest {
   }
 
   /**
-   * Class created based on example from https://github.com/influxdata/influxdb-java/issues/343
+   * Class created based on example from https://github.com/influxdata/influxdb-java/issues/343.
    */
   @Measurement(name = "tb_network")
   static class GroupByCarrierDeviceOS {

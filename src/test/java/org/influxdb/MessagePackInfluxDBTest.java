@@ -25,7 +25,7 @@ import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
 /**
- * Test the InfluxDB API over MessagePack format
+ * Test the InfluxDB API over MessagePack format.
  *
  * @author hoan.le [at] bonitoo.io
  *
@@ -47,7 +47,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
   }
 
   /**
-   * Tests writing points using the time precision feature
+   * Tests writing points using the time precision feature.
    * @throws Exception
    */
   @Override

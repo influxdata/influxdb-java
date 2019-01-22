@@ -337,7 +337,7 @@ public class InfluxDBTest {
     /**
      * When batch of points' size is over UDP limit, the expected exception
      * is java.lang.RuntimeException: java.net.SocketException:
-     * The message is larger than the maximum supported by the underlying transport: Datagram send failed
+     * The message is larger than the maximum supported by the underlying transport: Datagram send failed.
      * @throws Exception
      */
     @Test
@@ -428,7 +428,7 @@ public class InfluxDBTest {
     }
 
   /**
-   * Tests writing points using the time precision feature
+   * Tests writing points using the time precision feature.
    * @throws Exception
    */
   @Test
@@ -606,7 +606,7 @@ public class InfluxDBTest {
   }
 
   /**
-   * Test that creating database which name is composed of numbers only works
+   * Test that creating database which name is composed of numbers only works.
    */
   @Test
   public void testCreateNumericNamedDatabase() {
@@ -619,7 +619,7 @@ public class InfluxDBTest {
   }
 
     /**
-     * Test that creating database which name is empty will throw expected exception
+     * Test that creating database which name is empty will throw expected exception.
      */
     @Test
     public void testCreateEmptyNamedDatabase() {
@@ -630,7 +630,7 @@ public class InfluxDBTest {
     }
 
     /**
-     * Test that creating database which name contains -
+     * Test that creating database which name contains -.
      */
     @Test()
     public void testCreateDatabaseWithNameContainHyphen() {
@@ -745,7 +745,7 @@ public class InfluxDBTest {
   }
 
     /**
-     * Test writing multiple separate records to the database by Gzip compress
+     * Test writing multiple separate records to the database by Gzip compress.
      */
     @Test
     public void testWriteEnableGzip() {
@@ -777,7 +777,7 @@ public class InfluxDBTest {
 
     /**
      * Test the implementation of flag control for gzip such as:
-     * {@link InfluxDB#disableGzip()}} and {@link InfluxDB#isBatchEnabled()}},etc
+     * {@link InfluxDB#disableGzip()}} and {@link InfluxDB#isBatchEnabled()}}, etc.
      */
     @Test
     public void testWriteEnableGzipAndDisableGzip() {
@@ -1107,7 +1107,7 @@ public class InfluxDBTest {
     }
 
   /**
-   * Test creation and deletion of retention policies
+   * Test creation and deletion of retention policies.
    */
   @Test
   public void testCreateDropRetentionPolicies() {
@@ -1149,7 +1149,7 @@ public class InfluxDBTest {
   }
 
   /**
-   * Test initialize InfluxDBImpl with MessagePack format for InfluxDB versions before 1.4 will throw exception
+   * Test initialize InfluxDBImpl with MessagePack format for InfluxDB versions before 1.4 will throw exception.
    */
   @Test
   @EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "1\\.3|1\\.2|1\\.1")
@@ -1161,7 +1161,7 @@ public class InfluxDBTest {
   }
 
   /**
-   * test for issue #445
+   * Test for issue #445.
    * make sure reusing of OkHttpClient.Builder causes no error
    * @throws InterruptedException
    */

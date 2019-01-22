@@ -7,12 +7,11 @@ import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
 /**
- * Test cases for InfluxDBException
+ * Test cases for InfluxDBException.
  *
  * @author hoan.le [at] bonitoo.io
  *
  */
-
 @RunWith(JUnitPlatform.class)
 public class InfluxDBExceptionTest {
 

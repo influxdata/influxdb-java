@@ -143,7 +143,7 @@ public class UDPInfluxDBTest {
      * When batch of points' size is over UDP limit, the expected exception is
      * java.lang.RuntimeException: java.net.SocketException: The message is
      * larger than the maximum supported by the underlying transport: Datagram
-     * send failed
+     * send failed.
      *
      * @throws Exception
      */

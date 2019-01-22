@@ -9,7 +9,7 @@ import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
 /**
- * Test the BatchOptions with MessagePack format
+ * Test the BatchOptions with MessagePack format.
  *
  * @author hoan.le [at] bonitoo.io
  *
