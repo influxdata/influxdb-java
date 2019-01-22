@@ -113,8 +113,8 @@ public class BatchPointTest {
 
     @Test
     public void pointsCollection() {
-      Point p1 = Point.measurement("something").build();
-      Point p2 = Point.measurement("something2").build();
+      Point p1 = Point.measurement("something").addField("one", 1).build();
+      Point p2 = Point.measurement("something2").addField("two", 2).build();
       Collection<Point> points = Arrays.asList(p1, p2);
       BatchPoints b = BatchPoints.builder().points(points).build();
       List<Point> returned = b.getPoints();
