@@ -109,7 +109,7 @@ public class TicketTest {
                             .measurement("TestSlash")
                             .time(rundate1Sec, TimeUnit.SECONDS)
                             .tag("precision", "Second")
-                            .addField("MultipleSlash" ,  "echo \\\".ll 12.0i\\\";")
+                            .addField("MultipleSlash", "echo \\\".ll 12.0i\\\";")
                             .build();
     this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
     this.influxDB.deleteDatabase(dbName);

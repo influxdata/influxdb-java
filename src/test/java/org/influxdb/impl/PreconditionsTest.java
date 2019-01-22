@@ -53,9 +53,9 @@ public class PreconditionsTest {
   }
 
   @Test
-  public void testCheckDurationInf(){
+  public void testCheckDurationInf() {
     final String duration = "inf";
-    Assertions.assertDoesNotThrow(()->{
+    Assertions.assertDoesNotThrow(()-> {
       Preconditions.checkDuration(duration, "duration");
     });
   }

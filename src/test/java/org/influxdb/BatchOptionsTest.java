@@ -52,24 +52,24 @@ public class BatchOptionsTest {
   public void testParametersSet() {
     BatchOptions options = BatchOptions.DEFAULTS.actions(3);
     Assertions.assertEquals(3, options.getActions());
-    options=options.consistency(InfluxDB.ConsistencyLevel.ANY);
+    options = options.consistency(InfluxDB.ConsistencyLevel.ANY);
     Assertions.assertEquals(InfluxDB.ConsistencyLevel.ANY, options.getConsistency());
-    options=options.flushDuration(1001);
+    options = options.flushDuration(1001);
     Assertions.assertEquals(1001, options.getFlushDuration());
-    options=options.bufferLimit(7070);
+    options = options.bufferLimit(7070);
     Assertions.assertEquals(7070, options.getBufferLimit());
-    options=options.jitterDuration(104);
+    options = options.jitterDuration(104);
     Assertions.assertEquals(104, options.getJitterDuration());
-    BiConsumer<Iterable<Point>, Throwable> handler=new BiConsumer<Iterable<Point>, Throwable>() {
+    BiConsumer<Iterable<Point>, Throwable> handler = new BiConsumer<Iterable<Point>, Throwable>() {
       @Override
       public void accept(Iterable<Point> points, Throwable throwable) {
 
       }
     };
-    options=options.exceptionHandler(handler);
+    options = options.exceptionHandler(handler);
     Assertions.assertEquals(handler, options.getExceptionHandler());
-    ThreadFactory tf=Executors.defaultThreadFactory();
-    options=options.threadFactory(tf);
+    ThreadFactory tf = Executors.defaultThreadFactory();
+    options = options.threadFactory(tf);
     Assertions.assertEquals(tf, options.getThreadFactory());
   }
 
@@ -87,7 +87,7 @@ public class BatchOptionsTest {
       this.influxDB.setDatabase(dbName);
       for (int j = 0; j < 5; j++) {
         Point point = Point.measurement("cpu")
-                .time(j,TimeUnit.MILLISECONDS)
+                .time(j, TimeUnit.MILLISECONDS)
                 .addField("idle", (double) j)
                 .addField("user", 2.0 * j)
                 .addField("system", 3.0 * j).build();
@@ -571,7 +571,7 @@ public class BatchOptionsTest {
   void writeSomePoints(InfluxDB influxDB, String measurement, int firstIndex, int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement(measurement)
-              .time(i,TimeUnit.HOURS)
+              .time(i, TimeUnit.HOURS)
               .addField("field1", (double) i)
               .addField("field2", (double) (i) * 1.1)
               .addField("field3", "moderate").build();
@@ -582,7 +582,7 @@ public class BatchOptionsTest {
   void writeSomePoints(InfluxDB influxDB, int firstIndex, int lastIndex) {
     for (int i = firstIndex; i <= lastIndex; i++) {
       Point point = Point.measurement("weather")
-              .time(i,TimeUnit.HOURS)
+              .time(i, TimeUnit.HOURS)
               .addField("temperature", (double) i)
               .addField("humidity", (double) (i) * 1.1)
               .addField("uv_index", "moderate").build();
@@ -602,7 +602,7 @@ public class BatchOptionsTest {
     BatchPoints batchPoints = BatchPoints.database(dbName).build();
     for (int i = 1; i <= n; i++) {
       Point point = Point.measurement(measurement)
-              .time(i,TimeUnit.MILLISECONDS)
+              .time(i, TimeUnit.MILLISECONDS)
               .addField("f1", (double) i)
               .addField("f2", (double) (i) * 1.1)
               .addField("f3", "f_v3").build();

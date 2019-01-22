@@ -77,7 +77,7 @@ public class RetryCapableBatchWriterTest {
     Assert.assertEquals(capturedArgument1.get(3).getPoints().size(), 98);
 
     // error handler called twice; once for first unrecoverable write, se
-    verify(errorHandler, times(2)).accept(any(),any());
+    verify(errorHandler, times(2)).accept(any(), any());
 
     // will write data that previously were not sent, will send additional data
     Mockito.reset(mockInfluxDB);
@@ -181,7 +181,7 @@ public class RetryCapableBatchWriterTest {
 
     BatchPoints.Builder b = BatchPoints.database("d1");
     for (int i = 0; i < 200; i++) {
-      b.point(Point.measurement("x1").time(1,TimeUnit.HOURS).
+      b.point(Point.measurement("x1").time(1, TimeUnit.HOURS).
           addField("x", 1).
           tag("t", "v1").build()).build();
     }
@@ -190,12 +190,12 @@ public class RetryCapableBatchWriterTest {
 
     b = BatchPoints.database("d1");
 
-    b.point(Point.measurement("x1").time(1,TimeUnit.HOURS).
+    b.point(Point.measurement("x1").time(1, TimeUnit.HOURS).
         addField("x", 2).
         tag("t", "v2").build()).build();
 
     for (int i = 0; i < 199; i++) {
-      b.point(Point.measurement("x1").time(2,TimeUnit.HOURS).
+      b.point(Point.measurement("x1").time(2, TimeUnit.HOURS).
           addField("x", 2).
           tag("t", "v2").build()).build();
     }
@@ -263,7 +263,7 @@ public class RetryCapableBatchWriterTest {
 
     for (Exception exception : tryExceptionList) {
       // try for 100 times with random number of points each time
-      for (int i=0; i < 100; i++) {
+      for (int i = 0; i < 100; i++) {
         int count = 200 + ((i * 777) & 511);
         BatchPoints bps = getBP(count);
         if (exception != null) {
@@ -276,7 +276,7 @@ public class RetryCapableBatchWriterTest {
 
         // count actual number of points in batchQueue
         @SuppressWarnings("unchecked")
-        LinkedList<BatchPoints> batchQueue = (LinkedList<BatchPoints>)localBatchQueue.get(rw);
+        LinkedList<BatchPoints> batchQueue = (LinkedList<BatchPoints>) localBatchQueue.get(rw);
         int sum = 0;
         for (BatchPoints b : batchQueue) {
           sum += b.getPoints().size();

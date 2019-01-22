@@ -44,7 +44,7 @@ public class InfluxDBFactoryTest {
 
   @Test
   public void testShouldThrowIllegalArgumentWithInvalidUrl() {
-    Assertions.assertThrows(IllegalArgumentException.class,() -> {
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
        InfluxDBFactory.connect("invalidUrl");
     });
   }

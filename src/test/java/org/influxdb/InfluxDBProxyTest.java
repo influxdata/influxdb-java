@@ -33,7 +33,7 @@ public class InfluxDBProxyTest {
    * delete database after all tests end.
    */
   @AfterEach
-  public void cleanup(){
+  public void cleanup() {
     influxDB.close();
   }
 
@@ -42,9 +42,9 @@ public class InfluxDBProxyTest {
     influxDB.createDatabase(TEST_DB);
     influxDB.setDatabase(TEST_DB);
 
-    for(int i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++) {
       Point point = Point.measurement("weather")
-          .time(i,TimeUnit.HOURS)
+          .time(i, TimeUnit.HOURS)
           .addField("temperature", (double) i)
           .addField("humidity", (double) (i) * 1.1)
           .addField("uv_index", "moderate").build();
@@ -64,9 +64,9 @@ public class InfluxDBProxyTest {
     influxDB.setDatabase(UDP_DB);
 
     int proxyUdpPort = Integer.parseInt(TestUtils.getProxyUdpPort());
-    for(int i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++) {
       Point point = Point.measurement("weather")
-          .time(i,TimeUnit.HOURS)
+          .time(i, TimeUnit.HOURS)
           .addField("temperature", (double) i)
           .addField("humidity", (double) (i) * 1.1)
           .addField("uv_index", "moderate").build();

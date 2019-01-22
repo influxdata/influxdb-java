@@ -41,7 +41,7 @@ public class InfluxDBMapperTest {
     Assert.assertEquals(serverMeasure.getCpu(), persistedMeasure.getCpu(), 0);
     Assert.assertEquals(serverMeasure.isHealthy(), persistedMeasure.isHealthy());
     Assert.assertEquals(serverMeasure.getUptime(), persistedMeasure.getUptime());
-    Assert.assertEquals(serverMeasure.getIp(),persistedMeasure.getIp());
+    Assert.assertEquals(serverMeasure.getIp(), persistedMeasure.getIp());
     Assert.assertEquals(
         serverMeasure.getMemoryUtilization(), persistedMeasure.getMemoryUtilization());
   }
@@ -51,8 +51,8 @@ public class InfluxDBMapperTest {
     ServerMeasure serverMeasure = createMeasure();
     influxDBMapper.save(serverMeasure);
 
-    List<ServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure",UDP_DATABASE),ServerMeasure.class);
-    Assert.assertTrue(persistedMeasures.size()>0);
+    List<ServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure", UDP_DATABASE), ServerMeasure.class);
+    Assert.assertTrue(persistedMeasures.size() > 0);
   }
 
   @Test
@@ -94,7 +94,7 @@ public class InfluxDBMapperTest {
     serverMeasure.setTime(instant);
     influxDBMapper.save(serverMeasure);
     ServerMeasure persistedMeasure = influxDBMapper.query(ServerMeasure.class).get(0);
-    Assert.assertEquals(instant,persistedMeasure.getTime());
+    Assert.assertEquals(instant, persistedMeasure.getTime());
   }
 
 

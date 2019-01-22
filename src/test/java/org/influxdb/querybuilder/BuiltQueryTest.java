@@ -870,7 +870,7 @@ public class BuiltQueryTest {
             select()
                     .column("water_level")
                     .from(DATABASE, "h2o_feet")
-                    .where(gt("column1", op(3,MUL,op(cop("column2",ADD,3), ADD, 4))));
+                    .where(gt("column1", op(3, MUL, op(cop("column2", ADD, 3), ADD, 4))));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -958,14 +958,14 @@ public class BuiltQueryTest {
   @Test
   public void multipleDatabaseBackReferenceing() {
     Query query =
-            new Query("SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);",DATABASE);
+            new Query("SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);", DATABASE);
     Query select =
             select()
                     .mean(raw("*"))
                     .into("\"where_else\".\"autogen\".:MEASUREMENT")
                     .fromRaw(DATABASE, "/.*/")
-                    .where(gte("time","2015-08-18T00:00:00Z"))
-                    .and(lte("time","2015-08-18T00:06:00Z"))
+                    .where(gte("time", "2015-08-18T00:00:00Z"))
+                    .and(lte("time", "2015-08-18T00:06:00Z"))
                     .groupBy(time(12L, MINUTE));
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
