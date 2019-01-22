@@ -192,8 +192,9 @@
           <failsOnError>true</failsOnError>
           <configLocation>checkstyle.xml</configLocation>
           <consoleOutput>true</consoleOutput>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
         </configuration>
-        <executions>
+         <executions>
           <execution>
             <phase>verify</phase>
             <goals>
