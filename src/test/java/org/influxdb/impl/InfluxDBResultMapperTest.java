@@ -49,7 +49,7 @@ public class InfluxDBResultMapperTest {
   InfluxDBResultMapper mapper = new InfluxDBResultMapper();
 
   @Test
-  public void testToPOJO_HappyPath() {
+  public void testToPOJOHappyPath() {
     // Given...
     List<String> columnList = Arrays.asList("time", "uuid");
     List<Object> firstSeriesResult = Arrays.asList(Instant.now().toEpochMilli(), UUID.randomUUID().toString());
@@ -80,7 +80,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testThrowExceptionIfError_InfluxQueryResultHasError() {
+  public void testThrowExceptionIfErrorInfluxQueryResultHasError() {
     QueryResult queryResult = new QueryResult();
     queryResult.setError("main queryresult error");
 
@@ -90,7 +90,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testThrowExceptionIfError_InfluxQueryResultSeriesHasError() {
+  public void testThrowExceptionIfErrorInfluxQueryResultSeriesHasError() {
     QueryResult queryResult = new QueryResult();
 
     QueryResult.Result seriesResult = new QueryResult.Result();
@@ -104,12 +104,12 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testGetMeasurementName_testStateMeasurement() {
+  public void testGetMeasurementNameTestStateMeasurement() {
     Assertions.assertEquals("CustomMeasurement", mapper.getMeasurementName(MyCustomMeasurement.class));
   }
 
   @Test
-  public void testParseSeriesAs_testTwoValidSeries() {
+  public void testParseSeriesAsTestTwoValidSeries() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -137,7 +137,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testParseSeriesAs_testNonNullAndValidValues() {
+  public void testParseSeriesAsTestNonNullAndValidValues() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -201,7 +201,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testFieldValueModified_DateAsISO8601() {
+  public void testFieldValueModifiedDateAsISO8601() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -221,7 +221,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testFieldValueModified_DateAsInteger() {
+  public void testFieldValueModifiedDateAsInteger() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -263,7 +263,7 @@ public class InfluxDBResultMapperTest {
    * https://github.com/influxdata/influxdb/issues/7596 for more information.
    */
   @Test
-  public void testToPOJO_SeriesFromQueryResultIsNull() {
+  public void testToPOJOSeriesFromQueryResultIsNull() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -281,7 +281,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testToPOJO_QueryResultCreatedByGroupByClause() {
+  public void testToPOJOQueryResultCreatedByGroupByClause() {
     // Given...
     mapper.cacheMeasurementClass(GroupByCarrierDeviceOS.class);
 
@@ -335,7 +335,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  public void testToPOJO_ticket363() {
+  public void testToPOJOTicket363() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -356,7 +356,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  void testToPOJO_Precision() {
+  void testToPOJOPrecision() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 
@@ -383,7 +383,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
-  void testToPOJO_SetMeasureName() {
+  void testToPOJOSetMeasureName() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
 

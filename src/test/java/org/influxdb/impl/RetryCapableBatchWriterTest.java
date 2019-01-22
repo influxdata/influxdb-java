@@ -245,9 +245,9 @@ public class RetryCapableBatchWriterTest {
   public void testBufferCountConsistency() throws Exception {
     InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
     BiConsumer errorHandler = mock(BiConsumer.class);
-    int MAX_BUFFER_CAPACITY = 3000;
+    int maxBufferCapacity = 3000;
     RetryCapableBatchWriter rw = new RetryCapableBatchWriter(mockInfluxDB, errorHandler,
-            MAX_BUFFER_CAPACITY, 1000);
+            maxBufferCapacity, 1000);
 
     Exception nonRecoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"database not found: cvfdgf\" }");
     Exception recoverable = InfluxDBException.buildExceptionForErrorState("{ \"error\": \"cache-max-memory-size exceeded 104/1400\" }");
@@ -292,7 +292,7 @@ public class RetryCapableBatchWriterTest {
         Assertions.assertTrue(sum == localUsedRetryBufferCapacityVal,
                 "batchSize usage counter mismatch UsedRetryBufferCapacityVal, "
                 + sum + " != " + localUsedRetryBufferCapacityVal);
-        Assertions.assertTrue(sum < MAX_BUFFER_CAPACITY, "batchSize usage outside of allowed range " + sum);
+        Assertions.assertTrue(sum < maxBufferCapacity, "batchSize usage outside of allowed range " + sum);
       }
     }
   }

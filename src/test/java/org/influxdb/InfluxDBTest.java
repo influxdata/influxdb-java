@@ -1185,7 +1185,7 @@ public class InfluxDBTest {
     if (!executor.awaitTermination(20, TimeUnit.SECONDS)) {
       executor.shutdownNow();
     }
-    Assertions.assertTrue(MyInfluxDBBean.OK);
+    Assertions.assertTrue(MyInfluxDBBean.ok);
     //assert that MyInfluxDBBean.OKHTTP_BUILDER stays untouched (no interceptor added)
     Assertions.assertTrue(MyInfluxDBBean.OKHTTP_BUILDER.interceptors().isEmpty());
   }
@@ -1193,14 +1193,14 @@ public class InfluxDBTest {
   private static final class MyInfluxDBBean {
 
     static final OkHttpClient.Builder OKHTTP_BUILDER = new OkHttpClient.Builder();
-    static Boolean OK = true;
+    static Boolean ok = true;
     static final String URL = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
 
     InfluxDB influxClient;
 
     String connectAndDoNothing1() {
-      synchronized (OK) {
-        if (!OK) {
+      synchronized (ok) {
+        if (!ok) {
           return null;
         }
       }
@@ -1208,9 +1208,9 @@ public class InfluxDBTest {
         influxClient = InfluxDBFactory.connect(URL, "admin", "admin", OKHTTP_BUILDER);
         influxClient.close();
       } catch (Exception e) {
-        synchronized (OK) {
-          if (OK) {
-            OK = false;
+        synchronized (ok) {
+          if (ok) {
+            ok = false;
           }
         }
       }
