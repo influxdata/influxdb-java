@@ -682,7 +682,7 @@ public class InfluxDBTest {
     });
     Set<Thread> threads = Thread.getAllStackTraces().keySet();
     boolean existThreadWithSettedName = false;
-    for (Thread thread: threads) {
+    for (Thread thread : threads) {
       if (thread.getName().equalsIgnoreCase(threadName)) {
         existThreadWithSettedName = true;
         break;

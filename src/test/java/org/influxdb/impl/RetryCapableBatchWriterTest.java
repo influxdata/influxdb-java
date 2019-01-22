@@ -144,7 +144,7 @@ public class RetryCapableBatchWriterTest {
     for (int i = 0; i < size; i++) {
       rw.write(Collections.singletonList(bp));
     }
-    verify(errorHandler, times(size)).accept(any(), any());;
+    verify(errorHandler, times(size)).accept(any(), any());
   }
 
   @Test
