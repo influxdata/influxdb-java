@@ -27,8 +27,8 @@ import org.junit.runner.RunWith;
 public class UDPInfluxDBTest {
 
     private InfluxDB influxDB;
-    private final static int UDP_PORT = 8089;
-    private final static String UDP_DATABASE = "udp";
+    private static final int UDP_PORT = 8089;
+    private static final String UDP_DATABASE = "udp";
 
      /**
      * Create a influxDB connection before all tests start.

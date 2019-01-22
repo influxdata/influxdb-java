@@ -50,8 +50,8 @@ import java.util.function.Consumer;
 public class InfluxDBTest {
 
   InfluxDB influxDB;
-  private final static int UDP_PORT = 8089;
-  final static String UDP_DATABASE = "udp";
+  private static final int UDP_PORT = 8089;
+  static final String UDP_DATABASE = "udp";
 
   /**
    * Create a influxDB connection before all tests start.

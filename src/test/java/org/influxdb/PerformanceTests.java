@@ -26,12 +26,12 @@ import org.mockito.invocation.InvocationOnMock;
 @RunWith(JUnitPlatform.class)
 public class PerformanceTests {
   private InfluxDB influxDB;
-  private final static int COUNT = 1;
-  private final static int POINT_COUNT = 100000;
-  private final static int SINGLE_POINT_COUNT = 10000;
+  private static final int COUNT = 1;
+  private static final int POINT_COUNT = 100000;
+  private static final int SINGLE_POINT_COUNT = 10000;
 
-  private final static int UDP_PORT = 8089;
-  private final static String UDP_DATABASE = "udp";
+  private static final int UDP_PORT = 8089;
+  private static final String UDP_DATABASE = "udp";
 
   @BeforeEach
   public void setUp() {
