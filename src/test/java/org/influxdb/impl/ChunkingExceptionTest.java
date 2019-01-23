@@ -73,37 +73,38 @@ public class ChunkingExceptionTest {
         doThrow(ex).when(adapter).fromJson(any(JsonReader.class));
 
         String url = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
-        InfluxDB influxDB = new InfluxDBImpl(url, "admin", "admin", new OkHttpClient.Builder(), influxDBService, adapter) {
+        try (InfluxDB influxDB = new InfluxDBImpl(url, "admin", "admin", new OkHttpClient.Builder(), influxDBService, adapter) {
             @Override
             public String version() {
                 return "9.99";
             }
-        };
+        }) {
 
-        String dbName = "write_unittest_" + System.currentTimeMillis();
-        final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
-        Query query = new Query("SELECT * FROM disk", dbName);
+            String dbName = "write_unittest_" + System.currentTimeMillis();
+            final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+            Query query = new Query("SELECT * FROM disk", dbName);
 
-        if (onFailure == null) {
-            influxDB.query(query, 2, queue::add);
-        } else {
-            //test with onComplete and onFailure consumer
-            influxDB.query(query, 2, (cancellable, result) -> queue.add(result),
-                //on complete
-                () -> {  },
-                onFailure
-            );
+            if (onFailure == null) {
+                influxDB.query(query, 2, queue::add);
+            } else {
+                //test with onComplete and onFailure consumer
+                influxDB.query(query, 2, (cancellable, result) -> queue.add(result),
+                    //on complete
+                    () -> {  },
+                    onFailure
+                );
+            }
+
+            ArgumentCaptor<Callback<ResponseBody>> argumentCaptor = ArgumentCaptor.forClass(Callback.class);
+            verify(call).enqueue(argumentCaptor.capture());
+            Callback<ResponseBody> callback = argumentCaptor.getValue();
+
+            callback.onResponse(call, Response.success(responseBody));
+
+            QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+            Assertions.assertNotNull(result);
+            Assertions.assertEquals(message, result.getError());
         }
-
-        ArgumentCaptor<Callback<ResponseBody>> argumentCaptor = ArgumentCaptor.forClass(Callback.class);
-        verify(call).enqueue(argumentCaptor.capture());
-        Callback<ResponseBody> callback = argumentCaptor.getValue();
-
-        callback.onResponse(call, Response.success(responseBody));
-
-        QueryResult result = queue.poll(20, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(message, result.getError());
     }
 
 }
