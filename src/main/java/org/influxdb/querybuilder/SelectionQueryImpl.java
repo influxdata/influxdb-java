@@ -188,6 +188,6 @@ public class SelectionQueryImpl implements Selection, WithInto {
 
   public SelectionSubQueryImpl<SelectQueryImpl> fromSubQuery(final String database) {
     SelectQueryImpl selectQuery = from(database);
-    return new SelectionSubQueryImpl(selectQuery);
+    return new SelectionSubQueryImpl<>(selectQuery);
   }
 }

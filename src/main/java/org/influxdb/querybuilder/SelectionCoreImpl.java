@@ -167,12 +167,12 @@ class SelectionCoreImpl implements Selection, WithInto {
 
   <E extends Where> SelectCoreImpl<E> from(final FromClause fromClause, final E where) {
     clearSelection();
-    return new SelectCoreImpl(fromClause, columns, isDistinct, where, intoMeasurement);
+    return new SelectCoreImpl<>(fromClause, columns, isDistinct, where, intoMeasurement);
   }
 
   <E extends Where> SelectCoreImpl<E> from(final E where) {
     clearSelection();
-    return new SelectCoreImpl(columns, isDistinct, where, intoMeasurement);
+    return new SelectCoreImpl<>(columns, isDistinct, where, intoMeasurement);
   }
 
   protected SelectionCoreImpl clearSelection() {

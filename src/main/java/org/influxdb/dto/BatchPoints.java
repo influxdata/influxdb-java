@@ -2,6 +2,7 @@ package org.influxdb.dto;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,11 +108,22 @@ public class BatchPoints {
     /**
      * Add a set of Points to this set of points.
      *
-     * @param pointsToAdd the List if Points to add
+     * @param pointsToAdd the Points to add
      * @return the Builder instance
      */
     public Builder points(final Point... pointsToAdd) {
       this.points.addAll(Arrays.asList(pointsToAdd));
+      return this;
+    }
+
+    /**
+     * Add a set of Points to this set of points.
+     *
+     * @param pointsToAdd the Points to add
+     * @return the Builder instance
+     */
+    public Builder points(final Collection<Point> pointsToAdd) {
+      this.points.addAll(pointsToAdd);
       return this;
     }
 

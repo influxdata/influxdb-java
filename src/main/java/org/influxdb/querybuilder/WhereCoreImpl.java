@@ -51,12 +51,12 @@ public class WhereCoreImpl<T extends Select> implements Select, Where {
 
   @Override
   public WhereNested andNested() {
-    return new WhereNested(this, false);
+    return new WhereNested<>(this, false);
   }
 
   @Override
   public WhereNested orNested() {
-    return new WhereNested(this, true);
+    return new WhereNested<>(this, true);
   }
 
   @Override
