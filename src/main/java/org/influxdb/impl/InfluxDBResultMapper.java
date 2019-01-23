@@ -217,11 +217,15 @@ public class InfluxDBResultMapper {
         influxColumnAndFieldMap = initialMap;
       }
 
-      for (Field field : clazz.getDeclaredFields()) {
-        Column colAnnotation = field.getAnnotation(Column.class);
-        if (colAnnotation != null) {
-          influxColumnAndFieldMap.put(colAnnotation.name(), field);
+      Class<?> c = clazz;
+      while (c != null) {
+        for (Field field : c.getDeclaredFields()) {
+          Column colAnnotation = field.getAnnotation(Column.class);
+          if (colAnnotation != null) {
+            influxColumnAndFieldMap.put(colAnnotation.name(), field);
+          }
         }
+        c = c.getSuperclass();
       }
     }
   }

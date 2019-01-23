@@ -159,11 +159,13 @@ public class InfluxDBTest {
 
     Object waitForTestresults = new Object();
     Consumer<QueryResult> check = (queryResult) -> {
-      Assertions.assertTrue(queryResult.getResults().get(0).getSeries().size() == 1);
-      Series s = queryResult.getResults().get(0).getSeries().get(0);
-      Assertions.assertTrue(s.getValues().size() == 1);
-      synchronized (waitForTestresults) {
-        waitForTestresults.notifyAll();
+      if (!"DONE".equals(queryResult.getError())) {
+        Assertions.assertTrue(queryResult.getResults().get(0).getSeries().size() == 1);
+        Series s = queryResult.getResults().get(0).getSeries().get(0);
+        Assertions.assertTrue(s.getValues().size() == 1);
+        synchronized (waitForTestresults) {
+          waitForTestresults.notifyAll();
+        }
       }
     };
     this.influxDB.query(query, 10, check);
