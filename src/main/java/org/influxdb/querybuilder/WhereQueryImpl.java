@@ -49,12 +49,12 @@ public class WhereQueryImpl<T extends SelectQueryImpl> extends BuiltQuery implem
 
   @Override
   public WhereNested<WhereQueryImpl<T>> andNested() {
-    return new WhereNested(this, false);
+    return new WhereNested<>(this, false);
   }
 
   @Override
   public WhereNested<WhereQueryImpl<T>> orNested() {
-    return new WhereNested(this, true);
+    return new WhereNested<>(this, true);
   }
 
   @Override
