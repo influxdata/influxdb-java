@@ -485,7 +485,7 @@ public class BatchOptionsTest {
   public void testWriteWithRetryOnRecoverableError() throws InterruptedException {
     String dbName = "write_unittest_" + System.currentTimeMillis();
     InfluxDB spy = spy(influxDB);
-    doAnswer(new Answer() {
+    doAnswer(new Answer<Object>() {
       boolean firstCall = true;
 
       @Override
