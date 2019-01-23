@@ -8,6 +8,8 @@
   would be used [Issue #548](https://github.com/influxdata/influxdb-java/issues/548)
 - Add BatchPoints.Builder.points(Collection)
   [Issue #451](https://github.com/influxdata/influxdb-java/issues/451)
+- @Column supports class inheritance
+  [Issue #367](https://github.com/influxdata/influxdb-java/issues/367)
 
 ## 2.14 [2018-10-12]
 
