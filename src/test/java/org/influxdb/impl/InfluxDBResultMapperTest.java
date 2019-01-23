@@ -447,8 +447,8 @@ public class InfluxDBResultMapperTest {
     Assertions.assertEquals(subValue, result.get(0).subValue);
   }
 
-	@Measurement(name = "CustomMeasurement")
-	static class MyCustomMeasurement {
+  @Measurement(name = "CustomMeasurement")
+  static class MyCustomMeasurement {
 
     @Column(name = "time")
     private Instant time;
@@ -522,7 +522,7 @@ public class InfluxDBResultMapperTest {
   }
 
   @Measurement(name = "foo")
-	static class MyPojoWithUnsupportedField {
+  static class MyPojoWithUnsupportedField {
 
     @Column(name = "bar")
     private Date myDate;
