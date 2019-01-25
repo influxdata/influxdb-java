@@ -557,12 +557,35 @@ public class InfluxDBImpl implements InfluxDB {
     call.enqueue(new Callback<QueryResult>() {
       @Override
       public void onResponse(final Call<QueryResult> call, final Response<QueryResult> response) {
-        onSuccess.accept(response.body());
+        if (response.isSuccessful()) {
+          onSuccess.accept(response.body());
+        } else {
+          InfluxDBException influxDBException = null;
+          ResponseBody errorBody = response.errorBody();
+          if (errorBody != null) {
+            try {
+              influxDBException = new InfluxDBException(errorBody.string());
+            } catch (IOException e) {
+              throw new InfluxDBException(e);
+            }
+          } else {
+            influxDBException = new InfluxDBException(response.toString());
+          }
+          if (onFailure == null) {
+            throw influxDBException;
+          } else {
+            onFailure.accept(influxDBException);
+          }
+        }
       }
 
       @Override
       public void onFailure(final Call<QueryResult> call, final Throwable throwable) {
-        onFailure.accept(throwable);
+        if (onFailure == null) {
+          throw new InfluxDBException(throwable);
+        } else {
+          onFailure.accept(throwable);
+        }
       }
     });
   }
