@@ -274,7 +274,7 @@ public final class BatchProcessor {
     };
     // Flush at specified Rate
     this.scheduler.schedule(flushRunnable,
-            this.flushInterval + (int) (Math.random() * BatchProcessor.this.jitterInterval),
+            this.flushInterval + (int) (Math.random() * this.jitterInterval),
             this.flushIntervalUnit);
   }
 
@@ -282,7 +282,7 @@ public final class BatchProcessor {
     List<Point> currentBatch = null;
     try {
       if (this.queue.isEmpty()) {
-        BatchProcessor.this.batchWriter.write(Collections.emptyList());
+        this.batchWriter.write(Collections.emptyList());
         return;
       }
       //for batch on HTTP.
@@ -318,11 +318,11 @@ public final class BatchProcessor {
         }
       }
 
-      BatchProcessor.this.batchWriter.write(batchKeyToBatchPoints.values());
+      this.batchWriter.write(batchKeyToBatchPoints.values());
 
       for (Entry<Integer, List<String>> entry : udpPortToBatchPoints.entrySet()) {
           for (String lineprotocolStr : entry.getValue()) {
-              BatchProcessor.this.influxDB.write(entry.getKey(), lineprotocolStr);
+              this.influxDB.write(entry.getKey(), lineprotocolStr);
           }
       }
     } catch (Throwable t) {
