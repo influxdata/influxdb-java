@@ -262,7 +262,7 @@ public final class BatchProcessor {
   BatchProcessor(final InfluxDBImpl influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
                  final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
                  final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
-                 final ConsistencyLevel consistencyLevel, TimeUnit precision) {
+                 final ConsistencyLevel consistencyLevel, final TimeUnit precision) {
     super();
     this.influxDB = influxDB;
     this.batchWriter = batchWriter;

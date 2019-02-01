@@ -182,14 +182,13 @@ public final class BatchOptions implements Cloneable {
   public InfluxDB.ConsistencyLevel getConsistency() {
     return consistency;
   }
-  
+
   /**
    * @return the time precision
    */
   public TimeUnit getPrecision() {
     return precision;
   }
-  
 
   private BatchOptions getClone() {
     try {
