@@ -2,6 +2,10 @@
 
 ## 2.15 [unreleased]
 
+### Fixes
+
+- Close underlying OkHttpClient when closing [Issue #359](https://github.com/influxdata/influxdb-java/issues/359)
+
 ### Features
 
 - Query and BatchPoints do not mandate a database name, in which case the InfluxDB database
