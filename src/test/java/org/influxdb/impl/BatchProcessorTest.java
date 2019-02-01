@@ -203,7 +203,7 @@ public class BatchProcessorTest {
       
       ArgumentCaptor<Collection<BatchPoints>> argument = ArgumentCaptor.forClass(Collection.class);
 
-      verify(batchWriter, times(2)).write(argument.capture());
+      verify(batchWriter, atLeastOnce()).write(argument.capture());
       
       for (Collection<BatchPoints> list : argument.getAllValues()) {
         for (BatchPoints p : list) {
