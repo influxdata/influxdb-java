@@ -828,8 +828,6 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public void close() {
-    this.client.dispatcher().executorService().shutdown();
-    this.client.connectionPool().evictAll();
     try {
         this.disableBatch();
     } finally {
@@ -837,6 +835,8 @@ public class InfluxDBImpl implements InfluxDB {
             datagramSocket.close();
         }
     }
+    this.client.dispatcher().executorService().shutdown();
+    this.client.connectionPool().evictAll();
   }
 
   @Override
