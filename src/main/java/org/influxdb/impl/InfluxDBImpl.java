@@ -85,6 +85,7 @@ public class InfluxDBImpl implements InfluxDB {
   private final String hostName;
   private String version;
   private final Retrofit retrofit;
+  private final OkHttpClient client;
   private final InfluxDBService influxDBService;
   private BatchProcessor batchProcessor;
   private final AtomicBoolean batchEnabled = new AtomicBoolean(false);
@@ -173,8 +174,9 @@ public class InfluxDBImpl implements InfluxDB {
       break;
     }
 
+    this.client = clonedOkHttpBuilder.build();
     Retrofit.Builder clonedRetrofitBuilder = retrofitBuilder.baseUrl(url).build().newBuilder();
-    this.retrofit = clonedRetrofitBuilder.client(clonedOkHttpBuilder.build())
+    this.retrofit = clonedRetrofitBuilder.client(this.client)
             .addConverterFactory(converterFactory).build();
     this.influxDBService = this.retrofit.create(InfluxDBService.class);
 
@@ -197,9 +199,10 @@ public class InfluxDBImpl implements InfluxDB {
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
+    this.client = clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
+        addInterceptor(new BasicAuthInterceptor(username, password)).build();
     this.retrofit = new Retrofit.Builder().baseUrl(url)
-        .client(clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
-            addInterceptor(new BasicAuthInterceptor(username, password)).build())
+        .client(this.client)
         .addConverterFactory(MoshiConverterFactory.create()).build();
     this.influxDBService = influxDBService;
 
@@ -832,6 +835,8 @@ public class InfluxDBImpl implements InfluxDB {
             datagramSocket.close();
         }
     }
+    this.client.dispatcher().executorService().shutdown();
+    this.client.connectionPool().evictAll();
   }
 
   @Override
