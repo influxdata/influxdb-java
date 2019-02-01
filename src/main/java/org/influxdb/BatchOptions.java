@@ -4,6 +4,7 @@ import org.influxdb.dto.Point;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
@@ -12,6 +13,13 @@ import java.util.function.BiConsumer;
  */
 public final class BatchOptions implements Cloneable {
 
+  // default values here are consistent with Telegraf
+  public static final int DEFAULT_BATCH_ACTIONS_LIMIT = 1000;
+  public static final int DEFAULT_BATCH_INTERVAL_DURATION = 1000;
+  public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
+  public static final int DEFAULT_BUFFER_LIMIT = 10000;
+  public static final TimeUnit DEFAULT_PRECISION = TimeUnit.NANOSECONDS;
+
   /**
    * Default batch options. This class is immutable, each configuration
    * is built by taking the DEFAULTS and setting specific configuration
@@ -19,16 +27,11 @@ public final class BatchOptions implements Cloneable {
    */
   public static final BatchOptions DEFAULTS = new BatchOptions();
 
-  // default values here are consistent with Telegraf
-  public static final int DEFAULT_BATCH_ACTIONS_LIMIT = 1000;
-  public static final int DEFAULT_BATCH_INTERVAL_DURATION = 1000;
-  public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
-  public static final int DEFAULT_BUFFER_LIMIT = 10000;
-
   private int actions = DEFAULT_BATCH_ACTIONS_LIMIT;
   private int flushDuration = DEFAULT_BATCH_INTERVAL_DURATION;
   private int jitterDuration = DEFAULT_JITTER_INTERVAL_DURATION;
   private int bufferLimit = DEFAULT_BUFFER_LIMIT;
+  private TimeUnit precision = DEFAULT_PRECISION;
 
   private ThreadFactory threadFactory = Executors.defaultThreadFactory();
   BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {
@@ -120,6 +123,17 @@ public final class BatchOptions implements Cloneable {
   }
 
   /**
+   * Set the time precision to use for the whole batch. If unspecified, will default to {@link TimeUnit#NANOSECONDS}.
+   * @param precision sets the precision to use
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
+   */
+  public BatchOptions precision(final TimeUnit precision) {
+    BatchOptions clone = getClone();
+    clone.precision = precision;
+    return clone;
+  }
+
+  /**
    * @return actions the number of actions to collect
    */
   public int getActions() {
@@ -168,6 +182,14 @@ public final class BatchOptions implements Cloneable {
   public InfluxDB.ConsistencyLevel getConsistency() {
     return consistency;
   }
+  
+  /**
+   * @return the time precision
+   */
+  public TimeUnit getPrecision() {
+    return precision;
+  }
+  
 
   private BatchOptions getClone() {
     try {

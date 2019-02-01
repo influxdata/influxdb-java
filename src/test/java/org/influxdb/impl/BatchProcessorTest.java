@@ -1,29 +1,39 @@
 package org.influxdb.impl;
 
-import static org.mockito.Mockito.any;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
-import org.hamcrest.Matchers;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import org.hamcrest.Matchers;
+import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
+import org.influxdb.TestUtils;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertNull;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 
 @RunWith(JUnitPlatform.class)
@@ -159,4 +169,60 @@ public class BatchProcessorTest {
         assertThat(batchProcessor.getConsistencyLevel(), is(equalTo(InfluxDB.ConsistencyLevel.ANY)));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void precision() throws Exception {
+      String dbName = "write_unittest_" + System.currentTimeMillis();
+      String rpName = "somePolicy";
+      BatchWriter batchWriter;
+      try (InfluxDB influxDB = TestUtils.connectToInfluxDB()) {
+        try {
+          influxDB.createDatabase(dbName);
+          influxDB.createRetentionPolicy(rpName, dbName, "30h", 2, true);
+
+          influxDB.enableBatch(BatchOptions.DEFAULTS.actions(2000).precision(TimeUnit.SECONDS).flushDuration(100));
+
+          BatchProcessor batchProcessor = getPrivateField(influxDB, "batchProcessor");
+          BatchWriter originalBatchWriter = getPrivateField(batchProcessor, "batchWriter");
+          batchWriter = Mockito.spy(originalBatchWriter);
+          setPrivateField(batchProcessor, "batchWriter", batchWriter);
+          
+          Point point1 = Point.measurement("cpu")
+              .time(System.currentTimeMillis() /1000, TimeUnit.SECONDS)
+              .addField("idle", 90L)
+              .addField("user", 9L)
+              .addField("system", 1L)
+              .build();
+
+          influxDB.write(dbName, rpName, point1);
+
+        } finally {
+          influxDB.deleteDatabase(dbName);
+        }
+      }
+      
+      ArgumentCaptor<Collection<BatchPoints>> argument = ArgumentCaptor.forClass(Collection.class);
+
+      verify(batchWriter, times(2)).write(argument.capture());
+      
+      for (Collection<BatchPoints> list : argument.getAllValues()) {
+        for (BatchPoints p : list) {
+          assertTrue(p.toString().contains("precision=SECONDS"));
+          assertFalse(p.toString().contains("precision=NANOSECONDS"));
+        }
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    static <T> T getPrivateField(final Object obj, final String name) throws Exception {
+      Field field = obj.getClass().getDeclaredField(name);
+      field.setAccessible(true);
+      return (T) field.get(obj);
+    }
+    
+    static void setPrivateField(final Object obj, final String name, final Object value) throws Exception {
+      Field field = obj.getClass().getDeclaredField(name);
+      field.setAccessible(true);
+      field.set(obj, value);
+  }
 }

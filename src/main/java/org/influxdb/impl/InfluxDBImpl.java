@@ -304,6 +304,7 @@ public class InfluxDBImpl implements InfluxDB {
             .threadFactory(batchOptions.getThreadFactory())
             .bufferLimit(batchOptions.getBufferLimit())
             .consistencyLevel(batchOptions.getConsistency())
+            .precision(batchOptions.getPrecision())
             .build();
     this.batchEnabled.set(true);
     return this;

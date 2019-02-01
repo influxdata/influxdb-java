@@ -41,6 +41,7 @@ public final class BatchProcessor {
   private final int flushInterval;
   private final ConsistencyLevel consistencyLevel;
   private final int jitterInterval;
+  private final TimeUnit precision;
   private final BatchWriter batchWriter;
 
   /**
@@ -56,6 +57,7 @@ public final class BatchProcessor {
     // this is a default value if the InfluxDb.enableBatch(BatchOptions) IS NOT used
     // the reason is backward compatibility
     private int bufferLimit = 0;
+    private TimeUnit precision;
 
     private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> { };
     private ConsistencyLevel consistencyLevel;
@@ -149,18 +151,32 @@ public final class BatchProcessor {
       this.exceptionHandler = handler;
       return this;
     }
-      /**
-       * Consistency level for batch write.
-       *
-       * @param consistencyLevel
-       *            the consistencyLevel
-       *
-       * @return this Builder to use it fluent
-       */
-      public Builder consistencyLevel(final ConsistencyLevel consistencyLevel) {
-          this.consistencyLevel = consistencyLevel;
-          return this;
-      }
+
+    /**
+     * Consistency level for batch write.
+     *
+     * @param consistencyLevel
+     *            the consistencyLevel
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder consistencyLevel(final ConsistencyLevel consistencyLevel) {
+        this.consistencyLevel = consistencyLevel;
+        return this;
+    }
+
+    /**
+     * Set the time precision to use for the batch.
+     *
+     * @param precision
+     *            the precision
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder precision(final TimeUnit precision) {
+        this.precision = precision;
+        return this;
+    }
 
     /**
      * Create the BatchProcessor.
@@ -183,7 +199,8 @@ public final class BatchProcessor {
         batchWriter = new OneShotBatchWriter(this.influxDB);
       }
       return new BatchProcessor(this.influxDB, batchWriter, this.threadFactory, this.actions, this.flushIntervalUnit,
-                                this.flushInterval, this.jitterInterval, exceptionHandler, this.consistencyLevel);
+                                this.flushInterval, this.jitterInterval, exceptionHandler, this.consistencyLevel,
+                                this.precision);
     }
   }
 
@@ -245,7 +262,7 @@ public final class BatchProcessor {
   BatchProcessor(final InfluxDBImpl influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
                  final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
                  final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
-                 final ConsistencyLevel consistencyLevel) {
+                 final ConsistencyLevel consistencyLevel, TimeUnit precision) {
     super();
     this.influxDB = influxDB;
     this.batchWriter = batchWriter;
@@ -256,6 +273,7 @@ public final class BatchProcessor {
     this.scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
     this.exceptionHandler = exceptionHandler;
     this.consistencyLevel = consistencyLevel;
+    this.precision = precision;
     if (actions > 1 && actions < Integer.MAX_VALUE) {
         this.queue = new LinkedBlockingQueue<>(actions);
     } else {
@@ -303,7 +321,8 @@ public final class BatchProcessor {
             String batchKey = dbName + "_" + rp;
             if (!batchKeyToBatchPoints.containsKey(batchKey)) {
               BatchPoints batchPoints = BatchPoints.database(dbName)
-                                                   .retentionPolicy(rp).consistency(getConsistencyLevel()).build();
+                                                   .retentionPolicy(rp).consistency(getConsistencyLevel())
+                                                   .precision(getPrecision()).build();
               batchKeyToBatchPoints.put(batchKey, batchPoints);
             }
             batchKeyToBatchPoints.get(batchKey).point(point);
@@ -374,6 +393,10 @@ public final class BatchProcessor {
 
   public ConsistencyLevel getConsistencyLevel() {
     return consistencyLevel;
+  }
+
+  public TimeUnit getPrecision() {
+    return precision;
   }
 
   BatchWriter getBatchWriter() {

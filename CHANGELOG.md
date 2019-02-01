@@ -10,6 +10,8 @@
   [Issue #451](https://github.com/influxdata/influxdb-java/issues/451)
 - @Column supports class inheritance
   [Issue #367](https://github.com/influxdata/influxdb-java/issues/367)
+- BatchOptions to have .precision()
+  [Issue #532](https://github.com/influxdata/influxdb-java/issues/532)
 
 ## 2.14 [2018-10-12]
 
