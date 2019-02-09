@@ -5,6 +5,13 @@
 ### Fixes
 
 - Close underlying OkHttpClient when closing [Issue #359](https://github.com/influxdata/influxdb-java/issues/359)
+- Update OkHttp to 3.13.1 which disables TLSv1 and TLSv1.1 by default, if still required you can enable them:
+
+```java
+OkHttpClient client = new OkHttpClient.Builder()
+    .connectionSpecs(Arrays.asList(ConnectionSpec.COMPATIBLE_TLS))
+    .build();
+```
 
 ### Features
 
