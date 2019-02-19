@@ -57,12 +57,12 @@ public class InfluxDBResultMapper {
 
   /**
    * When a query is executed without {@link TimeUnit}, InfluxDB returns the <tt>time</tt>
-   * column as an ISO8601 date.
+   * column as a RFC3339 date.
    */
-  private static final DateTimeFormatter ISO8601_FORMATTER = new DateTimeFormatterBuilder()
+  private static final DateTimeFormatter RFC3339_FORMATTER = new DateTimeFormatterBuilder()
     .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
     .appendFraction(ChronoField.NANO_OF_SECOND, FRACTION_MIN_WIDTH, FRACTION_MAX_WIDTH, ADD_DECIMAL_POINT)
-    .appendPattern("X")
+    .appendZoneOrOffsetId()
     .toFormatter();
 
   /**
@@ -338,7 +338,7 @@ public class InfluxDBResultMapper {
     if (Instant.class.isAssignableFrom(fieldType)) {
       Instant instant;
       if (value instanceof String) {
-        instant = Instant.from(ISO8601_FORMATTER.parse(String.valueOf(value)));
+        instant = Instant.from(RFC3339_FORMATTER.parse(String.valueOf(value)));
       } else if (value instanceof Long) {
         instant = Instant.ofEpochMilli(toMillis((long) value, precision));
       } else if (value instanceof Double) {
