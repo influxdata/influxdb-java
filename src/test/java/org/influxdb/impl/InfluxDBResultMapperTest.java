@@ -441,6 +441,37 @@ public class InfluxDBResultMapperTest {
     Assertions.assertEquals(subValue, result.get(0).subValue);
   }
 
+  @Test
+  public void testToPOJO_ticket573() {
+    // Given...
+    mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+    List<String> columnList = Arrays.asList("time");
+    List<List<Object>> valuesList = Arrays.asList(
+      Arrays.asList("2015-08-17T19:00:00-05:00"), // Chicago (UTC-5)
+      Arrays.asList("2015-08-17T19:00:00.000000001-05:00"), // Chicago (UTC-5)
+      Arrays.asList("2000-01-01T00:00:00-00:00"),
+      Arrays.asList("2000-01-02T00:00:00+00:00")
+    );
+
+    QueryResult.Series series = new QueryResult.Series();
+    series.setColumns(columnList);
+    series.setValues(valuesList);
+
+    // When...
+    List<MyCustomMeasurement> result = new LinkedList<>();
+    mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
+
+    // Then...
+    Assertions.assertEquals(4, result.size(), "incorrect number of elemets");
+    // Note: RFC3339 timestamp with TZ from InfluxDB are parsed into an Instant (UTC)
+    Assertions.assertTrue(result.get(0).time.equals(Instant.parse("2015-08-18T00:00:00Z")));
+    Assertions.assertTrue(result.get(1).time.equals(Instant.parse("2015-08-18T00:00:00.000000001Z")));
+    // RFC3339 section 4.3 https://tools.ietf.org/html/rfc3339#section-4.3
+    Assertions.assertTrue(result.get(2).time.equals(Instant.parse("2000-01-01T00:00:00Z")));
+    Assertions.assertTrue(result.get(3).time.equals(Instant.parse("2000-01-02T00:00:00Z")));
+  }
+
 	@Measurement(name = "CustomMeasurement")
 	static class MyCustomMeasurement {
 
