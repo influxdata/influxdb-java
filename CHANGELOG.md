@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.15 [unreleased]
+## 2.15 [2019-02-22]
 
 ### Fixes
 
