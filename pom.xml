@@ -239,7 +239,7 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.12.1</version>
+      <version>3.12.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -268,12 +268,12 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>3.13.1</version>
+      <version>3.14.0</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>logging-interceptor</artifactId>
-      <version>3.13.1</version>
+      <version>3.14.0</version>
     </dependency>
   </dependencies>
   <profiles>
