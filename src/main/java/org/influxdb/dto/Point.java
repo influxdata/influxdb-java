@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -262,6 +263,9 @@ public class Point {
         if (column.tag()) {
           this.tags.put(fieldName, (String) fieldValue);
         } else {
+          if ("time".equals(fieldName) && fieldValue instanceof Instant) {
+            fieldValue = ((Instant) fieldValue).getEpochSecond();
+          }
           this.fields.put(fieldName, fieldValue);
         }
 
