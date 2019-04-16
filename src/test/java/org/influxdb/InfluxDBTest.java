@@ -508,7 +508,6 @@ public class InfluxDBTest {
 				.addField("foo", 1d)
 				.tag("device", "one")
 				.time(t1, TimeUnit.NANOSECONDS).build(); // 2017-01-27T16:00:00.000000100Z
-		Double timeP1 = Double.valueOf(t1);
 
 		long t2 = 1485277200000000200L;
 		Point p2 = Point
@@ -516,7 +515,6 @@ public class InfluxDBTest {
 				.addField("foo", 2d)
 				.tag("device", "two")
 				.time(t2, TimeUnit.NANOSECONDS).build(); // 2017-01-27T17:00:00.000000200Z
-		Double timeP2 = Double.valueOf(t2);
 
 		long t3 = 1485280800000000300L;
 		Point p3 = Point
@@ -524,7 +522,6 @@ public class InfluxDBTest {
 				.addField("foo", 3d)
 				.tag("device", "three")
 				.time(t3, TimeUnit.NANOSECONDS).build(); // 2017-01-27T18:00:00.000000300Z
-		Double timeP3 = Double.valueOf(t3);
 
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
@@ -538,9 +535,9 @@ public class InfluxDBTest {
 		// THEN the measure points have a timestamp with second precision
 		QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName), TimeUnit.NANOSECONDS);
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
-		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), t1);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), t2);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), t3);
 
 		this.influxDB.deleteDatabase(dbName);
 	}

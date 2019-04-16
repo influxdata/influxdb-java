@@ -20,6 +20,11 @@
  */
 package org.influxdb.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -35,7 +40,6 @@ import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.QueryResult;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
@@ -69,12 +73,12 @@ public class InfluxDBResultMapperTest {
     List<MyCustomMeasurement> myList = mapper.toPOJO(queryResult, MyCustomMeasurement.class);
 
     // Then...
-    Assertions.assertEquals(1, myList.size(), "there must be one entry in the result list");
+    assertEquals(1, myList.size(), "there must be one entry in the result list");
   }
 
 	@Test
 	public void testThrowExceptionIfMissingAnnotation() {
-		Assertions.assertThrows(IllegalArgumentException.class, () -> {
+		assertThrows(IllegalArgumentException.class, () -> {
 			mapper.throwExceptionIfMissingAnnotation(String.class);
 		});
 	}
@@ -84,7 +88,7 @@ public class InfluxDBResultMapperTest {
 		QueryResult queryResult = new QueryResult();
 		queryResult.setError("main queryresult error");
 
-		Assertions.assertThrows(InfluxDBMapperException.class, () -> {
+		assertThrows(InfluxDBMapperException.class, () -> {
 			mapper.throwExceptionIfResultWithError(queryResult);
 		});
 	}
@@ -98,14 +102,14 @@ public class InfluxDBResultMapperTest {
 
 		queryResult.setResults(Arrays.asList(seriesResult));
 
-		Assertions.assertThrows(InfluxDBMapperException.class, () -> {
+		assertThrows(InfluxDBMapperException.class, () -> {
 			mapper.throwExceptionIfResultWithError(queryResult);
 		});
 	}
 
 	@Test
 	public void testGetMeasurementName_testStateMeasurement() {
-		Assertions.assertEquals("CustomMeasurement", mapper.getMeasurementName(MyCustomMeasurement.class));
+		assertEquals("CustomMeasurement", mapper.getMeasurementName(MyCustomMeasurement.class));
 	}
 
 	@Test
@@ -127,13 +131,13 @@ public class InfluxDBResultMapperTest {
 		mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
 
 		//Then...
-		Assertions.assertTrue(result.size() == 2, "there must be two series in the result list");
+		assertTrue(result.size() == 2, "there must be two series in the result list");
 
-		Assertions.assertEquals(firstSeriesResult.get(0), result.get(0).time.toEpochMilli(), "Field 'time' (1st series) is not valid");
-		Assertions.assertEquals(firstSeriesResult.get(1), result.get(0).uuid, "Field 'uuid' (1st series) is not valid");
+		assertEquals(firstSeriesResult.get(0), result.get(0).time.toEpochMilli(), "Field 'time' (1st series) is not valid");
+		assertEquals(firstSeriesResult.get(1), result.get(0).uuid, "Field 'uuid' (1st series) is not valid");
 
-		Assertions.assertEquals(secondSeriesResult.get(0), result.get(1).time.toEpochMilli(), "Field 'time' (2nd series) is not valid");
-		Assertions.assertEquals(secondSeriesResult.get(1), result.get(1).uuid, "Field 'uuid' (2nd series) is not valid");
+		assertEquals(secondSeriesResult.get(0), result.get(1).time.toEpochMilli(), "Field 'time' (2nd series) is not valid");
+		assertEquals(secondSeriesResult.get(1), result.get(1).uuid, "Field 'uuid' (2nd series) is not valid");
 	}
 
 	@Test
@@ -150,13 +154,10 @@ public class InfluxDBResultMapperTest {
 		Double now = Long.valueOf(System.currentTimeMillis()).doubleValue();
 		String uuidAsString = UUID.randomUUID().toString();
 
-		// InfluxDB client returns any number as Double.
-		// See https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987
-		// for more information.
 		List<Object> seriesResult = Arrays.asList(now, uuidAsString,
-			new Double("1.01"), new Double("2"), new Double("3"),
-			new Double("1.01"), new Double("4"), new Double("5"),
-			"false", "true");
+			Double.valueOf("1.01"), Long.valueOf("2"), Integer.valueOf("3"),
+			Double.valueOf("1.02"), Long.valueOf("4"), Integer.valueOf("5"),
+			Boolean.FALSE, Boolean.TRUE);
 
 		QueryResult.Series series = new QueryResult.Series();
 		series.setColumns(columnList);
@@ -168,36 +169,19 @@ public class InfluxDBResultMapperTest {
 
 		//Then...
 		MyCustomMeasurement myObject = result.get(0);
-		Assertions.assertEquals(now.longValue(), myObject.time.toEpochMilli(), "field 'time' does not match");
-		Assertions.assertEquals(uuidAsString, myObject.uuid, "field 'uuid' does not match");
+		assertEquals(now.longValue(), myObject.time.toEpochMilli(), "field 'time' does not match");
+		assertEquals(uuidAsString, myObject.uuid, "field 'uuid' does not match");
 
-		Assertions.assertEquals(asDouble(seriesResult.get(2)), myObject.doubleObject, "field 'doubleObject' does not match");
-		Assertions.assertEquals(new Long(asDouble(seriesResult.get(3)).longValue()), myObject.longObject, "field 'longObject' does not match");
-		Assertions.assertEquals(new Integer(asDouble(seriesResult.get(4)).intValue()), myObject.integerObject, "field 'integerObject' does not match");
+		assertEquals(Double.valueOf("1.01"), myObject.doubleObject, "field 'doubleObject' does not match");
+		assertEquals(Long.valueOf("2"), myObject.longObject, "field 'longObject' does not match");
+		assertEquals(Integer.valueOf("3"), myObject.integerObject, "field 'integerObject' does not match");
 
-		Assertions.assertTrue(
-			Double.compare(asDouble(seriesResult.get(5)).doubleValue(), myObject.doublePrimitive) == 0,
-			"field 'doublePrimitive' does not match");
+		assertTrue(Double.compare(1.02d, myObject.doublePrimitive) == 0, "field 'doublePrimitive' does not match");
+		assertTrue(Long.compare(4L, myObject.longPrimitive) == 0, "field 'longPrimitive' does not match");
+		assertTrue(Integer.compare(5, myObject.integerPrimitive) == 0, "field 'integerPrimitive' does not match");
 
-		Assertions.assertTrue(
-			Long.compare(asDouble(seriesResult.get(6)).longValue(), myObject.longPrimitive) == 0,
-			"field 'longPrimitive' does not match");
-
-		Assertions.assertTrue(
-			Integer.compare(asDouble(seriesResult.get(7)).intValue(), myObject.integerPrimitive) == 0,
-			"field 'integerPrimitive' does not match");
-
-		Assertions.assertEquals(
-			Boolean.valueOf(String.valueOf(seriesResult.get(8))), myObject.booleanObject,
-			"field 'booleanObject' does not match");
-
-		Assertions.assertEquals(
-			Boolean.valueOf(String.valueOf(seriesResult.get(9))).booleanValue(), myObject.booleanPrimitive,
-			"field 'booleanPrimitive' does not match");
-	}
-
-	Double asDouble(Object obj) {
-		return (Double) obj;
+		assertFalse(myObject.booleanObject,	"field 'booleanObject' does not match");
+		assertTrue(myObject.booleanPrimitive, "field 'booleanPrimitive' does not match");
 	}
 
 	@Test
@@ -217,7 +201,7 @@ public class InfluxDBResultMapperTest {
 		mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
 
 		//Then...
-		Assertions.assertTrue(result.size() == 1);
+		assertTrue(result.size() == 1);
 	}
 
 	@Test
@@ -237,7 +221,7 @@ public class InfluxDBResultMapperTest {
 		mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
 
 		//Then...
-		Assertions.assertTrue(result.size() == 1);
+		assertTrue(result.size() == 1);
 	}
 
 	@Test
@@ -254,7 +238,7 @@ public class InfluxDBResultMapperTest {
 
 		//When...
 		List<MyPojoWithUnsupportedField> result = new LinkedList<>();
-		Assertions.assertThrows(InfluxDBMapperException.class, () -> {
+		assertThrows(InfluxDBMapperException.class, () -> {
 			mapper.parseSeriesAs(series, MyPojoWithUnsupportedField.class, result);
 		});
 	}
@@ -277,7 +261,7 @@ public class InfluxDBResultMapperTest {
     List<MyCustomMeasurement> myList = mapper.toPOJO(queryResult, MyCustomMeasurement.class);
 
     // Then...
-    Assertions.assertTrue( myList.isEmpty(), "there must NO entry in the result list");
+    assertTrue( myList.isEmpty(), "there must NO entry in the result list");
   }
 
   @Test
@@ -326,12 +310,12 @@ public class InfluxDBResultMapperTest {
 
     // Then...
     GroupByCarrierDeviceOS firstGroupByEntry = myList.get(0);
-    Assertions.assertEquals("000/00", firstGroupByEntry.carrier, "field 'carrier' does not match");
-    Assertions.assertEquals("4.4.2", firstGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+    assertEquals("000/00", firstGroupByEntry.carrier, "field 'carrier' does not match");
+    assertEquals("4.4.2", firstGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
 
     GroupByCarrierDeviceOS secondGroupByEntry = myList.get(1);
-    Assertions.assertEquals("000/01", secondGroupByEntry.carrier, "field 'carrier' does not match");
-    Assertions.assertEquals("9.3.5", secondGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
+    assertEquals("000/01", secondGroupByEntry.carrier, "field 'carrier' does not match");
+    assertEquals("9.3.5", secondGroupByEntry.deviceOsVersion, "field 'deviceOsVersion' does not match");
   }
 
   @Test
@@ -351,8 +335,8 @@ public class InfluxDBResultMapperTest {
     mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
 
     // Then...
-    Assertions.assertEquals(1, result.size(), "incorrect number of elemets");
-    Assertions.assertEquals(1, result.get(0).time.getNano(), "incorrect value for the nanoseconds field");
+    assertEquals(1, result.size(), "incorrect number of elemets");
+    assertEquals(1, result.get(0).time.getNano(), "incorrect value for the nanoseconds field");
   }
 
 	@Test
@@ -378,8 +362,8 @@ public class InfluxDBResultMapperTest {
 		List<MyCustomMeasurement> result = mapper.toPOJO(queryResult, MyCustomMeasurement.class, TimeUnit.SECONDS);
 
 		// Then...
-		Assertions.assertEquals(1, result.size(), "incorrect number of elements");
-		Assertions.assertEquals(1_500_000_000L, result.get(0).time.toEpochMilli(), "incorrect value for the millis field");
+		assertEquals(1, result.size(), "incorrect number of elements");
+		assertEquals(1_500_000_000L, result.get(0).time.toEpochMilli(), "incorrect value for the millis field");
 	}
 
 	@Test
@@ -406,7 +390,7 @@ public class InfluxDBResultMapperTest {
 				mapper.toPOJO(queryResult, MyCustomMeasurement.class, "MySeriesName");
 
 		//Then...
-		Assertions.assertTrue(result.size() == 1);
+		assertTrue(result.size() == 1);
 	}
 
   @Test
@@ -436,9 +420,9 @@ public class InfluxDBResultMapperTest {
         mapper.toPOJO(queryResult, MySubMeasurement.class, "MySeriesName");
 
     //Then...
-    Assertions.assertTrue(result.size() == 1);
-    Assertions.assertEquals(superValue, result.get(0).superValue);
-    Assertions.assertEquals(subValue, result.get(0).subValue);
+    assertTrue(result.size() == 1);
+    assertEquals(superValue, result.get(0).superValue);
+    assertEquals(subValue, result.get(0).subValue);
   }
 
   @Test
@@ -463,13 +447,13 @@ public class InfluxDBResultMapperTest {
     mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
 
     // Then...
-    Assertions.assertEquals(4, result.size(), "incorrect number of elemets");
+    assertEquals(4, result.size(), "incorrect number of elemets");
     // Note: RFC3339 timestamp with TZ from InfluxDB are parsed into an Instant (UTC)
-    Assertions.assertTrue(result.get(0).time.equals(Instant.parse("2015-08-18T00:00:00Z")));
-    Assertions.assertTrue(result.get(1).time.equals(Instant.parse("2015-08-18T00:00:00.000000001Z")));
+    assertTrue(result.get(0).time.equals(Instant.parse("2015-08-18T00:00:00Z")));
+    assertTrue(result.get(1).time.equals(Instant.parse("2015-08-18T00:00:00.000000001Z")));
     // RFC3339 section 4.3 https://tools.ietf.org/html/rfc3339#section-4.3
-    Assertions.assertTrue(result.get(2).time.equals(Instant.parse("2000-01-01T00:00:00Z")));
-    Assertions.assertTrue(result.get(3).time.equals(Instant.parse("2000-01-02T00:00:00Z")));
+    assertTrue(result.get(2).time.equals(Instant.parse("2000-01-01T00:00:00Z")));
+    assertTrue(result.get(3).time.equals(Instant.parse("2000-01-02T00:00:00Z")));
   }
 
 	@Measurement(name = "CustomMeasurement")

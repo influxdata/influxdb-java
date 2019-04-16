@@ -2,6 +2,8 @@ package org.influxdb.impl;
 
 
 import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.JsonReader;
+import com.squareup.moshi.JsonWriter;
 import com.squareup.moshi.Moshi;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -38,6 +40,8 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -51,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -166,11 +171,48 @@ public class InfluxDBImpl implements InfluxDB {
       break;
     case JSON:
     default:
-      converterFactory = MoshiConverterFactory.create();
+        com.squareup.moshi.JsonAdapter.Factory objectFactory = new com.squareup.moshi.JsonAdapter.Factory() {
+            @Override
+            public JsonAdapter<?> create(Type type, Set<? extends Annotation> annotations, Moshi moshi) {
+                if (type != Object.class) {
+                    return null;
+                }
+    
+                JsonAdapter<Object> delegate = moshi.nextAdapter(this, Object.class, annotations);
+                return new JsonAdapter<Object>() {
+                    @Override
+                    @com.squareup.moshi.FromJson
+                    public Object fromJson(JsonReader reader) throws IOException {
+                        if (reader.peek() != JsonReader.Token.NUMBER) {
+                            return delegate.fromJson(reader);
+                        } else {
+                            String value = reader.nextString();
+                            if (value.indexOf('.') != -1) {
+                                return Double.valueOf(value);
+                            } else {
+                                return Long.valueOf(value);
+                            }
+                        }
+                    }
+    
+                    @Override
+                    @com.squareup.moshi.ToJson
+                    public void toJson(JsonWriter writer, Object value) {
+                        throw new UnsupportedOperationException();
+                    }
+    
+                    @Override
+                    public String toString() {
+                        return "CustomJsonAdapter(Object)";
+                    }
+                };
+            }
+        };
 
-      Moshi moshi = new Moshi.Builder().build();
+      Moshi moshi = new Moshi.Builder().add(objectFactory).build();
       JsonAdapter<QueryResult> adapter = moshi.adapter(QueryResult.class);
       chunkProccesor = new JSONChunkProccesor(adapter);
+      converterFactory = MoshiConverterFactory.create(moshi);
       break;
     }
 

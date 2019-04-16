@@ -361,11 +361,11 @@ public class InfluxDBResultMapper {
       return true;
     }
     if (long.class.isAssignableFrom(fieldType)) {
-      field.setLong(object, ((Double) value).longValue());
+      field.setLong(object, ((Long) value).longValue());
       return true;
     }
     if (int.class.isAssignableFrom(fieldType)) {
-      field.setInt(object, ((Double) value).intValue());
+      field.setInt(object, ((Integer) value).intValue());
       return true;
     }
     if (boolean.class.isAssignableFrom(fieldType)) {
@@ -377,23 +377,12 @@ public class InfluxDBResultMapper {
 
   <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
     final Object value) throws IllegalArgumentException, IllegalAccessException {
-    if (Double.class.isAssignableFrom(fieldType)) {
-      field.set(object, value);
-      return true;
+    boolean isAssignable = Double.class.isAssignableFrom(fieldType) || Long.class.isAssignableFrom(fieldType)
+                        || Integer.class.isAssignableFrom(fieldType) || Boolean.class.isAssignableFrom(fieldType);
+    if (isAssignable) {
+        field.set(object, value);
     }
-    if (Long.class.isAssignableFrom(fieldType)) {
-      field.set(object, Long.valueOf(((Double) value).longValue()));
-      return true;
-    }
-    if (Integer.class.isAssignableFrom(fieldType)) {
-      field.set(object, Integer.valueOf(((Double) value).intValue()));
-      return true;
-    }
-    if (Boolean.class.isAssignableFrom(fieldType)) {
-      field.set(object, Boolean.valueOf(String.valueOf(value)));
-      return true;
-    }
-    return false;
+    return isAssignable;
   }
 
   private Long toMillis(final long value, final TimeUnit precision) {

@@ -1,12 +1,19 @@
 
 package org.influxdb;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.Query;
+import org.influxdb.impl.InfluxDBResultMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +28,8 @@ import org.junit.runner.RunWith;
 @DisplayName("Test for github issues")
 @RunWith(JUnitPlatform.class)
 public class TicketTest {
+
+    private final InfluxDBResultMapper mapper = new InfluxDBResultMapper();
 
 	private InfluxDB influxDB;
 
@@ -118,4 +127,54 @@ public class TicketTest {
 		this.influxDB.deleteDatabase(dbName);
 	}
 
+	/**
+     * Test for ticket #440
+     */
+    @Test
+    public void testTicket440() {
+        String dbName = "ticket440_" + System.currentTimeMillis();
+        influxDB.createDatabase(dbName);
+
+        long tsEgress = 1523264395509072018L;
+        Instant now = Instant.now();
+
+        Point point = Point.measurement("latency_1")
+                            .time(now.toEpochMilli(), TimeUnit.MILLISECONDS)
+                            .tag("msg_type", "1")                       
+                            .addField("ts_egr", tsEgress)
+                            .addField("ts_egr_long", tsEgress)
+                            .addField("pi", Math.PI)
+                            .build();
+        influxDB.write(dbName, TestUtils.defaultRetentionPolicy(influxDB.version()), point);
+
+        Query query = new Query("SELECT * FROM latency_1", dbName);
+        Latency latency = mapper.toPOJO(influxDB.query(query), Latency.class).get(0);
+        assertEquals(tsEgress, latency.tsEgress);
+        
+        influxDB.deleteDatabase(dbName);
+    }
+
+    @Measurement(name = "latency_1")
+    public static class Latency {
+        @Column(name = "time")
+        Instant time;
+
+        @Column(name = "msg_type")
+        String msgType;
+
+        @Column(name = "ts_egr")
+        long tsEgress;
+        
+        @Column(name = "ts_egr_long")
+        Long tsEgressLong;
+
+        @Column(name = "pi")
+        double pi;
+
+        @Override
+        public String toString() {
+            return "Latency [time=" + time + ", msgType=" + msgType + ", tsEgress=" + tsEgress + ", tsEgressLong="
+                    + tsEgressLong + ", pi=" + pi + "]";
+        }
+    }
 }
