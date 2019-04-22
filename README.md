@@ -333,7 +333,7 @@ To solve this situation the influxdb-java offers an option to offset the flushDu
 the clients will flush their buffers in different intervals:
 
 ```java
-influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500);
+influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500));
 ```
 
 ### Other Usages
