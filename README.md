@@ -29,7 +29,7 @@ String dbName = "aTimeSeries";
 influxDB.query(new Query("CREATE DATABASE " + dbName));
 influxDB.setDatabase(dbName);
 String rpName = "aRetentionPolicy";
-influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+influxDB.query(new Query("CREATE RETENTION POLICY " + rpName + " ON " + dbName + " DURATION 30h REPLICATION 2 SHARD DURATION 30m DEFAULT"));
 influxDB.setRetentionPolicy(rpName);
 
 influxDB.enableBatch(BatchOptions.DEFAULTS);
@@ -49,7 +49,7 @@ influxDB.write(Point.measurement("disk")
 
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
-influxDB.dropRetentionPolicy(rpName, dbName);
+influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
 influxDB.query(new Query("DROP DATABASE " + dbName));
 influxDB.close();
 ```
@@ -88,7 +88,7 @@ InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "r
 String dbName = "aTimeSeries";
 influxDB.query(new Query("CREATE DATABASE " + dbName));
 String rpName = "aRetentionPolicy";
-influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+influxDB.query(new Query("CREATE RETENTION POLICY " + rpName + " ON " + dbName + " DURATION 30h REPLICATION 2 SHARD DURATION 30m DEFAULT"));
 
 // Flush every 2000 Points, at least every 100ms
 influxDB.enableBatch(BatchOptions.DEFAULTS.actions(2000).flushDuration(100));
@@ -109,7 +109,7 @@ influxDB.write(dbName, rpName, point1);
 influxDB.write(dbName, rpName, point2);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
-influxDB.dropRetentionPolicy(rpName, dbName);
+influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
 influxDB.query(new Query("DROP DATABASE " + dbName));
 influxDB.close();
 ```
@@ -123,7 +123,7 @@ InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "r
 String dbName = "aTimeSeries";
 influxDB.query(new Query("CREATE DATABASE " + dbName));
 String rpName = "aRetentionPolicy";
-influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
+influxDB.query(new Query("CREATE RETENTION POLICY " + rpName + " ON " + dbName + " DURATION 30h REPLICATION 2 DEFAULT"));
 
 BatchPoints batchPoints = BatchPoints
                 .database(dbName)
@@ -147,7 +147,7 @@ batchPoints.point(point2);
 influxDB.write(batchPoints);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
-influxDB.dropRetentionPolicy(rpName, dbName);
+influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
 influxDB.query(new Query("DROP DATABASE " + dbName));
 ```
 
