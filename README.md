@@ -26,7 +26,7 @@ resulting errors see [this section.](#synchronous-writes)
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
-influxDB.query(new Query("CREATE DATABASE " + dbName,""));
+influxDB.query(new Query("CREATE DATABASE " + dbName));
 influxDB.setDatabase(dbName);
 String rpName = "aRetentionPolicy";
 influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
@@ -50,7 +50,7 @@ influxDB.write(Point.measurement("disk")
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.dropRetentionPolicy(rpName, dbName);
-influxDB.deleteDatabase(dbName);
+influxDB.query(new Query("DROP DATABASE " + dbName));
 influxDB.close();
 ```
 
@@ -86,7 +86,7 @@ If your points are written into different databases and retention policies, the 
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
-influxDB.query(new Query("CREATE DATABASE " + dbName,""));
+influxDB.query(new Query("CREATE DATABASE " + dbName));
 String rpName = "aRetentionPolicy";
 influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
 
@@ -110,7 +110,7 @@ influxDB.write(dbName, rpName, point2);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.dropRetentionPolicy(rpName, dbName);
-influxDB.deleteDatabase(dbName);
+influxDB.query(new Query("DROP DATABASE " + dbName));
 influxDB.close();
 ```
 
@@ -121,7 +121,7 @@ If you want to write the data points immediately to InfluxDB (and handle the err
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
-influxDB.query(new Query("CREATE DATABASE " + dbName,""));
+influxDB.query(new Query("CREATE DATABASE " + dbName));
 String rpName = "aRetentionPolicy";
 influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
 
@@ -148,7 +148,7 @@ influxDB.write(batchPoints);
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query);
 influxDB.dropRetentionPolicy(rpName, dbName);
-influxDB.deleteDatabase(dbName);
+influxDB.query(new Query("DROP DATABASE " + dbName));
 ```
 
 #### Try-with-resources
