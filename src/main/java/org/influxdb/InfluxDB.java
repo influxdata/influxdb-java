@@ -166,6 +166,8 @@ public interface InfluxDB extends AutoCloseable {
    * Note that batch processing needs to be explicitly stopped before the application is shutdown.
    * To do so call disableBatch().
    *
+   * @param batchOptions
+   *            the options to set for batching the writes.
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch(final BatchOptions batchOptions);
@@ -551,8 +553,8 @@ public interface InfluxDB extends AutoCloseable {
    *
    * @param name
    *            the name of the new database.
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
-   *             <strong>CREATE DATABASE</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a parameterized <strong>CREATE DATABASE</strong> query.
    */
   @Deprecated
   public void createDatabase(final String name);
@@ -562,8 +564,8 @@ public interface InfluxDB extends AutoCloseable {
    *
    * @param name
    *            the name of the database to delete.
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
-   *             <strong>DROP DATABASE</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a <strong>DROP DATABASE</strong> query.
    */
   @Deprecated
   public void deleteDatabase(final String name);
@@ -572,8 +574,8 @@ public interface InfluxDB extends AutoCloseable {
    * Describe all available databases.
    *
    * @return a List of all Database names.
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
-   *             <strong>SHOW DATABASES</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a <strong>SHOW DATABASES</strong> query.
    */
   @Deprecated
   public List<String> describeDatabases();
@@ -585,8 +587,8 @@ public interface InfluxDB extends AutoCloseable {
    *            the name of the database to search.
    *
    * @return true if the database exists or false if it doesn't exist
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
-   *             <strong>SHOW DATABASES</strong> query and inspect the result.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a <strong>SHOW DATABASES</strong> query and inspect the result.
    */
   @Deprecated
   public boolean databaseExists(final String name);
@@ -639,8 +641,8 @@ public interface InfluxDB extends AutoCloseable {
    * @param shardDuration the shardDuration
    * @param replicationFactor the replicationFactor of the rp
    * @param isDefault if the rp is the default rp for the database or not
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
-   *             <strong>CREATE RETENTION POLICY</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a parameterized <strong>CREATE RETENTION POLICY</strong> query.
    */
   @Deprecated
   public void createRetentionPolicy(final String rpName, final String database, final String duration,
@@ -653,8 +655,8 @@ public interface InfluxDB extends AutoCloseable {
    * @param duration the duration of the rp
    * @param replicationFactor the replicationFactor of the rp
    * @param isDefault if the rp is the default rp for the database or not
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
-   *             <strong>CREATE RETENTION POLICY</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a parameterized <strong>CREATE RETENTION POLICY</strong> query.
    */
   @Deprecated
   public void createRetentionPolicy(final String rpName, final String database, final String duration,
@@ -667,8 +669,8 @@ public interface InfluxDB extends AutoCloseable {
    * @param duration the duration of the rp
    * @param shardDuration the shardDuration
    * @param replicationFactor the replicationFactor of the rp
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a parameterized
-   *             <strong>CREATE RETENTION POLICY</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a parameterized <strong>CREATE RETENTION POLICY</strong> query.
    */
   @Deprecated
   public void createRetentionPolicy(final String rpName, final String database, final String duration,
@@ -678,8 +680,8 @@ public interface InfluxDB extends AutoCloseable {
    * Drops a retentionPolicy in a database.
    * @param rpName the name of the retentionPolicy
    * @param database the name of the database
-   * @deprecated (since 2.9, removed in 3.0) Use <tt>org.influxdb.InfluxDB.query(Query)</tt> to execute a
-   *             <strong>DROP RETENTION POLICY</strong> query.
+   * @deprecated (since 2.9, removed in 3.0) Use <code>org.influxdb.InfluxDB.query(Query)</code>
+   *             to execute a <strong>DROP RETENTION POLICY</strong> query.
    */
   @Deprecated
   public void dropRetentionPolicy(final String rpName, final String database);

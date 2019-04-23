@@ -140,7 +140,7 @@ public class BatchPoints {
 
     /**
      * Set the time precision to use for the whole batch. If unspecified, will default to {@link TimeUnit#NANOSECONDS}
-     * @param precision
+     * @param precision the precision of the points
      * @return the Builder instance
      */
     public Builder precision(final TimeUnit precision) {

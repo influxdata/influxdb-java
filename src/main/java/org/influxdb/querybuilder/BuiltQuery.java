@@ -153,7 +153,10 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return new SubRelativeTimeClause(new TimeInterval(interval, literal));
     }
 
-    /** @return */
+    /**
+     *
+     * @return the Ordering
+     */
     public static Ordering asc() {
       return new Ordering(false);
     }
@@ -161,7 +164,7 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
     /**
      * InfluxDB supports only time for ordering.
      *
-     * @return
+     * @return the Ordering
      */
     public static Ordering desc() {
       return new Ordering(true);

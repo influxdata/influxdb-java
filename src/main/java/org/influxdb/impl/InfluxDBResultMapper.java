@@ -56,7 +56,7 @@ public class InfluxDBResultMapper {
   private static final boolean ADD_DECIMAL_POINT = true;
 
   /**
-   * When a query is executed without {@link TimeUnit}, InfluxDB returns the <tt>time</tt>
+   * When a query is executed without {@link TimeUnit}, InfluxDB returns the <code>time</code>
    * column as a RFC3339 date.
    */
   private static final DateTimeFormatter RFC3339_FORMATTER = new DateTimeFormatterBuilder()
@@ -80,7 +80,7 @@ public class InfluxDBResultMapper {
    * same order as received from InfluxDB.
    *
    * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <tt>clazz</tt> parameter is not annotated with &#64;Measurement or it was not
+   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
    * possible to define the values of your POJO (e.g. due to an unsupported field type).
    */
   public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz) throws InfluxDBMapperException {
@@ -103,7 +103,7 @@ public class InfluxDBResultMapper {
    * same order as received from InfluxDB.
    *
    * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <tt>clazz</tt> parameter is not annotated with &#64;Measurement or it was not
+   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
    * possible to define the values of your POJO (e.g. due to an unsupported field type).
    */
   public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz,
@@ -129,7 +129,7 @@ public class InfluxDBResultMapper {
    * same order as received from InfluxDB.
    *
    * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <tt>clazz</tt> parameter is not annotated with &#64;Measurement or it was not
+   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
    * possible to define the values of your POJO (e.g. due to an unsupported field type).
    */
   public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz, final String measurementName)
@@ -154,7 +154,7 @@ public class InfluxDBResultMapper {
    * same order as received from InfluxDB.
    *
    * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <tt>clazz</tt> parameter is not annotated with &#64;Measurement or it was not
+   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
    * possible to define the values of your POJO (e.g. due to an unsupported field type).
    */
   public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz, final String measurementName,
