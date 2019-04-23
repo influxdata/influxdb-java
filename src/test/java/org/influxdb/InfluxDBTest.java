@@ -1114,9 +1114,9 @@ public class InfluxDBTest {
 		String dbName = "rpTest_" + System.currentTimeMillis();
 		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
-		this.influxDB.createRetentionPolicy("testRP1", dbName, "30h", 2, false);
-		this.influxDB.createRetentionPolicy("testRP2", dbName, "10d", "20m", 2, false);
-		this.influxDB.createRetentionPolicy("testRP3", dbName, "2d4w", "20m", 2);
+		this.influxDB.query(new Query("CREATE RETENTION POLICY testRP1 ON " + dbName + " DURATION 30h REPLICATION 2"));
+		this.influxDB.query(new Query("CREATE RETENTION POLICY testRP2 ON " + dbName + " DURATION 10d REPLICATION 2 SHARD DURATION 20m"));
+		this.influxDB.query(new Query("CREATE RETENTION POLICY testRP3 ON " + dbName + " DURATION 2d4w REPLICATION 2 SHARD DURATION 20m DEFAULT"));
 
 		Query query = new Query("SHOW RETENTION POLICIES", dbName);
 		QueryResult result = this.influxDB.query(query);
@@ -1126,9 +1126,9 @@ public class InfluxDBTest {
 		Assertions.assertTrue(retentionPolicies.get(2).contains("testRP2"));
 		Assertions.assertTrue(retentionPolicies.get(3).contains("testRP3"));
 
-		this.influxDB.dropRetentionPolicy("testRP1", dbName);
-		this.influxDB.dropRetentionPolicy("testRP2", dbName);
-		this.influxDB.dropRetentionPolicy("testRP3", dbName);
+		this.influxDB.query(new Query("DROP RETENTION POLICY testRP1 ON " + dbName));
+		this.influxDB.query(new Query("DROP RETENTION POLICY testRP2 ON " + dbName));
+		this.influxDB.query(new Query("DROP RETENTION POLICY testRP3 ON " + dbName));
 
 		result = this.influxDB.query(query);
 		Assertions.assertNull(result.getError());

@@ -28,6 +28,7 @@ import org.influxdb.InfluxDB;
 import org.influxdb.TestUtils;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.Query;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -178,7 +179,7 @@ public class BatchProcessorTest {
       try (InfluxDB influxDB = TestUtils.connectToInfluxDB()) {
         try {
           influxDB.createDatabase(dbName);
-          influxDB.createRetentionPolicy(rpName, dbName, "30h", 2, true);
+          influxDB.query(new Query("CREATE RETENTION POLICY " + rpName + " ON " + dbName + " DURATION 30h REPLICATION 2 DEFAULT"));
 
           influxDB.enableBatch(BatchOptions.DEFAULTS.actions(2000).precision(TimeUnit.SECONDS).flushDuration(100));
 
@@ -186,7 +187,7 @@ public class BatchProcessorTest {
           BatchWriter originalBatchWriter = getPrivateField(batchProcessor, "batchWriter");
           batchWriter = Mockito.spy(originalBatchWriter);
           setPrivateField(batchProcessor, "batchWriter", batchWriter);
-          
+
           Point point1 = Point.measurement("cpu")
               .time(System.currentTimeMillis() /1000, TimeUnit.SECONDS)
               .addField("idle", 90L)
@@ -200,11 +201,11 @@ public class BatchProcessorTest {
           influxDB.deleteDatabase(dbName);
         }
       }
-      
+
       ArgumentCaptor<Collection<BatchPoints>> argument = ArgumentCaptor.forClass(Collection.class);
 
       verify(batchWriter, atLeastOnce()).write(argument.capture());
-      
+
       for (Collection<BatchPoints> list : argument.getAllValues()) {
         for (BatchPoints p : list) {
           assertTrue(p.toString().contains("precision=SECONDS"));
@@ -219,7 +220,7 @@ public class BatchProcessorTest {
       field.setAccessible(true);
       return (T) field.get(obj);
     }
-    
+
     static void setPrivateField(final Object obj, final String name, final Object value) throws Exception {
       Field field = obj.getClass().getDeclaredField(name);
       field.setAccessible(true);
