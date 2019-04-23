@@ -26,7 +26,7 @@ resulting errors see [this section.](#synchronous-writes)
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
-influxDB.createDatabase(dbName);
+influxDB.query(new Query("CREATE DATABASE " + dbName,""));
 influxDB.setDatabase(dbName);
 String rpName = "aRetentionPolicy";
 influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
@@ -86,7 +86,7 @@ If your points are written into different databases and retention policies, the 
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
-influxDB.createDatabase(dbName);
+influxDB.query(new Query("CREATE DATABASE " + dbName,""));
 String rpName = "aRetentionPolicy";
 influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
 
@@ -121,7 +121,7 @@ If you want to write the data points immediately to InfluxDB (and handle the err
 ```java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
-influxDB.createDatabase(dbName);
+influxDB.query(new Query("CREATE DATABASE " + dbName,""));
 String rpName = "aRetentionPolicy";
 influxDB.createRetentionPolicy(rpName, dbName, "30d", "30m", 2, true);
 
@@ -333,7 +333,7 @@ To solve this situation the influxdb-java offers an option to offset the flushDu
 the clients will flush their buffers in different intervals:
 
 ```java
-influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500);
+influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500));
 ```
 
 ### Other Usages
