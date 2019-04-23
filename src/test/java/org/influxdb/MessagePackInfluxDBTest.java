@@ -43,9 +43,9 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
   @BeforeEach
   public void setUp() throws InterruptedException, IOException {
     influxDB = TestUtils.connectToInfluxDB(ResponseFormat.MSGPACK);
-    influxDB.createDatabase(UDP_DATABASE);
+    influxDB.query(new Query("CREATE DATABASE " + UDP_DATABASE));
   }
-  
+
   /**
    * Tests writing points using the time precision feature
    * @throws Exception
@@ -55,7 +55,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
   public void testWriteBatchWithPrecision() throws Exception {
     // GIVEN a database and a measurement
     String dbName = "precision_unittest_" + System.currentTimeMillis();
-    this.influxDB.createDatabase(dbName);
+    this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
     String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -97,16 +97,16 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     long bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0));
     Assertions.assertEquals(bySecond, t1);
-    
+
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0));
     Assertions.assertEquals(bySecond, t2);
-    
+
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0));
     Assertions.assertEquals(bySecond, t3);
 
-    this.influxDB.deleteDatabase(dbName);
+    this.influxDB.query(new Query("DROP DATABASE " + dbName));
   }
 
   @Override
@@ -114,7 +114,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
   public void testWriteBatchWithoutPrecision() throws Exception {
     // GIVEN a database and a measurement
     String dbName = "precision_unittest_" + System.currentTimeMillis();
-    this.influxDB.createDatabase(dbName);
+    this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
     String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -164,15 +164,15 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0).toString());
     Assertions.assertEquals(value, timeP3);
 
-    this.influxDB.deleteDatabase(dbName);
+    this.influxDB.query(new Query("DROP DATABASE " + dbName));
   }
-  
+
   @Override
   @Test
   public void testWriteRecordsWithPrecision() throws Exception {
     // GIVEN a database and a measurement
     String dbName = "precision_unittest_" + System.currentTimeMillis();
-    this.influxDB.createDatabase(dbName);
+    this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
     String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -193,7 +193,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     // THEN the measure points have a timestamp with second precision
     QueryResult queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName));
     Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
-    
+
     long bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0));
     Assertions.assertEquals(bySecond, timeP1);
@@ -201,12 +201,12 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0));
     Assertions.assertEquals(bySecond, timeP2);
-    
+
     bySecond = TimeUnit.NANOSECONDS.toSeconds(
         (Long) queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0));
     Assertions.assertEquals(bySecond, timeP3);
 
-    this.influxDB.deleteDatabase(dbName);
+    this.influxDB.query(new Query("DROP DATABASE " + dbName));
   }
 
   @Override
@@ -217,7 +217,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
       return;
     }
     String dbName = "write_unittest_" + System.currentTimeMillis();
-    this.influxDB.createDatabase(dbName);
+    this.influxDB.query(new Query("CREATE DATABASE " + dbName));
     String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
     BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
     Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
@@ -238,7 +238,7 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
       }});
 
     Thread.sleep(2000);
-    this.influxDB.deleteDatabase(dbName);
+    this.influxDB.query(new Query("DROP DATABASE " + dbName));
 
     QueryResult result = queue.poll(20, TimeUnit.SECONDS);
     Assertions.assertNotNull(result);

@@ -62,7 +62,7 @@ public class InfluxDBTest {
 	@BeforeEach
 	public void setUp() throws InterruptedException, IOException {
 		this.influxDB = TestUtils.connectToInfluxDB();
-		this.influxDB.createDatabase(UDP_DATABASE);
+		this.influxDB.query(new Query("CREATE DATABASE " + UDP_DATABASE));
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class InfluxDBTest {
 	 */
 	@AfterEach
 	public void cleanup(){
-		this.influxDB.deleteDatabase(UDP_DATABASE);
+		this.influxDB.query(new Query("DROP DATABASE " + UDP_DATABASE));
 	}
 
 	/**
@@ -199,7 +199,7 @@ public class InfluxDBTest {
 	@Test
 	public void testDescribeDatabases() {
 		String dbName = "unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		this.influxDB.describeDatabases();
 		List<String> result = this.influxDB.describeDatabases();
 		Assertions.assertNotNull(result);
@@ -213,7 +213,7 @@ public class InfluxDBTest {
 
 		}
 		Assertions.assertTrue(found, "It is expected that describeDataBases contents the newly create database.");
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	/**
@@ -223,12 +223,12 @@ public class InfluxDBTest {
 	public void testDatabaseExists() {
 		String existentdbName = "unittest_1";
 		String notExistentdbName = "unittest_2";
-		this.influxDB.createDatabase(existentdbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + existentdbName));
 		boolean checkDbExistence = this.influxDB.databaseExists(existentdbName);
 		Assertions.assertTrue(checkDbExistence, "It is expected that databaseExists return true for " + existentdbName + " database");
 		checkDbExistence = this.influxDB.databaseExists(notExistentdbName);
 		Assertions.assertFalse(checkDbExistence, "It is expected that databaseExists return false for " + notExistentdbName + " database");
-		this.influxDB.deleteDatabase(existentdbName);
+		this.influxDB.query(new Query("DROP DATABASE " + existentdbName));
 	}
 
 	/**
@@ -237,7 +237,7 @@ public class InfluxDBTest {
 	@Test
 	public void testWrite() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		BatchPoints batchPoints = BatchPoints.database(dbName).tag("async", "true").retentionPolicy(rp).build();
 		Point point1 = Point
@@ -254,7 +254,7 @@ public class InfluxDBTest {
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
     /**
@@ -264,7 +264,7 @@ public class InfluxDBTest {
     @Test
     public void testWriteNoDatabase() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.createDatabase(dbName);
+        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
         this.influxDB.setDatabase(dbName);
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
         BatchPoints batchPoints = BatchPoints.builder().tag("async", "true").retentionPolicy(rp).build();
@@ -282,7 +282,7 @@ public class InfluxDBTest {
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
         Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-        this.influxDB.deleteDatabase(dbName);
+        this.influxDB.query(new Query("DROP DATABASE " + dbName));
     }
 
     /**
@@ -310,13 +310,13 @@ public class InfluxDBTest {
     @Test
     public void testWriteStringData() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.createDatabase(dbName);
+        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
         this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test idle=90,usertime=9,system=1");
         Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
         QueryResult result = this.influxDB.query(query);
         Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-        this.influxDB.deleteDatabase(dbName);
+        this.influxDB.query(new Query("DROP DATABASE " + dbName));
     }
 
 	/**
@@ -325,7 +325,7 @@ public class InfluxDBTest {
 	@Test
 	public void testWriteStringDataSimple() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		this.influxDB.setDatabase(dbName);
 		this.influxDB.setRetentionPolicy(rp);
@@ -333,7 +333,7 @@ public class InfluxDBTest {
 		Query query = new Query("SELECT * FROM cpu GROUP BY *", dbName);
 		QueryResult result = this.influxDB.query(query);
 		Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
     /**
@@ -369,7 +369,7 @@ public class InfluxDBTest {
     @Test
     public void testWriteMultipleStringData() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.createDatabase(dbName);
+        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
         this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, "cpu,atag=test1 idle=100,usertime=10,system=1\ncpu,atag=test2 idle=200,usertime=20,system=2\ncpu,atag=test3 idle=300,usertime=30,system=3");
@@ -380,7 +380,7 @@ public class InfluxDBTest {
         Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
         Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
         Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
-        this.influxDB.deleteDatabase(dbName);
+        this.influxDB.query(new Query("DROP DATABASE " + dbName));
     }
 
 	/**
@@ -389,7 +389,7 @@ public class InfluxDBTest {
 	@Test
 	public void testWriteMultipleStringDataSimple() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		this.influxDB.setDatabase(dbName);
 		this.influxDB.setRetentionPolicy(rp);
@@ -402,7 +402,7 @@ public class InfluxDBTest {
 		Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
 		Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
 		Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
     /**
@@ -411,7 +411,7 @@ public class InfluxDBTest {
     @Test
     public void testWriteMultipleStringDataLines() {
         String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.createDatabase(dbName);
+        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
         String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
         this.influxDB.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
@@ -426,7 +426,7 @@ public class InfluxDBTest {
         Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
         Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
         Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
-        this.influxDB.deleteDatabase(dbName);
+        this.influxDB.query(new Query("DROP DATABASE " + dbName));
     }
 
 	/**
@@ -437,7 +437,7 @@ public class InfluxDBTest {
 	public void testWriteBatchWithPrecision() throws Exception {
 		// GIVEN a database and a measurement
 		String dbName = "precision_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -488,14 +488,14 @@ public class InfluxDBTest {
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
 
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	@Test
 	public void testWriteBatchWithoutPrecision() throws Exception {
 		// GIVEN a database and a measurement
 		String dbName = "precision_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -542,14 +542,14 @@ public class InfluxDBTest {
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
 
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	@Test
 	public void testWriteRecordsWithPrecision() throws Exception {
 		// GIVEN a database and a measurement
 		String dbName = "precision_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -578,7 +578,7 @@ public class InfluxDBTest {
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	/**
@@ -587,7 +587,7 @@ public class InfluxDBTest {
 	@Test
 	public void testWriteMultipleStringDataLinesSimple() {
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		this.influxDB.setDatabase(dbName);
 		this.influxDB.setRetentionPolicy(rp);
@@ -604,7 +604,7 @@ public class InfluxDBTest {
 		Assertions.assertEquals("test1", result.getResults().get(0).getSeries().get(0).getTags().get("atag"));
 		Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
 		Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	/**
@@ -612,12 +612,11 @@ public class InfluxDBTest {
 	 */
 	@Test
 	public void testCreateNumericNamedDatabase() {
-		String numericDbName = "123";
+		this.influxDB.query(new Query("CREATE DATABASE \"123\""));
 
-		this.influxDB.createDatabase(numericDbName);
 		List<String> result = this.influxDB.describeDatabases();
-		Assertions.assertTrue(result.contains(numericDbName));
-		this.influxDB.deleteDatabase(numericDbName);
+		Assertions.assertTrue(result.contains("123"));
+		this.influxDB.query(new Query("DROP DATABASE \"123\""));
 	}
 
     /**
@@ -625,9 +624,8 @@ public class InfluxDBTest {
      */
     @Test
     public void testCreateEmptyNamedDatabase() {
-        String emptyName = "";
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-			this.influxDB.createDatabase(emptyName);
+        Assertions.assertThrows(org.influxdb.InfluxDBException.class, () -> {
+			this.influxDB.query(new Query(Query.encode("CREATE DATABASE \"\"")));
 		});
     }
 
@@ -636,13 +634,12 @@ public class InfluxDBTest {
      */
     @Test()
     public void testCreateDatabaseWithNameContainHyphen() {
-        String databaseName = "123-456";
-        this.influxDB.createDatabase(databaseName);
+				this.influxDB.query(new Query("CREATE DATABASE \"123-456\""));
         try {
             List<String> result = this.influxDB.describeDatabases();
-            Assertions.assertTrue(result.contains(databaseName));
+            Assertions.assertTrue(result.contains("123-456"));
         } finally {
-            this.influxDB.deleteDatabase(databaseName);
+            this.influxDB.query(new Query("DROP DATABASE \"123-456\""));
         }
     }
 
@@ -704,7 +701,7 @@ public class InfluxDBTest {
 		Assertions.assertThrows(RuntimeException.class, () -> {
 			InfluxDBFactory.connect("http://" + errorHost + ":" + TestUtils.getInfluxPORT(true));
 		});
-		
+
 		String unresolvableHost = "a.b.c";
 		Assertions.assertThrows(InfluxDBIOException.class, () -> {
 		  InfluxDBFactory.connect("http://" + unresolvableHost + ":" + TestUtils.getInfluxPORT(true));
@@ -716,7 +713,7 @@ public class InfluxDBTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       InfluxDBFactory.connect("@@@http://@@@");
     });
-    
+
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
       InfluxDBFactory.connect("http://@@@abc");
     });
@@ -756,7 +753,7 @@ public class InfluxDBTest {
         try {
             influxDBForTestGzip.setLogLevel(LogLevel.NONE);
             influxDBForTestGzip.enableGzip();
-            influxDBForTestGzip.createDatabase(dbName);
+            influxDBForTestGzip.query(new Query("CREATE DATABASE " + dbName));
             String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
             influxDBForTestGzip.write(dbName, rp, InfluxDB.ConsistencyLevel.ONE, Arrays.asList(
@@ -772,7 +769,7 @@ public class InfluxDBTest {
             Assertions.assertEquals("test2", result.getResults().get(0).getSeries().get(1).getTags().get("atag"));
             Assertions.assertEquals("test3", result.getResults().get(0).getSeries().get(2).getTags().get("atag"));
         } finally {
-            influxDBForTestGzip.deleteDatabase(dbName);
+            influxDBForTestGzip.query(new Query("DROP DATABASE " + dbName));
             influxDBForTestGzip.close();
         }
     }
@@ -807,7 +804,7 @@ public class InfluxDBTest {
           return;
       }
       String dbName = "write_unittest_" + System.currentTimeMillis();
-      this.influxDB.createDatabase(dbName);
+      this.influxDB.query(new Query("CREATE DATABASE " + dbName));
       String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
       BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
       Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
@@ -828,7 +825,7 @@ public class InfluxDBTest {
           }});
 
       Thread.sleep(2000);
-      this.influxDB.deleteDatabase(dbName);
+      this.influxDB.query(new Query("DROP DATABASE " + dbName));
 
       QueryResult result = queue.poll(20, TimeUnit.SECONDS);
       Assertions.assertNotNull(result);
@@ -857,7 +854,7 @@ public class InfluxDBTest {
             return;
         }
         String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.createDatabase(dbName);
+        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         Query query = new Query("UNKNOWN_QUERY", dbName);
         this.influxDB.query(query, 10, new Consumer<QueryResult>() {
@@ -866,7 +863,7 @@ public class InfluxDBTest {
                 countDownLatch.countDown();
             }
         });
-        this.influxDB.deleteDatabase(dbName);
+        this.influxDB.query(new Query("DROP DATABASE " + dbName));
         Assertions.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
     }
 
@@ -899,7 +896,7 @@ public class InfluxDBTest {
 		}
 
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
 		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
@@ -917,7 +914,7 @@ public class InfluxDBTest {
 		this.influxDB.query(query, 2, result -> {}, countDownLatch::countDown);
 
 		Thread.sleep(2000);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 
 		boolean await = countDownLatch.await(10, TimeUnit.SECONDS);
 		Assertions.assertTrue(await, "The onComplete action did not arrive!");
@@ -930,11 +927,11 @@ public class InfluxDBTest {
 			return;
 		}
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
 		Query query = new Query("UNKNOWN_QUERY", dbName);
 		this.influxDB.query(query, 10, result -> {}, countDownLatch::countDown);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 
 		boolean await = countDownLatch.await(5, TimeUnit.SECONDS);
 		Assertions.assertFalse(await, "The onComplete action arrive!");
@@ -948,7 +945,7 @@ public class InfluxDBTest {
 		}
 
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
 		for (int i = 0; i < 10; i++)
@@ -996,7 +993,7 @@ public class InfluxDBTest {
 		}
 
 		String dbName = "write_unittest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
 		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
@@ -1014,7 +1011,7 @@ public class InfluxDBTest {
 		this.influxDB.query(query, 2, (cancellable, queryResult) -> cancellable.cancel(), countDownLatch::countDown);
 
 		Thread.sleep(2000);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 
 		boolean await = countDownLatch.await(5, TimeUnit.SECONDS);
 		Assertions.assertFalse(await, "The onComplete action arrive!");
@@ -1082,7 +1079,7 @@ public class InfluxDBTest {
     public void testFlushPendingWritesWhenBatchingEnabled() {
         String dbName = "flush_tests_" + System.currentTimeMillis();
         try {
-            this.influxDB.createDatabase(dbName);
+            this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
             // Enable batching with a very large buffer and flush interval so writes will be triggered by our call to flush().
             this.influxDB.enableBatch(Integer.MAX_VALUE, Integer.MAX_VALUE, TimeUnit.HOURS);
@@ -1096,7 +1093,7 @@ public class InfluxDBTest {
             QueryResult result = this.influxDB.query(query);
             Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
         } finally {
-            this.influxDB.deleteDatabase(dbName);
+            this.influxDB.query(new Query("DROP DATABASE " + dbName));
             this.influxDB.disableBatch();
         }
     }
@@ -1115,7 +1112,7 @@ public class InfluxDBTest {
 	@Test
 	public void testCreateDropRetentionPolicies() {
 		String dbName = "rpTest_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 
 		this.influxDB.createRetentionPolicy("testRP1", dbName, "30h", 2, false);
 		this.influxDB.createRetentionPolicy("testRP2", dbName, "10d", "20m", 2, false);

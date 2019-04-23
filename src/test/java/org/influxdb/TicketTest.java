@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ public class TicketTest {
 	@Test
 	public void testTicket38() {
 		String dbName = "ticket38_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		Point point1 = Point
 				.measurement("metric")
 				.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
@@ -53,7 +54,7 @@ public class TicketTest {
 				.tag("region", "region")
 				.build();
 		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	/**
@@ -63,7 +64,7 @@ public class TicketTest {
 	@Test
 	public void testTicket39() {
 		String dbName = "ticket39_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		BatchPoints batchPoints = BatchPoints
 				.database(dbName)
 				.tag("async", "true")
@@ -75,7 +76,7 @@ public class TicketTest {
 		Point point = builder.build();
 		batchPoints.point(point);
 		this.influxDB.write(batchPoints);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	/**
@@ -84,15 +85,15 @@ public class TicketTest {
 	@Test
 	public void testTicket40() {
 		String dbName = "ticket40_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		this.influxDB.enableBatch(100, 100, TimeUnit.MICROSECONDS);
 		for (int i = 0; i < 1000; i++) {
 			Point point = Point.measurement("cpu").addField("idle", 99.0).build();
 			this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point);
 		}
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
-	
+
 	/**
 	 * Test for ticket #303
 	 *
@@ -100,22 +101,22 @@ public class TicketTest {
 	@Test
 	public void testTicket303() {
 		String dbName = "ticket303_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
-		
-                
-                Date rundate1 = new Date() ; 
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+
+
+                Date rundate1 = new Date() ;
                 long rundate1Sec = rundate1.getTime() / 1000;
-       
-              
-        
+
+
+
           Point point1 = Point
                             .measurement("TestSlash")
                             .time(rundate1Sec, TimeUnit.SECONDS)
-                            .tag("precision", "Second")                       
-                            .addField("MultipleSlash" ,  "echo \\\".ll 12.0i\\\";")                            
-                            .build(); 
+                            .tag("precision", "Second")
+                            .addField("MultipleSlash" ,  "echo \\\".ll 12.0i\\\";")
+                            .build();
 		this.influxDB.write(dbName, TestUtils.defaultRetentionPolicy(this.influxDB.version()), point1);
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 }

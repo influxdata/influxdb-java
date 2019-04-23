@@ -27,7 +27,7 @@ public class PerformanceTests {
 	private final static int COUNT = 1;
 	private final static int POINT_COUNT = 100000;
 	private final static int SINGLE_POINT_COUNT = 10000;
-	
+
 	private final static int UDP_PORT = 8089;
 	private final static String UDP_DATABASE = "udp";
 
@@ -35,21 +35,21 @@ public class PerformanceTests {
 	public void setUp() {
 		this.influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "root", "root");
 		this.influxDB.setLogLevel(LogLevel.NONE);
-		this.influxDB.createDatabase(UDP_DATABASE);
+		this.influxDB.query(new Query("CREATE DATABASE " + UDP_DATABASE));
 	}
-	
+
 	/**
 	 * delete UDP database after all tests end.
 	 */
 	@AfterEach
 	public void cleanup(){
-		this.influxDB.deleteDatabase(UDP_DATABASE);
+		this.influxDB.query(new Query("CREATE DATABASE " + UDP_DATABASE));
 	}
 
 	@Test
 	public void testWriteSinglePointPerformance() {
 		String dbName = "write_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		this.influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 		long start = System.currentTimeMillis();
@@ -62,14 +62,14 @@ public class PerformanceTests {
 		}
 		this.influxDB.disableBatch();
 		System.out.println("Single Point Write for " + SINGLE_POINT_COUNT + " writes of Points took:" + (System.currentTimeMillis() - start));
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	@Disabled
 	@Test
 	public void testWritePerformance() {
 		String dbName = "writepoints_" + System.currentTimeMillis();
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
 		long start = System.currentTimeMillis();
@@ -93,13 +93,13 @@ public class PerformanceTests {
 			this.influxDB.write(batchPoints);
 		}
 		System.out.println("WritePoints for " + COUNT + " writes of " + POINT_COUNT + " Points took:" + (System.currentTimeMillis() - start));
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	@Test
 	public void testMaxWritePointsPerformance() {
 		String dbName = "d";
-		this.influxDB.createDatabase(dbName);
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
 		this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
 		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
 
@@ -109,7 +109,7 @@ public class PerformanceTests {
 			this.influxDB.write(dbName, rp, point);
 		}
 		System.out.println("5Mio points:" + (System.currentTimeMillis() - start));
-		this.influxDB.deleteDatabase(dbName);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
 	/**
@@ -124,7 +124,7 @@ public class PerformanceTests {
     }
 
     String dbName = "write_compare_udp_" + System.currentTimeMillis();
-    this.influxDB.createDatabase(dbName);
+    this.influxDB.query(new Query("CREATE DATABASE " + dbName));
     this.influxDB.enableBatch(10000, 100, TimeUnit.MILLISECONDS);
 
     int repetitions = 15;
@@ -147,14 +147,14 @@ public class PerformanceTests {
     long elapsedForSingleWrite = System.currentTimeMillis() - start;
     System.out.println("performance(ms):write udp with 1000 single strings:" + elapsedForSingleWrite);
 
-    this.influxDB.deleteDatabase(dbName);
+    this.influxDB.query(new Query("DROP DATABASE " + dbName));
     Assertions.assertTrue(elapsedForSingleWrite - elapsedForBatchWrite > 0);
   }
-	
+
   @Test
   public void testRetryWritePointsInBatch() throws InterruptedException {
     String dbName = "d";
-    
+
     InfluxDB spy = spy(influxDB);
     TestAnswer answer = new TestAnswer() {
       boolean started = false;
@@ -170,17 +170,17 @@ public class PerformanceTests {
         }
       }
     };
-    
+
     answer.params.put("startTime", System.currentTimeMillis() + 8000);
     doAnswer(answer).when(spy).write(any(BatchPoints.class));
-    
-    spy.createDatabase(dbName);
+
+    spy.query(new Query("CREATE DATABASE " + dbName));
     BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(10000).flushDuration(2000).bufferLimit(300000).exceptionHandler((points, throwable) -> {
       System.out.println("+++++++++++ exceptionHandler +++++++++++");
       System.out.println(throwable);
       System.out.println("++++++++++++++++++++++++++++++++++++++++");
     });
-    
+
     //this.influxDB.enableBatch(100000, 60, TimeUnit.SECONDS);
     spy.enableBatch(batchOptions);
     String rp = TestUtils.defaultRetentionPolicy(spy.version());
@@ -189,7 +189,7 @@ public class PerformanceTests {
       Point point = Point.measurement("s").time(i, TimeUnit.MILLISECONDS).addField("v", 1.0).build();
       spy.write(dbName, rp, point);
     }
-    
+
     System.out.println("sleep");
     Thread.sleep(12000);
     try {
@@ -200,11 +200,11 @@ public class PerformanceTests {
       System.out.println("+++++++++++++++++count() +++++++++++++++++++++");
       System.out.println(e);
       System.out.println("++++++++++++++++++++++++++++++++++++++++++++++");
-      
+
     }
 
     spy.disableBatch();
-    spy.deleteDatabase(dbName);
+    spy.query(new Query("DROP DATABASE " + dbName));
   }
 
 }
