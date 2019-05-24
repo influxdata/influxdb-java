@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
 import org.influxdb.impl.Preconditions;
 
 /**
@@ -258,6 +260,15 @@ public class Point {
         final String fieldName) {
       try {
         Object fieldValue = field.get(pojo);
+
+        TimeColumn tc = field.getAnnotation(TimeColumn.class);
+        if (tc != null && Instant.class.isAssignableFrom(field.getType())) {
+          Instant instant = (Instant) fieldValue;
+          TimeUnit timeUint = tc.timeUnit();
+          this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUint);
+          this.precision = timeUint;
+          return;
+        }
 
         if (column.tag()) {
           this.tags.put(fieldName, (String) fieldValue);
