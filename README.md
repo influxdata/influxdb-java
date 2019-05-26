@@ -231,11 +231,12 @@ public class Cpu {
 }
 ```
 
-2. Add @Measurement and @Column annotations:
+2. Add @Measurement,@TimeColumn and @Column annotations:
 
 ```Java
 @Measurement(name = "cpu")
 public class Cpu {
+    @TimeColumn
     @Column(name = "time")
     private Instant time;
     @Column(name = "host", tag = true)
@@ -270,7 +271,7 @@ Having the same POJO class Cpu
 ```java
 String dbName = "myTimeseries";
 String rpName = "aRetentionPolicy";
-// Cpu has annotations @Measurement and @Column
+// Cpu has annotations @Measurement,@TimeColumn and @Column
 Cpu cpu = new Cpu();
 // ... setting data
 

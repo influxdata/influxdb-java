@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.16
+
+### Fixes
+
+- Add new annotation called TimeColumn for timestamp field in POJO bean, this can set Point time and precision field correctly, also avoid UnableToParseException when flush Point to influx.
+
 ## 2.15 [2019-02-22]
 
 ### Fixes

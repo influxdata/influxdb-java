@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
@@ -263,10 +264,11 @@ public class Point {
 
         TimeColumn tc = field.getAnnotation(TimeColumn.class);
         if (tc != null && Instant.class.isAssignableFrom(field.getType())) {
-          Instant instant = (Instant) fieldValue;
-          TimeUnit timeUint = tc.timeUnit();
-          this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUint);
-          this.precision = timeUint;
+          Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
+            TimeUnit timeUint = tc.timeUnit();
+            this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUint);
+            this.precision = timeUint;
+          });
           return;
         }
 
