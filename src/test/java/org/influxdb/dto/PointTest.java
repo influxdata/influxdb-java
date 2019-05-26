@@ -1,6 +1,8 @@
 package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
@@ -511,7 +514,42 @@ public class PointTest {
   }
 
   @Test
-  public void testAddFieldsFromPOJOWithData() {
+  public void testAddFieldsFromPOJOWithTimeColumn() throws NoSuchFieldException, IllegalAccessException {
+    TimeColumnPojo pojo = new TimeColumnPojo();
+    pojo.time = Instant.now();
+    pojo.booleanPrimitive = true;
+
+    Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+    Field timeField = p.getClass().getDeclaredField("time");
+    Field precisionField = p.getClass().getDeclaredField("precision");
+    timeField.setAccessible(true);
+    precisionField.setAccessible(true);
+
+    Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+    Assertions.assertEquals(TimeUnit.MILLISECONDS, precisionField.get(p));
+    Assertions.assertEquals(TimeUnit.MILLISECONDS.convert(pojo.time.toEpochMilli(),TimeUnit.MILLISECONDS), timeField.get(p));
+
+    pojo.time = null;
+  }
+
+	@Test
+	public void testAddFieldsFromPOJOWithTimeColumnNull() throws NoSuchFieldException, IllegalAccessException {
+		TimeColumnPojo pojo = new TimeColumnPojo();
+		pojo.booleanPrimitive = true;
+
+		Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+		Field timeField = p.getClass().getDeclaredField("time");
+		Field precisionField = p.getClass().getDeclaredField("precision");
+		timeField.setAccessible(true);
+		precisionField.setAccessible(true);
+
+		Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+
+		pojo.time = null;
+	}
+
+  @Test
+  public void testAddFieldsFromPOJOWithData() throws NoSuchFieldException, IllegalAccessException {
     Pojo pojo = new Pojo();
     pojo.booleanObject = true;
     pojo.booleanPrimitive = false;
@@ -594,6 +632,15 @@ public class PointTest {
     }
   }
 
+	@Measurement(name = "tcmeasurement")
+  static class TimeColumnPojo {
+	  @Column(name = "booleanPrimitive")
+	  private boolean booleanPrimitive;
+
+	  @TimeColumn
+	  @Column(name = "time")
+	  private Instant time;
+  }
 
   @Measurement(name = "mymeasurement")
   static class Pojo {

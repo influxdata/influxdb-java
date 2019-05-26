@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
 import org.influxdb.dto.QueryResult;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -442,6 +443,38 @@ public class InfluxDBResultMapperTest {
   }
 
   @Test
+  public void testToPOJO_HasTimeColumn() {
+	  // Given...
+	  mapper.cacheMeasurementClass(HasTimeColumnMeasurement.class);
+
+	  List<String> columnList = Arrays.asList("time");
+	  List<List<Object>> valuesList = Arrays.asList(
+			  Arrays.asList("2015-08-17T19:00:00-05:00"), // Chicago (UTC-5)
+			  Arrays.asList("2015-08-17T19:00:00.000000001-05:00"), // Chicago (UTC-5)
+			  Arrays.asList("2000-01-01T00:00:00-00:00"),
+			  Arrays.asList("2000-01-02T00:00:00+00:00")
+	  );
+
+	  QueryResult.Series series = new QueryResult.Series();
+	  series.setColumns(columnList);
+	  series.setValues(valuesList);
+
+	  // When...
+	  List<HasTimeColumnMeasurement> result = new LinkedList<>();
+	  mapper.parseSeriesAs(series, HasTimeColumnMeasurement.class, result);
+
+	  // Then...
+	  Assertions.assertEquals(4, result.size(), "incorrect number of elemets");
+	  // Note: RFC3339 timestamp with TZ from InfluxDB are parsed into an Instant (UTC)
+	  Assertions.assertTrue(result.get(0).time.equals(Instant.parse("2015-08-18T00:00:00Z")));
+	  Assertions.assertTrue(result.get(1).time.equals(Instant.parse("2015-08-18T00:00:00.000000001Z")));
+	  // RFC3339 section 4.3 https://tools.ietf.org/html/rfc3339#section-4.3
+	  Assertions.assertTrue(result.get(2).time.equals(Instant.parse("2000-01-01T00:00:00Z")));
+	  Assertions.assertTrue(result.get(3).time.equals(Instant.parse("2000-01-02T00:00:00Z")));
+
+  }
+
+  @Test
   public void testToPOJO_ticket573() {
     // Given...
     mapper.cacheMeasurementClass(MyCustomMeasurement.class);
@@ -472,9 +505,35 @@ public class InfluxDBResultMapperTest {
     Assertions.assertTrue(result.get(3).time.equals(Instant.parse("2000-01-02T00:00:00Z")));
   }
 
+	@Measurement(name = "HasTimeColumnMeasurement")
+	static class HasTimeColumnMeasurement {
+  		@TimeColumn
+		@Column(name = "time")
+		private Instant time;
+
+  		@Column(name = "value")
+  		private Integer value;
+
+		public Instant getTime() {
+			return time;
+		}
+
+		public void setTime(Instant time) {
+			this.time = time;
+		}
+
+		public Integer getValue() {
+			return value;
+		}
+
+		public void setValue(Integer value) {
+			this.value = value;
+		}
+	}
+
+
 	@Measurement(name = "CustomMeasurement")
 	static class MyCustomMeasurement {
-
 		@Column(name = "time")
 		private Instant time;
 
@@ -555,7 +614,6 @@ public class InfluxDBResultMapperTest {
    */
   @Measurement(name = "tb_network")
   static class GroupByCarrierDeviceOS {
-
     @Column(name = "time")
     private Instant time;
 
