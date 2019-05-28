@@ -439,10 +439,12 @@ public class Point {
 
   private void concatenatedTags(final StringBuilder sb) {
     for (Entry<String, String> tag : this.tags.entrySet()) {
-      sb.append(',');
-      escapeKey(sb, tag.getKey());
-      sb.append('=');
-      escapeKey(sb, tag.getValue());
+      if(tag.getValue() != null) {  
+        sb.append(',');
+        escapeKey(sb, tag.getKey());
+        sb.append('=');
+        escapeKey(sb, tag.getValue());
+      }
     }
     sb.append(' ');
   }
