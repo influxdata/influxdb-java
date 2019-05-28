@@ -608,14 +608,13 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
                     final Runnable onComplete, final Consumer<Throwable> onFailure) {
-
     Call<ResponseBody> call;
     if (query instanceof BoundParameterQuery) {
       BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-      call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize,
+      call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize,
           boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
-      call = this.influxDBService.query(query.getDatabase(), query.getCommandWithUrlEncoded(), chunkSize);
+      call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize);
     }
 
     call.enqueue(new Callback<ResponseBody>() {
@@ -681,11 +680,11 @@ public class InfluxDBImpl implements InfluxDB {
     Call<QueryResult> call = null;
     if (query instanceof BoundParameterQuery) {
         BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-        call = this.influxDBService.query(query.getDatabase(),
+        call = this.influxDBService.query(getDatabase(query),
                 TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(),
                 boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
-        call = this.influxDBService.query(query.getDatabase(),
+        call = this.influxDBService.query(getDatabase(query),
                 TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
     }
     return executeQuery(call);
@@ -746,19 +745,15 @@ public class InfluxDBImpl implements InfluxDB {
    */
   private Call<QueryResult> callQuery(final Query query) {
     Call<QueryResult> call;
-    String db = query.getDatabase();
-    if (db == null) {
-        db = this.database;
-    }
     if (query instanceof BoundParameterQuery) {
         BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-        call = this.influxDBService.postQuery(db, query.getCommandWithUrlEncoded(),
+        call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded(),
                 boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
         if (query.requiresPost()) {
-          call = this.influxDBService.postQuery(db, query.getCommandWithUrlEncoded());
+          call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded());
         } else {
-          call = this.influxDBService.query(db, query.getCommandWithUrlEncoded());
+          call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded());
         }
     }
     return call;
@@ -924,6 +919,11 @@ public class InfluxDBImpl implements InfluxDB {
         .append(database)
         .append("\"");
     executeQuery(this.influxDBService.postQuery(Query.encode(queryBuilder.toString())));
+  }
+
+  private String getDatabase(final Query query) {
+  	String db = query.getDatabase();
+  	return db == null ? this.database : db;
   }
 
   private interface ChunkProccesor {
