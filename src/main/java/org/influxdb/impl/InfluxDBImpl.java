@@ -923,7 +923,10 @@ public class InfluxDBImpl implements InfluxDB {
 
   private String getDatabase(final Query query) {
   	String db = query.getDatabase();
-  	return db == null ? this.database : db;
+  	if (db == null) {
+  		return this.database;
+	}
+  	return db;
   }
 
   private interface ChunkProccesor {
