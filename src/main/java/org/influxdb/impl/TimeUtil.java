@@ -60,7 +60,7 @@ public enum TimeUtil {
     case MICROSECONDS:
       return "u";
     case NANOSECONDS:
-      return "ns";
+      return "n";
     default:
       throw new IllegalArgumentException("time precision must be one of:" + ALLOWED_TIMEUNITS);
     }
