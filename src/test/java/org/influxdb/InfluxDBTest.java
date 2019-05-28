@@ -1,5 +1,6 @@
 package org.influxdb;
 
+import java.util.Collections;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.BatchPoints;
@@ -39,6 +40,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import org.junit.runner.notification.RunListener;
 
 /**
  * Test the InfluxDB API.
@@ -284,6 +286,162 @@ public class InfluxDBTest {
         Assertions.assertFalse(result.getResults().get(0).getSeries().get(0).getTags().isEmpty());
         this.influxDB.query(new Query("DROP DATABASE " + dbName));
     }
+
+	/**
+	 * Tests that database information is used from {@link InfluxDB} when database information
+	 * is not present in query.
+	 */
+    @Test
+    public void testQueryWithNoDatabase() {
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+		this.influxDB.setDatabase(dbName); // Set db here, then after write query should pass.
+		this.influxDB.write(Point
+			.measurement("cpu")
+			.tag("atag", "test")
+			.addField("idle", 90L)
+			.addField("usertime", 9L)
+			.addField("system", 1L)
+			.build());
+
+		Query query = new Query("SELECT * FROM cpu GROUP BY *");
+		QueryResult result = this.influxDB.query(query);
+		Assertions.assertEquals(
+			result.getResults().get(0).getSeries().get(0).getTags(),
+			Collections.singletonMap("atag", "test")
+		);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+	}
+
+	/**
+	 * Tests that database information is used from {@link InfluxDB} when database information
+	 * is not present in query.
+	 */
+	@Test
+	public void testQueryWithNoDatabaseWithConsumer() {
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+		this.influxDB.setDatabase(dbName); // Set db here, then after write query should pass.
+		this.influxDB.write(Point
+			.measurement("cpu")
+			.tag("atag", "test")
+			.addField("idle", 90L)
+			.addField("usertime", 9L)
+			.addField("system", 1L)
+			.build());
+
+		Query query = new Query("SELECT * FROM cpu GROUP BY *");
+		this.influxDB.query(query,
+			queryResult ->
+				Assertions.assertEquals(
+					queryResult.getResults().get(0).getSeries().get(0).getTags(),
+					Collections.singletonMap("atag", "test")
+				)
+			,
+			throwable -> Assertions.fail()
+		);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+	}
+
+
+	/**
+	 * Tests that database information is used from {@link InfluxDB} when database information
+	 * is not present in query.
+	 */
+	// Note: this test is copied from InfluxDBTest#testChunking but changed so that database
+	// information is present in client not query. Combined both tests test situations with
+	// and without database information present in query, hence no need for additional test
+	// for situation where database info is not set in the client.
+	public void testQueryNoDatabaseWithChunking() throws Exception {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+		this.influxDB.setDatabase(dbName); // Set database -> no need to use it as query parameter.
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+		Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+		Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
+		batchPoints.point(point3);
+		this.influxDB.write(batchPoints);
+
+		Thread.sleep(2000);
+		final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+		Query query = new Query("SELECT * FROM disk");
+		this.influxDB.query(query, 2, queue::add);
+
+		Thread.sleep(2000);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+
+		QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+		Assertions.assertNotNull(result);
+		System.out.println(result);
+		Assertions.assertEquals(2, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+		result = queue.poll(20, TimeUnit.SECONDS);
+		Assertions.assertNotNull(result);
+		System.out.println(result);
+		Assertions.assertEquals(1, result.getResults().get(0).getSeries().get(0).getValues().size());
+
+		result = queue.poll(20, TimeUnit.SECONDS);
+		Assertions.assertNotNull(result);
+		System.out.println(result);
+		Assertions.assertEquals("DONE", result.getError());
+	}
+
+	/**
+	 * Tests that database information is used from {@link InfluxDB} when database information
+	 * is not present in query and when different time format is requested from db.
+	 */
+	@Test
+	public void testQueryNoDatabaseWithTimeFormat() {
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		long time = 1559027876L;
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+		this.influxDB.setDatabase(dbName); // Set db here, then after write query should pass.
+		this.influxDB.write(Point
+			.measurement("cpu")
+			.tag("atag", "test")
+			.addField("idle", 90L)
+			.addField("usertime", 9L)
+			.addField("system", 1L)
+			.time(time, TimeUnit.MILLISECONDS) // Set time.
+			.build());
+
+		Query query = new Query("SELECT * FROM cpu GROUP BY *");
+
+		// Test milliseconds
+		QueryResult result = this.influxDB.query(query, TimeUnit.MILLISECONDS);
+		Series series = result.getResults().get(0).getSeries().get(0);
+		Assertions.assertEquals(
+			((Number)series.getValues().get(0).get(series.getColumns().indexOf("time"))).longValue() ,
+			time
+		);
+
+		// Test nanoseconds
+		result = this.influxDB.query(query, TimeUnit.NANOSECONDS);
+		series = result.getResults().get(0).getSeries().get(0);
+		Assertions.assertEquals(
+			((Number)series.getValues().get(0).get(series.getColumns().indexOf("time"))).longValue(),
+			TimeUnit.NANOSECONDS.convert(time, TimeUnit.MILLISECONDS)
+		);
+
+		// Test seconds
+		result = this.influxDB.query(query, TimeUnit.SECONDS);
+		series = result.getResults().get(0).getSeries().get(0);
+		Assertions.assertEquals(
+			((Number)series.getValues().get(0).get(series.getColumns().indexOf("time"))).longValue(),
+			TimeUnit.SECONDS.convert(time, TimeUnit.MILLISECONDS)
+
+		);
+
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+	}
 
     /**
      *  Test the implementation of {@link InfluxDB#write(int, Point)}'s async support.
