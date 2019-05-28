@@ -924,7 +924,7 @@ public class InfluxDBImpl implements InfluxDB {
   private String getDatabase(final Query query) {
   	String db = query.getDatabase();
   	if (db == null) {
-  		return this.database;
+  	    return this.database;
 	}
   	return db;
   }
