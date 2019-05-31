@@ -40,7 +40,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
-import org.junit.runner.notification.RunListener;
 
 /**
  * Test the InfluxDB API.
