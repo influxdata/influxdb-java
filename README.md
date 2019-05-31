@@ -160,6 +160,48 @@ try (InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root
 }
 ```
 
+#### Default database to query
+
+If you only use one database you can set client level database information. This database will be used for all subsequent HTTP queries, 
+but if you still sometimes need to query some different database you can, you need to provide provide database information directly in the query,
+then database information in the query will take precedence and query will be pushed to that database. 
+This is shown in the following example:
+
+```java
+// Database names
+InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+
+String db1 = "database1";
+influxDB.query(new Query("CREATE DATABASE " + db1));
+String defaultRpName = "aRetentionPolicy1";
+influxDB.query(new Query("CREATE RETENTION POLICY " + rp1 + " ON " + db1 + " DURATION 30h REPLICATION 2 DEFAULT"));
+Point point1 = Point.measurement("cpu")
+                    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                    .addField("idle", 90L)
+                    .addField("user", 9L)
+                    .addField("system", 1L)
+                    .build();
+influxDB.write(db1, rp1, point1); // Write to db1
+
+String db2 = "database2";
+influxDB.query(new Query("CREATE DATABASE " + db2));
+String rp2 = "aRetentionPolicy1";
+influxDB.query(new Query("CREATE RETENTION POLICY " + rp2 + " ON " + db2 + " DURATION 30h REPLICATION 2 DEFAULT"));
+Point point2 = Point.measurement("cpu")
+                    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                    .addField("idle", 80L)
+                    .addField("user", 8L)
+                    .addField("system", 2L)
+                    .build();
+influxDB.write(db2, rp2, point2); // Write to db2
+
+
+influxDB.query(new Query("SELECT * FROM cpu"));     // Returns Point1
+influxDB.query(new Query("SELECT * FROM cpu", db2)) // Returns Point2
+
+```  
+
+
 ### Advanced Usage
 
 #### Gzip's support (version 2.5+ required)
