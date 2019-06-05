@@ -1,14 +1,10 @@
 package org.influxdb;
 
-import java.util.Collections;
+import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.InfluxDB.ResponseFormat;
-import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.*;
 import org.influxdb.dto.BoundParameterQuery.QueryBuilder;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
 import org.influxdb.dto.QueryResult.Series;
 import org.influxdb.impl.InfluxDBImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -19,25 +15,13 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
-import okhttp3.OkHttpClient;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
@@ -193,6 +177,20 @@ public class InfluxDBTest {
 		// Will throw exception in case of error.
 		result.result();
 	}
+
+    /**
+     * Tests for callback query with a failure.
+     * see Issue #602
+     */
+    @Test
+    public void testCallbackQueryFailureHandling() {
+        final AsyncResult<QueryResult> res = new AsyncResult<>();
+
+        this.influxDB.query(new Query("SHOW SERRIES"), res.resultConsumer, res.errorConsumer);
+
+        Assertions.assertThrows(InfluxDBException.class, res::result,
+                "Malformed query should throw InfluxDBException");
+    }
 
 	/**
 	 * Test that describe Databases works.
