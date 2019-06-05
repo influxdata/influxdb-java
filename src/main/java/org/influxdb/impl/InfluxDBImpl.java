@@ -3,31 +3,19 @@ package org.influxdb.impl;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
-import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okio.BufferedSource;
-
 import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
 import org.influxdb.InfluxDBIOException;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.BoundParameterQuery;
-import org.influxdb.dto.Point;
-import org.influxdb.dto.Pong;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
+import org.influxdb.dto.*;
 import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
 import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
 import org.influxdb.msgpack.MessagePackConverterFactory;
 import org.influxdb.msgpack.MessagePackTraverser;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Converter.Factory;
@@ -38,18 +26,11 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -561,7 +542,28 @@ public class InfluxDBImpl implements InfluxDB {
     call.enqueue(new Callback<QueryResult>() {
       @Override
       public void onResponse(final Call<QueryResult> call, final Response<QueryResult> response) {
-        onSuccess.accept(response.body());
+        if (response.isSuccessful()) {
+          onSuccess.accept(response.body());
+        } else {
+          Throwable t = null;
+          String errorBody = null;
+
+          try {
+            if (response.errorBody() != null) {
+              errorBody = response.errorBody().string();
+            }
+          } catch (IOException e) {
+            t = e;
+          }
+
+          if (t != null) {
+            onFailure.accept(new InfluxDBException(response.message(), t));
+          } else if (errorBody != null) {
+            onFailure.accept(new InfluxDBException(response.message() + " - " + errorBody));
+          } else {
+            onFailure.accept(new InfluxDBException(response.message()));
+          }
+        }
       }
 
       @Override

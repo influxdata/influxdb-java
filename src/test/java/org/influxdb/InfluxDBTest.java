@@ -159,38 +159,38 @@ public class InfluxDBTest {
     }
   }
 
-	/**
-	 * Tests for callback query.
-	 */
-	@Test
-	public void testCallbackQuery() throws Throwable {
-		final AsyncResult<QueryResult> result = new AsyncResult<>();
-		final Consumer<QueryResult> firstQueryConsumer  = new Consumer<QueryResult>() {
-			@Override
-			public void accept(QueryResult queryResult) {
-				influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
-			}
-		};
+  /**
+   * Tests for callback query.
+   */
+  @Test
+  public void testCallbackQuery() throws Throwable {
+    final AsyncResult<QueryResult> result = new AsyncResult<>();
+    final Consumer<QueryResult> firstQueryConsumer = new Consumer<QueryResult>() {
+      @Override
+      public void accept(QueryResult queryResult) {
+        influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
+      }
+    };
 
-		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"), firstQueryConsumer, result.errorConsumer);
+    this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"), firstQueryConsumer, result.errorConsumer);
 
-		// Will throw exception in case of error.
-		result.result();
-	}
+    // Will throw exception in case of error.
+    result.result();
+  }
 
-    /**
-     * Tests for callback query with a failure.
-     * see Issue #602
-     */
-    @Test
-    public void testCallbackQueryFailureHandling() {
-        final AsyncResult<QueryResult> res = new AsyncResult<>();
+  /**
+   * Tests for callback query with a failure.
+   * see Issue #602
+   */
+  @Test
+  public void testCallbackQueryFailureHandling() {
+    final AsyncResult<QueryResult> res = new AsyncResult<>();
 
-        this.influxDB.query(new Query("SHOW SERRIES"), res.resultConsumer, res.errorConsumer);
+    this.influxDB.query(new Query("SHOW SERRIES"), res.resultConsumer, res.errorConsumer);
 
-        Assertions.assertThrows(InfluxDBException.class, res::result,
-                "Malformed query should throw InfluxDBException");
-    }
+    Assertions.assertThrows(InfluxDBException.class, res::result,
+            "Malformed query should throw InfluxDBException");
+  }
 
 	/**
 	 * Test that describe Databases works.
