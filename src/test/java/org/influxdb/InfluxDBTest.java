@@ -39,6 +39,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 /**
  * Test the InfluxDB API.
@@ -208,9 +209,11 @@ public class InfluxDBTest {
       Assertions.fail("Malformed query should throw InfluxDBException");
     }
     catch (InfluxDBException e){
-      Assertions.assertTrue(e.getMessage().matches("Bad Request[\\s-a-zA-Z{}:\",0-9]*error parsing query: " +
-                      "found SERRIES, expected[\\s-a-zA-Z{}:\",0-9]*"),
-              "Error string not expected");
+      Pattern errorPattern = Pattern.compile("Bad Request.*error parsing query: found SERRIES, expected.*",
+              Pattern.DOTALL);
+
+      Assertions.assertTrue(errorPattern.matcher(e.getMessage()).matches(),
+              "Error string \"" + e.getMessage() + "\" does not match error pattern");
     }
   }
 
