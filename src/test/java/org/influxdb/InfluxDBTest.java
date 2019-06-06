@@ -24,8 +24,19 @@ import java.net.ConnectException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
@@ -187,13 +198,20 @@ public class InfluxDBTest {
    * see Issue #602
    */
   @Test
-  public void testCallbackQueryFailureHandling() {
+  public void testCallbackQueryFailureHandling() throws Throwable {
     final AsyncResult<QueryResult> res = new AsyncResult<>();
 
     this.influxDB.query(new Query("SHOW SERRIES"), res.resultConsumer, res.errorConsumer);
 
-    Assertions.assertThrows(InfluxDBException.class, res::result,
-            "Malformed query should throw InfluxDBException");
+    try{
+      res.result();
+      Assertions.fail("Malformed query should throw InfluxDBException");
+    }
+    catch (InfluxDBException e){
+      Assertions.assertTrue(e.getMessage().matches("Bad Request[\\s-a-zA-Z{}:\",0-9]*error parsing query: " +
+                      "found SERRIES, expected[\\s-a-zA-Z{}:\",0-9]*"),
+              "Error string not expected");
+    }
   }
 
 	/**
