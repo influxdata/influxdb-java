@@ -1,6 +1,6 @@
 package org.influxdb;
 
-import java.util.Collections;
+import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.InfluxDB.ResponseFormat;
 import org.influxdb.dto.BatchPoints;
@@ -19,8 +19,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
-import okhttp3.OkHttpClient;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.time.Instant;
@@ -28,6 +26,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -40,6 +39,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 /**
  * Test the InfluxDB API.
@@ -175,24 +175,47 @@ public class InfluxDBTest {
     }
   }
 
-	/**
-	 * Tests for callback query.
-	 */
-	@Test
-	public void testCallbackQuery() throws Throwable {
-		final AsyncResult<QueryResult> result = new AsyncResult<>();
-		final Consumer<QueryResult> firstQueryConsumer  = new Consumer<QueryResult>() {
-			@Override
-			public void accept(QueryResult queryResult) {
-				influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
-			}
-		};
+  /**
+   * Tests for callback query.
+   */
+  @Test
+  public void testCallbackQuery() throws Throwable {
+    final AsyncResult<QueryResult> result = new AsyncResult<>();
+    final Consumer<QueryResult> firstQueryConsumer = new Consumer<QueryResult>() {
+      @Override
+      public void accept(QueryResult queryResult) {
+        influxDB.query(new Query("DROP DATABASE mydb2", "mydb"), result.resultConsumer, result.errorConsumer);
+      }
+    };
 
-		this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"), firstQueryConsumer, result.errorConsumer);
+    this.influxDB.query(new Query("CREATE DATABASE mydb2", "mydb"), firstQueryConsumer, result.errorConsumer);
 
-		// Will throw exception in case of error.
-		result.result();
-	}
+    // Will throw exception in case of error.
+    result.result();
+  }
+
+  /**
+   * Tests for callback query with a failure.
+   * see Issue #602
+   */
+  @Test
+  public void testCallbackQueryFailureHandling() throws Throwable {
+    final AsyncResult<QueryResult> res = new AsyncResult<>();
+
+    this.influxDB.query(new Query("SHOW SERRIES"), res.resultConsumer, res.errorConsumer);
+
+    try{
+      res.result();
+      Assertions.fail("Malformed query should throw InfluxDBException");
+    }
+    catch (InfluxDBException e){
+      Pattern errorPattern = Pattern.compile("Bad Request.*error parsing query: found SERRIES, expected.*",
+              Pattern.DOTALL);
+
+      Assertions.assertTrue(errorPattern.matcher(e.getMessage()).matches(),
+              "Error string \"" + e.getMessage() + "\" does not match error pattern");
+    }
+  }
 
 	/**
 	 * Test that describe Databases works.

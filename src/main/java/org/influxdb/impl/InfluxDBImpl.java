@@ -1,6 +1,5 @@
 package org.influxdb.impl;
 
-
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import okhttp3.Headers;
@@ -12,7 +11,6 @@ import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okio.BufferedSource;
-
 import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
@@ -27,7 +25,6 @@ import org.influxdb.impl.BatchProcessor.HttpBatchEntry;
 import org.influxdb.impl.BatchProcessor.UdpBatchEntry;
 import org.influxdb.msgpack.MessagePackConverterFactory;
 import org.influxdb.msgpack.MessagePackTraverser;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Converter.Factory;
@@ -48,8 +45,8 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -561,7 +558,28 @@ public class InfluxDBImpl implements InfluxDB {
     call.enqueue(new Callback<QueryResult>() {
       @Override
       public void onResponse(final Call<QueryResult> call, final Response<QueryResult> response) {
-        onSuccess.accept(response.body());
+        if (response.isSuccessful()) {
+          onSuccess.accept(response.body());
+        } else {
+          Throwable t = null;
+          String errorBody = null;
+
+          try {
+            if (response.errorBody() != null) {
+              errorBody = response.errorBody().string();
+            }
+          } catch (IOException e) {
+            t = e;
+          }
+
+          if (t != null) {
+            onFailure.accept(new InfluxDBException(response.message(), t));
+          } else if (errorBody != null) {
+            onFailure.accept(new InfluxDBException(response.message() + " - " + errorBody));
+          } else {
+            onFailure.accept(new InfluxDBException(response.message()));
+          }
+        }
       }
 
       @Override
