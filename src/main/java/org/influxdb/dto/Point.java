@@ -405,13 +405,15 @@ public class Point {
   }
 
   /**
-   * calculate the lineprotocol entry for a single Point.
+   * Calculate the lineprotocol entry for a single Point.
+   * <p>
+   * NaN and infinity values are silently dropped as they are unsupported:
+   * https://github.com/influxdata/influxdb/issues/4089
    *
-   * Documentation is WIP : https://github.com/influxdb/influxdb/pull/2997
+   * @see <a href="https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_reference/">
+   *     InfluxDB line protocol reference</a>
    *
-   * https://github.com/influxdb/influxdb/blob/master/tsdb/README.md
-   *
-   * @return the String without newLine.
+   * @return the String without newLine, empty when there are no fields to write
    */
   public String lineProtocol() {
     return lineProtocol(null);
@@ -419,8 +421,15 @@ public class Point {
 
   /**
    * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
+   * <p>
+   * NaN and infinity values are silently dropped as they are unsupported:
+   * https://github.com/influxdata/influxdb/issues/4089
+   *
+   * @see <a href="https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_reference/">
+   *     InfluxDB line protocol reference</a>
+   *
    * @param precision the time precision unit for this point
-   * @return the String without newLine
+   * @return the String without newLine, empty when there are no fields to write
    */
   public String lineProtocol(final TimeUnit precision) {
 
@@ -431,7 +440,10 @@ public class Point {
 
     escapeKey(sb, measurement);
     concatenatedTags(sb);
-    concatenatedFields(sb);
+    int writtenFields = concatenatedFields(sb);
+    if (writtenFields == 0) {
+      return "";
+    }
     formatedTime(sb, precision);
 
     return sb.toString();
@@ -447,10 +459,11 @@ public class Point {
     sb.append(' ');
   }
 
-  private void concatenatedFields(final StringBuilder sb) {
+  private int concatenatedFields(final StringBuilder sb) {
+    int fieldCount = 0;
     for (Entry<String, Object> field : this.fields.entrySet()) {
       Object value = field.getValue();
-      if (value == null) {
+      if (value == null || isNotFinite(value)) {
         continue;
       }
       escapeKey(sb, field.getKey());
@@ -471,6 +484,8 @@ public class Point {
       }
 
       sb.append(',');
+
+      fieldCount++;
     }
 
     // efficiently chop off the trailing comma
@@ -478,6 +493,8 @@ public class Point {
     if (sb.charAt(lengthMinusOne) == ',') {
       sb.setLength(lengthMinusOne);
     }
+
+    return fieldCount;
   }
 
   static void escapeKey(final StringBuilder sb, final String key) {
@@ -503,6 +520,11 @@ public class Point {
           sb.append(field.charAt(i));
       }
     }
+  }
+
+  private static boolean isNotFinite(final Object value) {
+    return value instanceof Double && !Double.isFinite((Double) value)
+            || value instanceof Float && !Float.isFinite((Float) value);
   }
 
   private void formatedTime(final StringBuilder sb, final TimeUnit precision) {

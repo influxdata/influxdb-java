@@ -483,6 +483,44 @@ public class PointTest {
       assertThat(tags).isEqualTo(correctOrder);
     }
 
+    @Test
+    public void lineProtocolSkippingOfNanFields() {
+		String lineProtocol;
+
+		lineProtocol = Point
+				.measurement("test")
+				.time(1, TimeUnit.MILLISECONDS)
+				.addField("float-valid", 1f)
+				.addField("float-nan", Float.NaN)
+				.addField("float-inf1", Float.NEGATIVE_INFINITY)
+				.addField("float-inf2", Float.POSITIVE_INFINITY)
+				.tag("host", "serverA")
+				.build()
+				.lineProtocol(TimeUnit.MILLISECONDS);
+		assertThat(lineProtocol).isEqualTo("test,host=serverA float-valid=1.0 1");
+
+		lineProtocol = Point
+				.measurement("test")
+				.time(1, TimeUnit.MILLISECONDS)
+				.addField("double-valid", 1d)
+				.addField("double-nan", Double.NaN)
+				.addField("double-inf1", Double.NEGATIVE_INFINITY)
+				.addField("double-inf2", Double.POSITIVE_INFINITY)
+				.tag("host", "serverA")
+				.build()
+				.lineProtocol(TimeUnit.MILLISECONDS);
+		assertThat(lineProtocol).isEqualTo("test,host=serverA double-valid=1.0 1");
+
+		lineProtocol = Point
+				.measurement("test")
+				.time(1, TimeUnit.MILLISECONDS)
+				.addField("double-nan", Double.NaN)
+				.tag("host", "serverA")
+				.build()
+				.lineProtocol(TimeUnit.MILLISECONDS);
+		assertThat(lineProtocol).isEqualTo("");
+    }
+
 
   @Test
   public void testAddFieldsFromPOJONullCheck() {

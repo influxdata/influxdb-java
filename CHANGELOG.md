@@ -5,6 +5,8 @@
 ### Fixes
 
 - Add new annotation called TimeColumn for timestamp field in POJO bean, this can set Point time and precision field correctly, also avoid UnableToParseException when flush Point to influx.
+- Skip fields with NaN and infinity values when writing to InfluxDB
+  [Issue #614](https://github.com/influxdata/influxdb-java/issues/614)
 
 ## 2.15 [2019-02-22]
 
