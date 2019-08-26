@@ -236,6 +236,7 @@ public class Point {
 
       Class<? extends Object> clazz = pojo.getClass();
       while (clazz != null){
+
         for (Field field : clazz.getDeclaredFields()) {
 
           Column column = field.getAnnotation(Column.class);
