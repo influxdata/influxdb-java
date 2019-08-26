@@ -854,7 +854,7 @@ public class PointTest {
     }
 
     @Measurement(name = "SubMeasurement")
-    static class SubClassMeasurement extends SuperMeasurement{
+    static class SubClassMeasurement extends SuperMeasurement {
         @Column(name = "subClassField")
         String subValue;
     }
