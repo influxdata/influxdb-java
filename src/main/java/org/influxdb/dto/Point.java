@@ -235,7 +235,7 @@ public class Point {
     public Builder addFieldsFromPOJO(final Object pojo) {
 
       Class<? extends Object> clazz = pojo.getClass();
-      while (clazz != null){
+      while (clazz != null) {
 
         for (Field field : clazz.getDeclaredFields()) {
 
