@@ -235,19 +235,21 @@ public class Point {
     public Builder addFieldsFromPOJO(final Object pojo) {
 
       Class<? extends Object> clazz = pojo.getClass();
+      while (clazz != null){
+        for (Field field : clazz.getDeclaredFields()) {
 
-      for (Field field : clazz.getDeclaredFields()) {
+          Column column = field.getAnnotation(Column.class);
 
-        Column column = field.getAnnotation(Column.class);
+          if (column == null) {
+            continue;
+          }
 
-        if (column == null) {
-          continue;
+          field.setAccessible(true);
+          String fieldName = column.name();
+          addFieldByAttribute(pojo, field, column, fieldName);
         }
-
-        field.setAccessible(true);
-        String fieldName = column.name();
-        addFieldByAttribute(pojo, field, column, fieldName);
-      }
+      clazz = clazz.getSuperclass();
+    }
 
       if (this.fields.isEmpty()) {
         throw new BuilderException("Class " + pojo.getClass().getName()
