@@ -31,6 +31,8 @@ OkHttpClient client = new OkHttpClient.Builder()
   [Issue #367](https://github.com/influxdata/influxdb-java/issues/367)
 - BatchOptions to have .precision()
   [Issue #532](https://github.com/influxdata/influxdb-java/issues/532)
+- Point.Builder.addFieldsFromPOJO to add Column fields from super class
+  [Issue #613](https://github.com/influxdata/influxdb-java/issues/613)
 
 ## 2.14 [2018-10-12]
 
