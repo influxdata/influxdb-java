@@ -155,7 +155,7 @@ public interface InfluxDB extends AutoCloseable {
 
   /**
    * Enable batching of single Point writes to speed up writes significantly. This is the same as calling
-   * InfluxDB.enableBatch(BatchingOptions.DEFAULTS)
+   * InfluxDB.enableBatch(BatchOptions.DEFAULTS)
    * @return the InfluxDB instance to be able to use it in a fluent manner.
    */
   public InfluxDB enableBatch();
