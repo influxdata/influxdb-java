@@ -391,14 +391,14 @@ The latest version for maven dependence:
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
-  <version>2.15</version>
+  <version>2.16</version>
 </dependency>
 ```
 
 Or when using with gradle:
 
 ```groovy
-compile 'org.influxdb:influxdb-java:2.15'
+compile 'org.influxdb:influxdb-java:2.16'
 ```
 
 For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
