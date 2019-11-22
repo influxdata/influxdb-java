@@ -1023,31 +1023,77 @@ public class InfluxDBTest {
       Assertions.assertEquals("DONE", result.getError());
   }
 
-    /**
-     * Test chunking edge case.
-     * @throws InterruptedException
-     */
-    @Test
-    public void testChunkingFail() throws InterruptedException {
-        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
-            // do not test version 0.13 and 1.0
-            return;
-        }
-        String dbName = "write_unittest_" + System.currentTimeMillis();
-        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        Query query = new Query("UNKNOWN_QUERY", dbName);
-        this.influxDB.query(query, 10, new Consumer<QueryResult>() {
-            @Override
-            public void accept(QueryResult result) {
-                countDownLatch.countDown();
-            }
-        });
-        this.influxDB.query(new Query("DROP DATABASE " + dbName));
-        Assertions.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
-    }
+	/**
+	 * Test chunking edge case.
+	 *
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testChunkingFail() throws InterruptedException {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		final CountDownLatch countDownLatchFailure = new CountDownLatch(1);
+		Query query = new Query("UNKNOWN_QUERY", dbName);
+		this.influxDB.query(query, 10,
+				(cancellable, queryResult) -> {
+					countDownLatch.countDown();
+				}, () -> {
+				},
+				throwable -> {
+					countDownLatchFailure.countDown();
+				});
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+		Assertions.assertTrue(countDownLatchFailure.await(10, TimeUnit.SECONDS));
+		Assertions.assertFalse(countDownLatch.await(10, TimeUnit.SECONDS));
+	}
 
-    /**
+	@Test
+	public void testChunkingFailInConsumer() throws InterruptedException {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+		Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+		Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
+		batchPoints.point(point3);
+		this.influxDB.write(batchPoints);
+
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		final CountDownLatch countDownLatchFailure = new CountDownLatch(1);
+		final CountDownLatch countDownLatchComplete = new CountDownLatch(1);
+		Query query = new Query("SELECT * FROM disk", dbName);
+		this.influxDB.query(query, 2,
+				(cancellable, queryResult) -> {
+					countDownLatch.countDown();
+					throw new RuntimeException("my error");
+				}, () -> {
+					countDownLatchComplete.countDown();
+					System.out.println("onComplete()");
+				},
+				throwable -> {
+					Assertions.assertEquals(throwable.getMessage(), "my error");
+					countDownLatchFailure.countDown();
+				});
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+		Assertions.assertTrue(countDownLatchFailure.await(10, TimeUnit.SECONDS));
+		Assertions.assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+		Assertions.assertFalse(countDownLatchComplete.await(10, TimeUnit.SECONDS));
+	}
+
+	/**
      * Test chunking on 0.13 and 1.0.
      * @throws InterruptedException
      */

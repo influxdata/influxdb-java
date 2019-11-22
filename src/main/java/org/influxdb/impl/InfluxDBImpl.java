@@ -676,7 +676,13 @@ public class InfluxDBImpl implements InfluxDB {
           if (onFailure != null) {
             onFailure.accept(e);
           }
+        } catch (Exception e) {
+          call.cancel();
+          if (onFailure != null) {
+            onFailure.accept(e);
+          }
         }
+
       }
 
       @Override
