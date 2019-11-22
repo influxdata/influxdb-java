@@ -276,9 +276,13 @@ public class Point {
         }
 
         if (column.tag()) {
-          this.tags.put(fieldName, (String) fieldValue);
+          if(fieldValue != null) {
+            this.tags.put(fieldName, (String) fieldValue);
+          }
         } else {
-          this.fields.put(fieldName, fieldValue);
+          if(fieldValue != null) {
+            this.fields.put(fieldName, fieldValue);
+          }
         }
 
       } catch (IllegalArgumentException | IllegalAccessException e) {
