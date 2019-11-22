@@ -276,11 +276,11 @@ public class Point {
         }
 
         if (column.tag()) {
-          if(fieldValue != null) {
+          if (fieldValue != null) {
             this.tags.put(fieldName, (String) fieldValue);
           }
         } else {
-          if(fieldValue != null) {
+          if (fieldValue != null) {
             this.fields.put(fieldName, fieldValue);
           }
         }
