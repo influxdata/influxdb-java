@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.17 [2019-12-06]
+
+### Fixes
+- Fixed runtime exception propagation in chunked query [Issue #639](https://github.com/influxdata/influxdb-java/issues/639)
+
 ## 2.16 [2019-10-25]
 
 ### Fixes
