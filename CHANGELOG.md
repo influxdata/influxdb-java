@@ -1,5 +1,7 @@
 # Changelog
 
+## 2.18 [unreleased]
+
 ## 2.17 [2019-12-06]
 
 ### Fixes
