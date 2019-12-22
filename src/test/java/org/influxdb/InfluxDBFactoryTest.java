@@ -21,8 +21,14 @@ public class InfluxDBFactoryTest {
 	 * Test for a {@link InfluxDBFactory #connect(String)}.
 	 */
 	@Test
-	public void testCreateInfluxDBInstanceWithoutUserNameAndPassword() {
+	public void testShouldNotUseBasicAuthWhenCreateInfluxDBInstanceWithoutUserNameAndPassword() {
 		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true));
+		verifyInfluxDBInstance(influxDB);
+	}
+
+	@Test
+	public void testShouldNotUseBasicAuthWhenCreateInfluxDBInstanceWithUserNameAndWithoutPassword() {
+		InfluxDB influxDB = InfluxDBFactory.connect("http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true), "admin", null);
 		verifyInfluxDBInstance(influxDB);
 	}
 
