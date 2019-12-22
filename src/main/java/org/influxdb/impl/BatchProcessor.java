@@ -35,7 +35,7 @@ public final class BatchProcessor {
   protected final BlockingQueue<AbstractBatchEntry> queue;
   private final ScheduledExecutorService scheduler;
   private final BiConsumer<Iterable<Point>, Throwable> exceptionHandler;
-  final InfluxDBImpl influxDB;
+  final InfluxDB influxDB;
   final int actions;
   private final TimeUnit flushIntervalUnit;
   private final int flushInterval;
@@ -48,7 +48,7 @@ public final class BatchProcessor {
    * The Builder to create a BatchProcessor instance.
    */
   public static final class Builder {
-    private final InfluxDBImpl influxDB;
+    private final InfluxDB influxDB;
     private ThreadFactory threadFactory = Executors.defaultThreadFactory();
     private int actions;
     private TimeUnit flushIntervalUnit;
@@ -77,7 +77,7 @@ public final class BatchProcessor {
      *            is mandatory.
      */
     public Builder(final InfluxDB influxDB) {
-      this.influxDB = (InfluxDBImpl) influxDB;
+      this.influxDB = influxDB;
     }
 
     /**
@@ -259,7 +259,7 @@ public final class BatchProcessor {
     return new Builder(influxDB);
   }
 
-  BatchProcessor(final InfluxDBImpl influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
+  BatchProcessor(final InfluxDB influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
                  final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
                  final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
                  final ConsistencyLevel consistencyLevel, final TimeUnit precision) {

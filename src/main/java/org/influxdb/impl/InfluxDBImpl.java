@@ -147,9 +147,12 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    OkHttpClient.Builder clonedOkHttpBuilder = okHttpBuilder.build().newBuilder();
-    clonedOkHttpBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
-      addInterceptor(new BasicAuthInterceptor(username, password));
+    OkHttpClient.Builder clonedOkHttpBuilder = okHttpBuilder.build().newBuilder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(gzipRequestInterceptor);
+    if (username != null && password != null) {
+      clonedOkHttpBuilder.addInterceptor(new BasicAuthInterceptor(username, password));
+    }
     Factory converterFactory = null;
     switch (responseFormat) {
     case MSGPACK:
@@ -195,9 +198,11 @@ public class InfluxDBImpl implements InfluxDB {
     setLogLevel(LOG_LEVEL);
 
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
-    OkHttpClient.Builder clonedBuilder = client.build().newBuilder();
-    this.client = clonedBuilder.addInterceptor(loggingInterceptor).addInterceptor(gzipRequestInterceptor).
-        addInterceptor(new BasicAuthInterceptor(username, password)).build();
+    OkHttpClient.Builder clonedBuilder = client.build().newBuilder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(gzipRequestInterceptor)
+            .addInterceptor(new BasicAuthInterceptor(username, password));
+    this.client = clonedBuilder.build();
     this.retrofit = new Retrofit.Builder().baseUrl(url)
         .client(this.client)
         .addConverterFactory(MoshiConverterFactory.create()).build();
