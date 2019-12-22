@@ -77,7 +77,7 @@ public final class BatchProcessor {
      *            is mandatory.
      */
     public Builder(final InfluxDB influxDB) {
-      this.influxDB = (InfluxDB) influxDB;
+      this.influxDB = influxDB;
     }
 
     /**
