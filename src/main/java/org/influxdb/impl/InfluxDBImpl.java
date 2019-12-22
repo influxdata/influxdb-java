@@ -200,10 +200,8 @@ public class InfluxDBImpl implements InfluxDB {
     this.gzipRequestInterceptor = new GzipRequestInterceptor();
     OkHttpClient.Builder clonedBuilder = client.build().newBuilder()
             .addInterceptor(loggingInterceptor)
-            .addInterceptor(gzipRequestInterceptor);
-    if (username != null && password != null) {
-      clonedBuilder = clonedBuilder.addInterceptor(new BasicAuthInterceptor(username, password));
-    }
+            .addInterceptor(gzipRequestInterceptor)
+            .addInterceptor(new BasicAuthInterceptor(username, password));
     this.client = clonedBuilder.build();
     this.retrofit = new Retrofit.Builder().baseUrl(url)
         .client(this.client)
