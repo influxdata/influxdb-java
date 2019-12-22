@@ -2,9 +2,14 @@
 
 ## 2.18 [unreleased]
 
+### Fixes
+
+- Update to okhttp 4.x [PR #644](https://github.com/influxdata/influxdb-java/pull/644)
+
 ## 2.17 [2019-12-06]
 
 ### Fixes
+
 - Fixed runtime exception propagation in chunked query [Issue #639](https://github.com/influxdata/influxdb-java/issues/639)
 
 ## 2.16 [2019-10-25]
