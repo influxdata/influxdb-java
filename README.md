@@ -235,7 +235,7 @@ Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
 
-#### QueryResult mapper to POJO (version 2.7+ required)
+#### QueryResult mapper to POJO (version 2.7+ required, version 2.17+ for @TimeColumn annotation required)
 
 An alternative way to handle the QueryResult object is now available.
 Supposing that you have a measurement _CPU_:
