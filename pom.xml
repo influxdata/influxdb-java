@@ -9,10 +9,6 @@
   <description>Java API to access the InfluxDB REST API</description>
   <url>http://www.influxdb.org</url>
 
-  <prerequisites>
-    <maven>3.3.9</maven>
-  </prerequisites>
-
   <licenses>
     <license>
       <name>The MIT License (MIT)</name>
@@ -133,6 +129,26 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.3.9</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
