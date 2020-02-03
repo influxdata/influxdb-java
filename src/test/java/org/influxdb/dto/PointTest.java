@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -15,14 +16,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.influxdb.BuilderException;
+import org.influxdb.InfluxDB;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
+import org.influxdb.impl.InfluxDBImpl;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 
 /**
  * Test for the Point DTO.
@@ -616,6 +620,32 @@ public class PointTest {
     }
 
     @Test
+    public void testAddFieldsFromPOJOConsistentWithAddField() {
+        PojoNumberPrimitiveTypes pojo = new PojoNumberPrimitiveTypes();
+        pojo.shortType = 128;
+        pojo.intType = 1_048_576;
+        pojo.longType = 1_073_741_824;
+        pojo.floatType = 246.8f;
+        pojo.doubleType = 123.4;
+
+        Point pojo_point = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        mockInfluxDB.write(pojo_point);
+
+        Point expected = Point.measurement("PojoNumberPrimitiveTypes")
+                .addField("shortType", pojo.shortType)
+                .addField("intType", pojo.intType)
+                .addField("longType", pojo.longType)
+                .addField("floatType", pojo.floatType)
+                .addField("doubleType", pojo.doubleType)
+                .build();
+
+        Assert.assertEquals(pojo_point.lineProtocol(), expected.lineProtocol());
+        Mockito.verify(mockInfluxDB).write(expected);
+    }
+
+    @Test
     public void testAddFieldsFromPOJOWithPublicAttributes() {
 
         PojoWithPublicAttributes pojo = new PojoWithPublicAttributes();
@@ -857,5 +887,24 @@ public class PointTest {
     static class SubClassMeasurement extends SuperMeasurement {
         @Column(name = "subClassField")
         String subValue;
+    }
+
+    @Measurement(name = "PojoNumberPrimitiveTypes")
+    static class PojoNumberPrimitiveTypes
+    {
+        @Column(name = "shortType")
+        public short shortType;
+
+        @Column(name = "intType")
+        public int intType;
+
+        @Column(name = "longType")
+        public long longType;
+
+        @Column(name = "floatType")
+        public float floatType;
+
+        @Column(name = "doubleType")
+        public double doubleType;
     }
 }
