@@ -178,6 +178,21 @@ public class Point {
       return this;
     }
 
+    public Builder addField(final String field, final int value) {
+      fields.put(field, value);
+      return this;
+    }
+
+    public Builder addField(final String field, final float value) {
+      fields.put(field, value);
+      return this;
+    }
+
+    public Builder addField(final String field, final short value) {
+      fields.put(field, value);
+      return this;
+    }
+
     public Builder addField(final String field, final Number value) {
       fields.put(field, value);
       return this;
