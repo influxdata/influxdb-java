@@ -7,6 +7,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -352,6 +353,56 @@ public class PointTest {
     }
 
     /**
+     * Tests for #267
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLineProtocolBigInteger() throws Exception {
+        // GIVEN a point with nanosecond precision farther in the future than a long can hold
+        Instant instant = Instant.EPOCH.plus(600L * 365, ChronoUnit.DAYS);
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(BigInteger.valueOf(instant.getEpochSecond())
+                                .multiply(BigInteger.valueOf(1000000000L))
+                                .add(BigInteger.valueOf(instant.getNano())), TimeUnit.NANOSECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.NANOSECONDS)
+        String nanosTime = p.lineProtocol(TimeUnit.NANOSECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in nanoseconds
+        assertThat(nanosTime).isEqualTo(BigInteger.valueOf(instant.getEpochSecond())
+                                                  .multiply(BigInteger.valueOf(1000000000L))
+                                                  .add(BigInteger.valueOf(instant.getNano())).toString());
+    }
+
+    /**
+     * Tests for #267
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLineProtocolBigDecimal() throws Exception {
+        // GIVEN a point with nanosecond precision farther in the future than a long can hold
+        Instant instant = Instant.EPOCH.plus(600L * 365, ChronoUnit.DAYS);
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(BigDecimal.valueOf(instant.getEpochSecond())
+                                .multiply(BigDecimal.valueOf(1000000000L))
+                                .add(BigDecimal.valueOf(instant.getNano())).add(BigDecimal.valueOf(1.9123456)), TimeUnit.NANOSECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.NANOSECONDS)
+        String nanosTime = p.lineProtocol(TimeUnit.NANOSECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is the integer part of the BigDecimal
+        assertThat(nanosTime).isEqualTo("18921600000000000001");
+    }
+
+    /**
      * Tests for #182
      *
      * @throws Exception
@@ -576,6 +627,27 @@ public class PointTest {
     }
 
     @Test
+    public void testAddFieldsFromPOJOWithTimeColumnNanoseconds() throws NoSuchFieldException, IllegalAccessException {
+        TimeColumnPojoNano pojo = new TimeColumnPojoNano();
+        pojo.time = Instant.now().plusNanos(13213L).plus(365L * 12000, ChronoUnit.DAYS);
+        pojo.booleanPrimitive = true;
+
+        Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        Field timeField = p.getClass().getDeclaredField("time");
+        Field precisionField = p.getClass().getDeclaredField("precision");
+        timeField.setAccessible(true);
+        precisionField.setAccessible(true);
+
+        Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+        Assertions.assertEquals(TimeUnit.NANOSECONDS, precisionField.get(p));
+        Assertions.assertEquals(BigInteger.valueOf(pojo.time.getEpochSecond())
+                                           .multiply(BigInteger.valueOf(1000000000L)).add(
+                                           BigInteger.valueOf(pojo.time.getNano())), timeField.get(p));
+
+        pojo.time = null;
+    }
+
+    @Test
     public void testAddFieldsFromPOJOWithTimeColumnNull() throws NoSuchFieldException, IllegalAccessException {
         TimeColumnPojo pojo = new TimeColumnPojo();
         pojo.booleanPrimitive = true;
@@ -723,6 +795,16 @@ public class PointTest {
         private boolean booleanPrimitive;
 
         @TimeColumn
+        @Column(name = "time")
+        private Instant time;
+    }
+
+    @Measurement(name = "tcmeasurement")
+    static class TimeColumnPojoNano {
+        @Column(name = "booleanPrimitive")
+        private boolean booleanPrimitive;
+
+        @TimeColumn(timeUnit = TimeUnit.NANOSECONDS)
         @Column(name = "time")
         private Instant time;
     }

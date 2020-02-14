@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.Instant;
 import java.util.Locale;
@@ -28,7 +29,7 @@ import org.influxdb.impl.Preconditions;
 public class Point {
   private String measurement;
   private Map<String, String> tags;
-  private Long time;
+  private Number time;
   private TimeUnit precision = TimeUnit.NANOSECONDS;
   private Map<String, Object> fields;
   private static final int MAX_FRACTION_DIGITS = 340;
@@ -89,9 +90,10 @@ public class Point {
    *
    */
   public static final class Builder {
+    private static final BigInteger NANOSECONDS_PER_SECOND = BigInteger.valueOf(1000000000L);
     private final String measurement;
     private final Map<String, String> tags = new TreeMap<>();
-    private Long time;
+    private Number time;
     private TimeUnit precision;
     private final Map<String, Object> fields = new TreeMap<>();
 
@@ -220,11 +222,12 @@ public class Point {
     /**
      * Add a time to this point.
      *
-     * @param timeToSet the time for this point
+     * @param timeToSet      the time for this point
      * @param precisionToSet the TimeUnit
      * @return the Builder instance.
      */
-    public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
+    public Builder time(final Number timeToSet, final TimeUnit precisionToSet) {
+      Objects.requireNonNull(timeToSet, "timeToSet");
       Objects.requireNonNull(precisionToSet, "precisionToSet");
       this.time = timeToSet;
       this.precision = precisionToSet;
@@ -283,9 +286,17 @@ public class Point {
         TimeColumn tc = field.getAnnotation(TimeColumn.class);
         if (tc != null && Instant.class.isAssignableFrom(field.getType())) {
           Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
-            TimeUnit timeUint = tc.timeUnit();
-            this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUint);
-            this.precision = timeUint;
+            TimeUnit timeUnit = tc.timeUnit();
+            if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
+              this.time = BigInteger.valueOf(instant.getEpochSecond())
+                                    .multiply(NANOSECONDS_PER_SECOND)
+                                    .add(BigInteger.valueOf(instant.getNano()))
+                                    .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
+            } else {
+              this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUnit);
+              this.precision = timeUnit;
+            }
+            this.precision = timeUnit;
           });
           return;
         }
@@ -339,7 +350,7 @@ public class Point {
    * @param time
    *            the time to set
    */
-  void setTime(final Long time) {
+  void setTime(final Number time) {
     this.time = time;
   }
 
@@ -553,12 +564,36 @@ public class Point {
     if (this.time == null) {
       return;
     }
-    if (precision == null) {
-      sb.append(" ").append(TimeUnit.NANOSECONDS.convert(this.time, this.precision));
-      return;
+    TimeUnit converterPrecision = precision;
+
+    if (converterPrecision == null) {
+      converterPrecision = TimeUnit.NANOSECONDS;
     }
-    sb.append(" ").append(precision.convert(this.time, this.precision));
+    if (this.time instanceof BigInteger) {
+      BigInteger time = (BigInteger) this.time;
+      long conversionFactor = converterPrecision.convert(1, this.precision);
+      if (conversionFactor >= 1) {
+        time = time.multiply(BigInteger.valueOf(conversionFactor));
+      } else {
+        conversionFactor = this.precision.convert(1, converterPrecision);
+        time = time.divide(BigInteger.valueOf(conversionFactor));
+      }
+      sb.append(" ").append(time);
+    } else if (this.time instanceof BigDecimal) {
+      BigDecimal time = (BigDecimal) this.time;
+      long conversionFactor = converterPrecision.convert(1, this.precision);
+      if (conversionFactor >= 1) {
+        time = time.multiply(BigDecimal.valueOf(conversionFactor));
+      } else {
+        conversionFactor = this.precision.convert(1, converterPrecision);
+        time = time.divide(BigDecimal.valueOf(conversionFactor), RoundingMode.HALF_UP);
+      }
+      sb.append(" ").append(time.toBigInteger());
+    } else {
+      sb.append(" ").append(converterPrecision.convert(this.time.longValue(), this.precision));
+    }
   }
+
 
   private static String findMeasurementName(final Class<?> clazz) {
     return clazz.getAnnotation(Measurement.class).name();
