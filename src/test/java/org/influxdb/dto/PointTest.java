@@ -398,7 +398,7 @@ public class PointTest {
         // WHEN i call lineProtocol(TimeUnit.SECONDS)
         String secondTime = p.lineProtocol(TimeUnit.SECONDS).replace("measurement foo=\"bar\" ", "");
 
-        // THEN the timestamp is in nanoseconds
+        // THEN the timestamp is the seconds part of the Instant
         assertThat(secondTime).isEqualTo(Long.toString(instant.getEpochSecond()));
     }
 
@@ -446,7 +446,7 @@ public class PointTest {
         // WHEN i call lineProtocol(TimeUnit.SECONDS)
         String secondTime = p.lineProtocol(TimeUnit.SECONDS).replace("measurement foo=\"bar\" ", "");
 
-        // THEN the timestamp is the integer part of the BigDecimal
+        // THEN the timestamp is the seconds part of the Instant
         assertThat(secondTime).isEqualTo(Long.toString(instant.getEpochSecond()));
     }
 
