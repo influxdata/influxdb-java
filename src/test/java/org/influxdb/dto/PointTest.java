@@ -384,6 +384,30 @@ public class PointTest {
      * @throws Exception
      */
     @Test
+    public void testLineProtocolBigIntegerSeconds() throws Exception {
+        // GIVEN a point with nanosecond precision farther in the future than a long can hold
+        Instant instant = Instant.EPOCH.plus(600L * 365, ChronoUnit.DAYS);
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(BigInteger.valueOf(instant.getEpochSecond())
+                                .multiply(BigInteger.valueOf(1000000000L))
+                                .add(BigInteger.valueOf(instant.getNano())), TimeUnit.NANOSECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.SECONDS)
+        String secondTime = p.lineProtocol(TimeUnit.SECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is in nanoseconds
+        assertThat(secondTime).isEqualTo(Long.toString(instant.getEpochSecond()));
+    }
+
+    /**
+     * Tests for #267
+     *
+     * @throws Exception
+     */
+    @Test
     public void testLineProtocolBigDecimal() throws Exception {
         // GIVEN a point with nanosecond precision farther in the future than a long can hold
         Instant instant = Instant.EPOCH.plus(600L * 365, ChronoUnit.DAYS);
@@ -400,6 +424,30 @@ public class PointTest {
 
         // THEN the timestamp is the integer part of the BigDecimal
         assertThat(nanosTime).isEqualTo("18921600000000000001");
+    }
+
+    /**
+     * Tests for #267
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLineProtocolBigDecimalSeconds() throws Exception {
+        // GIVEN a point with nanosecond precision farther in the future than a long can hold
+        Instant instant = Instant.EPOCH.plus(600L * 365, ChronoUnit.DAYS);
+        Point p = Point
+                .measurement("measurement")
+                .addField("foo", "bar")
+                .time(BigDecimal.valueOf(instant.getEpochSecond())
+                                .multiply(BigDecimal.valueOf(1000000000L))
+                                .add(BigDecimal.valueOf(instant.getNano())).add(BigDecimal.valueOf(1.9123456)), TimeUnit.NANOSECONDS)
+                .build();
+
+        // WHEN i call lineProtocol(TimeUnit.SECONDS)
+        String secondTime = p.lineProtocol(TimeUnit.SECONDS).replace("measurement foo=\"bar\" ", "");
+
+        // THEN the timestamp is the integer part of the BigDecimal
+        assertThat(secondTime).isEqualTo(Long.toString(instant.getEpochSecond()));
     }
 
     /**
