@@ -235,6 +235,18 @@ public class Point {
     }
 
     /**
+     * Add a time to this point as Long.
+     * only kept for binary compatibility with previous releases.
+     *
+     * @param timeToSet      the time for this point as Long
+     * @param precisionToSet the TimeUnit
+     * @return the Builder instance.
+     */
+    public Builder time(final Long timeToSet, final TimeUnit precisionToSet) {
+      return time((Number) timeToSet, precisionToSet);
+    }
+
+    /**
      * Does this builder contain any fields?
      *
      * @return true, if the builder contains any fields, false otherwise.
