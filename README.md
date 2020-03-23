@@ -131,9 +131,13 @@ There is a shell script running InfluxDB and Maven from inside a Docker containe
 $> ./compile-and-test.sh
 ```
 
-## Frequently Asked Questions
+## Useful links
 
-This is a [FAQ](FAQ.md) list for influxdb-java.
+* [Manual](MANUAL.md) (main documentation);
+* [InfluxDB Object Mapper](INFLUXDB_MAPPER.md);
+* [Query Builder](QUERY_BUILDER.md);
+* [FAQ](FAQ.md);
+* [Changelog](CHANGELOG.md).
 
 ## License
 
