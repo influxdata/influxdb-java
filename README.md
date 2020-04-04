@@ -42,10 +42,10 @@ compile group: 'org.influxdb', name: 'influxdb-java', version: "${influxdbClient
     * [InfluxDB line protocol](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/) (for the braves only);
     * UDP, as [supported by InfluxDB](https://docs.influxdata.com/influxdb/v1.7/supported_protocols/udp/);
 * Support synchronous and asynchronous writes;
-* Batch support configurable: `jitter` interval, `buffer` size and `flush` interval.
+* Batch support configurable with `jitter` interval, `buffer` size and `flush` interval.
 
 
-## Basic Usage
+## Quick start
 
 ```Java
 // Create an object to handle the communication with InfluxDB.
@@ -71,11 +71,11 @@ influxDB.enableBatch(BatchOptions.DEFAULTS);
 
 // Write points to InfluxDB.
 influxDB.write(Point.measurement("h2o_feet")
-    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-    .tag("location", "santa_monica")
-    .addField("level description", "below 3 feet")
-    .addField("water_level", 2.064d)
-    .build());
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.tag("location", "santa_monica")
+	.addField("level description", "below 3 feet")
+	.addField("water_level", 2.064d)
+	.build());
 
 influxDB.write(Point.measurement("h2o_feet")
 	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
@@ -91,7 +91,7 @@ Thread.sleep(5_000L);
 
 // Query your data using InfluxQL.
 // https://docs.influxdata.com/influxdb/v1.7/query_language/data_exploration/#the-basic-select-statement
-QueryResult queryResult = influxDB.query(new Query("SELECT * FROM h2o_feet", databaseName));
+QueryResult queryResult = influxDB.query(new Query("SELECT * FROM h2o_feet"));
 
 System.out.println(queryResult);
 // It will print something like:

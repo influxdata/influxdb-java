@@ -1,69 +1,98 @@
-# influxdb-java
+# Manual
 
-[![Build Status](https://travis-ci.org/influxdata/influxdb-java.svg?branch=master)](https://travis-ci.org/influxdata/influxdb-java)
-[![codecov.io](http://codecov.io/github/influxdata/influxdb-java/coverage.svg?branch=master)](http://codecov.io/github/influxdata/influxdb-java?branch=master)
-[![Issue Count](https://codeclimate.com/github/influxdata/influxdb-java/badges/issue_count.svg)](https://codeclimate.com/github/influxdata/influxdb-java)
+## Quick start
+The code below is similar to the one found on the README.md file but with comments removed and rows numbered for better reference.
 
-Note: This library is for use with InfluxDB 1.x. For connecting to InfluxDB 2.x instances, please use the [influxdb-client-java](https://github.com/influxdata/influxdb-client-java) client.
+```Java
+final String serverURL = "http://127.0.0.1:8086", username = "root", password = "root";
+final InfluxDB influxDB = InfluxDBFactory.connect(serverURL, username, password);  // (1)
 
-This is the Java Client library which is only compatible with InfluxDB 0.9 and higher. Maintained by [@majst01](https://github.com/majst01).
+String databaseName = "NOAA_water_database";
+influxDB.query(new Query("CREATE DATABASE " + databaseName));
+influxDB.setDatabase(databaseName);                                       // (2)
 
-To connect to InfluxDB 0.8.x you need to use influxdb-java version 1.6.
+String retentionPolicyName = "one_day_only";
+influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName 
+		+ " ON " + databaseName + " DURATION 1d REPLICATION 1 DEFAULT"));
+influxDB.setRetentionPolicy(retentionPolicyName);                         // (3)
 
-This implementation is meant as a Java rewrite of the influxdb-go package.
-All low level REST Api calls are available.
+influxDB.enableBatch(BatchOptions.DEFAULTS);                              // (4)
 
-## Usage
+influxDB.write(Point.measurement("h2o_feet")                              // (5)
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.tag("location", "santa_monica")
+	.addField("level description", "below 3 feet")
+	.addField("water_level", 2.064d)
+	.build());
 
-### Basic Usage
+influxDB.write(Point.measurement("h2o_feet")                              // (5)
+	.tag("location", "coyote_creek")
+	.addField("level description", "between 6 and 9 feet")
+	.addField("water_level", 8.12d)
+	.build());                                                            // (6)
 
-This is a recommended approach to write data points into InfluxDB. The influxdb-java
-client is storing your writes into an internal buffer and flushes them asynchronously
-to InfluxDB at a fixed flush interval to achieve good performance on both client and
-server side. This requires influxdb-java v2.7 or newer.
+Thread.sleep(5_000L);                                                     // (7)
 
-If you want to write data points immediately into InfluxDB and synchronously process
-resulting errors see [this section.](#synchronous-writes)
+QueryResult queryResult = influxDB.query(new Query("SELECT * FROM h2o_feet"));
 
-```java
-InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
-String dbName = "aTimeSeries";
-influxDB.query(new Query("CREATE DATABASE " + dbName));
-influxDB.setDatabase(dbName);
-String rpName = "aRetentionPolicy";
-influxDB.query(new Query("CREATE RETENTION POLICY " + rpName + " ON " + dbName + " DURATION 30h REPLICATION 2 SHARD DURATION 30m DEFAULT"));
-influxDB.setRetentionPolicy(rpName);
+System.out.println(queryResult);
+// It will print something like:
+// QueryResult [results=[Result [series=[Series [name=h2o_feet, tags=null, 
+// 		columns=[time, level description, location, water_level],
+//		values=[
+// 			[2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064], 
+//			[2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
+//		]]], error=null]], error=null]
 
-influxDB.enableBatch(BatchOptions.DEFAULTS);
+influxDB.close();                                                         // (8)
+```
 
-influxDB.write(Point.measurement("cpu")
-    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-    .addField("idle", 90L)
-    .addField("user", 9L)
-    .addField("system", 1L)
-    .build());
+### Connecting to InfluxDB
+(1) The `InfluxDB` client is thread-safe and our recommendation is to have a single instance per application and reuse it, when possible. Every `InfluxDB` instance keeps multiple data structures, including those used to manage different pools like HTTP clients for reads and writes.
 
-influxDB.write(Point.measurement("disk")
-    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-    .addField("used", 80L)
-    .addField("free", 1L)
-    .build());
+It's possible to have just one client even when reading or writing to multiple InfluxDB databases and this will be shown later here.
 
-Query query = new Query("SELECT idle FROM cpu", dbName);
-influxDB.query(query);
-influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
-influxDB.query(new Query("DROP DATABASE " + dbName));
+
+### Setting a default database (optional)
+(2) If you are not querying different databases with a single `InfluxDB` client, it's possible to set a default database name and all queries (reads and writes) from this `InfluxDB` client will be executed against the default database.
+
+If we only comment out the line (2) then all reads and writes queries would fail. To avoid this, we need to pass the database name as parameter to `BatchPoints` (writes) and to `Query` (reads). For example:
+
+```Java
+// ...
+String databaseName = "NOAA_water_database";
+// influxDB.setDatabase() won't be called...
+String retentionPolicyName = "one_day_only";
+// ...
+
+BatchPoints batchPoints = BatchPoints.database(databaseName).retentionPolicy(retentionPolicyName).build();
+
+batchPoints.point(Point.measurement("h2o_feet")
+	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+	.tag("location", "santa_monica")
+	.addField("level description", "below 3 feet")
+	.addField("water_level", 2.064d)
+	.build());
+
+// ...
+influxDB.write(batchPoints);
+// ...
+QueryResult queryResult = influxDB.query(new Query("SELECT * FROM h2o_feet"), databaseName);
+// ...
 influxDB.close();
 ```
 
-Any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
-If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:
+It's possible to use both approaches at the same time: set a default database using `influxDB.setDatabase` and read/write passing a `databaseName` as parameter. On this case, the `databaseName` passed as parameter will be used.
 
-```java
-influxDB.enableBatch(BatchOptions.DEFAULTS.exceptionHandler(
-        (failedPoints, throwable) -> { /* custom error handling here */ })
-);
-```
+
+### Setting a default retention policy (optional)
+(3) ...
+
+
+### Enabling batch writes
+(4) ...
+
+`----8<----BEGIN DRAFT----8<----`
 
 With batching enabled the client provides two strategies how to deal with errors thrown by the InfluxDB server.
 
@@ -79,48 +108,47 @@ Note:
 
 * Batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
 * `InfluxDB.enableBatch(BatchOptions)` is available since version 2.9. Prior versions use `InfluxDB.enableBatch(actions, flushInterval, timeUnit)` or similar based on the configuration parameters you want to set.
-* APIs to create and drop retention policies are supported only in versions > 2.7
-* If you are using influxdb < 2.8, you should use retention policy: 'autogen'
-* If you are using influxdb < 1.0.0, you should use 'default' instead of 'autogen'
 
-If your points are written into different databases and retention policies, the more complex InfluxDB.write() methods can be used:
+#### Batch flush interval jittering (version 2.9+ required)
 
-```java
-InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
-String dbName = "aTimeSeries";
-influxDB.query(new Query("CREATE DATABASE " + dbName));
-String rpName = "aRetentionPolicy";
-influxDB.query(new Query("CREATE RETENTION POLICY " + rpName + " ON " + dbName + " DURATION 30h REPLICATION 2 SHARD DURATION 30m DEFAULT"));
+When using large number of influxdb-java clients against a single server it may happen that all the clients
+will submit their buffered points at the same time and possibly overloading the server. This is usually happening
+when all the clients are started at once - for instance as members of cloud hosted large cluster networks.  
+If all the clients have the same flushDuration set this situation will repeat periodically.
 
-// Flush every 2000 Points, at least every 100ms
-influxDB.enableBatch(BatchOptions.DEFAULTS.actions(2000).flushDuration(100));
+To solve this situation the influxdb-java offers an option to offset the flushDuration by a random interval so that
+the clients will flush their buffers in different intervals:
 
-Point point1 = Point.measurement("cpu")
-                    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                    .addField("idle", 90L)
-                    .addField("user", 9L)
-                    .addField("system", 1L)
-                    .build();
-Point point2 = Point.measurement("disk")
-                    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                    .addField("used", 80L)
-                    .addField("free", 1L)
-                    .build();
-
-influxDB.write(dbName, rpName, point1);
-influxDB.write(dbName, rpName, point2);
-Query query = new Query("SELECT idle FROM cpu", dbName);
-influxDB.query(query);
-influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
-influxDB.query(new Query("DROP DATABASE " + dbName));
-influxDB.close();
+```Java
+influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500));
 ```
 
-#### Synchronous writes
+`----8<----END DRAFT----8<----`
 
-If you want to write the data points immediately to InfluxDB (and handle the errors as well) without any delays see the following example:
 
-```java
+### Writing to InfluxDB
+(5) ...
+
+`----8<----BEGIN DRAFT----8<----`
+
+Any errors that happen during the batch flush won't leak into the caller of the `write` method. By default, any kind of errors will be just logged with "SEVERE" level.
+If you need to be notified and do some custom logic when such asynchronous errors happen, you can add an error handler with a `BiConsumer<Iterable<Point>, Throwable>` using the overloaded `enableBatch` method:
+
+```Java
+influxDB.enableBatch(BatchOptions.DEFAULTS.exceptionHandler(
+        (failedPoints, throwable) -> { /* custom error handling here */ })
+);
+```
+
+`----8<----END DRAFT----8<----`
+
+#### Writing synchronously to InfluxDB (not recommended)
+
+If you want to write the data points synchronously to InfluxDB and handle the errors (as they may happen) with every write:
+
+`----8<----BEGIN DRAFT----8<----`
+
+```Java
 InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
 String dbName = "aTimeSeries";
 influxDB.query(new Query("CREATE DATABASE " + dbName));
@@ -152,61 +180,44 @@ influxDB.query(query);
 influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
 influxDB.query(new Query("DROP DATABASE " + dbName));
 ```
+`----8<----END DRAFT----8<----`
 
-#### Try-with-resources
-Try-with-resources is a new feature in JDK7, InfluxDB support this feature, you can use it just like the following example:
+### Reading from InfluxDB
+(7) ...
+
+#### Query using Callbacks (version 2.8+ required)
+
+influxdb-java now supports returning results of a query via callbacks. Only one
+of the following consumers are going to be called once :
 
 ```java
-try (InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root")) {
-        // Read or Write, do any thing you want
-}
+this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
+    // Do something with the result...
+}, throwable -> {
+    // Do something with the error...
+});
 ```
 
-#### Default database to query
+#### Query using parameter binding ("prepared statements", version 2.10+ required)
 
-If you only use one database you can set client level database information. This database will be used for all subsequent HTTP queries, 
-but if you still sometimes need to query some different database you can, you need to provide provide database information directly in the query,
-then database information in the query will take precedence and query will be pushed to that database. 
-This is shown in the following example:
+If your Query is based on user input, it is good practice to use parameter binding to avoid [injection attacks](https://en.wikipedia.org/wiki/SQL_injection).
+You can create queries with parameter binding with the help of the QueryBuilder:
 
 ```java
-// Database names
-InfluxDB influxDB = InfluxDBFactory.connect("http://172.17.0.2:8086", "root", "root");
+Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE idle > $idle AND system > $system")
+        .forDatabase(dbName)
+        .bind("idle", 90)
+        .bind("system", 5)
+        .create();
+QueryResult results = influxDB.query(query);
+```
 
-String db1 = "database1";
-influxDB.query(new Query("CREATE DATABASE " + db1));
-String defaultRpName = "aRetentionPolicy1";
-influxDB.query(new Query("CREATE RETENTION POLICY " + rp1 + " ON " + db1 + " DURATION 30h REPLICATION 2 DEFAULT"));
-Point point1 = Point.measurement("cpu")
-                    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                    .addField("idle", 90L)
-                    .addField("user", 9L)
-                    .addField("system", 1L)
-                    .build();
-influxDB.write(db1, rp1, point1); // Write to db1
-
-String db2 = "database2";
-influxDB.query(new Query("CREATE DATABASE " + db2));
-String rp2 = "aRetentionPolicy1";
-influxDB.query(new Query("CREATE RETENTION POLICY " + rp2 + " ON " + db2 + " DURATION 30h REPLICATION 2 DEFAULT"));
-Point point2 = Point.measurement("cpu")
-                    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                    .addField("idle", 80L)
-                    .addField("user", 8L)
-                    .addField("system", 2L)
-                    .build();
-influxDB.write(db2, rp2, point2); // Write to db2
+The values of the bind() calls are bound to the placeholders in the query ($idle, $system).
 
 
-influxDB.query(new Query("SELECT * FROM cpu"));     // Returns Point1
-influxDB.query(new Query("SELECT * FROM cpu", db2)) // Returns Point2
+## Advanced Usage
 
-```  
-
-
-### Advanced Usage
-
-#### Gzip's support (version 2.5+ required)
+### Gzip's support (version 2.5+ required)
 
 influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfer data's size , you can call:
 
@@ -214,7 +225,7 @@ influxdb-java client doesn't enable gzip compress for http request body by defau
 influxDB.enableGzip()
 ```
 
-#### UDP's support (version 2.5+ required)
+### UDP's support (version 2.5+ required)
 
 influxdb-java client support udp protocol now. you can call following methods directly to write through UDP.
 
@@ -226,7 +237,7 @@ public void write(final int udpPort, final Point point);
 
 Note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
-#### Chunking support (version 2.6+ required)
+### Chunking support (version 2.6+ required)
 
 influxdb-java client now supports influxdb chunking. The following example uses a chunkSize of 20 and invokes the specified Consumer (e.g. System.out.println) for each received QueryResult
 
@@ -235,7 +246,7 @@ Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
 
-#### QueryResult mapper to POJO (version 2.7+ required, version 2.17+ for @TimeColumn annotation required)
+### QueryResult mapper to POJO (version 2.7+ required, version 2.17+ for @TimeColumn annotation required)
 
 An alternative way to handle the QueryResult object is now available.
 Supposing that you have a measurement _CPU_:
@@ -308,7 +319,7 @@ InfluxDBResultMapper resultMapper = new InfluxDBResultMapper(); // thread-safe -
 List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 ```
 
-#### Writing using POJO
+### Writing using POJO
 The same way we use `annotations` to transform data to POJO, we can write data as POJO.
 Having the same POJO class Cpu
 
@@ -338,103 +349,15 @@ An alternative way to create InfluxDB queries is available. By using the [QueryB
 
 In case you want to save and load data using models you can use the [InfluxDBMapper](INFLUXDB_MAPPER.md).
 
-#### Query using Callbacks (version 2.8+ required)
 
-influxdb-java now supports returning results of a query via callbacks. Only one
-of the following consumers are going to be called once :
 
-```java
-this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
-    // Do something with the result...
-}, throwable -> {
-    // Do something with the error...
-});
-```
 
-#### Query using parameter binding ("prepared statements", version 2.10+ required)
-
-If your Query is based on user input, it is good practice to use parameter binding to avoid [injection attacks](https://en.wikipedia.org/wiki/SQL_injection).
-You can create queries with parameter binding with the help of the QueryBuilder:
-
-```java
-Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE idle > $idle AND system > $system")
-        .forDatabase(dbName)
-        .bind("idle", 90)
-        .bind("system", 5)
-        .create();
-QueryResult results = influxDB.query(query);
-```
-
-The values of the bind() calls are bound to the placeholders in the query ($idle, $system).
-
-#### Batch flush interval jittering (version 2.9+ required)
-
-When using large number of influxdb-java clients against a single server it may happen that all the clients
-will submit their buffered points at the same time and possibly overloading the server. This is usually happening
-when all the clients are started at once - for instance as members of cloud hosted large cluster networks.  
-If all the clients have the same flushDuration set this situation will repeat periodically.
-
-To solve this situation the influxdb-java offers an option to offset the flushDuration by a random interval so that
-the clients will flush their buffers in different intervals:
-
-```java
-influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500));
-```
 
 ### Other Usages
 
 For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
 
-## Version
 
-The latest version for maven dependence:
-
-```xml
-<dependency>
-  <groupId>org.influxdb</groupId>
-  <artifactId>influxdb-java</artifactId>
-  <version>2.17</version>
-</dependency>
-```
-
-Or when using with gradle:
-
-```groovy
-compile 'org.influxdb:influxdb-java:2.17'
-```
-
-For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
-
-### Build Requirements
-
-* Java 1.8+ (tested with jdk8 and jdk11)
-* Maven 3.0+ (tested with maven 3.5.0)
-* Docker daemon running
-
-Then you can build influxdb-java with all tests with:
-
-```bash
-mvn clean install
-```
-
-If you don't have Docker running locally, you can skip tests with `-DskipTests` flag:
-
-```bash
-mvn clean install -DskipTests
-```
-
-If you have Docker running, but it is not at localhost (e.g. you are on a Mac and using `docker-machine`) you can set an optional environment variable `INFLUXDB_IP` to point to the correct IP address:
-
-```bash
-export INFLUXDB_IP=192.168.99.100
-mvn test
-```
-
-For convenience we provide a small shell script which starts a influxdb server locally and executes `mvn clean install` with all tests inside docker containers.
-
-```bash
-./compile-and-test.sh
-```
 
 ### Publishing
 
