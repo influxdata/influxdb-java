@@ -86,30 +86,22 @@ It's possible to use both approaches at the same time: set a default database us
 
 
 ### Setting a default retention policy (optional)
-(3) ...
+(3) TODO: like setting a default database, explain here how it works with RP.
 
 
 ### Enabling batch writes
-(4) ...
+(4) TODO: explanation about BatchOption parameters:
 
-`----8<----BEGIN DRAFT----8<----`
+```Java
+  // default values here are consistent with Telegraf
+  public static final int DEFAULT_BATCH_ACTIONS_LIMIT = 1000;
+  public static final int DEFAULT_BATCH_INTERVAL_DURATION = 1000;
+  public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
+  public static final int DEFAULT_BUFFER_LIMIT = 10000;
+  public static final TimeUnit DEFAULT_PRECISION = TimeUnit.NANOSECONDS;
+```
 
-With batching enabled the client provides two strategies how to deal with errors thrown by the InfluxDB server.
-
-   1. 'One shot' write - on failed write request to InfluxDB server an error is reported to the client using the means mentioned above.
-   2. 'Retry on error' write (used by default) - on failed write the request by the client is repeated after batchInterval elapses
-       (if there is a chance the write will succeed - the error was caused by overloading the server, a network error etc.)
-       When new data points are written before the previous (failed) points are successfully written, those are queued inside the client
-       and wait until older data points are successfully written.
-       Size of this queue is limited and configured by `BatchOptions.bufferLimit` property. When the limit is reached, the oldest points
-       in the queue are dropped. 'Retry on error' strategy is used when individual write batch size defined by `BatchOptions.actions` is lower than `BatchOptions.bufferLimit`.
-
-Note:
-
-* Batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shut-down, or the application will not shut down properly. To do so simply call: ```influxDB.close()```
-* `InfluxDB.enableBatch(BatchOptions)` is available since version 2.9. Prior versions use `InfluxDB.enableBatch(actions, flushInterval, timeUnit)` or similar based on the configuration parameters you want to set.
-
-#### Batch flush interval jittering (version 2.9+ required)
+#### Configuring the jitter interval for batch writes
 
 When using large number of influxdb-java clients against a single server it may happen that all the clients
 will submit their buffered points at the same time and possibly overloading the server. This is usually happening
@@ -123,7 +115,17 @@ the clients will flush their buffers in different intervals:
 influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500));
 ```
 
-`----8<----END DRAFT----8<----`
+#### Error handling with batch writes
+With batching enabled the client provides two strategies how to deal with errors thrown by the InfluxDB server.
+
+   1. 'One shot' write - on failed write request to InfluxDB server an error is reported to the client using the means mentioned above.
+   2. 'Retry on error' write (used by default) - on failed write the request by the client is repeated after batchInterval elapses (if there is a chance the write will succeed - the error was caused by overloading the server, a network error etc.)
+       When new data points are written before the previous (failed) points are successfully written, those are queued inside the client and wait until older data points are successfully written.
+       Size of this queue is limited and configured by `BatchOptions.bufferLimit` property. When the limit is reached, the oldest points in the queue are dropped. 'Retry on error' strategy is used when individual write batch size defined by `BatchOptions.actions` is lower than `BatchOptions.bufferLimit`.
+
+Note:
+
+* Batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shutdown or the application will terminate properly. To do so, call `influxDB.close()`.
 
 
 ### Writing to InfluxDB
@@ -182,15 +184,17 @@ influxDB.query(new Query("DROP DATABASE " + dbName));
 ```
 `----8<----END DRAFT----8<----`
 
+
 ### Reading from InfluxDB
 (7) ...
 
-#### Query using Callbacks (version 2.8+ required)
+
+#### Query using Callbacks
 
 influxdb-java now supports returning results of a query via callbacks. Only one
 of the following consumers are going to be called once :
 
-```java
+```Java
 this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
     // Do something with the result...
 }, throwable -> {
@@ -198,12 +202,12 @@ this.influxDB.query(new Query("SELECT idle FROM cpu", dbName), queryResult -> {
 });
 ```
 
-#### Query using parameter binding ("prepared statements", version 2.10+ required)
+#### Query using parameter binding (a.k.a. "prepared statements")
 
 If your Query is based on user input, it is good practice to use parameter binding to avoid [injection attacks](https://en.wikipedia.org/wiki/SQL_injection).
 You can create queries with parameter binding with the help of the QueryBuilder:
 
-```java
+```Java
 Query query = QueryBuilder.newQuery("SELECT * FROM cpu WHERE idle > $idle AND system > $system")
         .forDatabase(dbName)
         .bind("idle", 90)
@@ -217,19 +221,19 @@ The values of the bind() calls are bound to the placeholders in the query ($idle
 
 ## Advanced Usage
 
-### Gzip's support (version 2.5+ required)
+### Gzip's support
 
 influxdb-java client doesn't enable gzip compress for http request body by default. If you want to enable gzip to reduce transfer data's size , you can call:
 
-```java
+```Java
 influxDB.enableGzip()
 ```
 
-### UDP's support (version 2.5+ required)
+### UDP's support
 
 influxdb-java client support udp protocol now. you can call following methods directly to write through UDP.
 
-```java
+```Java
 public void write(final int udpPort, final String records);
 public void write(final int udpPort, final List<String> records);
 public void write(final int udpPort, final Point point);
@@ -237,16 +241,16 @@ public void write(final int udpPort, final Point point);
 
 Note: make sure write content's total size should not > UDP protocol's limit(64K), or you should use http instead of udp.
 
-### Chunking support (version 2.6+ required)
+### Chunking support
 
 influxdb-java client now supports influxdb chunking. The following example uses a chunkSize of 20 and invokes the specified Consumer (e.g. System.out.println) for each received QueryResult
 
-```java
+```Java
 Query query = new Query("SELECT idle FROM cpu", dbName);
 influxDB.query(query, 20, queryResult -> System.out.println(queryResult));
 ```
 
-### QueryResult mapper to POJO (version 2.7+ required, version 2.17+ for @TimeColumn annotation required)
+### QueryResult mapper to POJO
 
 An alternative way to handle the QueryResult object is now available.
 Supposing that you have a measurement _CPU_:
@@ -348,9 +352,6 @@ An alternative way to create InfluxDB queries is available. By using the [QueryB
 ### InfluxDBMapper
 
 In case you want to save and load data using models you can use the [InfluxDBMapper](INFLUXDB_MAPPER.md).
-
-
-
 
 
 ### Other Usages
