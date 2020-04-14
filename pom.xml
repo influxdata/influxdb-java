@@ -242,13 +242,13 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.6.1</version>
+      <version>5.6.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-runner</artifactId>
-      <version>1.6.1</version>
+      <version>1.6.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -301,12 +301,12 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.4.1</version>
+      <version>4.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>logging-interceptor</artifactId>
-      <version>4.4.1</version>
+      <version>4.5.0</version>
     </dependency>
   </dependencies>
   <profiles>
