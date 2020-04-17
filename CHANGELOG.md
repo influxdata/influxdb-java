@@ -1,6 +1,8 @@
 # Changelog
 
-## 2.18 [unreleased]
+## 2.19 [unreleased]
+
+## 2.18 [2020-04-17]
 
 ### Fixes
 
