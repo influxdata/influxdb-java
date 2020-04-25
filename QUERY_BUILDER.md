@@ -1,7 +1,8 @@
-#### QueryBuilder:
+# QueryBuilder
 
 Supposing that you have a measurement _h2o_feet_:
-```
+
+```sqlite-psql
 > SELECT * FROM "h2o_feet"
 
 name: h2o_feet
@@ -14,9 +15,7 @@ time                   level description      location       water_level
 2015-09-18T21:42:00Z   between 3 and 6 feet   santa_monica   4.938
 ```
 
-
-##### The basic SELECT statement
-
+## The basic SELECT statement
 
 Issue simple select statements
 
@@ -34,18 +33,15 @@ Select specific tags and fields from a single measurement
 Query query = select("level description","location","water_level").from(DATABASE,"h2o_feet");
 ```
 
-
 ```sqlite-psql
 SELECT "level description",location,water_level FROM h2o_feet;
 ```
 
 Select specific tags and fields from a single measurement, and provide their identifier type
 
-
 ```java
 Query query = select().column("\"level description\"::field").column("\"location\"::tag").column("\"water_level\"::field").from(DATABASE,"h2o_feet");
 ```
-
 
 ```sqlite-psql
 SELECT "level description"::field,"location"::tag,"water_level"::field FROM h2o_feet;
@@ -57,18 +53,15 @@ Select all fields from a single measurement
 Query query = select().raw("*::field").from(DATABASE,"h2o_feet");
 ```
 
-
 ```sqlite-psql
 SELECT *::field FROM h2o_feet;
 ```
 
 Select a specific field from a measurement and perform basic arithmetic
 
-
 ```java
 Query query = select().op(op(cop("water_level",MUL,2),"+",4)).from(DATABASE,"h2o_feet");
 ```
-
 
 ```sqlite-psql
 SELECT (water_level * 2) + 4 FROM h2o_feet;
@@ -79,7 +72,6 @@ Select all data from more than one measurement
 ```java
 Query query = select().from(DATABASE,"\"h2o_feet\",\"h2o_pH\"");
 ```
-
 
 ```sqlite-psql
 SELECT * FROM "h2o_feet","h2o_pH";
@@ -161,7 +153,7 @@ Query query = select().from(DATABASE,"h2o_feet")
 SELECT * FROM h2o_feet WHERE time > now() - 7d;
 ```
 
-##### The GROUP BY clause
+## The GROUP BY clause
 
 Group query results by a single tag
 
@@ -195,7 +187,7 @@ Query query = select().mean("index").from(DATABASE,"h2o_feet")
 SELECT MEAN(index) FROM h2o_feet GROUP BY *;
 ```
 
-**GROUP BY time intervals**
+## GROUP BY time interval
 
 Group query results into 12 minute intervals
 
@@ -225,7 +217,7 @@ Group query results into 12 minutes intervals and by a tag key
 SELECT COUNT(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:30:00Z'' GROUP BY time(12m),location;
 ```
 
-##### Advanced GROUP BY time() syntax
+## Advanced GROUP BY time() syntax
 
 Group query results into 18 minute intervals and shift the preset time boundaries forward
 
@@ -255,7 +247,7 @@ Query query = select().mean("water_level").from(DATABASE,"h2o_feet")
 SELECT MEAN(water_level) FROM h2o_feet WHERE location = 'coyote_creek' AND time >= '2015-08-18T00:06:00Z' AND time <= '2015-08-18T00:54:00Z' GROUP BY time(18m,-12m);
 ```
 
-##### GROUP BY time intervals and fill()
+## GROUP BY time intervals and fill()
 
 ```java
 Query select = select()
@@ -270,7 +262,7 @@ Query select = select()
 SELECT water_level FROM h2o_feet WHERE time > 24043524m - 6m GROUP BY water_level fill(100);"
 ```
 
-##### The INTO clause
+## The INTO clause
 
 Rename a database
 
@@ -328,7 +320,7 @@ Query select = select()
 SELECT MEAN(*) INTO "where_else"."autogen".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);
 ```
 
-##### ORDER BY time DESC
+## ORDER BY time DESC
 
 Return the newest points first
 
@@ -357,7 +349,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY time(12m) ORDER BY time DESC;
 ```
 
-##### The LIMIT clause
+## The LIMIT clause
 
 Limit the number of points returned
 
@@ -386,7 +378,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) LIMIT 2;
 ```
 
-##### The SLIMIT clause
+## The SLIMIT clause
 
 Limit the number of series returned
 
@@ -399,8 +391,8 @@ Query select = select().column("water_level")
 
 ```sqlite-psql
 SELECT water_level FROM "h2o_feet" GROUP BY * SLIMIT 1
-
 ```
+
 Limit the number of series returned and include a GROUP BY time() clause
 
 ```java
@@ -417,7 +409,7 @@ Query select = select().column("water_level")
 SELECT water_level FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) SLIMIT 1;
 ```
 
-##### The OFFSET clause
+## The OFFSET clause
 
 Paginate points
 
@@ -429,7 +421,7 @@ Query select = select("water_level","location").from(DATABASE,"h2o_feet").limit(
 SELECT water_level,location FROM h2o_feet LIMIT 3 OFFSET 3;
 ```
 
-##### The SOFFSET clause
+## The SOFFSET clause
 
 Paginate series and include all clauses
 
@@ -449,7 +441,7 @@ Query select = select().mean("water_level")
 SELECT MEAN(water_level) FROM h2o_feet WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:42:00Z' GROUP BY *,time(12m) ORDER BY time DESC LIMIT 2 OFFSET 2 SLIMIT 1 SOFFSET 1;
 ```
 
-##### The Time Zone clause
+## The Time Zone clause
 
 Return the UTC offset for Chicago’s time zone
 
@@ -466,7 +458,7 @@ Query select = select()
 SELECT test1 FROM foobar GROUP BY test2,test3 SLIMIT 1 tz('America/Chicago');
 ```
 
-##### Time Syntax
+## Time Syntax
 
 Specify a time range with RFC3339 date-time strings
 
@@ -535,10 +527,9 @@ Query select = select().column("water_level")
 SELECT water_level FROM h2o_feet WHERE location = 'santa_monica' AND time >= now() - 1h;
 ```
 
-##### Regular expressions
+## Regular expressions
 
 Use a regular expression to specify field keys and tag keys in the SELECT clause
-
 
 ```java
 Query select = select().regex("l").from(DATABASE,"h2o_feet").limit(1);
@@ -557,6 +548,7 @@ Query select = select().regex("l").distinct().from(DATABASE,"h2o_feet").limit(1)
 ```sqlite-psql
 SELECT DISTINCT /l/ FROM h2o_feet LIMIT 1;
 ```
+
 Use a regular expression to specify measurements in the FROM clause
 
 ```java
@@ -596,4 +588,3 @@ Query select = select().raw("an expression on select").from(dbName, "cpu").where
 ```sqlite-psql
 SELECT an expression on select FROM h2o_feet WHERE an expression as condition;
 ```
-

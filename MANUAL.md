@@ -1,6 +1,7 @@
 # Manual
 
 ## Quick start
+
 The code below is similar to the one found on the README.md file but with comments removed and rows numbered for better reference.
 
 ```Java
@@ -12,24 +13,24 @@ influxDB.query(new Query("CREATE DATABASE " + databaseName));
 influxDB.setDatabase(databaseName);                                       // (2)
 
 String retentionPolicyName = "one_day_only";
-influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName 
-		+ " ON " + databaseName + " DURATION 1d REPLICATION 1 DEFAULT"));
+influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName
+        + " ON " + databaseName + " DURATION 1d REPLICATION 1 DEFAULT"));
 influxDB.setRetentionPolicy(retentionPolicyName);                         // (3)
 
 influxDB.enableBatch(BatchOptions.DEFAULTS);                              // (4)
 
 influxDB.write(Point.measurement("h2o_feet")                              // (5)
-	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-	.tag("location", "santa_monica")
-	.addField("level description", "below 3 feet")
-	.addField("water_level", 2.064d)
-	.build());
+    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    .tag("location", "santa_monica")
+    .addField("level description", "below 3 feet")
+    .addField("water_level", 2.064d)
+    .build());
 
 influxDB.write(Point.measurement("h2o_feet")                              // (5)
-	.tag("location", "coyote_creek")
-	.addField("level description", "between 6 and 9 feet")
-	.addField("water_level", 8.12d)
-	.build());                                                            // (6)
+    .tag("location", "coyote_creek")
+    .addField("level description", "between 6 and 9 feet")
+    .addField("water_level", 8.12d)
+    .build());                                                            // (6)
 
 Thread.sleep(5_000L);                                                     // (7)
 
@@ -37,23 +38,24 @@ QueryResult queryResult = influxDB.query(new Query("SELECT * FROM h2o_feet"));
 
 System.out.println(queryResult);
 // It will print something like:
-// QueryResult [results=[Result [series=[Series [name=h2o_feet, tags=null, 
-// 		columns=[time, level description, location, water_level],
-//		values=[
-// 			[2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064], 
-//			[2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
-//		]]], error=null]], error=null]
+// QueryResult [results=[Result [series=[Series [name=h2o_feet, tags=null,
+//      columns=[time, level description, location, water_level],
+//      values=[
+//      [2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064],
+//      [2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
+//      ]]], error=null]], error=null]
 
 influxDB.close();                                                         // (8)
 ```
 
 ### Connecting to InfluxDB
+
 (1) The `InfluxDB` client is thread-safe and our recommendation is to have a single instance per application and reuse it, when possible. Every `InfluxDB` instance keeps multiple data structures, including those used to manage different pools like HTTP clients for reads and writes.
 
 It's possible to have just one client even when reading or writing to multiple InfluxDB databases and this will be shown later here.
 
-
 ### Setting a default database (optional)
+
 (2) If you are not querying different databases with a single `InfluxDB` client, it's possible to set a default database name and all queries (reads and writes) from this `InfluxDB` client will be executed against the default database.
 
 If we only comment out the line (2) then all reads and writes queries would fail. To avoid this, we need to pass the database name as parameter to `BatchPoints` (writes) and to `Query` (reads). For example:
@@ -68,11 +70,11 @@ String retentionPolicyName = "one_day_only";
 BatchPoints batchPoints = BatchPoints.database(databaseName).retentionPolicy(retentionPolicyName).build();
 
 batchPoints.point(Point.measurement("h2o_feet")
-	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-	.tag("location", "santa_monica")
-	.addField("level description", "below 3 feet")
-	.addField("water_level", 2.064d)
-	.build());
+    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    .tag("location", "santa_monica")
+    .addField("level description", "below 3 feet")
+    .addField("water_level", 2.064d)
+    .build());
 
 // ...
 influxDB.write(batchPoints);
@@ -84,12 +86,12 @@ influxDB.close();
 
 It's possible to use both approaches at the same time: set a default database using `influxDB.setDatabase` and read/write passing a `databaseName` as parameter. On this case, the `databaseName` passed as parameter will be used.
 
-
 ### Setting a default retention policy (optional)
+
 (3) TODO: like setting a default database, explain here how it works with RP.
 
-
 ### Enabling batch writes
+
 (4) TODO: explanation about BatchOption parameters:
 
 ```Java
@@ -116,6 +118,7 @@ influxDB.enableBatch(BatchOptions.DEFAULTS.jitterDuration(500));
 ```
 
 #### Error handling with batch writes
+
 With batching enabled the client provides two strategies how to deal with errors thrown by the InfluxDB server.
 
    1. 'One shot' write - on failed write request to InfluxDB server an error is reported to the client using the means mentioned above.
@@ -127,8 +130,8 @@ Note:
 
 * Batching functionality creates an internal thread pool that needs to be shutdown explicitly as part of a graceful application shutdown or the application will terminate properly. To do so, call `influxDB.close()`.
 
-
 ### Writing to InfluxDB
+
 (5) ...
 
 `----8<----BEGIN DRAFT----8<----`
@@ -182,12 +185,12 @@ influxDB.query(query);
 influxDB.query(new Query("DROP RETENTION POLICY " + rpName + " ON " + dbName));
 influxDB.query(new Query("DROP DATABASE " + dbName));
 ```
+
 `----8<----END DRAFT----8<----`
 
-
 ### Reading from InfluxDB
-(7) ...
 
+(7) ...
 
 #### Query using Callbacks
 
@@ -217,7 +220,6 @@ QueryResult results = influxDB.query(query);
 ```
 
 The values of the bind() calls are bound to the placeholders in the query ($idle, $system).
-
 
 ## Advanced Usage
 
@@ -324,6 +326,7 @@ List<Cpu> cpuList = resultMapper.toPOJO(queryResult, Cpu.class);
 ```
 
 ### Writing using POJO
+
 The same way we use `annotations` to transform data to POJO, we can write data as POJO.
 Having the same POJO class Cpu
 
@@ -345,7 +348,7 @@ influxDB.write(dbName, rpName, point);
 * If your InfluxDB query contains multiple SELECT clauses **for the same measurement**, InfluxResultMapper will process all results because there is no way to distinguish which one should be mapped to your POJO. It may result in an invalid collection being returned;
 * A Class field annotated with _@Column(..., tag = true)_ (i.e. a [InfluxDB Tag](https://docs.influxdata.com/influxdb/v1.2/concepts/glossary/#tag-value)) must be declared as _String_.
 
-#### QueryBuilder:
+#### QueryBuilder
 
 An alternative way to create InfluxDB queries is available. By using the [QueryBuilder](QUERY_BUILDER.md) you can create queries using java instead of providing the influxdb queries as strings.
 
@@ -353,12 +356,9 @@ An alternative way to create InfluxDB queries is available. By using the [QueryB
 
 In case you want to save and load data using models you can use the [InfluxDBMapper](INFLUXDB_MAPPER.md).
 
-
 ### Other Usages
 
 For additional usage examples have a look at [InfluxDBTest.java](https://github.com/influxdb/influxdb-java/blob/master/src/test/java/org/influxdb/InfluxDBTest.java "InfluxDBTest.java")
-
-
 
 ### Publishing
 

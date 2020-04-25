@@ -3,18 +3,18 @@
 ## Functionality
 
 - [Frequently Asked Questions](#frequently-asked-questions)
-    - [Functionality](#functionality)
-    - [Security](#security)
-    - [Is the batch part of the client thread safe](#is-the-batch-part-of-the-client-thread-safe)
-    - [If multiple threads are accessing it, are they all adding Points to the same batch ?](#if-multiple-threads-are-accessing-it-are-they-all-adding-points-to-the-same-batch)
-    - [And if so, is there a single thread in the background that is emptying batch to the server ?](#and-if-so-is-there-a-single-thread-in-the-background-that-is-emptying-batch-to-the-server)
-    - [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client)
-    - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server)
-    - [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived)
-    - [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for)
-    - [How to handle exceptions while using async chunked queries ?](#how-to-handle-exceptions-while-using-async-chunked-queries)
-    - [Is default config security setup TLS 1.2 ?](#is-default-config-security-setup-tls-12)
-    - [How to use SSL client certificate authentication](#how-to-use-ssl-client-certificate-authentication)
+  - [Functionality](#functionality)
+  - [Security](#security)
+  - [Is the batch part of the client thread safe](#is-the-batch-part-of-the-client-thread-safe)
+  - [If multiple threads are accessing it, are they all adding Points to the same batch ?](#if-multiple-threads-are-accessing-it-are-they-all-adding-points-to-the-same-batch)
+  - [And if so, is there a single thread in the background that is emptying batch to the server ?](#and-if-so-is-there-a-single-thread-in-the-background-that-is-emptying-batch-to-the-server)
+  - [If there is an error during this background process, is it propagated to the rest of the client ?](#if-there-is-an-error-during-this-background-process-is-it-propagated-to-the-rest-of-the-client)
+  - [How the client responds to concurrent write backpressure from server ?](#how-the-client-responds-to-concurrent-write-backpressure-from-server)
+  - [Is there a way to tell that all query chunks have arrived ?](#is-there-a-way-to-tell-that-all-query-chunks-have-arrived)
+  - [How to handle exceptions while using async chunked queries ?](#how-to-handle-exceptions-while-using-async-chunked-queries)
+  - [Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?](#is-there-a-way-to-tell-the-system-to-stop-sending-more-chunks-once-ive-found-what-im-looking-for)
+  - [Is default config security setup TLS 1.2 ?](#is-default-config-security-setup-tls-12)
+  - [How to use SSL client certificate authentication](#how-to-use-ssl-client-certificate-authentication)
 
 ## Security
 
@@ -84,11 +84,12 @@ influxDB.query(new Query("SELECT * FROM disk", "telegraf"), 10_000,
         System.out.println("The query successfully finished.");
     });
 ```
+
 ## How to handle exceptions while using async chunked queries ?
 
-Exception handling for chunked queries can be handled by __onFailure__ error 
-consumer. 
-   
+Exception handling for chunked queries can be handled by __onFailure__ error
+consumer.
+
 ```java
 
 influxDB.query(query, chunksize,
@@ -104,7 +105,6 @@ influxDB.query(query, chunksize,
         throwable -> {
             System.out.println("On Failure - " + throwable.getLocalizedMessage());
         });
-    
 ```
 
 ## Is there a way to tell the system to stop sending more chunks once I've found what I'm looking for ?

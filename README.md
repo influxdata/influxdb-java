@@ -10,13 +10,13 @@ _Note: This library is for use with InfluxDB 1.x. For connecting to InfluxDB 2.x
 
 ## Adding the library to your project
 
-The library artifact is published in Maven central, available at https://search.maven.org/artifact/org.influxdb/influxdb-java.
+The library artifact is published in Maven central, available at [https://search.maven.org/artifact/org.influxdb/influxdb-java](https://search.maven.org/artifact/org.influxdb/influxdb-java).
 
 ### Release versions
 
 Maven dependency:
 
-```
+```xml
 <dependency>
   <groupId>org.influxdb</groupId>
   <artifactId>influxdb-java</artifactId>
@@ -26,24 +26,23 @@ Maven dependency:
 
 Gradle dependency:
 
-```
+```bash
 compile group: 'org.influxdb', name: 'influxdb-java', version: "${influxdbClientVersion}"
 ```
 
 ## Features
 
 * Querying data using:
-    * [Influx Query Language (InfluxQL)](https://docs.influxdata.com/influxdb/v1.7/query_language/), with support for [bind parameters](https://docs.influxdata.com/influxdb/v1.7/tools/api/#bind-parameters) (similar to [JDBC PreparedStatement parameters](https://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html#supply_values_ps));
-    * it's own [QueryBuilder](https://github.com/influxdata/influxdb-java/blob/master/QUERY_BUILDER.md), as you would do with e.g. EclipseLink or Hibernate;
-    * Message Pack (requires InfluxDB [1.4+](https://www.influxdata.com/blog/whats-new-influxdb-oss-1-4/));
+  * [Influx Query Language (InfluxQL)](https://docs.influxdata.com/influxdb/v1.7/query_language/), with support for [bind parameters](https://docs.influxdata.com/influxdb/v1.7/tools/api/#bind-parameters) (similar to [JDBC PreparedStatement parameters](https://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html#supply_values_ps));
+  * it's own [QueryBuilder](https://github.com/influxdata/influxdb-java/blob/master/QUERY_BUILDER.md), as you would do with e.g. EclipseLink or Hibernate;
+  * Message Pack (requires InfluxDB [1.4+](https://www.influxdata.com/blog/whats-new-influxdb-oss-1-4/));
 * Writing data using:
-    * Data Point (an object provided by this library that represents a ... data point);
-    * Your own POJO (you need to add a few Java Annotations);
-    * [InfluxDB line protocol](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/) (for the braves only);
-    * UDP, as [supported by InfluxDB](https://docs.influxdata.com/influxdb/v1.7/supported_protocols/udp/);
+  * Data Point (an object provided by this library that represents a ... data point);
+  * Your own POJO (you need to add a few Java Annotations);
+  * [InfluxDB line protocol](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/) (for the braves only);
+  * UDP, as [supported by InfluxDB](https://docs.influxdata.com/influxdb/v1.7/supported_protocols/udp/);
 * Support synchronous and asynchronous writes;
 * Batch support configurable with `jitter` interval, `buffer` size and `flush` interval.
-
 
 ## Quick start
 
@@ -62,8 +61,8 @@ influxDB.setDatabase(databaseName);
 // ... and a retention policy, if necessary.
 // https://docs.influxdata.com/influxdb/v1.7/query_language/database_management/
 String retentionPolicyName = "one_day_only";
-influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName 
-		+ " ON " + databaseName + " DURATION 1d REPLICATION 1 DEFAULT"));
+influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName
+        + " ON " + databaseName + " DURATION 1d REPLICATION 1 DEFAULT"));
 influxDB.setRetentionPolicy(retentionPolicyName);
 
 // Enable batch writes to get better performance.
@@ -71,18 +70,18 @@ influxDB.enableBatch(BatchOptions.DEFAULTS);
 
 // Write points to InfluxDB.
 influxDB.write(Point.measurement("h2o_feet")
-	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-	.tag("location", "santa_monica")
-	.addField("level description", "below 3 feet")
-	.addField("water_level", 2.064d)
-	.build());
+    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    .tag("location", "santa_monica")
+    .addField("level description", "below 3 feet")
+    .addField("water_level", 2.064d)
+    .build());
 
 influxDB.write(Point.measurement("h2o_feet")
-	.time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-	.tag("location", "coyote_creek")
-	.addField("level description", "between 6 and 9 feet")
-	.addField("water_level", 8.12d)
-	.build());
+    .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+    .tag("location", "coyote_creek")
+    .addField("level description", "between 6 and 9 feet")
+    .addField("water_level", 8.12d)
+    .build());
 
 // Wait a few seconds in order to let the InfluxDB client
 // write your points asynchronously (note: you can adjust the
@@ -95,12 +94,12 @@ QueryResult queryResult = influxDB.query(new Query("SELECT * FROM h2o_feet"));
 
 System.out.println(queryResult);
 // It will print something like:
-// QueryResult [results=[Result [series=[Series [name=h2o_feet, tags=null, 
-// 		columns=[time, level description, location, water_level],
-//		values=[
-// 			[2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064], 
-//			[2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
-//		]]], error=null]], error=null]
+// QueryResult [results=[Result [series=[Series [name=h2o_feet, tags=null,
+//      columns=[time, level description, location, water_level],
+//      values=[
+//         [2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064],
+//         [2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
+//      ]]], error=null]], error=null]
 
 // Close it if your application is terminating or you are not using it anymore.
 influxDB.close();
@@ -110,7 +109,7 @@ influxDB.close();
 
 For version change history have a look at [ChangeLog](https://github.com/influxdata/influxdb-java/blob/master/CHANGELOG.md).
 
-**Build Requirements**
+### Build Requirements
 
 * Java 1.8+
 * Maven 3.5+
@@ -141,7 +140,7 @@ $> ./compile-and-test.sh
 
 ## License
 
-```
+```license
 The MIT License (MIT)
 
 Copyright (c) 2014 Stefan Majer
