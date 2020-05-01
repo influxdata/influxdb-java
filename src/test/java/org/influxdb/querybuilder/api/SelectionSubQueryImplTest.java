@@ -1,4 +1,4 @@
-package org.influxdb.querybuilder;
+package org.influxdb.querybuilder.api;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
 import static org.influxdb.querybuilder.Operations.ADD;

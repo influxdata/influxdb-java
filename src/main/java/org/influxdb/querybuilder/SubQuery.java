@@ -12,7 +12,7 @@ public abstract class SubQuery<T extends WithSubquery> implements QueryStringBui
     return parent;
   }
 
-  T close() {
+  public T close() {
     parent.setSubQuery(this);
     return parent;
   }
