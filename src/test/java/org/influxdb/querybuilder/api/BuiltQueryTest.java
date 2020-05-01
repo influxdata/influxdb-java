@@ -1,4 +1,4 @@
-package org.influxdb.querybuilder;
+package org.influxdb.querybuilder.api;
 
 import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.*;
 import static org.influxdb.querybuilder.Operations.ADD;
@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.influxdb.dto.Query;
+import org.influxdb.querybuilder.RawText;
+import org.influxdb.querybuilder.Where;
 import org.junit.jupiter.api.Test;
 
 public class BuiltQueryTest {
