@@ -21,6 +21,8 @@
 package org.influxdb.impl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -50,6 +52,8 @@ public class InfluxDBResultMapper {
    */
   private static final
     ConcurrentMap<String, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<>();
+
+  private static final ConcurrentMap<String, ConcurrentMap<String, Method>> CLASS_SETTERS_CACHE = new ConcurrentHashMap<>();
 
   private static final int FRACTION_MIN_WIDTH = 0;
   private static final int FRACTION_MAX_WIDTH = 9;
@@ -217,11 +221,25 @@ public class InfluxDBResultMapper {
         influxColumnAndFieldMap = initialMap;
       }
 
+      ConcurrentMap<String, Method> classFieldSetters = new ConcurrentHashMap<>();
+      ConcurrentMap<String, Method> fieldSetters = CLASS_SETTERS_CACHE.putIfAbsent(clazz.getName(), classFieldSetters);
+      if (fieldSetters == null) {
+        fieldSetters = classFieldSetters;
+      }
+
       Class<?> c = clazz;
       while (c != null) {
         for (Field field : c.getDeclaredFields()) {
           Column colAnnotation = field.getAnnotation(Column.class);
           if (colAnnotation != null) {
+            String fieldName = field.getName();
+            String setterName = "set".concat(fieldName.substring(0,1).toUpperCase().concat(fieldName.substring(1)));
+            try {
+              Method setter = c.getDeclaredMethod(setterName, field.getType());
+              fieldSetters.put(colAnnotation.name(), setter);
+            } catch (NoSuchMethodException e) {
+              //sj_todo ignore? maybe print a warning that no setter found?
+            }
             influxColumnAndFieldMap.put(colAnnotation.name(), field);
           }
         }
@@ -254,16 +272,18 @@ public class InfluxDBResultMapper {
                             final TimeUnit precision) {
     int columnSize = series.getColumns().size();
     ConcurrentMap<String, Field> colNameAndFieldMap = CLASS_FIELD_CACHE.get(clazz.getName());
+    ConcurrentMap<String, Method> fieldSettersMap = CLASS_SETTERS_CACHE.get(clazz.getName());
     try {
       T object = null;
       for (List<Object> row : series.getValues()) {
         for (int i = 0; i < columnSize; i++) {
+          Method fieldSetter = fieldSettersMap.get(series.getColumns().get(i));
           Field correspondingField = colNameAndFieldMap.get(series.getColumns().get(i)/*InfluxDB columnName*/);
-          if (correspondingField != null) {
+          if (correspondingField != null || fieldSetter != null) {
             if (object == null) {
               object = clazz.newInstance();
             }
-            setFieldValue(object, correspondingField, row.get(i), precision);
+            setFieldValue(object, correspondingField, fieldSetter, row.get(i), precision);
           }
         }
         // When the "GROUP BY" clause is used, "tags" are returned as Map<String,String> and
@@ -273,9 +293,10 @@ public class InfluxDBResultMapper {
         if (series.getTags() != null && !series.getTags().isEmpty()) {
           for (Entry<String, String> entry : series.getTags().entrySet()) {
             Field correspondingField = colNameAndFieldMap.get(entry.getKey()/*InfluxDB columnName*/);
-            if (correspondingField != null) {
+            Method fieldSetter = fieldSettersMap.get(entry.getKey());
+            if (correspondingField != null || fieldSetter != null ) {
               // I don't think it is possible to reach here without a valid "object"
-              setFieldValue(object, correspondingField, entry.getValue(), precision);
+              setFieldValue(object, correspondingField, fieldSetter, entry.getValue(), precision);
             }
           }
         }
@@ -284,7 +305,7 @@ public class InfluxDBResultMapper {
           object = null;
         }
       }
-    } catch (InstantiationException | IllegalAccessException e) {
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
       throw new InfluxDBMapperException(e);
     }
     return result;
@@ -302,8 +323,8 @@ public class InfluxDBResultMapper {
    * @throws IllegalArgumentException
    * @throws IllegalAccessException
    */
-  <T> void setFieldValue(final T object, final Field field, final Object value, final TimeUnit precision)
-    throws IllegalArgumentException, IllegalAccessException {
+  <T> void setFieldValue(final T object, final Field field, final Method fieldSetter, final Object value, final TimeUnit precision)
+          throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
     if (value == null) {
       return;
     }
@@ -312,9 +333,15 @@ public class InfluxDBResultMapper {
       if (!field.isAccessible()) {
         field.setAccessible(true);
       }
-      if (fieldValueModified(fieldType, field, object, value, precision)
-        || fieldValueForPrimitivesModified(fieldType, field, object, value)
-        || fieldValueForPrimitiveWrappersModified(fieldType, field, object, value)) {
+      if (!fieldSetter.isAccessible()) {
+        fieldSetter.setAccessible(true);
+      }
+      if (assignInstant(fieldType, field, fieldSetter, object, value, precision)
+        || assignString(fieldType, field, fieldSetter, object, value)
+        || assignDouble(fieldType, field, fieldSetter, object, value)
+        || assignInteger(fieldType, field, fieldSetter, object, value)
+        || assignLong(fieldType, field, fieldSetter, object, value)
+        || assignBoolean(fieldType, field, fieldSetter, object, value)) {
         return;
       }
       String msg = "Class '%s' field '%s' is from an unsupported type '%s'.";
@@ -328,14 +355,9 @@ public class InfluxDBResultMapper {
     }
   }
 
-  <T> boolean fieldValueModified(final Class<?> fieldType, final Field field, final T object, final Object value,
-                                 final TimeUnit precision)
-    throws IllegalArgumentException, IllegalAccessException {
-    if (String.class.isAssignableFrom(fieldType)) {
-      field.set(object, String.valueOf(value));
-      return true;
-    }
-    if (Instant.class.isAssignableFrom(fieldType)) {
+  <T> boolean assignInstant(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value, final TimeUnit precision) throws InvocationTargetException, IllegalAccessException {
+    boolean isInstantAssigned = false;
+    if(Instant.class.isAssignableFrom(fieldType)) {
       Instant instant;
       if (value instanceof String) {
         instant = Instant.from(RFC3339_FORMATTER.parse(String.valueOf(value)));
@@ -348,52 +370,102 @@ public class InfluxDBResultMapper {
       } else {
         throw new InfluxDBMapperException("Unsupported type " + field.getClass() + " for field " + field.getName());
       }
-      field.set(object, instant);
-      return true;
+      if(fieldSetter != null && fieldSetter.isAccessible()) {
+        fieldSetter.invoke(object, instant);
+        isInstantAssigned = true;
+      } else {
+        field.set(object, instant);
+        isInstantAssigned = true;
+      }
     }
-    return false;
+    return isInstantAssigned;
   }
 
-  <T> boolean fieldValueForPrimitivesModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value) throws IllegalArgumentException, IllegalAccessException {
-    if (double.class.isAssignableFrom(fieldType)) {
-      field.setDouble(object, ((Double) value).doubleValue());
-      return true;
+  <T> boolean assignString(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value) throws InvocationTargetException, IllegalAccessException {
+    boolean isStringAssigned = false;
+    if(String.class.isAssignableFrom(fieldType)) {
+      final String stringValue = String.valueOf(value);
+      if(fieldSetter != null && fieldSetter.isAccessible()) {
+        fieldSetter.invoke(object, stringValue);
+        isStringAssigned = true;
+      } else {
+        field.set(object, stringValue);
+        isStringAssigned = true;
+      }
     }
-    if (long.class.isAssignableFrom(fieldType)) {
-      field.setLong(object, ((Double) value).longValue());
-      return true;
-    }
-    if (int.class.isAssignableFrom(fieldType)) {
-      field.setInt(object, ((Double) value).intValue());
-      return true;
-    }
-    if (boolean.class.isAssignableFrom(fieldType)) {
-      field.setBoolean(object, Boolean.valueOf(String.valueOf(value)).booleanValue());
-      return true;
-    }
-    return false;
+    return isStringAssigned;
   }
 
-  <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value) throws IllegalArgumentException, IllegalAccessException {
-    if (Double.class.isAssignableFrom(fieldType)) {
-      field.set(object, value);
-      return true;
+  <T> boolean assignDouble(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value) throws InvocationTargetException, IllegalAccessException {
+    boolean isDoubleAssigned = false;
+    if(double.class.isAssignableFrom(fieldType) || Double.class.isAssignableFrom(fieldType)) {
+      if(fieldSetter != null && fieldSetter.isAccessible()) {
+        fieldSetter.invoke(object, value);
+        isDoubleAssigned = true;
+      } else if(double.class.isAssignableFrom(fieldType)) {
+        final double doubleValue = (Double) value;
+        field.setDouble(object, doubleValue);
+        isDoubleAssigned = true;
+      } else if(Double.class.isAssignableFrom(fieldType)) {
+        field.set(object, value);
+        isDoubleAssigned = true;
+      }
     }
-    if (Long.class.isAssignableFrom(fieldType)) {
-      field.set(object, Long.valueOf(((Double) value).longValue()));
-      return true;
+    return isDoubleAssigned;
+  }
+
+  <T> boolean assignLong(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value) throws InvocationTargetException, IllegalAccessException {
+    boolean isLongAssigned = false;
+    if(long.class.isAssignableFrom(fieldType) || Long.class.isAssignableFrom(fieldType)) {
+      final long longValue = ((Double) value).longValue();
+      if(fieldSetter != null && fieldSetter.isAccessible()) {
+        fieldSetter.invoke(object, longValue);
+        isLongAssigned = true;
+      } else if(long.class.isAssignableFrom(fieldType)) {
+        field.setLong(object, longValue);
+        isLongAssigned = true;
+      } else if(Long.class.isAssignableFrom(fieldType)) {
+        field.set(object, longValue);
+        isLongAssigned = true;
+      }
     }
-    if (Integer.class.isAssignableFrom(fieldType)) {
-      field.set(object, Integer.valueOf(((Double) value).intValue()));
-      return true;
+    return isLongAssigned;
+  }
+
+  <T> boolean assignInteger(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value) throws InvocationTargetException, IllegalAccessException {
+    boolean isIntegerAssigned = false;
+    if(int.class.isAssignableFrom(fieldType) || Integer.class.isAssignableFrom(fieldType)) {
+      final int intValue = ((Double) value).intValue();
+      if(fieldSetter != null && fieldSetter.isAccessible()) {
+        fieldSetter.invoke(object, intValue);
+        isIntegerAssigned = true;
+      } else if(int.class.isAssignableFrom(fieldType)) {
+        field.setInt(object, intValue);
+        isIntegerAssigned = true;
+      } else if(Integer.class.isAssignableFrom(fieldType)) {
+        field.set(object, intValue);
+        isIntegerAssigned = true;
+      }
     }
-    if (Boolean.class.isAssignableFrom(fieldType)) {
-      field.set(object, Boolean.valueOf(String.valueOf(value)));
-      return true;
+    return isIntegerAssigned;
+  }
+
+  <T> boolean assignBoolean(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value) throws InvocationTargetException, IllegalAccessException {
+    boolean isBooleanAssigned = false;
+    if(boolean.class.isAssignableFrom(fieldType) || Boolean.class.isAssignableFrom(fieldType)) {
+      final boolean boolValue = Boolean.parseBoolean(String.valueOf(value));
+      if(fieldSetter != null && fieldSetter.isAccessible()) {
+        fieldSetter.invoke(object, boolValue);
+        isBooleanAssigned = true;
+      } else if(boolean.class.isAssignableFrom(fieldType)) {
+        field.setBoolean(object, boolValue);
+        isBooleanAssigned = true;
+      } else if(Boolean.class.isAssignableFrom(fieldType)) {
+        field.set(object, boolValue);
+        isBooleanAssigned = true;
+      }
     }
-    return false;
+    return isBooleanAssigned;
   }
 
   private Long toMillis(final long value, final TimeUnit precision) {
