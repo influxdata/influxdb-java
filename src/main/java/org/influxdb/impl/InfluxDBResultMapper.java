@@ -333,9 +333,6 @@ public class InfluxDBResultMapper {
       if (!field.isAccessible()) {
         field.setAccessible(true);
       }
-      if (!fieldSetter.isAccessible()) {
-        fieldSetter.setAccessible(true);
-      }
       if (assignInstant(fieldType, field, fieldSetter, object, value, precision)
         || assignString(fieldType, field, fieldSetter, object, value)
         || assignDouble(fieldType, field, fieldSetter, object, value)
@@ -370,7 +367,7 @@ public class InfluxDBResultMapper {
       } else {
         throw new InfluxDBMapperException("Unsupported type " + field.getClass() + " for field " + field.getName());
       }
-      if(fieldSetter != null && fieldSetter.isAccessible()) {
+      if(fieldSetter != null) {
         fieldSetter.invoke(object, instant);
         isInstantAssigned = true;
       } else {
@@ -385,7 +382,7 @@ public class InfluxDBResultMapper {
     boolean isStringAssigned = false;
     if(String.class.isAssignableFrom(fieldType)) {
       final String stringValue = String.valueOf(value);
-      if(fieldSetter != null && fieldSetter.isAccessible()) {
+      if(fieldSetter != null) {
         fieldSetter.invoke(object, stringValue);
         isStringAssigned = true;
       } else {
@@ -399,7 +396,7 @@ public class InfluxDBResultMapper {
   <T> boolean assignDouble(final Class<?> fieldType, final Field field, final Method fieldSetter, final T object, final Object value) throws InvocationTargetException, IllegalAccessException {
     boolean isDoubleAssigned = false;
     if(double.class.isAssignableFrom(fieldType) || Double.class.isAssignableFrom(fieldType)) {
-      if(fieldSetter != null && fieldSetter.isAccessible()) {
+      if(fieldSetter != null) {
         fieldSetter.invoke(object, value);
         isDoubleAssigned = true;
       } else if(double.class.isAssignableFrom(fieldType)) {
@@ -418,7 +415,7 @@ public class InfluxDBResultMapper {
     boolean isLongAssigned = false;
     if(long.class.isAssignableFrom(fieldType) || Long.class.isAssignableFrom(fieldType)) {
       final long longValue = ((Double) value).longValue();
-      if(fieldSetter != null && fieldSetter.isAccessible()) {
+      if(fieldSetter != null) {
         fieldSetter.invoke(object, longValue);
         isLongAssigned = true;
       } else if(long.class.isAssignableFrom(fieldType)) {
@@ -436,7 +433,7 @@ public class InfluxDBResultMapper {
     boolean isIntegerAssigned = false;
     if(int.class.isAssignableFrom(fieldType) || Integer.class.isAssignableFrom(fieldType)) {
       final int intValue = ((Double) value).intValue();
-      if(fieldSetter != null && fieldSetter.isAccessible()) {
+      if(fieldSetter != null) {
         fieldSetter.invoke(object, intValue);
         isIntegerAssigned = true;
       } else if(int.class.isAssignableFrom(fieldType)) {
@@ -454,7 +451,7 @@ public class InfluxDBResultMapper {
     boolean isBooleanAssigned = false;
     if(boolean.class.isAssignableFrom(fieldType) || Boolean.class.isAssignableFrom(fieldType)) {
       final boolean boolValue = Boolean.parseBoolean(String.valueOf(value));
-      if(fieldSetter != null && fieldSetter.isAccessible()) {
+      if(fieldSetter != null) {
         fieldSetter.invoke(object, boolValue);
         isBooleanAssigned = true;
       } else if(boolean.class.isAssignableFrom(fieldType)) {
