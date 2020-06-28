@@ -211,11 +211,7 @@ public class InfluxDBResultMapper {
       if (CLASS_FIELD_CACHE.containsKey(clazz.getName())) {
         continue;
       }
-      ConcurrentMap<String, Field> initialMap = new ConcurrentHashMap<>();
-      ConcurrentMap<String, Field> influxColumnAndFieldMap = CLASS_FIELD_CACHE.putIfAbsent(clazz.getName(), initialMap);
-      if (influxColumnAndFieldMap == null) {
-        influxColumnAndFieldMap = initialMap;
-      }
+      ConcurrentMap<String, Field> influxColumnAndFieldMap = new ConcurrentHashMap<>();
 
       Class<?> c = clazz;
       while (c != null) {
@@ -227,6 +223,7 @@ public class InfluxDBResultMapper {
         }
         c = c.getSuperclass();
       }
+      CLASS_FIELD_CACHE.putIfAbsent(clazz.getName(), influxColumnAndFieldMap);
     }
   }
 
