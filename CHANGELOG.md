@@ -4,7 +4,7 @@
 
 ### Features
 
-- Added signature to InfluxDBMapper.query() with params final Query query, final Class<T> clazz, final String measurementName to leverage InfluxDBResultMapper.toPojo method with identical signature.
+- Added new signature to InfluxDBMapper.query() with params final Query query, final Class<T> clazz, final String measurementName to leverage InfluxDBResultMapper.toPojo method with identical signature.
 
 ### Improvements
 
