@@ -56,6 +56,24 @@ public class InfluxDBMapperTest {
   }
 
   @Test
+  public void testQueryWhenCalledWithClassOnly() {
+    ServerMeasure serverMeasure = createMeasure();
+    influxDBMapper.save(serverMeasure);
+
+    List<ServerMeasure> persistedMeasures = influxDBMapper.query(ServerMeasure.class);
+    Assert.assertTrue(persistedMeasures.size()>0);
+  }
+
+  @Test
+  public void testQueryWhenCalledWithQuery_Class_MeasurementName() {
+    ServerMeasure serverMeasure = createMeasure();
+    influxDBMapper.save(serverMeasure);
+
+    List<NonAnnotatedServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure",UDP_DATABASE), NonAnnotatedServerMeasure.class, "server_measure");
+    Assert.assertTrue(persistedMeasures.size()>0);
+  }
+
+  @Test
   public void testIllegalField() {
     InvalidMeasure invalidMeasure = new InvalidMeasure();
     invalidMeasure.setVal(new BigDecimal("2.3"));
@@ -105,6 +123,87 @@ public class InfluxDBMapperTest {
 
   @Measurement(name = "server_measure", database = UDP_DATABASE)
   static class ServerMeasure {
+
+    /** Check the instant conversions */
+    @Column(name = "time")
+    private Instant time;
+
+    @Column(name = "name", tag = true)
+    private String name;
+
+    @Column(name = "cpu")
+    private double cpu;
+
+    @Column(name = "healthy")
+    private boolean healthy;
+
+    @Column(name = "min")
+    private long uptime;
+
+    @Column(name = "memory_utilization")
+    private Double memoryUtilization;
+
+    @Column(name = "ip")
+    private String ip;
+
+    public Instant getTime() {
+      return time;
+    }
+
+    public void setTime(Instant time) {
+      this.time = time;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public double getCpu() {
+      return cpu;
+    }
+
+    public void setCpu(double cpu) {
+      this.cpu = cpu;
+    }
+
+    public boolean isHealthy() {
+      return healthy;
+    }
+
+    public void setHealthy(boolean healthy) {
+      this.healthy = healthy;
+    }
+
+    public long getUptime() {
+      return uptime;
+    }
+
+    public void setUptime(long uptime) {
+      this.uptime = uptime;
+    }
+
+    public Double getMemoryUtilization() {
+      return memoryUtilization;
+    }
+
+    public void setMemoryUtilization(Double memoryUtilization) {
+      this.memoryUtilization = memoryUtilization;
+    }
+
+    public String getIp() {
+      return ip;
+    }
+
+    public void setIp(String ip) {
+      this.ip = ip;
+    }
+  }
+
+  static class NonAnnotatedServerMeasure {
 
     /** Check the instant conversions */
     @Column(name = "time")
