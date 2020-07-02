@@ -20,7 +20,7 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
   public InfluxDBMapper(final InfluxDB influxDB) {
     this.influxDB = influxDB;
   }
-  
+
   public <T> List<T> query(final Query query, final Class<T> clazz, final String measurementName) {
     QueryResult queryResult = influxDB.query(query);
     return toPOJO(queryResult, clazz, measurementName);
