@@ -310,6 +310,8 @@ public class InfluxDBImpl implements InfluxDB {
             .bufferLimit(batchOptions.getBufferLimit())
             .consistencyLevel(batchOptions.getConsistency())
             .precision(batchOptions.getPrecision())
+            .dropActionsOnQueueExhaustion(batchOptions.isDropActionsOnQueueExhaustion())
+            .droppedActionHandler(batchOptions.getDroppedActionHandler())
             .build();
     this.batchEnabled.set(true);
     return this;
@@ -343,13 +345,14 @@ public class InfluxDBImpl implements InfluxDB {
   public InfluxDB enableBatch(final int actions, final int flushDuration, final TimeUnit flushDurationTimeUnit,
                               final ThreadFactory threadFactory,
                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
-    enableBatch(actions, flushDuration, 0, flushDurationTimeUnit, threadFactory, exceptionHandler);
+    enableBatch(actions, flushDuration, 0, flushDurationTimeUnit, threadFactory, exceptionHandler, false, null);
     return this;
   }
 
   private InfluxDB enableBatch(final int actions, final int flushDuration, final int jitterDuration,
                                final TimeUnit durationTimeUnit, final ThreadFactory threadFactory,
-                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler) {
+                               final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+                               final boolean dropActionsOnQueueExhaustion, final Consumer<Point> droppedActionHandler) {
     if (this.batchEnabled.get()) {
       throw new IllegalStateException("BatchProcessing is already enabled.");
     }
@@ -360,6 +363,8 @@ public class InfluxDBImpl implements InfluxDB {
             .interval(flushDuration, jitterDuration, durationTimeUnit)
             .threadFactory(threadFactory)
             .consistencyLevel(consistency)
+            .dropActionsOnQueueExhaustion(dropActionsOnQueueExhaustion)
+            .droppedActionHandler(droppedActionHandler)
             .build();
     this.batchEnabled.set(true);
     return this;
