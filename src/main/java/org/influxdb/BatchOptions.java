@@ -141,9 +141,10 @@ public final class BatchOptions implements Cloneable {
   }
 
   /**
-   * Set to define the behaviour incase the action queue is exhausts, If unspecified, will default to false which means that the {@link InfluxDB#write(Point)} will be
-   * blocked till the space in the queue is created. true means that the newer actions being written to the queue will dropped and {@link BatchOptions#droppedActionHandler}
-   * will be called.
+   * Set to define the behaviour when the action queue exhausts. If unspecified, will default to false which means
+   * that the {@link InfluxDB#write(Point)} will be blocked till the space in the queue is created.
+   * true means that the newer actions being written to the queue will be dropped and
+   * {@link BatchOptions#droppedActionHandler} will be called.
    * @param dropActionsOnQueueExhaustion sets the behavior
    * @return the BatchOptions instance to be able to use it in a fluent manner.
    */
@@ -154,7 +155,8 @@ public final class BatchOptions implements Cloneable {
   }
 
   /**
-   * Handler to handle dropped actions due to queue actions. This is only valid when {@link BatchOptions#dropActionsOnQueueExhaustion} is set to true.
+   * Handler to handle dropped actions due to queue actions. This is only valid when
+   * {@link BatchOptions#dropActionsOnQueueExhaustion} is set to true.
    * @param droppedActionHandler to handle action drops on action queue exhaustion.
    * @return the BatchOptions instance to be able to use it in a fluent manner.
    */

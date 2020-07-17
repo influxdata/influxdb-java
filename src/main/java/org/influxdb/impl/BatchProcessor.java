@@ -158,9 +158,10 @@ public final class BatchProcessor {
     }
 
     /**
-     * Todefine the behaviour incase the action queue is exhausts, If unspecified, will default to false which means that the {@link InfluxDB#write(Point)} will be
-     *  blocked till the space in the queue is created. true means that the newer actions being written to the queue will dropped and {@link BatchProcessor#droppedActionHandler}
-     *   will be called.
+     * To define the behaviour when the action queue exhausts. If unspecified, will default to false which means that the
+     * {@link InfluxDB#write(Point)} will be blocked till the space in the queue is created.
+     * true means that the newer actions being written to the queue will dropped and
+     * {@link BatchProcessor#droppedActionHandler} will be called.
      *
      * @param dropActionsOnQueueExhaustion
      *            the dropActionsOnQueueExhaustion
@@ -298,7 +299,7 @@ public final class BatchProcessor {
                  final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
                  final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
                  final ConsistencyLevel consistencyLevel, final TimeUnit precision,
-                 final boolean dropActionsOnQueueExhaustion, Consumer<Point> droppedActionHandler) {
+                 final boolean dropActionsOnQueueExhaustion, final Consumer<Point> droppedActionHandler) {
     super();
     this.influxDB = influxDB;
     this.batchWriter = batchWriter;
