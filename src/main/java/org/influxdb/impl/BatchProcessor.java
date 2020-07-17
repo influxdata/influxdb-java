@@ -158,8 +158,8 @@ public final class BatchProcessor {
     }
 
     /**
-     * To define the behaviour when the action queue exhausts. If unspecified, will default to false which means that the
-     * {@link InfluxDB#write(Point)} will be blocked till the space in the queue is created.
+     * To define the behaviour when the action queue exhausts. If unspecified, will default to false which means that
+     * the {@link InfluxDB#write(Point)} will be blocked till the space in the queue is created.
      * true means that the newer actions being written to the queue will dropped and
      * {@link BatchProcessor#droppedActionHandler} will be called.
      *
@@ -403,8 +403,7 @@ public final class BatchProcessor {
             this.droppedActionHandler.accept(batchEntry.getPoint());
             return;
           }
-        }
-        else {
+        } else {
           this.queue.put(batchEntry);
         }
     } catch (InterruptedException e) {
