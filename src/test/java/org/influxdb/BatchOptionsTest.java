@@ -55,6 +55,9 @@ public class BatchOptionsTest {
 
   @Test
   public void testParametersSet() {
+
+    
+
     BatchOptions options = BatchOptions.DEFAULTS.actions(3);
     Assertions.assertEquals(3, options.getActions());
     options=options.consistency(InfluxDB.ConsistencyLevel.ANY);
