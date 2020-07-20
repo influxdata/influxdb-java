@@ -1,16 +1,19 @@
 package org.influxdb;
 
+import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDBException.DatabaseNotFoundException;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -18,10 +21,12 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 
 @RunWith(JUnitPlatform.class)
@@ -50,6 +55,9 @@ public class BatchOptionsTest {
 
   @Test
   public void testParametersSet() {
+
+    
+
     BatchOptions options = BatchOptions.DEFAULTS.actions(3);
     Assertions.assertEquals(3, options.getActions());
     options=options.consistency(InfluxDB.ConsistencyLevel.ANY);
@@ -71,6 +79,13 @@ public class BatchOptionsTest {
     ThreadFactory tf=Executors.defaultThreadFactory();
     options=options.threadFactory(tf);
     Assertions.assertEquals(tf, options.getThreadFactory());
+    Assertions.assertEquals(false, options.isDropActionsOnQueueExhaustion());
+
+    options=options.dropActionsOnQueueExhaustion(true);
+    Assertions.assertEquals(true, options.isDropActionsOnQueueExhaustion());
+    Consumer<Point> droppedActionHandler = (pt) -> {};
+    options=options.droppedActionHandler(droppedActionHandler);
+    Assertions.assertEquals(droppedActionHandler, options.getDroppedActionHandler());
   }
 
   /**
@@ -112,6 +127,74 @@ public class BatchOptionsTest {
       this.influxDB.disableBatch();
       this.influxDB.query(new Query("DROP DATABASE " + dbName));
     }
+  }
+
+  /**
+   * Test the implementation of {@link BatchOptions#dropActionsOnQueueExhaustion(boolean)} and {@link BatchOptions#droppedActionHandler(Consumer)} }.
+   */
+  @Test
+  public void testDropActionsOnQueueExhaustionSettings() throws InterruptedException, IOException {
+
+    /*
+      To simulate a behavior where the action if exhausted because it is not cleared by the batchProcessor(may be because the latency of writes to influx server went up),
+      will have to artificially inrease latency of http calls to influx db server, for that need to add an interceptor to the http client.
+      Thus locally creating a new influx db server instead of using the global one.
+     */
+
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    try (InfluxDB influxDBLocal = TestUtils.connectToInfluxDB(new OkHttpClient.Builder().addInterceptor(chain -> {
+      try {
+        //blocking the http call for write with countdown latch
+        if (chain.request().url().encodedPath().contains("write"))
+          countDownLatch.await(5, TimeUnit.SECONDS);
+        return chain.proceed(chain.request());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      return chain.proceed(chain.request());
+    }), null, InfluxDB.ResponseFormat.JSON)) {
+      String dbName = "write_unittest_" + System.currentTimeMillis();
+      try {
+
+        Consumer<Point> droppedActionHandler = mock(Consumer.class);
+        BatchOptions options = BatchOptions.DEFAULTS.actions(2).flushDuration(1000)
+                .dropActionsOnQueueExhaustion(true)
+                .droppedActionHandler(droppedActionHandler);
+
+        influxDBLocal.query(new Query("CREATE DATABASE " + dbName));
+        influxDBLocal.setDatabase(dbName);
+        influxDBLocal.enableBatch(options);
+
+
+        //write 4 points and the first two will get flushed as well as actions = 2;
+        writeSomePoints(influxDBLocal, 1, 2);
+        //wait for the BatchProcessor$write() to flush the queue.
+        Thread.sleep(200);
+
+        //4 more points, last 2 of these should get dropped
+        writeSomePoints(influxDBLocal, 3, 6);
+        verify(droppedActionHandler, times(2)).accept(any());
+
+        //releasing the latch
+        countDownLatch.countDown();
+
+        //wait for the point to get written to influx db.
+        Thread.sleep(200);
+
+        QueryResult result = influxDBLocal.query(new Query("select * from weather", dbName));
+        //assert that 2 points were dropped
+        Assertions.assertEquals(4, result.getResults().get(0).getSeries().get(0).getValues().size());
+        //assert that that last 2 points were dropped.
+        org.assertj.core.api.Assertions.assertThat(result.getResults().get(0).getSeries().get(0).getValues()).extracting(a -> a.get(2))
+                .containsOnly(1.0, 2.0, 3.0, 4.0);
+
+      }
+      finally {
+        influxDBLocal.query(new Query("DROP DATABASE " + dbName));
+      }
+
+    }
+
   }
 
   /**

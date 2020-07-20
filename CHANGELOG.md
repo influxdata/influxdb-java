@@ -2,6 +2,10 @@
 
 ## 2.20 [unreleased]
 
+### Features
+- Add an option in `BatchOption` to prevent `InfluxDB#write` from blocking when actions queue is exhausted. [Issue #668](https://github.com/influxdata/influxdb-java/issues/688)
+
+
 ## 2.19 [2020-05-18]
 
 ## 2.18 [2020-04-17]

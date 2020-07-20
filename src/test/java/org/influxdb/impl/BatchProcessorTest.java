@@ -8,12 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import java.io.IOException;
@@ -168,6 +163,23 @@ public class BatchProcessorTest {
         BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
                 .interval(1, TimeUnit.NANOSECONDS).consistencyLevel(InfluxDB.ConsistencyLevel.ANY).build();
         assertThat(batchProcessor.getConsistencyLevel(), is(equalTo(InfluxDB.ConsistencyLevel.ANY)));
+    }
+
+    @Test
+    public void testDropOnActionQueueExhaustionDefault()  {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).build();
+        Assertions.assertEquals(false, batchProcessor.isDropActionsOnQueueExhaustion());
+    }
+
+
+    @Test
+    public void testDropOnActionQueueExhaustionUpdated()  {
+        InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+        BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).dropActionsOnQueueExhaustion(true).build();
+        Assertions.assertEquals(true, batchProcessor.isDropActionsOnQueueExhaustion());
     }
 
     @Test
