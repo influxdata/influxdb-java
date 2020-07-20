@@ -3,7 +3,7 @@
 ## 2.20 [unreleased]
 
 ### Features
-
+- Add an option in `BatchOption` to prevent `InfluxDB#write` from blocking when actions queue is exhausted. [Issue #668](https://github.com/influxdata/influxdb-java/issues/688)
 - Added new signature to InfluxDBMapper.query() with params final Query query, final Class<T> clazz, final String measurementName to leverage InfluxDBResultMapper.toPojo method with identical signature.
 
 ### Improvements

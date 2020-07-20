@@ -19,6 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +44,8 @@ public final class BatchProcessor {
   private final int jitterInterval;
   private final TimeUnit precision;
   private final BatchWriter batchWriter;
+  private boolean dropActionsOnQueueExhaustion;
+  Consumer<Point> droppedActionHandler;
 
   /**
    * The Builder to create a BatchProcessor instance.
@@ -62,6 +65,8 @@ public final class BatchProcessor {
     private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> { };
     private ConsistencyLevel consistencyLevel;
 
+    private boolean dropActionsOnQueueExhaustion;
+    private Consumer<Point> droppedActionsHandler;
     /**
      * @param threadFactory
      *            is optional.
@@ -153,6 +158,37 @@ public final class BatchProcessor {
     }
 
     /**
+     * To define the behaviour when the action queue exhausts. If unspecified, will default to false which means that
+     * the {@link InfluxDB#write(Point)} will be blocked till the space in the queue is created.
+     * true means that the newer actions being written to the queue will dropped and
+     * {@link BatchProcessor#droppedActionHandler} will be called.
+     *
+     * @param dropActionsOnQueueExhaustion
+     *            the dropActionsOnQueueExhaustion
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder dropActionsOnQueueExhaustion(final boolean dropActionsOnQueueExhaustion) {
+      this.dropActionsOnQueueExhaustion = dropActionsOnQueueExhaustion;
+      return this;
+    }
+
+    /**
+     * A callback to be used when an actions are dropped on action queue exhaustion.
+     *
+     * @param handler
+     *            the handler
+     *
+     * @return this Builder to use it fluent
+     */
+    public Builder droppedActionHandler(final Consumer<Point> handler) {
+      this.droppedActionsHandler = handler;
+      return this;
+    }
+
+
+
+    /**
      * Consistency level for batch write.
      *
      * @param consistencyLevel
@@ -200,7 +236,7 @@ public final class BatchProcessor {
       }
       return new BatchProcessor(this.influxDB, batchWriter, this.threadFactory, this.actions, this.flushIntervalUnit,
                                 this.flushInterval, this.jitterInterval, exceptionHandler, this.consistencyLevel,
-                                this.precision);
+                                this.precision, this.dropActionsOnQueueExhaustion, this.droppedActionsHandler);
     }
   }
 
@@ -262,7 +298,8 @@ public final class BatchProcessor {
   BatchProcessor(final InfluxDB influxDB, final BatchWriter batchWriter, final ThreadFactory threadFactory,
                  final int actions, final TimeUnit flushIntervalUnit, final int flushInterval, final int jitterInterval,
                  final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
-                 final ConsistencyLevel consistencyLevel, final TimeUnit precision) {
+                 final ConsistencyLevel consistencyLevel, final TimeUnit precision,
+                 final boolean dropActionsOnQueueExhaustion, final Consumer<Point> droppedActionHandler) {
     super();
     this.influxDB = influxDB;
     this.batchWriter = batchWriter;
@@ -274,6 +311,8 @@ public final class BatchProcessor {
     this.exceptionHandler = exceptionHandler;
     this.consistencyLevel = consistencyLevel;
     this.precision = precision;
+    this.dropActionsOnQueueExhaustion = dropActionsOnQueueExhaustion;
+    this.droppedActionHandler = droppedActionHandler;
     if (actions > 1 && actions < Integer.MAX_VALUE) {
         this.queue = new LinkedBlockingQueue<>(actions);
     } else {
@@ -359,7 +398,14 @@ public final class BatchProcessor {
    */
   void put(final AbstractBatchEntry batchEntry) {
     try {
-        this.queue.put(batchEntry);
+        if (this.dropActionsOnQueueExhaustion) {
+          if (!this.queue.offer(batchEntry)) {
+            this.droppedActionHandler.accept(batchEntry.getPoint());
+            return;
+          }
+        } else {
+          this.queue.put(batchEntry);
+        }
     } catch (InterruptedException e) {
         throw new RuntimeException(e);
     }
@@ -403,4 +449,11 @@ public final class BatchProcessor {
     return batchWriter;
   }
 
+  public boolean isDropActionsOnQueueExhaustion() {
+    return dropActionsOnQueueExhaustion;
+  }
+
+  public Consumer<Point> getDroppedActionHandler() {
+    return droppedActionHandler;
+  }
 }

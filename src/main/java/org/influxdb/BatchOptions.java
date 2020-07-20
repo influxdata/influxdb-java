@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * BatchOptions are used to configure batching of individual data point writes
@@ -19,6 +20,8 @@ public final class BatchOptions implements Cloneable {
   public static final int DEFAULT_JITTER_INTERVAL_DURATION = 0;
   public static final int DEFAULT_BUFFER_LIMIT = 10000;
   public static final TimeUnit DEFAULT_PRECISION = TimeUnit.NANOSECONDS;
+  public static final boolean DEFAULT_DROP_ACTIONS_ON_QUEUE_EXHAUSTION = false;
+
 
   /**
    * Default batch options. This class is immutable, each configuration
@@ -32,10 +35,14 @@ public final class BatchOptions implements Cloneable {
   private int jitterDuration = DEFAULT_JITTER_INTERVAL_DURATION;
   private int bufferLimit = DEFAULT_BUFFER_LIMIT;
   private TimeUnit precision = DEFAULT_PRECISION;
+  private boolean dropActionsOnQueueExhaustion = DEFAULT_DROP_ACTIONS_ON_QUEUE_EXHAUSTION;
+  private Consumer<Point> droppedActionHandler = (point) -> {
+  };
 
   private ThreadFactory threadFactory = Executors.defaultThreadFactory();
   BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {
   };
+
   private InfluxDB.ConsistencyLevel consistency = InfluxDB.ConsistencyLevel.ONE;
 
   private BatchOptions() {
@@ -134,6 +141,33 @@ public final class BatchOptions implements Cloneable {
   }
 
   /**
+   * Set to define the behaviour when the action queue exhausts. If unspecified, will default to false which means
+   * that the {@link InfluxDB#write(Point)} will be blocked till the space in the queue is created.
+   * true means that the newer actions being written to the queue will be dropped and
+   * {@link BatchOptions#droppedActionHandler} will be called.
+   * @param dropActionsOnQueueExhaustion sets the behavior
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
+   */
+  public BatchOptions dropActionsOnQueueExhaustion(final boolean dropActionsOnQueueExhaustion) {
+    BatchOptions clone = getClone();
+    clone.dropActionsOnQueueExhaustion = dropActionsOnQueueExhaustion;
+    return clone;
+  }
+
+  /**
+   * Handler to handle dropped actions due to queue actions. This is only valid when
+   * {@link BatchOptions#dropActionsOnQueueExhaustion} is set to true.
+   * @param droppedActionHandler to handle action drops on action queue exhaustion.
+   * @return the BatchOptions instance to be able to use it in a fluent manner.
+   */
+  public BatchOptions droppedActionHandler(final Consumer<Point> droppedActionHandler) {
+    BatchOptions clone = getClone();
+    clone.droppedActionHandler = droppedActionHandler;
+    return clone;
+  }
+
+
+  /**
    * @return actions the number of actions to collect
    */
   public int getActions() {
@@ -188,6 +222,21 @@ public final class BatchOptions implements Cloneable {
    */
   public TimeUnit getPrecision() {
     return precision;
+  }
+
+
+  /**
+   * @return a boolean determining whether to drop actions on action queue exhaustion.
+   */
+  public boolean isDropActionsOnQueueExhaustion() {
+    return dropActionsOnQueueExhaustion;
+  }
+
+  /**
+   * @return a consumer function to handle actions drops on action queue exhaustion.
+   */
+  public Consumer<Point> getDroppedActionHandler() {
+    return droppedActionHandler;
   }
 
   private BatchOptions getClone() {
