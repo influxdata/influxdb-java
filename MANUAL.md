@@ -104,7 +104,7 @@ It's possible to use both approaches at the same time: set a default database us
   public static final boolean DEFAULT_DROP_ACTIONS_ON_QUEUE_EXHAUSTION = false;
 ```
 #### Configuring behaviour of batch writes when the action queue exhausts
-With batching enabled the client provides two options on how to deal with **action queue** (where the points are accumulated as a batch) exhaustion.
+With batching enabled, the client provides two options on how to deal with **action queue** (where the points are accumulated as a batch) exhaustion.
 1. When `dropActionsOnQueueExhaustion` is `false` (default value), `InfluxDB#write` will be blocked till the space is created in the action queue.
 2. When `dropActionsOnQueueExhaustion` is `true`, new writes using `InfluxDB#write` will dropped and `droppedActionHandler` will be called.
    Example usage:
