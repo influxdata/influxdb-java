@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 public final class CheckTags {
   static final String nameRegex = "([a-zA-Z0-9-_]+)";
-  static final String valueRegex = "[[:ascii:]]+";
+  static final String valueRegex = "[\\x00-\\x7F]+";
   static final Pattern namePattern = Pattern.compile(nameRegex, Pattern.MULTILINE);
   static final Pattern valuePattern = Pattern.compile(valueRegex, Pattern.MULTILINE);
   
@@ -28,7 +28,7 @@ public final class CheckTags {
   
   public static Boolean isTagNameLegal(String name){
     final Matcher matcher = namePattern.matcher(name);
-    return matcher.groupCount() == 1 && matcher.matches();
+    return matcher.matches();
   }
   
   /**

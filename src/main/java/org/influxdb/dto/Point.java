@@ -124,9 +124,6 @@ public class Point {
           && CheckTags.isTagValueLegal(value)) {
         tags.put(tagName, value);
       }
-      else {
-        throw InfluxDBException.buildExceptionForErrorState("tag name or value failed regex check");
-      }
       return this;
     }
 
@@ -139,7 +136,11 @@ public class Point {
      */
     public Builder tag(final Map<String, String> tagsToAdd) {
       for (Entry<String, String> tag : tagsToAdd.entrySet()) {
+        if(CheckTags.isTagNameLegal(tag.getKey())
+        && CheckTags.isTagValueLegal(tag.getValue()))
         tag(tag.getKey(), tag.getValue());
+        else
+          continue;
       }
       return this;
     }
