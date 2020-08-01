@@ -102,9 +102,6 @@ public class BatchPoints {
           && CheckTags.isTagNameLegal(tagName)
           && CheckTags.isTagValueLegal(value))
       this.tags.put(tagName, value);
-      else {
-      throw InfluxDBException.buildExceptionForErrorState("tag name or value failed regex check");
-      }
       return this;
     }
 

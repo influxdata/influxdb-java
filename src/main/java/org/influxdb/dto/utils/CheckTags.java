@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
  *
  * {Other Notes Relating to This Type (Optional)}
  *
- * @author BrentonPoke
+ * @author Brenton Poke
  *
  */
 public final class CheckTags {
