@@ -15,9 +15,11 @@ import java.util.TreeMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
+import org.influxdb.InfluxDBException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
+import org.influxdb.dto.utils.CheckTags;
 import org.influxdb.impl.Preconditions;
 
 /**
@@ -116,8 +118,14 @@ public class Point {
     public Builder tag(final String tagName, final String value) {
       Objects.requireNonNull(tagName, "tagName");
       Objects.requireNonNull(value, "value");
-      if (!tagName.isEmpty() && !value.isEmpty()) {
+      if (!tagName.isEmpty()
+          && !value.isEmpty()
+          && CheckTags.isTagNameLegal(tagName)
+          && CheckTags.isTagValueLegal(value)) {
         tags.put(tagName, value);
+      }
+      else {
+        throw InfluxDBException.buildExceptionForErrorState("tag name or value failed regex check");
       }
       return this;
     }

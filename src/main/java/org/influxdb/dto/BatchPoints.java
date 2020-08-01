@@ -10,6 +10,10 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import org.influxdb.InfluxDB.ConsistencyLevel;
+import org.influxdb.InfluxDBException;
+import org.influxdb.dto.utils.CheckTags;
+
+import static org.influxdb.dto.utils.CheckTags.*;
 
 /**
  * {Purpose of This Type}.
@@ -29,6 +33,7 @@ public class BatchPoints {
 
   BatchPoints() {
     // Only visible in the Builder
+    
   }
 
   /**
@@ -90,7 +95,16 @@ public class BatchPoints {
      * @return the Builder instance.
      */
     public Builder tag(final String tagName, final String value) {
+      Objects.requireNonNull(tagName, "tagName");
+      Objects.requireNonNull(value, "value");
+      if (!tagName.isEmpty()
+          && !value.isEmpty()
+          && CheckTags.isTagNameLegal(tagName)
+          && CheckTags.isTagValueLegal(value))
       this.tags.put(tagName, value);
+      else {
+      throw InfluxDBException.buildExceptionForErrorState("tag name or value failed regex check");
+      }
       return this;
     }
 
