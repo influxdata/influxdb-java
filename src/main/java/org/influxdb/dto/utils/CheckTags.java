@@ -16,6 +16,8 @@ public final class CheckTags {
   static final String VALUEREGEX = "[\\x00-\\x7F]+";
   static final Pattern NAMEPATTERN = Pattern.compile(NAMEREGEX, Pattern.MULTILINE);
   static final Pattern VALUEPATTERN = Pattern.compile(VALUEREGEX, Pattern.MULTILINE);
+
+  private CheckTags() { }
   /**
    * Check a single tag's name according to the corresponding regular expression.
    *
@@ -28,7 +30,6 @@ public final class CheckTags {
     final Matcher matcher = NAMEPATTERN.matcher(name);
     return matcher.matches();
   }
-  
   /**
    * Check a single tag's name according to the corresponding regular expression.
    *

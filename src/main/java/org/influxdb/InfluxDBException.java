@@ -53,7 +53,7 @@ public class InfluxDBException extends RuntimeException {
   static final String AUTHORIZATION_FAILED_ERROR = "authorization failed";
   static final String USERNAME_REQUIRED_ERROR = "username required";
   static final String TAGGING_INVALID_ERROR = "tag name or value failed regex check";
-  
+
   public static final class TaggingInvalidException extends InfluxDBException {
     private TaggingInvalidException(final String message) {
       super(message);
