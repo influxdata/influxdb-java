@@ -15,7 +15,6 @@ import java.util.TreeMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
-import org.influxdb.InfluxDBException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
@@ -136,11 +135,9 @@ public class Point {
      */
     public Builder tag(final Map<String, String> tagsToAdd) {
       for (Entry<String, String> tag : tagsToAdd.entrySet()) {
-        if(CheckTags.isTagNameLegal(tag.getKey())
-        && CheckTags.isTagValueLegal(tag.getValue()))
-        tag(tag.getKey(), tag.getValue());
-        else
-          continue;
+        if (CheckTags.isTagNameLegal(tag.getKey()) && CheckTags.isTagValueLegal(tag.getValue())) {
+          tag(tag.getKey(), tag.getValue());
+        }
       }
       return this;
     }
