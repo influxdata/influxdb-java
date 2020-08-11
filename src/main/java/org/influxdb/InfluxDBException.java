@@ -52,7 +52,6 @@ public class InfluxDBException extends RuntimeException {
   static final String USER_NOT_AUTHORIZED_ERROR = "user is not authorized to write to database";
   static final String AUTHORIZATION_FAILED_ERROR = "authorization failed";
   static final String USERNAME_REQUIRED_ERROR = "username required";
-  static final String TAGGING_INVALID_ERROR = "tag name or value failed regex check";
 
   public static final class TaggingInvalidException extends InfluxDBException {
     private TaggingInvalidException(final String message) {
@@ -162,9 +161,6 @@ public class InfluxDBException extends RuntimeException {
     if (errorMessage.contains(CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR)) {
       return new CacheMaxMemorySizeExceededException(errorMessage);
     }
-    if (errorMessage.contains(TAGGING_INVALID_ERROR)) {
-      return new TaggingInvalidException(errorMessage);
-      }
     if (errorMessage.contains(USER_REQUIRED_ERROR)
             || errorMessage.contains(USER_NOT_AUTHORIZED_ERROR)
             || errorMessage.contains(AUTHORIZATION_FAILED_ERROR)
