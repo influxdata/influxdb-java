@@ -12,13 +12,25 @@ import org.junit.runner.RunWith;
 public class CheckTagsTest {
   @Test
   public void TagNameNewLineTest() {
-    final String tagname = "mad\ndrid";
-    final String tagname1 = "maddrid\n";
-    final String tagname2 = "\nmaddrid";
+    final String tagname = "ma\ndrid";
+    final String tagname1 = "madrid\n";
+    final String tagname2 = "\nmadrid";
     
     Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(tagname,"city").addField("a", 1.0).build();
     Assert.assertFalse(point.getTags().containsKey("madrid"));
     Assert.assertFalse(point.getTags().containsKey("mad\nrid"));
+    Assert.assertFalse(CheckTags.isTagNameLegal(tagname));
+    Assert.assertFalse(CheckTags.isTagNameLegal(tagname1));
+    Assert.assertFalse(CheckTags.isTagNameLegal(tagname2));
+  }
+  @Test
+  public void TagNameCarriageReturnTest() {
+    final String tagname = "ma\rdrid";
+    final String tagname1 = "madrid\r";
+    final String tagname2 = "\rmadrid";
+    Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(tagname,"city").addField("a", 1.0).build();
+    Assert.assertFalse(point.getTags().containsKey("madrid"));
+    Assert.assertFalse(point.getTags().containsKey("mad\rrid"));
     Assert.assertFalse(CheckTags.isTagNameLegal(tagname));
     Assert.assertFalse(CheckTags.isTagNameLegal(tagname1));
     Assert.assertFalse(CheckTags.isTagNameLegal(tagname2));
