@@ -117,10 +117,7 @@ public class Point {
     public Builder tag(final String tagName, final String value) {
       Objects.requireNonNull(tagName, "tagName");
       Objects.requireNonNull(value, "value");
-      if (!tagName.isEmpty()
-          && !value.isEmpty()
-          && CheckTags.isTagNameLegal(tagName)
-          && CheckTags.isTagValueLegal(value)) {
+      if (CheckTags.isLegalFullCheck(tagName,value)) {
         tags.put(tagName, value);
       }
       return this;
@@ -135,10 +132,7 @@ public class Point {
      */
     public Builder tag(final Map<String, String> tagsToAdd) {
       for (Entry<String, String> tag : tagsToAdd.entrySet()) {
-        if (!tag.getKey().isEmpty()
-            && !tag.getValue().isEmpty()
-            && CheckTags.isTagNameLegal(tag.getKey())
-            && CheckTags.isTagValueLegal(tag.getValue())) {
+        if (CheckTags.isLegalFullCheck(tag.getKey(),tag.getValue())) {
           tags.put(tag.getKey(), tag.getValue());
         }
       }

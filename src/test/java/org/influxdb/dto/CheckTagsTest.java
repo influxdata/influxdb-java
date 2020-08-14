@@ -1,6 +1,8 @@
 package org.influxdb.dto;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
 import org.influxdb.dto.Point.Builder;
@@ -68,6 +70,15 @@ public class CheckTagsTest {
     Assertions.assertThat(points.build().getPoints().get(0).getTags().equals(map.values()));
     map.put("#phone","1-555-0101");
     Assertions.assertThat(!points.build().getPoints().get(0).getTags().equals(map.values()));
+  }
+  @Test
+  public void LegalFullCheckTagTest() {
+    Assert.assertTrue(CheckTags.isLegalFullCheck("test","value"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("",""));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("test",""));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("","value"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("ma\ndrid", "city"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("city","ąćę"));
   }
   @Test
   public void TagNameHyphenTest() {

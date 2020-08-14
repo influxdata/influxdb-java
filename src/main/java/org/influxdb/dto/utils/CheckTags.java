@@ -1,5 +1,7 @@
 package org.influxdb.dto.utils;
 
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,5 +42,11 @@ public final class CheckTags {
   public static Boolean isTagValueLegal(final String value) {
     final Matcher matcher = VALUEPATTERN.matcher(value);
     return matcher.matches();
+  }
+  public static Boolean isLegalFullCheck(final String name, final String value) {
+    return !name.isEmpty()
+        && !value.isEmpty()
+        && CheckTags.isTagNameLegal(name)
+        && CheckTags.isTagValueLegal(value);
   }
 }
