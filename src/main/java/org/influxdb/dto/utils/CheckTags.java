@@ -7,8 +7,6 @@ import java.util.regex.Pattern;
  * Utility class intended for internal use.
  * Checks the format of tag names and values to see if they conform to a regular expression.
  *
- * {Other Notes Relating to This Type (Optional)}
- *
  * @author Brenton Poke
  *
  */
