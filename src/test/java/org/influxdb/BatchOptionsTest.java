@@ -382,6 +382,7 @@ public class BatchOptionsTest {
 
       result = spy.query(new Query("select * from measurement2", dbName));
       //assert all 6 point written because of retry capable CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR and RetryCapableBatchWriter did retry
+      System.out.println(result.getResults());
       Assertions.assertEquals(6, result.getResults().get(0).getSeries().get(0).getValues().size());
     }
     finally {

@@ -12,9 +12,9 @@ import java.util.regex.Pattern;
  *
  */
 public final class CheckTags {
-  static final String NAMEREGEX = "([^\\\\n\\\\r]+)";
+  static final String NAMEREGEX = "[^\r\n]+";
   static final String VALUEREGEX = "[\\x00-\\x7F]+";
-  static final Pattern NAMEPATTERN = Pattern.compile(NAMEREGEX, Pattern.MULTILINE);
+  static final Pattern NAMEPATTERN = Pattern.compile(NAMEREGEX);
   static final Pattern VALUEPATTERN = Pattern.compile(VALUEREGEX, Pattern.MULTILINE);
 
   private CheckTags() { }
