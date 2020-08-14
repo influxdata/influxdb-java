@@ -93,10 +93,7 @@ public class BatchPoints {
     public Builder tag(final String tagName, final String value) {
       Objects.requireNonNull(tagName, "tagName");
       Objects.requireNonNull(value, "value");
-      if (!tagName.isEmpty()
-          && !value.isEmpty()
-          && CheckTags.isTagNameLegal(tagName)
-          && CheckTags.isTagValueLegal(value)) {
+      if (CheckTags.isLegalFullCheck(tagName, value)) {
         this.tags.put(tagName, value);
       }
       return this;

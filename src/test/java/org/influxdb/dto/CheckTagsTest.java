@@ -1,7 +1,11 @@
 package org.influxdb.dto;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
+import org.influxdb.dto.Point.Builder;
 import org.influxdb.dto.utils.CheckTags;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -12,13 +16,25 @@ import org.junit.runner.RunWith;
 public class CheckTagsTest {
   @Test
   public void TagNameNewLineTest() {
-    final String tagname = "mad\ndrid";
-    final String tagname1 = "maddrid\n";
-    final String tagname2 = "\nmaddrid";
+    final String tagname = "ma\ndrid";
+    final String tagname1 = "madrid\n";
+    final String tagname2 = "\nmadrid";
     
     Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(tagname,"city").addField("a", 1.0).build();
     Assert.assertFalse(point.getTags().containsKey("madrid"));
     Assert.assertFalse(point.getTags().containsKey("mad\nrid"));
+    Assert.assertFalse(CheckTags.isTagNameLegal(tagname));
+    Assert.assertFalse(CheckTags.isTagNameLegal(tagname1));
+    Assert.assertFalse(CheckTags.isTagNameLegal(tagname2));
+  }
+  @Test
+  public void TagNameCarriageReturnTest() {
+    final String tagname = "ma\rdrid";
+    final String tagname1 = "madrid\r";
+    final String tagname2 = "\rmadrid";
+    Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(tagname,"city").addField("a", 1.0).build();
+    Assert.assertFalse(point.getTags().containsKey("madrid"));
+    Assert.assertFalse(point.getTags().containsKey("mad\rrid"));
     Assert.assertFalse(CheckTags.isTagNameLegal(tagname));
     Assert.assertFalse(CheckTags.isTagNameLegal(tagname1));
     Assert.assertFalse(CheckTags.isTagNameLegal(tagname2));
@@ -32,6 +48,38 @@ public class CheckTagsTest {
     Assert.assertTrue(point.getTags().containsKey("$cost"));
     Assert.assertTrue(CheckTags.isTagNameLegal(tagname));
     Assert.assertTrue(CheckTags.isTagNameLegal(tagname1));
+    final HashMap<String, String> map = new HashMap<>();
+    map.put("$cost","$15");
+    map.put("$mortgage","$34,000");
+    map.put("%interest","65%");
+    map.put("@email","startrek@cbs.com");
+    Point.Builder point1 = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(map).addField("a", 1.0);
+    Assertions.assertThat(point1.build().getTags().values().equals(map.values()));
+  }
+  @Test
+  public void BatchPointsTagTest() {
+    final HashMap<String, String> map = new HashMap<>();
+    map.put("$cost","$15");
+    map.put("$mortgage","$34,000");
+    map.put("%interest","65%");
+    map.put("@email","startrek@cbs.com");
+    Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
+    BatchPoints.Builder points = BatchPoints.builder()
+        .tag("$cost","$15").tag("$mortgage","$34,000")
+        .tag("%interest","65%").tag("@email","startrek@cbs.com").point(point);
+    Assertions.assertThat(points.build().getPoints().get(0).getTags().equals(map.values()));
+    map.put("#phone","1-555-0101");
+    Assertions.assertThat(!points.build().getPoints().get(0).getTags().equals(map.values()));
+  }
+  @Test
+  public void LegalFullCheckTagTest() {
+    Assert.assertTrue(CheckTags.isLegalFullCheck("test","value"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("",""));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("test",""));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("","value"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("ma\ndrid", "city"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("city","ąćę"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("","ąćę"));
   }
   @Test
   public void TagNameHyphenTest() {
@@ -67,7 +115,16 @@ public class CheckTagsTest {
     Assert.assertTrue(CheckTags.isTagValueLegal(tagvalue3));
     Assert.assertTrue(CheckTags.isTagValueLegal(tagvalue4));
     Assert.assertFalse(CheckTags.isTagValueLegal("ąćę"));
-    
+    final HashMap<String, String> map = new HashMap<>();
+    map.put("cost",tagvalue);
+    map.put("mortgage",tagvalue1);
+    map.put("interest",tagvalue2);
+    map.put("email",tagvalue3);
+    Point.Builder point1 = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(map).addField("a", 1.0);
+    Assertions.assertThat(point1.build().getTags().values().equals(map.values()));
+    map.put("phone","1-555-0101");
+    Assertions.assertThat(!point1.build().getTags().values().equals(map.values()));
+  
   }
   @Test
   public void TagsNullOrEmpty(){
