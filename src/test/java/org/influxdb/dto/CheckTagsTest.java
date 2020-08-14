@@ -3,6 +3,7 @@ package org.influxdb.dto;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
+import org.influxdb.dto.Point.Builder;
 import org.influxdb.dto.utils.CheckTags;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,21 @@ public class CheckTagsTest {
     Assertions.assertThat(point1.build().getTags().values().equals(map.values()));
   }
   @Test
+  public void BatchPointsTagTest() {
+    final HashMap<String, String> map = new HashMap<>();
+    map.put("$cost","$15");
+    map.put("$mortgage","$34,000");
+    map.put("%interest","65%");
+    map.put("@email","startrek@cbs.com");
+    Point point = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).addField("a", 1.0).build();
+    BatchPoints.Builder points = BatchPoints.builder()
+        .tag("$cost","$15").tag("$mortgage","$34,000")
+        .tag("%interest","65%").tag("@email","startrek@cbs.com").point(point);
+    Assertions.assertThat(points.build().getPoints().get(0).getTags().equals(map.values()));
+    map.put("#phone","1-555-0101");
+    Assertions.assertThat(!points.build().getPoints().get(0).getTags().equals(map.values()));
+  }
+  @Test
   public void TagNameHyphenTest() {
     final String tagname = "-cost";
     final String tagname1 = "bushel-cost";
@@ -94,6 +110,8 @@ public class CheckTagsTest {
     map.put("email",tagvalue3);
     Point.Builder point1 = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(map).addField("a", 1.0);
     Assertions.assertThat(point1.build().getTags().values().equals(map.values()));
+    map.put("phone","1-555-0101");
+    Assertions.assertThat(!point1.build().getTags().values().equals(map.values()));
   
   }
   @Test
