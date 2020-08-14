@@ -53,15 +53,6 @@ public class InfluxDBException extends RuntimeException {
   static final String AUTHORIZATION_FAILED_ERROR = "authorization failed";
   static final String USERNAME_REQUIRED_ERROR = "username required";
 
-  public static final class TaggingInvalidException extends InfluxDBException {
-    private TaggingInvalidException(final String message) {
-      super(message);
-    }
-    public boolean isRetryWorth() {
-      return false;
-    }
-  }
-
   public static final class DatabaseNotFoundException extends InfluxDBException {
     private DatabaseNotFoundException(final String message) {
       super(message);
