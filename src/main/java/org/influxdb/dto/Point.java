@@ -135,8 +135,11 @@ public class Point {
      */
     public Builder tag(final Map<String, String> tagsToAdd) {
       for (Entry<String, String> tag : tagsToAdd.entrySet()) {
-        if (CheckTags.isTagNameLegal(tag.getKey()) && CheckTags.isTagValueLegal(tag.getValue())) {
-          tag(tag.getKey(), tag.getValue());
+        if (!tag.getKey().isEmpty()
+            && !tag.getValue().isEmpty()
+            && CheckTags.isTagNameLegal(tag.getKey())
+            && CheckTags.isTagValueLegal(tag.getValue())) {
+          tags.put(tag.getKey(), tag.getValue());
         }
       }
       return this;

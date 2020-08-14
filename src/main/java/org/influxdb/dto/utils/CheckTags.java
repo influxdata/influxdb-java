@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * {Purpose of This Type}.
+ * Utility class intended for internal use. Checks the format of tag names and values to see if they conform to a regular expression.
  *
  * {Other Notes Relating to This Type (Optional)}
  *
@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  *
  */
 public final class CheckTags {
-  static final String NAMEREGEX = "([a-zA-Z0-9-_]+)";
+  static final String NAMEREGEX = "([^\\\\n\\\\r]+)";
   static final String VALUEREGEX = "[\\x00-\\x7F]+";
   static final Pattern NAMEPATTERN = Pattern.compile(NAMEREGEX, Pattern.MULTILINE);
   static final Pattern VALUEPATTERN = Pattern.compile(VALUEREGEX, Pattern.MULTILINE);
