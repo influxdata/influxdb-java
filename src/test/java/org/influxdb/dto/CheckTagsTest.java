@@ -1,5 +1,6 @@
 package org.influxdb.dto;
 
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
 import org.influxdb.dto.utils.CheckTags;
@@ -44,6 +45,13 @@ public class CheckTagsTest {
     Assert.assertTrue(point.getTags().containsKey("$cost"));
     Assert.assertTrue(CheckTags.isTagNameLegal(tagname));
     Assert.assertTrue(CheckTags.isTagNameLegal(tagname1));
+    final HashMap<String, String> map = new HashMap<>();
+    map.put("$cost","$15");
+    map.put("$mortgage","$34,000");
+    map.put("%interest","65%");
+    map.put("@email","startrek@cbs.com");
+    Point.Builder point1 = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(map).addField("a", 1.0);
+    Assertions.assertThat(point1.build().getTags().values().equals(map.values()));
   }
   @Test
   public void TagNameHyphenTest() {
@@ -79,7 +87,14 @@ public class CheckTagsTest {
     Assert.assertTrue(CheckTags.isTagValueLegal(tagvalue3));
     Assert.assertTrue(CheckTags.isTagValueLegal(tagvalue4));
     Assert.assertFalse(CheckTags.isTagValueLegal("ąćę"));
-    
+    final HashMap<String, String> map = new HashMap<>();
+    map.put("cost",tagvalue);
+    map.put("mortgage",tagvalue1);
+    map.put("interest",tagvalue2);
+    map.put("email",tagvalue3);
+    Point.Builder point1 = Point.measurement("test").time(1, TimeUnit.NANOSECONDS).tag(map).addField("a", 1.0);
+    Assertions.assertThat(point1.build().getTags().values().equals(map.values()));
+  
   }
   @Test
   public void TagsNullOrEmpty(){
