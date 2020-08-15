@@ -79,6 +79,7 @@ public class CheckTagsTest {
     Assert.assertFalse(CheckTags.isLegalFullCheck("","value"));
     Assert.assertFalse(CheckTags.isLegalFullCheck("ma\ndrid", "city"));
     Assert.assertFalse(CheckTags.isLegalFullCheck("city","ąćę"));
+    Assert.assertFalse(CheckTags.isLegalFullCheck("","ąćę"));
   }
   @Test
   public void TagNameHyphenTest() {
