@@ -322,9 +322,9 @@ public class Point {
             this.fields.put(fieldName, fieldValue);
           }
         }
-          if(field.isAnnotationPresent(Default.class)) {
+          if (field.isAnnotationPresent(Default.class)) {
             Default val = field.getAnnotation(Default.class);
-            field.set(pojo,val.value());
+            field.set(pojo, val.value());
           }
 
       } catch (IllegalArgumentException | IllegalAccessException e) {
