@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Default;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
 import org.influxdb.impl.Preconditions;
@@ -274,7 +275,6 @@ public class Point {
           if (column == null) {
             continue;
           }
-
           field.setAccessible(true);
           String fieldName = column.name();
           addFieldByAttribute(pojo, field, column, fieldName);
@@ -322,6 +322,10 @@ public class Point {
             this.fields.put(fieldName, fieldValue);
           }
         }
+          if(field.isAnnotationPresent(Default.class)) {
+            Default val = field.getAnnotation(Default.class);
+            field.set(pojo,val.value());
+          }
 
       } catch (IllegalArgumentException | IllegalAccessException e) {
         // Can not happen since we use metadata got from the object

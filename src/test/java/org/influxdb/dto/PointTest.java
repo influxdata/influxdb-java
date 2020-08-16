@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.influxdb.BuilderException;
 import org.influxdb.InfluxDB;
 import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Default;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
 import org.influxdb.impl.InfluxDBImpl;
@@ -793,6 +794,15 @@ public class PointTest {
         Assertions.assertEquals(pojo.time, p.getFields().get("time"));
         Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
     }
+    @Test
+    public void testAddFieldsFromPOJOWithDefaultAnnotation() {
+        PojoWithDefaultAnnotation pojo = new PojoWithDefaultAnnotation();
+        pojo.setAuthor("");
+        pojo.setId("1");
+        Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        Assertions.assertEquals(pojo.getAuthor(),p.getFields().get("author"));
+        Assertions.assertEquals(pojo.getId(),p.getFields().get("id"));
+    }
 
     @Test
     public void testInheritMeasurement() {
@@ -818,6 +828,30 @@ public class PointTest {
             return id;
         }
 
+        public void setId(String id) {
+            this.id = id;
+        }
+    }
+    @Measurement(name = "mymeasurement")
+    static class PojoWithDefaultAnnotation {
+        
+        @Default("1")
+        @Column(name = "id")
+        private String id;
+        //check alternate order of annotations.  ¯\_(ツ)_/¯
+        @Column(name = "author")
+        @Default
+        private String author;
+        
+        public String getAuthor() {
+            return author;
+        }
+        public void setAuthor(String name) {
+            this.author = name;
+        }
+        public String getId() {
+            return id;
+        }
         public void setId(String id) {
             this.id = id;
         }
