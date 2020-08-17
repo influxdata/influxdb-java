@@ -797,15 +797,11 @@ public class PointTest {
     @Test
     public void testAddFieldsFromPOJOWithDefaultAnnotation() {
         PojoWithDefaultAnnotation pojo = new PojoWithDefaultAnnotation();
-        PojoWithDefaultAnnotation pojo1 = new PojoWithDefaultAnnotation();
         pojo.setAuthor("");
         pojo.setId("1");
         Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
-        //Completely separate pojo with different reference to compare against
-        pojo1.setAuthor("");
-        pojo1.setId("1");
-        Assertions.assertEquals(pojo1.getAuthor(),p.getFields().get("author"));
-        Assertions.assertEquals(pojo1.getId(),p.getFields().get("id"));
+        Assertions.assertEquals(pojo.getAuthor(),p.getFields().get("author"));
+        Assertions.assertEquals(pojo.getId(),p.getFields().get("id"));
     }
 
     @Test
