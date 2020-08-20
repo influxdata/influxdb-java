@@ -814,6 +814,29 @@ public class PointTest {
         Assertions.assertTrue(p.getFields().get("floatObject").equals(0.0f));
         Assertions.assertTrue(p.getFields().get("bigDecimal").equals(BigDecimal.ZERO));
         Assertions.assertTrue(p.getFields().get("bigInteger").equals(BigInteger.ZERO));
+    
+        //Soundness check
+        pojo.setId("41");
+        pojo.setAuthor("William Gibson");
+        pojo.setISBN(342134566545L);
+        pojo.setBigDecimal(BigDecimal.valueOf(12435125.435434));
+        pojo.setBooleanObject(true);
+        pojo.setBigInteger(new BigInteger(String.valueOf(54635265426256L)));
+        pojo.setDoubleObject(453.654d);
+        pojo.setFloatObject(5434.787f);
+        pojo.setIntegerObject(5346546);
+        p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        
+        Assertions.assertFalse(p.getFields().get("id").equals("2"));
+        Assertions.assertTrue(p.getFields().get("id").equals("41"));
+        Assertions.assertTrue(p.getFields().get("author").equals("William Gibson"));
+        Assertions.assertFalse(p.getFields().get("author").equals(""));
+        Assertions.assertFalse(p.getFields().get("booleanObject").equals(false));
+        Assertions.assertFalse(p.getFields().get("doubleObject").equals(20.0d));
+        Assertions.assertFalse(p.getFields().get("floatObject").equals(0.0f));
+        Assertions.assertFalse(p.getFields().get("bigDecimal").equals(BigDecimal.ZERO));
+        Assertions.assertFalse(p.getFields().get("bigInteger").equals(BigInteger.ZERO));
+        
     }
 
     @Test
@@ -904,6 +927,30 @@ public class PointTest {
     
         public BigInteger getBigInteger() {
             return bigInteger;
+        }
+    
+        public void setDoubleObject(Double doubleObject) {
+            this.doubleObject = doubleObject;
+        }
+    
+        public void setIntegerObject(Integer integerObject) {
+            this.integerObject = integerObject;
+        }
+    
+        public void setBooleanObject(Boolean booleanObject) {
+            this.booleanObject = booleanObject;
+        }
+    
+        public void setFloatObject(Float floatObject) {
+            this.floatObject = floatObject;
+        }
+    
+        public void setBigDecimal(BigDecimal bigDecimal) {
+            this.bigDecimal = bigDecimal;
+        }
+    
+        public void setBigInteger(BigInteger bigInteger) {
+            this.bigInteger = bigInteger;
         }
     
         public String getAuthor() {

@@ -293,7 +293,8 @@ public class Point {
     private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
         final String fieldName) {
       try {
-        if (field.isAnnotationPresent(Default.class)) {
+        
+        if (field.isAnnotationPresent(Default.class) && field.get(pojo) == null) {
           Default val = field.getAnnotation(Default.class);
           if (field.getType().equals(String.class)) {
             field.set(pojo, val.value());
