@@ -797,11 +797,23 @@ public class PointTest {
     @Test
     public void testAddFieldsFromPOJOWithDefaultAnnotation() {
         PojoWithDefaultAnnotation pojo = new PojoWithDefaultAnnotation();
-        pojo.setAuthor("");
-        pojo.setId("1");
+
         Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
-        Assertions.assertEquals(pojo.getAuthor(),p.getFields().get("author"));
-        Assertions.assertEquals(pojo.getId(),p.getFields().get("id"));
+        Assertions.assertTrue(pojo.getISBN().equals(20L));
+        Assertions.assertTrue(pojo.booleanObject.equals(false));
+        Assertions.assertTrue(pojo.integerObject.equals(20));
+        Assertions.assertTrue(pojo.doubleObject.equals(20.0d));
+        Assertions.assertTrue(pojo.floatObject.equals(0.0f));
+        Assertions.assertTrue(pojo.bigDecimal.equals(BigDecimal.ZERO));
+        Assertions.assertTrue(pojo.bigInteger.equals(BigInteger.ZERO));
+    
+        Assertions.assertTrue(p.getFields().get("author").equals(""));
+        Assertions.assertTrue(p.getFields().get("id").equals("2"));
+        Assertions.assertTrue(p.getFields().get("booleanObject").equals(false));
+        Assertions.assertTrue(p.getFields().get("doubleObject").equals(20.0d));
+        Assertions.assertTrue(p.getFields().get("floatObject").equals(0.0f));
+        Assertions.assertTrue(p.getFields().get("bigDecimal").equals(BigDecimal.ZERO));
+        Assertions.assertTrue(p.getFields().get("bigInteger").equals(BigInteger.ZERO));
     }
 
     @Test
@@ -835,14 +847,65 @@ public class PointTest {
     @Measurement(name = "mymeasurement")
     static class PojoWithDefaultAnnotation {
         
-        @Default("1")
+        @Default("2")
         @Column(name = "id")
         private String id;
         //check alternate order of annotations.  ¯\_(ツ)_/¯
         @Column(name = "author")
         @Default
         private String author;
+    
+        @Default(doubleValue = 20.0d)
+        @Column(name = "doubleObject")
+        private Double doubleObject;
         
+        @Default(intValue = 20)
+        @Column(name = "integerObject")
+        private Integer integerObject;
+        
+        @Default
+        @Column(name = "booleanObject")
+        private Boolean booleanObject;
+        @Default
+        @Column(name = "floatObject")
+        private Float floatObject;
+        
+        @Default
+        @Column(name = "bigDecimal")
+        private BigDecimal bigDecimal;
+        
+        @Default
+        @Column(name = "bigInteger")
+        private BigInteger bigInteger;
+        
+        @Default(longValue = 20L)
+        @Column(name = "ISBN")
+        private Long ISBN;
+    
+        public Double getDoubleObject() {
+            return doubleObject;
+        }
+    
+        public Integer getIntegerObject() {
+            return integerObject;
+        }
+    
+        public Boolean getBooleanObject() {
+            return booleanObject;
+        }
+    
+        public Float getFloatObject() {
+            return floatObject;
+        }
+    
+        public BigDecimal getBigDecimal() {
+            return bigDecimal;
+        }
+    
+        public BigInteger getBigInteger() {
+            return bigInteger;
+        }
+    
         public String getAuthor() {
             return author;
         }
@@ -854,6 +917,12 @@ public class PointTest {
         }
         public void setId(String id) {
             this.id = id;
+        }
+        public Long getISBN() {
+            return ISBN;
+        }
+        public void setISBN(Long ISBN) {
+            this.ISBN = ISBN;
         }
     }
 
