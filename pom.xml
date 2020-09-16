@@ -89,7 +89,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.0.0-M4</version>
+          <version>3.0.0-M5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -242,13 +242,13 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.6.2</version>
+      <version>5.7.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-runner</artifactId>
-      <version>1.6.2</version>
+      <version>1.7.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -260,13 +260,13 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.16.1</version>
+      <version>3.17.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.4.6</version>
+      <version>3.5.10</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -294,19 +294,19 @@
     <dependency>
     <groupId>org.msgpack</groupId>
       <artifactId>msgpack-core</artifactId>
-      <version>0.8.20</version>
+      <version>0.8.21</version>
     </dependency>
     <!-- If we use okhttp instead of java urlconnection we achieve server failover
             of the influxdb server address resolves to all influxdb server ips. -->
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.8.1</version>
+      <version>4.9.0</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>logging-interceptor</artifactId>
-      <version>4.8.1</version>
+      <version>4.9.0</version>
     </dependency>
   </dependencies>
   <profiles>
