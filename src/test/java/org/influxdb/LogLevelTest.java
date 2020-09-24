@@ -2,7 +2,6 @@ package org.influxdb;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.influxdb.InfluxDB.LogLevel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,6 @@ import org.junit.runner.RunWith;
  * Test the InfluxDBimpl log level setting from system property.
  *
  * @author hoan.le [at] bonitoo.io
- *
  */
 @RunWith(JUnitPlatform.class)
 public class LogLevelTest {
@@ -26,8 +24,9 @@ public class LogLevelTest {
     logLevelMap.put("HEADERS", LogLevel.HEADERS);
     logLevelMap.put("FULL", LogLevel.FULL);
     logLevelMap.put("abc", LogLevel.NONE);
-    logLevelMap.forEach((value, logLevel) -> {
-      Assertions.assertEquals(LogLevel.parseLogLevel(value), logLevel);
-    });
+    logLevelMap.forEach(
+        (value, logLevel) -> {
+          Assertions.assertEquals(LogLevel.parseLogLevel(value), logLevel);
+        });
   }
 }

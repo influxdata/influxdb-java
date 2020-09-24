@@ -4,7 +4,6 @@ import static org.influxdb.querybuilder.BuiltQuery.QueryBuilder.eq;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
-
 import org.influxdb.querybuilder.Appender;
 import org.junit.jupiter.api.Test;
 

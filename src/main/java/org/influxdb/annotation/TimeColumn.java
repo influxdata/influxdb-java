@@ -9,5 +9,5 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface TimeColumn {
-    TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
+  TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
 }

@@ -2,7 +2,6 @@ package org.influxdb.impl;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.Request;
@@ -19,58 +18,61 @@ import okio.Okio;
  */
 final class GzipRequestInterceptor implements Interceptor {
 
-    private AtomicBoolean enabled = new AtomicBoolean(false);
+  private AtomicBoolean enabled = new AtomicBoolean(false);
 
-    GzipRequestInterceptor() {
+  GzipRequestInterceptor() {}
+
+  public void enable() {
+    enabled.set(true);
+  }
+
+  public boolean isEnabled() {
+    return enabled.get();
+  }
+
+  public void disable() {
+    enabled.set(false);
+  }
+
+  @Override
+  public Response intercept(final Interceptor.Chain chain) throws IOException {
+    if (!enabled.get()) {
+      return chain.proceed(chain.request());
     }
 
-    public void enable() {
-        enabled.set(true);
+    Request originalRequest = chain.request();
+    RequestBody body = originalRequest.body();
+    if (body == null || originalRequest.header("Content-Encoding") != null) {
+      return chain.proceed(originalRequest);
     }
 
-    public boolean isEnabled() {
-        return enabled.get();
-    }
+    Request compressedRequest =
+        originalRequest
+            .newBuilder()
+            .header("Content-Encoding", "gzip")
+            .method(originalRequest.method(), gzip(body))
+            .build();
+    return chain.proceed(compressedRequest);
+  }
 
-    public void disable() {
-        enabled.set(false);
-    }
+  private RequestBody gzip(final RequestBody body) {
+    return new RequestBody() {
+      @Override
+      public MediaType contentType() {
+        return body.contentType();
+      }
 
-    @Override
-    public Response intercept(final Interceptor.Chain chain) throws IOException {
-        if (!enabled.get()) {
-            return chain.proceed(chain.request());
-        }
+      @Override
+      public long contentLength() {
+        return -1; // We don't know the compressed length in advance!
+      }
 
-        Request originalRequest = chain.request();
-        RequestBody body = originalRequest.body();
-        if (body == null || originalRequest.header("Content-Encoding") != null) {
-            return chain.proceed(originalRequest);
-        }
-
-        Request compressedRequest = originalRequest.newBuilder().header("Content-Encoding", "gzip")
-                .method(originalRequest.method(), gzip(body)).build();
-        return chain.proceed(compressedRequest);
-    }
-
-    private RequestBody gzip(final RequestBody body) {
-        return new RequestBody() {
-            @Override
-            public MediaType contentType() {
-                return body.contentType();
-            }
-
-            @Override
-            public long contentLength() {
-                return -1; // We don't know the compressed length in advance!
-            }
-
-            @Override
-            public void writeTo(final BufferedSink sink) throws IOException {
-                BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
-                body.writeTo(gzipSink);
-                gzipSink.close();
-            }
-        };
-    }
+      @Override
+      public void writeTo(final BufferedSink sink) throws IOException {
+        BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
+        body.writeTo(gzipSink);
+        gzipSink.close();
+      }
+    };
+  }
 }

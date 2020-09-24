@@ -138,5 +138,4 @@ public class InfluxDBMapper extends InfluxDBResultMapper {
           "Unsupported type " + fieldType + " for column " + columnName);
     }
   }
-
 }

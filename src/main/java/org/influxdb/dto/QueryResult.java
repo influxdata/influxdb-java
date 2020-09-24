@@ -6,10 +6,9 @@ import java.util.Map;
 /**
  * {Purpose of This Type}.
  *
- * {Other Notes Relating to This Type (Optional)}
+ * <p>{Other Notes Relating to This Type (Optional)}
  *
  * @author stefan
- *
  */
 // {
 // "results": [
@@ -29,17 +28,12 @@ public class QueryResult {
   private List<Result> results;
   private String error;
 
-  /**
-   * @return the results
-   */
+  /** @return the results */
   public List<Result> getResults() {
     return this.results;
   }
 
-  /**
-   * @param results
-   *            the results to set
-   */
+  /** @param results the results to set */
   public void setResults(final List<Result> results) {
     this.results = results;
   }
@@ -53,17 +47,12 @@ public class QueryResult {
     return this.error != null;
   }
 
-  /**
-   * @return the error
-   */
+  /** @return the error */
   public String getError() {
     return this.error;
   }
 
-  /**
-   * @param error
-   *            the error to set
-   */
+  /** @param error the error to set */
   public void setError(final String error) {
     this.error = error;
   }
@@ -72,17 +61,12 @@ public class QueryResult {
     private List<Series> series;
     private String error;
 
-    /**
-     * @return the series
-     */
+    /** @return the series */
     public List<Series> getSeries() {
       return this.series;
     }
 
-    /**
-     * @param series
-     *            the series to set
-     */
+    /** @param series the series to set */
     public void setSeries(final List<Series> series) {
       this.series = series;
     }
@@ -90,31 +74,23 @@ public class QueryResult {
     /**
      * Checks if this Result has an error message.
      *
-     * @return <code>true</code> if there is an error message,
-     *         <code>false</code> if not.
+     * @return <code>true</code> if there is an error message, <code>false</code> if not.
      */
     public boolean hasError() {
       return this.error != null;
     }
 
-    /**
-     * @return the error
-     */
+    /** @return the error */
     public String getError() {
       return this.error;
     }
 
-    /**
-     * @param error
-     *            the error to set
-     */
+    /** @param error the error to set */
     public void setError(final String error) {
       this.error = error;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
@@ -125,7 +101,6 @@ public class QueryResult {
       builder.append("]");
       return builder.toString();
     }
-
   }
 
   public static class Series {
@@ -134,69 +109,47 @@ public class QueryResult {
     private List<String> columns;
     private List<List<Object>> values;
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
       return this.name;
     }
 
-    /**
-     * @param name
-     *            the name to set
-     */
+    /** @param name the name to set */
     public void setName(final String name) {
       this.name = name;
     }
 
-    /**
-     * @return the tags
-     */
+    /** @return the tags */
     public Map<String, String> getTags() {
       return this.tags;
     }
 
-    /**
-     * @param tags
-     *            the tags to set
-     */
+    /** @param tags the tags to set */
     public void setTags(final Map<String, String> tags) {
       this.tags = tags;
     }
 
-    /**
-     * @return the columns
-     */
+    /** @return the columns */
     public List<String> getColumns() {
       return this.columns;
     }
 
-    /**
-     * @param columns
-     *            the columns to set
-     */
+    /** @param columns the columns to set */
     public void setColumns(final List<String> columns) {
       this.columns = columns;
     }
 
-    /**
-     * @return the values
-     */
+    /** @return the values */
     public List<List<Object>> getValues() {
       return this.values;
     }
 
-    /**
-     * @param values
-     *            the values to set
-     */
+    /** @param values the values to set */
     public void setValues(final List<List<Object>> values) {
       this.values = values;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
@@ -211,12 +164,9 @@ public class QueryResult {
       builder.append("]");
       return builder.toString();
     }
-
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
@@ -227,5 +177,4 @@ public class QueryResult {
     builder.append("]");
     return builder.toString();
   }
-
 }

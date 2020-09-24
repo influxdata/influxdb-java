@@ -1,20 +1,19 @@
 package org.influxdb.impl;
 
-import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDBException;
-import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.Point;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.function.BiConsumer;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBException;
+import org.influxdb.dto.BatchPoints;
+import org.influxdb.dto.Point;
 
 /**
- * Batch writer that tries to retry a write if it failed previously and
- * the reason of the failure is not permanent.
+ * Batch writer that tries to retry a write if it failed previously and the reason of the failure is
+ * not permanent.
  */
 class RetryCapableBatchWriter implements BatchWriter {
 
@@ -25,8 +24,11 @@ class RetryCapableBatchWriter implements BatchWriter {
   private int retryBufferCapacity;
   private int usedRetryBufferCapacity;
 
-  RetryCapableBatchWriter(final InfluxDB influxDB, final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
-                          final int retryBufferCapacity, final int requestActionsLimit) {
+  RetryCapableBatchWriter(
+      final InfluxDB influxDB,
+      final BiConsumer<Iterable<Point>, Throwable> exceptionHandler,
+      final int retryBufferCapacity,
+      final int requestActionsLimit) {
     this.influxDB = influxDB;
     this.exceptionHandler = exceptionHandler;
     batchQueue = new LinkedList<>();
@@ -34,7 +36,11 @@ class RetryCapableBatchWriter implements BatchWriter {
     this.requestActionsLimit = requestActionsLimit;
   }
 
-  private enum WriteResultOutcome { WRITTEN, FAILED_RETRY_POSSIBLE, FAILED_RETRY_IMPOSSIBLE }
+  private enum WriteResultOutcome {
+    WRITTEN,
+    FAILED_RETRY_POSSIBLE,
+    FAILED_RETRY_IMPOSSIBLE
+  }
 
   private static final class WriteResult {
 
@@ -72,7 +78,7 @@ class RetryCapableBatchWriter implements BatchWriter {
       BatchPoints entry = batchQueueIterator.next();
       WriteResult result = tryToWrite(entry);
       if (result.outcome == WriteResultOutcome.WRITTEN
-              || result.outcome == WriteResultOutcome.FAILED_RETRY_IMPOSSIBLE) {
+          || result.outcome == WriteResultOutcome.FAILED_RETRY_IMPOSSIBLE) {
         batchQueueIterator.remove();
         usedRetryBufferCapacity -= entry.getPoints().size();
         // we are throwing out data, notify the client
@@ -104,7 +110,6 @@ class RetryCapableBatchWriter implements BatchWriter {
           exceptionHandler.accept(batchPoints.getPoints(), result.throwable);
           break;
         default:
-
       }
     }
   }
@@ -137,9 +142,10 @@ class RetryCapableBatchWriter implements BatchWriter {
     while (usedRetryBufferCapacity > retryBufferCapacity && batchQueue.size() > 0) {
       List<Point> points = batchQueue.removeFirst().getPoints();
       usedRetryBufferCapacity -= points.size();
-      exceptionHandler.accept(points,
-              new InfluxDBException.RetryBufferOverrunException(
-                      "Retry buffer overrun, current capacity: " + retryBufferCapacity));
+      exceptionHandler.accept(
+          points,
+          new InfluxDBException.RetryBufferOverrunException(
+              "Retry buffer overrun, current capacity: " + retryBufferCapacity));
     }
   }
 
@@ -152,7 +158,7 @@ class RetryCapableBatchWriter implements BatchWriter {
       }
     }
     if (!hasBeenMergedIn) {
-        batchQueue.add(batchPoints);
+      batchQueue.add(batchPoints);
     }
     // recalculate local counter and evict old batches on merge as well
     usedRetryBufferCapacity += batchPoints.getPoints().size();

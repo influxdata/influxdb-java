@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A simple object model path, used internally for navigating on QueryResult objects
- * when traverse and parse the MessagePack data.
+ * A simple object model path, used internally for navigating on QueryResult objects when traverse
+ * and parse the MessagePack data.
  *
  * @author hoan.le [at] bonitoo.io
- *
  */
 class QueryResultModelPath {
   private List<String> names = new ArrayList<>();

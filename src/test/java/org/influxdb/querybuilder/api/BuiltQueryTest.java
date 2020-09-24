@@ -744,9 +744,7 @@ public class BuiltQueryTest {
   @Test
   public void testNullFromClause() {
     String from = null;
-    assertThrows(
-            IllegalArgumentException.class,
-            () -> select().from(DATABASE, from));
+    assertThrows(IllegalArgumentException.class, () -> select().from(DATABASE, from));
   }
 
   @Test
@@ -866,13 +864,13 @@ public class BuiltQueryTest {
   @Test
   public void testNestedOperations() {
     Query query =
-            new Query(
-                    "SELECT water_level FROM h2o_feet WHERE column1 > 3 * ((column2 + 3) + 4);", DATABASE);
+        new Query(
+            "SELECT water_level FROM h2o_feet WHERE column1 > 3 * ((column2 + 3) + 4);", DATABASE);
     Query select =
-            select()
-                    .column("water_level")
-                    .from(DATABASE, "h2o_feet")
-                    .where(gt("column1", op(3,MUL,op(cop("column2",ADD,3), ADD, 4))));
+        select()
+            .column("water_level")
+            .from(DATABASE, "h2o_feet")
+            .where(gt("column1", op(3, MUL, op(cop("column2", ADD, 3), ADD, 4))));
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -960,17 +958,18 @@ public class BuiltQueryTest {
   @Test
   public void multipleDatabaseBackReferenceing() {
     Query query =
-            new Query("SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);",DATABASE);
+        new Query(
+            "SELECT MEAN(*) INTO \"where_else\".\"autogen\".:MEASUREMENT FROM /.*/ WHERE time >= '2015-08-18T00:00:00Z' AND time <= '2015-08-18T00:06:00Z' GROUP BY time(12m);",
+            DATABASE);
     Query select =
-            select()
-                    .mean(raw("*"))
-                    .into("\"where_else\".\"autogen\".:MEASUREMENT")
-                    .fromRaw(DATABASE, "/.*/")
-                    .where(gte("time","2015-08-18T00:00:00Z"))
-                    .and(lte("time","2015-08-18T00:06:00Z"))
-                    .groupBy(time(12L, MINUTE));
+        select()
+            .mean(raw("*"))
+            .into("\"where_else\".\"autogen\".:MEASUREMENT")
+            .fromRaw(DATABASE, "/.*/")
+            .where(gte("time", "2015-08-18T00:00:00Z"))
+            .and(lte("time", "2015-08-18T00:06:00Z"))
+            .groupBy(time(12L, MINUTE));
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
   }
-
 }

@@ -111,5 +111,4 @@ public class WhereSubQueryImpl<T extends SelectWithSubquery, E extends WithSubqu
   public WhereSubQueryImpl<T, E> where(final String text) {
     return selectQuery.where(text);
   }
-
 }

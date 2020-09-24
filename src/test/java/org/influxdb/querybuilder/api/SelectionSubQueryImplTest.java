@@ -46,25 +46,25 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQuerySelectOperations() {
     Query query =
-            new Query(
-                    "SELECT * FROM (SELECT column1,column1 * 2,2 + 2,/*/,COUNT(column3),MIN(column1),SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) WHERE column1 = 1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT * FROM (SELECT column1,column1 * 2,2 + 2,/*/,COUNT(column3),MIN(column1),SUM((column2 + 1) - 4),testFunction(column1,column2) FROM foobar) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .fromSubQuery(DATABASE)
-                    .column("column1")
-                    .cop("column1",MUL,2)
-                    .op(2,ADD,2)
-                    .raw("/*/")
-                    .count("column3")
-                    .min("column1")
-                    .sum(op(cop("column2",ADD,1),SUB,4))
-                    .function("testFunction","column1","column2")
-                    .from("foobar")
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .fromSubQuery(DATABASE)
+            .column("column1")
+            .cop("column1", MUL, 2)
+            .op(2, ADD, 2)
+            .raw("/*/")
+            .count("column3")
+            .min("column1")
+            .sum(op(cop("column2", ADD, 1), SUB, 4))
+            .function("testFunction", "column1", "column2")
+            .from("foobar")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -315,28 +315,27 @@ public class SelectionSubQueryImplTest {
     assertEquals(query.getDatabase(), select.getDatabase());
   }
 
-
   @Test
   public void testSubQueryWhereOr() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar WHERE column1 > 1 + 2 OR column2 < column1 - 3) WHERE column1 = 1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar WHERE column1 > 1 + 2 OR column2 < column1 - 3) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .column("column1")
-                    .column("column2")
-                    .from("foobar")
-                    .where()
-                    .or(gt("column1",op(1,ADD,2)))
-                    .or(lt("column2",cop("column1",SUB,3)))
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .column("column1")
+            .column("column2")
+            .from("foobar")
+            .where()
+            .or(gt("column1", op(1, ADD, 2)))
+            .or(lt("column2", cop("column1", SUB, 3)))
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -345,23 +344,23 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryGroupByFill() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .column("column1")
-                    .column("column2")
-                    .from("foobar")
-                    .groupBy("column1")
-                    .fill(100)
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .column("column1")
+            .column("column2")
+            .from("foobar")
+            .groupBy("column1")
+            .fill(100)
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -370,21 +369,21 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryGroupByFillFromSelect() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(100)) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .from("foobar")
-                    .groupBy("column1")
-                    .fill(100)
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .from("foobar")
+            .groupBy("column1")
+            .fill(100)
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -393,21 +392,21 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryGroupByFillFromSelectString() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(null)) WHERE column1 = 1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT * FROM foobar GROUP BY column1 fill(null)) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .from("foobar")
-                    .groupBy("column1")
-                    .fill("null")
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .from("foobar")
+            .groupBy("column1")
+            .fill("null")
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());
@@ -416,24 +415,24 @@ public class SelectionSubQueryImplTest {
   @Test
   public void testSubQueryWithSLimit() {
     Query query =
-            new Query(
-                    "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100) SLIMIT 100 SOFFSET 120) WHERE column1 = 1 GROUP BY time;",
-                    DATABASE);
+        new Query(
+            "SELECT column1,column2 FROM (SELECT column1,column2 FROM foobar GROUP BY column1 fill(100) SLIMIT 100 SOFFSET 120) WHERE column1 = 1 GROUP BY time;",
+            DATABASE);
     Query select =
-            select()
-                    .requiresPost()
-                    .column("column1")
-                    .column("column2")
-                    .fromSubQuery(DATABASE)
-                    .column("column1")
-                    .column("column2")
-                    .from("foobar")
-                    .groupBy("column1")
-                    .sLimit(100,120)
-                    .fill(100)
-                    .close()
-                    .where(eq("column1", 1))
-                    .groupBy("time");
+        select()
+            .requiresPost()
+            .column("column1")
+            .column("column2")
+            .fromSubQuery(DATABASE)
+            .column("column1")
+            .column("column2")
+            .from("foobar")
+            .groupBy("column1")
+            .sLimit(100, 120)
+            .fill(100)
+            .close()
+            .where(eq("column1", 1))
+            .groupBy("time");
 
     assertEquals(query.getCommand(), select.getCommand());
     assertEquals(query.getDatabase(), select.getDatabase());

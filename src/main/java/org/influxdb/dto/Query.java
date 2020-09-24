@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
  * Represents a Query against Influxdb.
  *
  * @author stefan.majer [at] gmail.com
- *
  */
 public class Query {
 
@@ -16,9 +15,7 @@ public class Query {
   private final String database;
   private final boolean requiresPost;
 
-  /**
-   * @param command the query command
-   */
+  /** @param command the query command */
   public Query(final String command) {
     this(command, null);
   }
@@ -31,35 +28,29 @@ public class Query {
     this(command, database, false);
   }
 
-   /**
+  /**
    * @param command the query command
    * @param database the database to query
    * @param requiresPost true if the command requires a POST instead of GET to influxdb
    */
-   public Query(final String command, final String database, final boolean requiresPost) {
+  public Query(final String command, final String database, final boolean requiresPost) {
     super();
     this.command = command;
     this.database = database;
     this.requiresPost = requiresPost;
   }
 
-  /**
-   * @return the command
-   */
+  /** @return the command */
   public String getCommand() {
     return command;
   }
 
-  /**
-   * @return url encoded command
-   */
+  /** @return url encoded command */
   public String getCommandWithUrlEncoded() {
     return encode(command);
   }
 
-  /**
-   * @return the database
-   */
+  /** @return the database */
   public String getDatabase() {
     return database;
   }
@@ -74,38 +65,30 @@ public class Query {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((command == null) ? 0 : command.hashCode());
-    result = prime * result
-        + ((database == null) ? 0 : database.hashCode());
+    result = prime * result + ((database == null) ? 0 : database.hashCode());
     return result;
   }
 
   @SuppressWarnings("checkstyle:needbraces")
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     Query other = (Query) obj;
     if (command == null) {
-      if (other.command != null)
-        return false;
-    } else if (!command.equals(other.command))
-      return false;
+      if (other.command != null) return false;
+    } else if (!command.equals(other.command)) return false;
     if (database == null) {
-      if (other.database != null)
-        return false;
-    } else if (!database.equals(other.database))
-      return false;
+      if (other.database != null) return false;
+    } else if (!database.equals(other.database)) return false;
     return true;
   }
 
   /**
    * Encode a command into {@code x-www-form-urlencoded} format.
-   * @param command
-   *            the command to be encoded.
+   *
+   * @param command the command to be encoded.
    * @return a encoded command.
    */
   public static String encode(final String command) {

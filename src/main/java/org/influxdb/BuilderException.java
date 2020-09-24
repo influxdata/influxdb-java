@@ -7,9 +7,7 @@ package org.influxdb;
  */
 public class BuilderException extends RuntimeException {
 
-  /**
-   * Generated serial version UID.
-   */
+  /** Generated serial version UID. */
   private static final long serialVersionUID = 4178882805281378918L;
 
   public BuilderException(final String message) {

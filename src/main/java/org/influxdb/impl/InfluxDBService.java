@@ -1,9 +1,8 @@
 package org.influxdb.impl;
 
-import org.influxdb.dto.QueryResult;
-
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import org.influxdb.dto.QueryResult;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -27,42 +26,51 @@ interface InfluxDBService {
   @GET("ping")
   public Call<ResponseBody> ping();
 
-   /**
+  /**
    * @param username u: optional The username for authentication
    * @param password p: optional The password for authentication
    * @param database db: required The database to write points
-   * @param retentionPolicy rp: optional The retention policy to write points.
-   *                            If not specified, the autogen retention
-   * @param precision optional The precision of the time stamps (n, u, ms, s, m, h).
-   *                           If not specified, n
-   * @param consistency optional The write consistency level required for the write to succeed.
-   *                             Can be one of one, any, all, quorum. Defaults to all.
+   * @param retentionPolicy rp: optional The retention policy to write points. If not specified, the
+   *     autogen retention
+   * @param precision optional The precision of the time stamps (n, u, ms, s, m, h). If not
+   *     specified, n
+   * @param consistency optional The write consistency level required for the write to succeed. Can
+   *     be one of one, any, all, quorum. Defaults to all.
    */
   @POST("write")
-  public Call<ResponseBody> writePoints(@Query(DB) String database,
-      @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
-      @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
+  public Call<ResponseBody> writePoints(
+      @Query(DB) String database,
+      @Query(RP) String retentionPolicy,
+      @Query(PRECISION) String precision,
+      @Query(CONSISTENCY) String consistency,
+      @Body RequestBody batchPoints);
 
   @GET("query")
-  public Call<QueryResult> query(@Query(DB) String db,
-      @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
-
-  @POST("query")
-  public Call<QueryResult> query(@Query(DB) String db,
-          @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
-          @Query(value = PARAMS, encoded = true) String params);
-
-  @GET("query")
-  public Call<QueryResult> query(@Query(DB) String db,
+  public Call<QueryResult> query(
+      @Query(DB) String db,
+      @Query(EPOCH) String epoch,
       @Query(value = Q, encoded = true) String query);
 
   @POST("query")
-  public Call<QueryResult> postQuery(@Query(DB) String db,
-      @Query(value = Q, encoded = true) String query);
+  public Call<QueryResult> query(
+      @Query(DB) String db,
+      @Query(EPOCH) String epoch,
+      @Query(value = Q, encoded = true) String query,
+      @Query(value = PARAMS, encoded = true) String params);
+
+  @GET("query")
+  public Call<QueryResult> query(
+      @Query(DB) String db, @Query(value = Q, encoded = true) String query);
 
   @POST("query")
-  public Call<QueryResult> postQuery(@Query(DB) String db,
-          @Query(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
+  public Call<QueryResult> postQuery(
+      @Query(DB) String db, @Query(value = Q, encoded = true) String query);
+
+  @POST("query")
+  public Call<QueryResult> postQuery(
+      @Query(DB) String db,
+      @Query(value = Q, encoded = true) String query,
+      @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
   public Call<QueryResult> query(@Query(value = Q, encoded = true) String query);
@@ -72,11 +80,16 @@ interface InfluxDBService {
 
   @Streaming
   @GET("query?chunked=true")
-  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
+  public Call<ResponseBody> query(
+      @Query(DB) String db,
+      @Query(value = Q, encoded = true) String query,
       @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
   @POST("query?chunked=true")
-  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
-          @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+  public Call<ResponseBody> query(
+      @Query(DB) String db,
+      @Query(value = Q, encoded = true) String query,
+      @Query(CHUNK_SIZE) int chunkSize,
+      @Query(value = PARAMS, encoded = true) String params);
 }

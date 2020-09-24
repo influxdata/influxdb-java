@@ -6,10 +6,8 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.influxdb.InfluxDBIOException;
-
 import okio.Buffer;
+import org.influxdb.InfluxDBIOException;
 
 public final class BoundParameterQuery extends Query {
 
@@ -91,7 +89,7 @@ public final class BoundParameterQuery extends Query {
 
     public QueryBuilder bind(final String placeholder, final Object value) {
       if (query == null) {
-          query = new BoundParameterQuery(influxQL, null);
+        query = new BoundParameterQuery(influxQL, null);
       }
       query.params.put(placeholder, value);
       return this;

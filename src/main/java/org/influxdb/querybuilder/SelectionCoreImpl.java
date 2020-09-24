@@ -3,10 +3,10 @@ package org.influxdb.querybuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.influxdb.querybuilder.clauses.OperationClause;
-import org.influxdb.querybuilder.clauses.SimpleClause;
-import org.influxdb.querybuilder.clauses.SelectRegexClause;
 import org.influxdb.querybuilder.clauses.FromClause;
+import org.influxdb.querybuilder.clauses.OperationClause;
+import org.influxdb.querybuilder.clauses.SelectRegexClause;
+import org.influxdb.querybuilder.clauses.SimpleClause;
 
 class SelectionCoreImpl implements Selection, WithInto {
 
@@ -18,8 +18,7 @@ class SelectionCoreImpl implements Selection, WithInto {
 
   private Object currentSelection;
 
-  SelectionCoreImpl() {
-  }
+  SelectionCoreImpl() {}
 
   SelectionCoreImpl(final Object[] columns) {
     for (Object column : columns) {

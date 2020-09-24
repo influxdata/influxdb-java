@@ -1,14 +1,12 @@
 package org.influxdb;
 
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import java.io.InputStream;
-
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.ImmutableMapValue;
 import org.msgpack.value.impl.ImmutableStringValueImpl;
-
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
 
 /**
  * A wrapper for various exceptions caused while interacting with InfluxDB.
@@ -29,9 +27,7 @@ public class InfluxDBException extends RuntimeException {
     super(cause);
   }
 
-  /**
-   * @return true if the operation may succeed if repeated, false otherwise.
-   */
+  /** @return true if the operation may succeed if repeated, false otherwise. */
   public boolean isRetryWorth() {
     return true;
   }
@@ -153,9 +149,9 @@ public class InfluxDBException extends RuntimeException {
       return new CacheMaxMemorySizeExceededException(errorMessage);
     }
     if (errorMessage.contains(USER_REQUIRED_ERROR)
-            || errorMessage.contains(USER_NOT_AUTHORIZED_ERROR)
-            || errorMessage.contains(AUTHORIZATION_FAILED_ERROR)
-            || errorMessage.contains(USERNAME_REQUIRED_ERROR)) {
+        || errorMessage.contains(USER_NOT_AUTHORIZED_ERROR)
+        || errorMessage.contains(AUTHORIZATION_FAILED_ERROR)
+        || errorMessage.contains(USERNAME_REQUIRED_ERROR)) {
       return new AuthorizationFailedException(errorMessage);
     }
     return new InfluxDBException(errorMessage);
@@ -178,11 +174,12 @@ public class InfluxDBException extends RuntimeException {
 
   /**
    * Create corresponding InfluxDBException from the message pack error body.
-   * @param messagePackErrorBody
-   *          the error body if any
+   *
+   * @param messagePackErrorBody the error body if any
    * @return the Exception
    */
-  public static InfluxDBException buildExceptionForErrorState(final InputStream messagePackErrorBody) {
+  public static InfluxDBException buildExceptionForErrorState(
+      final InputStream messagePackErrorBody) {
     try {
       MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(messagePackErrorBody);
       ImmutableMapValue mapVal = (ImmutableMapValue) unpacker.unpackValue();

@@ -20,9 +20,7 @@
  */
 package org.influxdb;
 
-/**
- * @author fmachado
- */
+/** @author fmachado */
 public class InfluxDBMapperException extends RuntimeException {
 
   private static final long serialVersionUID = -7328402653918756407L;

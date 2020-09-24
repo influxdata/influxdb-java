@@ -8,16 +8,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
 import org.influxdb.InfluxDB.ConsistencyLevel;
+import org.influxdb.dto.utils.CheckTags;
 
 /**
  * {Purpose of This Type}.
  *
- * {Other Notes Relating to This Type (Optional)}
+ * <p>{Other Notes Relating to This Type (Optional)}
  *
  * @author stefan
- *
  */
 public class BatchPoints {
   private String database;
@@ -43,17 +42,14 @@ public class BatchPoints {
   /**
    * Create a new BatchPoints build to create a new BatchPoints in a fluent manner.
    *
-   * @param database
-   *            the name of the Database
+   * @param database the name of the Database
    * @return the Builder to be able to add further Builder calls.
    */
   public static Builder database(final String database) {
     return new Builder(database);
   }
 
-  /**
-   * The Builder to create a new BatchPoints instance.
-   */
+  /** The Builder to create a new BatchPoints instance. */
   public static final class Builder {
     private final String database;
     private String retentionPolicy;
@@ -62,9 +58,7 @@ public class BatchPoints {
     private ConsistencyLevel consistency;
     private TimeUnit precision;
 
-    /**
-     * @param database
-     */
+    /** @param database */
     Builder(final String database) {
       this.database = database;
     }
@@ -83,14 +77,16 @@ public class BatchPoints {
     /**
      * Add a tag to this set of points.
      *
-     * @param tagName
-     *            the tag name
-     * @param value
-     *            the tag value
+     * @param tagName the tag name
+     * @param value the tag value
      * @return the Builder instance.
      */
     public Builder tag(final String tagName, final String value) {
-      this.tags.put(tagName, value);
+      Objects.requireNonNull(tagName, "tagName");
+      Objects.requireNonNull(value, "value");
+      if (CheckTags.isLegalFullCheck(tagName, value)) {
+        this.tags.put(tagName, value);
+      }
       return this;
     }
 
@@ -139,7 +135,9 @@ public class BatchPoints {
     }
 
     /**
-     * Set the time precision to use for the whole batch. If unspecified, will default to {@link TimeUnit#NANOSECONDS}
+     * Set the time precision to use for the whole batch. If unspecified, will default to {@link
+     * TimeUnit#NANOSECONDS}
+     *
      * @param precision the precision of the points
      * @return the Builder instance
      */
@@ -174,61 +172,42 @@ public class BatchPoints {
     }
   }
 
-  /**
-   * @return the database
-   */
+  /** @return the database */
   public String getDatabase() {
     return this.database;
   }
 
-  /**
-   * @param database
-   *            the database to set
-   */
+  /** @param database the database to set */
   void setDatabase(final String database) {
     this.database = database;
   }
 
-  /**
-   * @return the retentionPolicy
-   */
+  /** @return the retentionPolicy */
   public String getRetentionPolicy() {
     return this.retentionPolicy;
   }
 
-  /**
-   * @param retentionPolicy
-   *            the retentionPolicy to set
-   */
+  /** @param retentionPolicy the retentionPolicy to set */
   void setRetentionPolicy(final String retentionPolicy) {
     this.retentionPolicy = retentionPolicy;
   }
 
-  /**
-   * @return the points
-   */
+  /** @return the points */
   public List<Point> getPoints() {
     return this.points;
   }
 
-  /**
-   * @param points
-   *            the points to set
-   */
+  /** @param points the points to set */
   void setPoints(final List<Point> points) {
     this.points = points;
   }
 
-  /**
-   * @return the time precision unit
-   */
+  /** @return the time precision unit */
   public TimeUnit getPrecision() {
     return precision;
   }
 
-  /**
-   * @param precision the time precision to set for the batch points
-   */
+  /** @param precision the time precision to set for the batch points */
   void setPrecision(final TimeUnit precision) {
     this.precision = precision;
   }
@@ -245,32 +224,22 @@ public class BatchPoints {
     return this;
   }
 
-  /**
-   * @return the tags
-   */
+  /** @return the tags */
   public Map<String, String> getTags() {
     return this.tags;
   }
 
-  /**
-   * @param tags
-   *            the tags to set
-   */
+  /** @param tags the tags to set */
   void setTags(final Map<String, String> tags) {
     this.tags = tags;
   }
 
-  /**
-   * @return the consistency
-   */
+  /** @return the consistency */
   public ConsistencyLevel getConsistency() {
     return this.consistency;
   }
 
-  /**
-   * @param consistency
-   *            the consistency to set
-   */
+  /** @param consistency the consistency to set */
   void setConsistency(final ConsistencyLevel consistency) {
     this.consistency = consistency;
   }
@@ -285,11 +254,11 @@ public class BatchPoints {
     }
     BatchPoints that = (BatchPoints) o;
     return Objects.equals(database, that.database)
-            && Objects.equals(retentionPolicy, that.retentionPolicy)
-            && Objects.equals(tags, that.tags)
-            && Objects.equals(points, that.points)
-            && consistency == that.consistency
-            && precision == that.precision;
+        && Objects.equals(retentionPolicy, that.retentionPolicy)
+        && Objects.equals(tags, that.tags)
+        && Objects.equals(points, that.points)
+        && consistency == that.consistency
+        && precision == that.precision;
   }
 
   @Override
@@ -297,25 +266,24 @@ public class BatchPoints {
     return Objects.hash(database, retentionPolicy, tags, points, consistency, precision);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("BatchPoints [database=")
-           .append(this.database)
-           .append(", retentionPolicy=")
-           .append(this.retentionPolicy)
-           .append(", consistency=")
-           .append(this.consistency)
-           .append(", tags=")
-           .append(this.tags)
-           .append(", precision=")
-           .append(this.precision)
-           .append(", points=")
-           .append(this.points)
-           .append("]");
+    builder
+        .append("BatchPoints [database=")
+        .append(this.database)
+        .append(", retentionPolicy=")
+        .append(this.retentionPolicy)
+        .append(", consistency=")
+        .append(this.consistency)
+        .append(", tags=")
+        .append(this.tags)
+        .append(", precision=")
+        .append(this.precision)
+        .append(", points=")
+        .append(this.points)
+        .append("]");
     return builder.toString();
   }
 
@@ -342,16 +310,17 @@ public class BatchPoints {
    */
   public boolean isMergeAbleWith(final BatchPoints that) {
     return Objects.equals(database, that.database)
-            && Objects.equals(retentionPolicy, that.retentionPolicy)
-            && Objects.equals(tags, that.tags)
-            && consistency == that.consistency;
+        && Objects.equals(retentionPolicy, that.retentionPolicy)
+        && Objects.equals(tags, that.tags)
+        && consistency == that.consistency;
   }
 
   /**
    * Merge two BatchPoints objects.
    *
    * @param that batch point to merge in
-   * @return true if the batch points have been merged into this BatchPoints instance. Return false otherwise.
+   * @return true if the batch points have been merged into this BatchPoints instance. Return false
+   *     otherwise.
    */
   public boolean mergeIn(final BatchPoints that) {
     boolean mergeAble = isMergeAbleWith(that);

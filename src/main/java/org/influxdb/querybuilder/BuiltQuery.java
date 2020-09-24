@@ -66,8 +66,7 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
    */
   public static final class QueryBuilder {
 
-    private QueryBuilder() {
-    }
+    private QueryBuilder() {}
 
     public static SelectionQueryImpl select(final String... columns) {
       return select((Object[]) columns);
@@ -153,10 +152,7 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
       return new SubRelativeTimeClause(new TimeInterval(interval, literal));
     }
 
-    /**
-     *
-     * @return the Ordering
-     */
+    /** @return the Ordering */
     public static Ordering asc() {
       return new Ordering(false);
     }

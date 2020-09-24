@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBMapperException;
 import org.influxdb.TestUtils;
@@ -41,7 +40,7 @@ public class InfluxDBMapperTest {
     Assert.assertEquals(serverMeasure.getCpu(), persistedMeasure.getCpu(), 0);
     Assert.assertEquals(serverMeasure.isHealthy(), persistedMeasure.isHealthy());
     Assert.assertEquals(serverMeasure.getUptime(), persistedMeasure.getUptime());
-    Assert.assertEquals(serverMeasure.getIp(),persistedMeasure.getIp());
+    Assert.assertEquals(serverMeasure.getIp(), persistedMeasure.getIp());
     Assert.assertEquals(
         serverMeasure.getMemoryUtilization(), persistedMeasure.getMemoryUtilization());
   }
@@ -51,8 +50,10 @@ public class InfluxDBMapperTest {
     ServerMeasure serverMeasure = createMeasure();
     influxDBMapper.save(serverMeasure);
 
-    List<ServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure",UDP_DATABASE),ServerMeasure.class);
-    Assert.assertTrue(persistedMeasures.size()>0);
+    List<ServerMeasure> persistedMeasures =
+        influxDBMapper.query(
+            new Query("SELECT * FROM server_measure", UDP_DATABASE), ServerMeasure.class);
+    Assert.assertTrue(persistedMeasures.size() > 0);
   }
 
   @Test
@@ -61,7 +62,7 @@ public class InfluxDBMapperTest {
     influxDBMapper.save(serverMeasure);
 
     List<ServerMeasure> persistedMeasures = influxDBMapper.query(ServerMeasure.class);
-    Assert.assertTrue(persistedMeasures.size()>0);
+    Assert.assertTrue(persistedMeasures.size() > 0);
   }
 
   @Test
@@ -69,8 +70,12 @@ public class InfluxDBMapperTest {
     ServerMeasure serverMeasure = createMeasure();
     influxDBMapper.save(serverMeasure);
 
-    List<NonAnnotatedServerMeasure> persistedMeasures = influxDBMapper.query(new Query("SELECT * FROM server_measure",UDP_DATABASE), NonAnnotatedServerMeasure.class, "server_measure");
-    Assert.assertTrue(persistedMeasures.size()>0);
+    List<NonAnnotatedServerMeasure> persistedMeasures =
+        influxDBMapper.query(
+            new Query("SELECT * FROM server_measure", UDP_DATABASE),
+            NonAnnotatedServerMeasure.class,
+            "server_measure");
+    Assert.assertTrue(persistedMeasures.size() > 0);
   }
 
   @Test
@@ -90,8 +95,7 @@ public class InfluxDBMapperTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> influxDBMapper.query(NoDatabaseMeasure.class),
-        "Should specify database for this query"
-    );
+        "Should specify database for this query");
   }
 
   @Test
@@ -101,8 +105,7 @@ public class InfluxDBMapperTest {
     assertThrows(
         InfluxDBMapperException.class,
         () -> influxDBMapper.save(nonInstantTime),
-        "time should be of type Instant"
-    );
+        "time should be of type Instant");
   }
 
   @Test
@@ -112,9 +115,8 @@ public class InfluxDBMapperTest {
     serverMeasure.setTime(instant);
     influxDBMapper.save(serverMeasure);
     ServerMeasure persistedMeasure = influxDBMapper.query(ServerMeasure.class).get(0);
-    Assert.assertEquals(instant,persistedMeasure.getTime());
+    Assert.assertEquals(instant, persistedMeasure.getTime());
   }
-
 
   @AfterEach
   public void cleanUp() throws Exception {
@@ -340,5 +342,4 @@ public class InfluxDBMapperTest {
     serverMeasure.setIp("19.087.4.5");
     return serverMeasure;
   }
-
 }

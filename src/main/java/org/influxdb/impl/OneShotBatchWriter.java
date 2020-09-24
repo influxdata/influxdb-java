@@ -1,13 +1,10 @@
 package org.influxdb.impl;
 
+import java.util.Collection;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 
-import java.util.Collection;
-
-/**
- * Batch writer that tries to write BatchPoints exactly once.
- */
+/** Batch writer that tries to write BatchPoints exactly once. */
 class OneShotBatchWriter implements BatchWriter {
 
   private InfluxDB influxDB;
@@ -24,7 +21,5 @@ class OneShotBatchWriter implements BatchWriter {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 }

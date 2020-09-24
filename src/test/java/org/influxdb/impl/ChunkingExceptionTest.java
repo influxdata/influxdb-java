@@ -7,13 +7,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.JsonReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
+import okio.Buffer;
 import org.influxdb.InfluxDB;
 import org.influxdb.TestUtils;
 import org.influxdb.dto.Query;
@@ -23,13 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.JsonReader;
-
-import okhttp3.OkHttpClient;
-import okhttp3.ResponseBody;
-import okio.Buffer;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -37,74 +34,79 @@ import retrofit2.Response;
 @RunWith(JUnitPlatform.class)
 public class ChunkingExceptionTest {
 
-    @Test
-    public void testChunkingIOException() throws IOException, InterruptedException {
-        
-        testChunkingException(new IOException(), "java.io.IOException", null);
-    }
+  @Test
+  public void testChunkingIOException() throws IOException, InterruptedException {
 
-    @Test
-    public void testChunkingEOFException() throws IOException, InterruptedException {
+    testChunkingException(new IOException(), "java.io.IOException", null);
+  }
 
-        testChunkingException(new EOFException(), "DONE", null);
-    }
+  @Test
+  public void testChunkingEOFException() throws IOException, InterruptedException {
 
-    @Test
-    public void testChunkingIOExceptionOnFailure() throws IOException, InterruptedException {
+    testChunkingException(new EOFException(), "DONE", null);
+  }
 
-        testChunkingException(new IOException(), "java.io.IOException", Assertions::assertNotNull);
-    }
+  @Test
+  public void testChunkingIOExceptionOnFailure() throws IOException, InterruptedException {
 
-    @Test
-    public void testChunkingEOFExceptionOnFailure() throws IOException, InterruptedException {
+    testChunkingException(new IOException(), "java.io.IOException", Assertions::assertNotNull);
+  }
 
-        testChunkingException(new EOFException(), "DONE",  Assertions::assertNotNull);
-    }
+  @Test
+  public void testChunkingEOFExceptionOnFailure() throws IOException, InterruptedException {
 
-    public void testChunkingException(Exception ex, String message, Consumer<Throwable> onFailure) throws IOException, InterruptedException {
+    testChunkingException(new EOFException(), "DONE", Assertions::assertNotNull);
+  }
 
-        InfluxDBService influxDBService = mock(InfluxDBService.class);
-        JsonAdapter<QueryResult> adapter = mock(JsonAdapter.class);
-        Call<ResponseBody> call = mock(Call.class);
-        ResponseBody responseBody = mock(ResponseBody.class);
+  public void testChunkingException(Exception ex, String message, Consumer<Throwable> onFailure)
+      throws IOException, InterruptedException {
 
-        when(influxDBService.query(any(String.class), any(String.class), anyInt())).thenReturn(call);
-        when(responseBody.source()).thenReturn(new Buffer());
-        doThrow(ex).when(adapter).fromJson(any(JsonReader.class));
+    InfluxDBService influxDBService = mock(InfluxDBService.class);
+    JsonAdapter<QueryResult> adapter = mock(JsonAdapter.class);
+    Call<ResponseBody> call = mock(Call.class);
+    ResponseBody responseBody = mock(ResponseBody.class);
 
-        String url = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
-        try (InfluxDB influxDB = new InfluxDBImpl(url, "admin", "admin", new OkHttpClient.Builder(), influxDBService, adapter) {
-            @Override
-            public String version() {
-                return "9.99";
-            }
+    when(influxDBService.query(any(String.class), any(String.class), anyInt())).thenReturn(call);
+    when(responseBody.source()).thenReturn(new Buffer());
+    doThrow(ex).when(adapter).fromJson(any(JsonReader.class));
+
+    String url = "http://" + TestUtils.getInfluxIP() + ":" + TestUtils.getInfluxPORT(true);
+    try (InfluxDB influxDB =
+        new InfluxDBImpl(
+            url, "admin", "admin", new OkHttpClient.Builder(), influxDBService, adapter) {
+          @Override
+          public String version() {
+            return "9.99";
+          }
         }) {
 
-            String dbName = "write_unittest_" + System.currentTimeMillis();
-            final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
-            Query query = new Query("SELECT * FROM disk", dbName);
+      String dbName = "write_unittest_" + System.currentTimeMillis();
+      final BlockingQueue<QueryResult> queue = new LinkedBlockingQueue<>();
+      Query query = new Query("SELECT * FROM disk", dbName);
 
-            if (onFailure == null) {
-                influxDB.query(query, 2, queue::add);
-            } else {
-                //test with onComplete and onFailure consumer
-                influxDB.query(query, 2, (cancellable, result) -> queue.add(result),
-                    //on complete
-                    () -> {  },
-                    onFailure
-                );
-            }
+      if (onFailure == null) {
+        influxDB.query(query, 2, queue::add);
+      } else {
+        // test with onComplete and onFailure consumer
+        influxDB.query(
+            query,
+            2,
+            (cancellable, result) -> queue.add(result),
+            // on complete
+            () -> {},
+            onFailure);
+      }
 
-            ArgumentCaptor<Callback<ResponseBody>> argumentCaptor = ArgumentCaptor.forClass(Callback.class);
-            verify(call).enqueue(argumentCaptor.capture());
-            Callback<ResponseBody> callback = argumentCaptor.getValue();
+      ArgumentCaptor<Callback<ResponseBody>> argumentCaptor =
+          ArgumentCaptor.forClass(Callback.class);
+      verify(call).enqueue(argumentCaptor.capture());
+      Callback<ResponseBody> callback = argumentCaptor.getValue();
 
-            callback.onResponse(call, Response.success(responseBody));
+      callback.onResponse(call, Response.success(responseBody));
 
-            QueryResult result = queue.poll(20, TimeUnit.SECONDS);
-            Assertions.assertNotNull(result);
-            Assertions.assertEquals(message, result.getError());
-        }
+      QueryResult result = queue.poll(20, TimeUnit.SECONDS);
+      Assertions.assertNotNull(result);
+      Assertions.assertEquals(message, result.getError());
     }
-
+  }
 }

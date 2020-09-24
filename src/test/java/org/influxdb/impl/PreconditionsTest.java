@@ -1,7 +1,7 @@
 package org.influxdb.impl;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
@@ -17,17 +17,21 @@ public class PreconditionsTest {
   @Test
   public void testCheckNonEmptyString2() {
     final String string = "";
-    Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      Preconditions.checkNonEmptyString(string, "string");
-		});
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          Preconditions.checkNonEmptyString(string, "string");
+        });
   }
 
   @Test
   public void testCheckNonEmptyString3() {
     final String string = null;
-    Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      Preconditions.checkNonEmptyString(string, "string");
-		});
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          Preconditions.checkNonEmptyString(string, "string");
+        });
   }
 
   @Test
@@ -39,24 +43,29 @@ public class PreconditionsTest {
   @Test
   public void testCheckPositiveNumber2() {
     final Number number = 0;
-    Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      Preconditions.checkPositiveNumber(number, "number");
-		});
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          Preconditions.checkPositiveNumber(number, "number");
+        });
   }
 
   @Test
   public void testCheckPositiveNumber3() {
     final Number number = null;
-    Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      Preconditions.checkPositiveNumber(number, "number");
-		});
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          Preconditions.checkPositiveNumber(number, "number");
+        });
   }
 
   @Test
-  public void testCheckDurationInf(){
+  public void testCheckDurationInf() {
     final String duration = "inf";
-    Assertions.assertDoesNotThrow(()->{
-      Preconditions.checkDuration(duration, "duration");
-    });
+    Assertions.assertDoesNotThrow(
+        () -> {
+          Preconditions.checkDuration(duration, "duration");
+        });
   }
 }

@@ -11,20 +11,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
+import org.influxdb.dto.utils.CheckTags;
 import org.influxdb.impl.Preconditions;
 
 /**
  * Representation of a InfluxDB database Point.
  *
  * @author stefan.majer [at] gmail.com
- *
  */
 public class Point {
   private String measurement;
@@ -34,7 +34,8 @@ public class Point {
   private Map<String, Object> fields;
   private static final int MAX_FRACTION_DIGITS = 340;
   private static final ThreadLocal<NumberFormat> NUMBER_FORMATTER =
-          ThreadLocal.withInitial(() -> {
+      ThreadLocal.withInitial(
+          () -> {
             NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
             numberFormat.setMaximumFractionDigits(MAX_FRACTION_DIGITS);
             numberFormat.setGroupingUsed(false);
@@ -44,19 +45,16 @@ public class Point {
 
   private static final int DEFAULT_STRING_BUILDER_SIZE = 1024;
   private static final ThreadLocal<StringBuilder> CACHED_STRINGBUILDERS =
-          ThreadLocal.withInitial(() -> new StringBuilder(DEFAULT_STRING_BUILDER_SIZE));
+      ThreadLocal.withInitial(() -> new StringBuilder(DEFAULT_STRING_BUILDER_SIZE));
 
-  Point() {
-  }
+  Point() {}
 
   /**
    * Create a new Point Build build to create a new Point in a fluent manner.
    *
-   * @param measurement
-   *            the name of the measurement.
+   * @param measurement the name of the measurement.
    * @return the Builder to be able to add further Builder calls.
    */
-
   public static Builder measurement(final String measurement) {
     return new Builder(measurement);
   }
@@ -67,7 +65,6 @@ public class Point {
    * @param clazz Class of the POJO
    * @return the Builder instance
    */
-
   public static Builder measurementByPOJO(final Class<?> clazz) {
     Objects.requireNonNull(clazz, "clazz");
     throwExceptionIfMissingAnnotation(clazz, Measurement.class);
@@ -75,11 +72,14 @@ public class Point {
     return new Builder(measurementName);
   }
 
-  private static void throwExceptionIfMissingAnnotation(final Class<?> clazz,
-      final Class<? extends Annotation> expectedClass) {
+  private static void throwExceptionIfMissingAnnotation(
+      final Class<?> clazz, final Class<? extends Annotation> expectedClass) {
     if (!clazz.isAnnotationPresent(expectedClass)) {
-      throw new IllegalArgumentException("Class " + clazz.getName() + " is not annotated with @"
-          + Measurement.class.getSimpleName());
+      throw new IllegalArgumentException(
+          "Class "
+              + clazz.getName()
+              + " is not annotated with @"
+              + Measurement.class.getSimpleName());
     }
   }
 
@@ -87,7 +87,6 @@ public class Point {
    * Builder for a new Point.
    *
    * @author stefan.majer [at] gmail.com
-   *
    */
   public static final class Builder {
     private static final BigInteger NANOSECONDS_PER_SECOND = BigInteger.valueOf(1000000000L);
@@ -97,9 +96,7 @@ public class Point {
     private TimeUnit precision;
     private final Map<String, Object> fields = new TreeMap<>();
 
-    /**
-     * @param measurement
-     */
+    /** @param measurement */
     Builder(final String measurement) {
       this.measurement = measurement;
     }
@@ -107,16 +104,14 @@ public class Point {
     /**
      * Add a tag to this point.
      *
-     * @param tagName
-     *            the tag name
-     * @param value
-     *            the tag value
+     * @param tagName the tag name
+     * @param value the tag value
      * @return the Builder instance.
      */
     public Builder tag(final String tagName, final String value) {
       Objects.requireNonNull(tagName, "tagName");
       Objects.requireNonNull(value, "value");
-      if (!tagName.isEmpty() && !value.isEmpty()) {
+      if (CheckTags.isLegalFullCheck(tagName, value)) {
         tags.put(tagName, value);
       }
       return this;
@@ -125,13 +120,14 @@ public class Point {
     /**
      * Add a Map of tags to add to this point.
      *
-     * @param tagsToAdd
-     *            the Map of tags to add
+     * @param tagsToAdd the Map of tags to add
      * @return the Builder instance.
      */
     public Builder tag(final Map<String, String> tagsToAdd) {
       for (Entry<String, String> tag : tagsToAdd.entrySet()) {
-        tag(tag.getKey(), tag.getValue());
+        if (CheckTags.isLegalFullCheck(tag.getKey(), tag.getValue())) {
+          tags.put(tag.getKey(), tag.getValue());
+        }
       }
       return this;
     }
@@ -139,10 +135,8 @@ public class Point {
     /**
      * Add a field to this point.
      *
-     * @param field
-     *            the field name
-     * @param value
-     *            the value of this field
+     * @param field the field name
+     * @param value the value of this field
      * @return the Builder instance.
      */
     @SuppressWarnings("checkstyle:finalparameters")
@@ -210,8 +204,7 @@ public class Point {
     /**
      * Add a Map of fields to this point.
      *
-     * @param fieldsToAdd
-     *            the fields to add
+     * @param fieldsToAdd the fields to add
      * @return the Builder instance.
      */
     public Builder fields(final Map<String, Object> fieldsToAdd) {
@@ -222,7 +215,7 @@ public class Point {
     /**
      * Add a time to this point.
      *
-     * @param timeToSet      the time for this point
+     * @param timeToSet the time for this point
      * @param precisionToSet the TimeUnit
      * @return the Builder instance.
      */
@@ -235,10 +228,9 @@ public class Point {
     }
 
     /**
-     * Add a time to this point as Long.
-     * only kept for binary compatibility with previous releases.
+     * Add a time to this point as Long. only kept for binary compatibility with previous releases.
      *
-     * @param timeToSet      the time for this point as Long
+     * @param timeToSet the time for this point as Long
      * @param precisionToSet the TimeUnit
      * @return the Builder instance.
      */
@@ -279,37 +271,45 @@ public class Point {
           String fieldName = column.name();
           addFieldByAttribute(pojo, field, column, fieldName);
         }
-      clazz = clazz.getSuperclass();
-    }
+        clazz = clazz.getSuperclass();
+      }
 
       if (this.fields.isEmpty()) {
-        throw new BuilderException("Class " + pojo.getClass().getName()
-            + " has no @" + Column.class.getSimpleName() + " annotation");
+        throw new BuilderException(
+            "Class "
+                + pojo.getClass().getName()
+                + " has no @"
+                + Column.class.getSimpleName()
+                + " annotation");
       }
 
       return this;
     }
 
-    private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
-        final String fieldName) {
+    private void addFieldByAttribute(
+        final Object pojo, final Field field, final Column column, final String fieldName) {
       try {
         Object fieldValue = field.get(pojo);
 
         TimeColumn tc = field.getAnnotation(TimeColumn.class);
         if (tc != null && Instant.class.isAssignableFrom(field.getType())) {
-          Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
-            TimeUnit timeUnit = tc.timeUnit();
-            if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
-              this.time = BigInteger.valueOf(instant.getEpochSecond())
-                                    .multiply(NANOSECONDS_PER_SECOND)
-                                    .add(BigInteger.valueOf(instant.getNano()))
-                                    .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
-            } else {
-              this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUnit);
-              this.precision = timeUnit;
-            }
-            this.precision = timeUnit;
-          });
+          Optional.ofNullable((Instant) fieldValue)
+              .ifPresent(
+                  instant -> {
+                    TimeUnit timeUnit = tc.timeUnit();
+                    if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
+                      this.time =
+                          BigInteger.valueOf(instant.getEpochSecond())
+                              .multiply(NANOSECONDS_PER_SECOND)
+                              .add(BigInteger.valueOf(instant.getNano()))
+                              .divide(
+                                  BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
+                    } else {
+                      this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUnit);
+                      this.precision = timeUnit;
+                    }
+                    this.precision = timeUnit;
+                  });
           return;
         }
 
@@ -342,64 +342,45 @@ public class Point {
       point.setFields(this.fields);
       point.setMeasurement(this.measurement);
       if (this.time != null) {
-          point.setTime(this.time);
-          point.setPrecision(this.precision);
+        point.setTime(this.time);
+        point.setPrecision(this.precision);
       }
       point.setTags(this.tags);
       return point;
     }
   }
 
-  /**
-   * @param measurement
-   *            the measurement to set
-   */
+  /** @param measurement the measurement to set */
   void setMeasurement(final String measurement) {
     this.measurement = measurement;
   }
 
-  /**
-   * @param time
-   *            the time to set
-   */
+  /** @param time the time to set */
   void setTime(final Number time) {
     this.time = time;
   }
 
-  /**
-   * @param tags
-   *            the tags to set
-   */
+  /** @param tags the tags to set */
   void setTags(final Map<String, String> tags) {
     this.tags = tags;
   }
 
-  /**
-   * @return the tags
-   */
+  /** @return the tags */
   Map<String, String> getTags() {
     return this.tags;
   }
 
-  /**
-   * @param precision
-   *            the precision to set
-   */
+  /** @param precision the precision to set */
   void setPrecision(final TimeUnit precision) {
     this.precision = precision;
   }
 
-  /**
-   * @return the fields
-   */
+  /** @return the fields */
   Map<String, Object> getFields() {
     return this.fields;
   }
 
-  /**
-   * @param fields
-   *            the fields to set
-   */
+  /** @param fields the fields to set */
   void setFields(final Map<String, Object> fields) {
     this.fields = fields;
   }
@@ -414,10 +395,10 @@ public class Point {
     }
     Point point = (Point) o;
     return Objects.equals(measurement, point.measurement)
-            && Objects.equals(tags, point.tags)
-            && Objects.equals(time, point.time)
-            && precision == point.precision
-            && Objects.equals(fields, point.fields);
+        && Objects.equals(tags, point.tags)
+        && Objects.equals(time, point.time)
+        && precision == point.precision
+        && Objects.equals(fields, point.fields);
   }
 
   @Override
@@ -425,9 +406,7 @@ public class Point {
     return Objects.hash(measurement, tags, time, precision, fields);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
@@ -451,13 +430,13 @@ public class Point {
 
   /**
    * Calculate the lineprotocol entry for a single Point.
-   * <p>
-   * NaN and infinity values are silently dropped as they are unsupported:
+   *
+   * <p>NaN and infinity values are silently dropped as they are unsupported:
    * https://github.com/influxdata/influxdb/issues/4089
    *
-   * @see <a href="https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_reference/">
+   * @see <a
+   *     href="https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_reference/">
    *     InfluxDB line protocol reference</a>
-   *
    * @return the String without newLine, empty when there are no fields to write
    */
   public String lineProtocol() {
@@ -465,14 +444,15 @@ public class Point {
   }
 
   /**
-   * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the timestamp.
-   * <p>
-   * NaN and infinity values are silently dropped as they are unsupported:
+   * Calculate the lineprotocol entry for a single point, using a specific {@link TimeUnit} for the
+   * timestamp.
+   *
+   * <p>NaN and infinity values are silently dropped as they are unsupported:
    * https://github.com/influxdata/influxdb/issues/4089
    *
-   * @see <a href="https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_reference/">
+   * @see <a
+   *     href="https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_reference/">
    *     InfluxDB line protocol reference</a>
-   *
    * @param precision the time precision unit for this point
    * @return the String without newLine, empty when there are no fields to write
    */
@@ -569,7 +549,7 @@ public class Point {
 
   private static boolean isNotFinite(final Object value) {
     return value instanceof Double && !Double.isFinite((Double) value)
-            || value instanceof Float && !Float.isFinite((Float) value);
+        || value instanceof Float && !Float.isFinite((Float) value);
   }
 
   private void formatedTime(final StringBuilder sb, final TimeUnit precision) {
@@ -605,7 +585,6 @@ public class Point {
       sb.append(" ").append(converterPrecision.convert(this.time.longValue(), this.precision));
     }
   }
-
 
   private static String findMeasurementName(final Class<?> clazz) {
     return clazz.getAnnotation(Measurement.class).name();

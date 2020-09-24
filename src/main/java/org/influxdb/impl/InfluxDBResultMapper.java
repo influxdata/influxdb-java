@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-
 import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
@@ -45,11 +44,9 @@ import org.influxdb.dto.QueryResult;
  */
 public class InfluxDBResultMapper {
 
-  /**
-   * Data structure used to cache classes used as measurements.
-   */
-  private static final
-    ConcurrentMap<String, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<>();
+  /** Data structure used to cache classes used as measurements. */
+  private static final ConcurrentMap<String, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE =
+      new ConcurrentHashMap<>();
 
   private static final int FRACTION_MIN_WIDTH = 0;
   private static final int FRACTION_MAX_WIDTH = 9;
@@ -59,106 +56,98 @@ public class InfluxDBResultMapper {
    * When a query is executed without {@link TimeUnit}, InfluxDB returns the <code>time</code>
    * column as a RFC3339 date.
    */
-  private static final DateTimeFormatter RFC3339_FORMATTER = new DateTimeFormatterBuilder()
-    .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
-    .appendFraction(ChronoField.NANO_OF_SECOND, FRACTION_MIN_WIDTH, FRACTION_MAX_WIDTH, ADD_DECIMAL_POINT)
-    .appendZoneOrOffsetId()
-    .toFormatter();
+  private static final DateTimeFormatter RFC3339_FORMATTER =
+      new DateTimeFormatterBuilder()
+          .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+          .appendFraction(
+              ChronoField.NANO_OF_SECOND, FRACTION_MIN_WIDTH, FRACTION_MAX_WIDTH, ADD_DECIMAL_POINT)
+          .appendZoneOrOffsetId()
+          .toFormatter();
 
   /**
-   * <p>
    * Process a {@link QueryResult} object returned by the InfluxDB client inspecting the internal
    * data structure and creating the respective object instances based on the Class passed as
    * parameter.
-   * </p>
    *
    * @param queryResult the InfluxDB result object
    * @param clazz the Class that will be used to hold your measurement data
    * @param <T> the target type
-   *
    * @return a {@link List} of objects from the same Class passed as parameter and sorted on the
-   * same order as received from InfluxDB.
-   *
-   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
-   * possible to define the values of your POJO (e.g. due to an unsupported field type).
+   *     same order as received from InfluxDB.
+   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors, <code>clazz
+   *     </code> parameter is not annotated with &#64;Measurement or it was not possible to define
+   *     the values of your POJO (e.g. due to an unsupported field type).
    */
-  public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz) throws InfluxDBMapperException {
+  public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz)
+      throws InfluxDBMapperException {
     return toPOJO(queryResult, clazz, TimeUnit.MILLISECONDS);
   }
 
   /**
-   * <p>
    * Process a {@link QueryResult} object returned by the InfluxDB client inspecting the internal
    * data structure and creating the respective object instances based on the Class passed as
    * parameter.
-   * </p>
    *
    * @param queryResult the InfluxDB result object
    * @param clazz the Class that will be used to hold your measurement data
    * @param precision the time precision of results
    * @param <T> the target type
-   *
    * @return a {@link List} of objects from the same Class passed as parameter and sorted on the
-   * same order as received from InfluxDB.
-   *
-   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
-   * possible to define the values of your POJO (e.g. due to an unsupported field type).
+   *     same order as received from InfluxDB.
+   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors, <code>clazz
+   *     </code> parameter is not annotated with &#64;Measurement or it was not possible to define
+   *     the values of your POJO (e.g. due to an unsupported field type).
    */
-  public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz,
-                            final TimeUnit precision) throws InfluxDBMapperException {
+  public <T> List<T> toPOJO(
+      final QueryResult queryResult, final Class<T> clazz, final TimeUnit precision)
+      throws InfluxDBMapperException {
     throwExceptionIfMissingAnnotation(clazz);
     String measurementName = getMeasurementName(clazz);
     return this.toPOJO(queryResult, clazz, measurementName, precision);
   }
 
   /**
-   * <p>
    * Process a {@link QueryResult} object returned by the InfluxDB client inspecting the internal
    * data structure and creating the respective object instances based on the Class passed as
    * parameter.
-   * </p>
    *
    * @param queryResult the InfluxDB result object
    * @param clazz the Class that will be used to hold your measurement data
    * @param <T> the target type
    * @param measurementName name of the Measurement
-   *
    * @return a {@link List} of objects from the same Class passed as parameter and sorted on the
-   * same order as received from InfluxDB.
-   *
-   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
-   * possible to define the values of your POJO (e.g. due to an unsupported field type).
+   *     same order as received from InfluxDB.
+   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors, <code>clazz
+   *     </code> parameter is not annotated with &#64;Measurement or it was not possible to define
+   *     the values of your POJO (e.g. due to an unsupported field type).
    */
-  public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz, final String measurementName)
+  public <T> List<T> toPOJO(
+      final QueryResult queryResult, final Class<T> clazz, final String measurementName)
       throws InfluxDBMapperException {
     return toPOJO(queryResult, clazz, measurementName, TimeUnit.MILLISECONDS);
   }
 
   /**
-   * <p>
    * Process a {@link QueryResult} object returned by the InfluxDB client inspecting the internal
    * data structure and creating the respective object instances based on the Class passed as
    * parameter.
-   * </p>
    *
    * @param queryResult the InfluxDB result object
    * @param clazz the Class that will be used to hold your measurement data
    * @param <T> the target type
    * @param measurementName name of the Measurement
    * @param precision the time precision of results
-   *
    * @return a {@link List} of objects from the same Class passed as parameter and sorted on the
-   * same order as received from InfluxDB.
-   *
-   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors,
-   * <code>clazz</code> parameter is not annotated with &#64;Measurement or it was not
-   * possible to define the values of your POJO (e.g. due to an unsupported field type).
+   *     same order as received from InfluxDB.
+   * @throws InfluxDBMapperException If {@link QueryResult} parameter contain errors, <code>clazz
+   *     </code> parameter is not annotated with &#64;Measurement or it was not possible to define
+   *     the values of your POJO (e.g. due to an unsupported field type).
    */
-  public <T> List<T> toPOJO(final QueryResult queryResult, final Class<T> clazz, final String measurementName,
-                            final TimeUnit precision)
+  public <T> List<T> toPOJO(
+      final QueryResult queryResult,
+      final Class<T> clazz,
+      final String measurementName,
+      final TimeUnit precision)
       throws InfluxDBMapperException {
 
     Objects.requireNonNull(measurementName, "measurementName");
@@ -170,15 +159,23 @@ public class InfluxDBResultMapper {
 
     List<T> result = new LinkedList<T>();
 
-    queryResult.getResults().stream()
-      .filter(internalResult -> Objects.nonNull(internalResult) && Objects.nonNull(internalResult.getSeries()))
-      .forEach(internalResult -> {
-        internalResult.getSeries().stream()
-          .filter(series -> series.getName().equals(measurementName))
-          .forEachOrdered(series -> {
-            parseSeriesAs(series, clazz, result, precision);
-          });
-        });
+    queryResult
+        .getResults()
+        .stream()
+        .filter(
+            internalResult ->
+                Objects.nonNull(internalResult) && Objects.nonNull(internalResult.getSeries()))
+        .forEach(
+            internalResult -> {
+              internalResult
+                  .getSeries()
+                  .stream()
+                  .filter(series -> series.getName().equals(measurementName))
+                  .forEachOrdered(
+                      series -> {
+                        parseSeriesAs(series, clazz, result, precision);
+                      });
+            });
 
     return result;
   }
@@ -186,7 +183,10 @@ public class InfluxDBResultMapper {
   void throwExceptionIfMissingAnnotation(final Class<?> clazz) {
     if (!clazz.isAnnotationPresent(Measurement.class)) {
       throw new IllegalArgumentException(
-        "Class " + clazz.getName() + " is not annotated with @" + Measurement.class.getSimpleName());
+          "Class "
+              + clazz.getName()
+              + " is not annotated with @"
+              + Measurement.class.getSimpleName());
     }
   }
 
@@ -195,11 +195,15 @@ public class InfluxDBResultMapper {
       throw new InfluxDBMapperException("InfluxDB returned an error: " + queryResult.getError());
     }
 
-    queryResult.getResults().forEach(seriesResult -> {
-      if (seriesResult.getError() != null) {
-        throw new InfluxDBMapperException("InfluxDB returned an error with Series: " + seriesResult.getError());
-      }
-    });
+    queryResult
+        .getResults()
+        .forEach(
+            seriesResult -> {
+              if (seriesResult.getError() != null) {
+                throw new InfluxDBMapperException(
+                    "InfluxDB returned an error with Series: " + seriesResult.getError());
+              }
+            });
   }
 
   ConcurrentMap<String, Field> getColNameAndFieldMap(final Class<?> clazz) {
@@ -243,19 +247,24 @@ public class InfluxDBResultMapper {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).timeUnit();
   }
 
-  <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
+  <T> List<T> parseSeriesAs(
+      final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
     return parseSeriesAs(series, clazz, result, TimeUnit.MILLISECONDS);
   }
 
-  <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result,
-                            final TimeUnit precision) {
+  <T> List<T> parseSeriesAs(
+      final QueryResult.Series series,
+      final Class<T> clazz,
+      final List<T> result,
+      final TimeUnit precision) {
     int columnSize = series.getColumns().size();
     ConcurrentMap<String, Field> colNameAndFieldMap = CLASS_FIELD_CACHE.get(clazz.getName());
     try {
       T object = null;
       for (List<Object> row : series.getValues()) {
         for (int i = 0; i < columnSize; i++) {
-          Field correspondingField = colNameAndFieldMap.get(series.getColumns().get(i)/*InfluxDB columnName*/);
+          Field correspondingField =
+              colNameAndFieldMap.get(series.getColumns().get(i) /*InfluxDB columnName*/);
           if (correspondingField != null) {
             if (object == null) {
               object = clazz.newInstance();
@@ -269,7 +278,8 @@ public class InfluxDBResultMapper {
         // "tag" values are always String.
         if (series.getTags() != null && !series.getTags().isEmpty()) {
           for (Entry<String, String> entry : series.getTags().entrySet()) {
-            Field correspondingField = colNameAndFieldMap.get(entry.getKey()/*InfluxDB columnName*/);
+            Field correspondingField =
+                colNameAndFieldMap.get(entry.getKey() /*InfluxDB columnName*/);
             if (correspondingField != null) {
               // I don't think it is possible to reach here without a valid "object"
               setFieldValue(object, correspondingField, entry.getValue(), precision);
@@ -288,9 +298,9 @@ public class InfluxDBResultMapper {
   }
 
   /**
-   * InfluxDB client returns any number as Double.
-   * See https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987
-   * for more information.
+   * InfluxDB client returns any number as Double. See
+   * https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987 for more
+   * information.
    *
    * @param object
    * @param field
@@ -299,8 +309,9 @@ public class InfluxDBResultMapper {
    * @throws IllegalArgumentException
    * @throws IllegalAccessException
    */
-  <T> void setFieldValue(final T object, final Field field, final Object value, final TimeUnit precision)
-    throws IllegalArgumentException, IllegalAccessException {
+  <T> void setFieldValue(
+      final T object, final Field field, final Object value, final TimeUnit precision)
+      throws IllegalArgumentException, IllegalAccessException {
     if (value == null) {
       return;
     }
@@ -310,24 +321,34 @@ public class InfluxDBResultMapper {
         field.setAccessible(true);
       }
       if (fieldValueModified(fieldType, field, object, value, precision)
-        || fieldValueForPrimitivesModified(fieldType, field, object, value)
-        || fieldValueForPrimitiveWrappersModified(fieldType, field, object, value)) {
+          || fieldValueForPrimitivesModified(fieldType, field, object, value)
+          || fieldValueForPrimitiveWrappersModified(fieldType, field, object, value)) {
         return;
       }
       String msg = "Class '%s' field '%s' is from an unsupported type '%s'.";
       throw new InfluxDBMapperException(
-        String.format(msg, object.getClass().getName(), field.getName(), field.getType()));
+          String.format(msg, object.getClass().getName(), field.getName(), field.getType()));
     } catch (ClassCastException e) {
-      String msg = "Class '%s' field '%s' was defined with a different field type and caused a ClassCastException. "
-        + "The correct type is '%s' (current field value: '%s').";
+      String msg =
+          "Class '%s' field '%s' was defined with a different field type and caused a ClassCastException. "
+              + "The correct type is '%s' (current field value: '%s').";
       throw new InfluxDBMapperException(
-        String.format(msg, object.getClass().getName(), field.getName(), value.getClass().getName(), value));
+          String.format(
+              msg,
+              object.getClass().getName(),
+              field.getName(),
+              value.getClass().getName(),
+              value));
     }
   }
 
-  <T> boolean fieldValueModified(final Class<?> fieldType, final Field field, final T object, final Object value,
-                                 final TimeUnit precision)
-    throws IllegalArgumentException, IllegalAccessException {
+  <T> boolean fieldValueModified(
+      final Class<?> fieldType,
+      final Field field,
+      final T object,
+      final Object value,
+      final TimeUnit precision)
+      throws IllegalArgumentException, IllegalAccessException {
     if (String.class.isAssignableFrom(fieldType)) {
       field.set(object, String.valueOf(value));
       return true;
@@ -343,7 +364,8 @@ public class InfluxDBResultMapper {
       } else if (value instanceof Integer) {
         instant = Instant.ofEpochMilli(toMillis(((Integer) value).longValue(), precision));
       } else {
-        throw new InfluxDBMapperException("Unsupported type " + field.getClass() + " for field " + field.getName());
+        throw new InfluxDBMapperException(
+            "Unsupported type " + field.getClass() + " for field " + field.getName());
       }
       field.set(object, instant);
       return true;
@@ -351,8 +373,9 @@ public class InfluxDBResultMapper {
     return false;
   }
 
-  <T> boolean fieldValueForPrimitivesModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value) throws IllegalArgumentException, IllegalAccessException {
+  <T> boolean fieldValueForPrimitivesModified(
+      final Class<?> fieldType, final Field field, final T object, final Object value)
+      throws IllegalArgumentException, IllegalAccessException {
     if (double.class.isAssignableFrom(fieldType)) {
       field.setDouble(object, ((Double) value).doubleValue());
       return true;
@@ -372,8 +395,9 @@ public class InfluxDBResultMapper {
     return false;
   }
 
-  <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value) throws IllegalArgumentException, IllegalAccessException {
+  <T> boolean fieldValueForPrimitiveWrappersModified(
+      final Class<?> fieldType, final Field field, final T object, final Object value)
+      throws IllegalArgumentException, IllegalAccessException {
     if (Double.class.isAssignableFrom(fieldType)) {
       field.set(object, value);
       return true;

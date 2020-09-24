@@ -10,8 +10,7 @@ import org.influxdb.querybuilder.time.TimeInterval;
 
 public final class FunctionFactory {
 
-  private FunctionFactory() {
-  }
+  private FunctionFactory() {}
 
   public static Function function(final String name, final Object... parameters) {
     convertToColumns(parameters);
