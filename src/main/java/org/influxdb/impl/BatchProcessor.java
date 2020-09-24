@@ -58,7 +58,7 @@ public final class BatchProcessor {
     private int bufferLimit = 0;
     private TimeUnit precision;
 
-    private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> {};
+    private BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (entries, throwable) -> { };
     private ConsistencyLevel consistencyLevel;
 
     private boolean dropActionsOnQueueExhaustion;

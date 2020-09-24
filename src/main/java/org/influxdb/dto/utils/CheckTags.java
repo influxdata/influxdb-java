@@ -13,7 +13,7 @@ public final class CheckTags {
   static final String NAMEREGEX = "[^\r\n]+";
   static final Pattern NAMEPATTERN = Pattern.compile(NAMEREGEX);
 
-  private CheckTags() {}
+  private CheckTags() { }
   /**
    * Check a single tag's name according to the corresponding regular expression.
    *

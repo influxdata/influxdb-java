@@ -155,7 +155,7 @@ public class SelectionSubQueryImpl<T extends WithSubquery> extends SubQuery<T>
   }
 
   @Override
-  public void setSubQuery(final QueryStringBuilder query) {}
+  public void setSubQuery(final QueryStringBuilder query) { }
 
   @Override
   public StringBuilder buildQueryString() {

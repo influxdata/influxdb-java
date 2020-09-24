@@ -346,7 +346,7 @@ public class InfluxDBImpl implements InfluxDB {
       final TimeUnit flushDurationTimeUnit,
       final ThreadFactory threadFactory) {
     enableBatch(
-        actions, flushDuration, flushDurationTimeUnit, threadFactory, (points, throwable) -> {});
+        actions, flushDuration, flushDurationTimeUnit, threadFactory, (points, throwable) -> { });
     return this;
   }
 
@@ -650,14 +650,14 @@ public class InfluxDBImpl implements InfluxDB {
   /** {@inheritDoc} */
   @Override
   public void query(final Query query, final int chunkSize, final Consumer<QueryResult> onNext) {
-    query(query, chunkSize, onNext, () -> {});
+    query(query, chunkSize, onNext, () -> { });
   }
 
   /** {@inheritDoc} */
   @Override
   public void query(
       final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext) {
-    query(query, chunkSize, onNext, () -> {});
+    query(query, chunkSize, onNext, () -> { });
   }
 
   /** {@inheritDoc} */
@@ -1041,7 +1041,7 @@ public class InfluxDBImpl implements InfluxDB {
       MessagePackTraverser traverser = new MessagePackTraverser();
       try (InputStream is = chunkedBody.byteStream()) {
         for (Iterator<QueryResult> it = traverser.traverse(is).iterator();
-            it.hasNext() && !cancellable.isCanceled(); ) {
+            it.hasNext() && !cancellable.isCanceled();) {
           QueryResult result = it.next();
           consumer.accept(cancellable, result);
         }

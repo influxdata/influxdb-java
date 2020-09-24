@@ -47,7 +47,7 @@ public class Point {
   private static final ThreadLocal<StringBuilder> CACHED_STRINGBUILDERS =
       ThreadLocal.withInitial(() -> new StringBuilder(DEFAULT_STRING_BUILDER_SIZE));
 
-  Point() {}
+  Point() { }
 
   /**
    * Create a new Point Build build to create a new Point in a fluent manner.

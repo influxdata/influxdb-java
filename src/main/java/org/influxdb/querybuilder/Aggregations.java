@@ -2,7 +2,7 @@ package org.influxdb.querybuilder;
 
 public final class Aggregations {
 
-  private Aggregations() {}
+  private Aggregations() { }
 
   public static final String COUNT = "COUNT";
   public static final String MAX = "MAX";

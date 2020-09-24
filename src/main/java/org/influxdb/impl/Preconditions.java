@@ -7,7 +7,7 @@ package org.influxdb.impl;
  */
 public final class Preconditions {
 
-  private Preconditions() {}
+  private Preconditions() { }
 
   /**
    * Enforces that the string is {@linkplain String#isEmpty() not empty}.

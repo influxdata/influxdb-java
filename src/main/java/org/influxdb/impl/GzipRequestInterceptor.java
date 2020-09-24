@@ -20,7 +20,7 @@ final class GzipRequestInterceptor implements Interceptor {
 
   private AtomicBoolean enabled = new AtomicBoolean(false);
 
-  GzipRequestInterceptor() {}
+  GzipRequestInterceptor() { }
 
   public void enable() {
     enabled.set(true);

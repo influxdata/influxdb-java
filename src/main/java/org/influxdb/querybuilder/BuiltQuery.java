@@ -66,7 +66,7 @@ public abstract class BuiltQuery extends Query implements QueryStringBuilder {
    */
   public static final class QueryBuilder {
 
-    private QueryBuilder() {}
+    private QueryBuilder() { }
 
     public static SelectionQueryImpl select(final String... columns) {
       return select((Object[]) columns);

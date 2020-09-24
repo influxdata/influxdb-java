@@ -2,7 +2,7 @@ package org.influxdb.querybuilder;
 
 public final class Operations {
 
-  private Operations() {}
+  private Operations() { }
 
   public static final String EQ = "=";
   public static final String NE = "!=";

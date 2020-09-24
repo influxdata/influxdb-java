@@ -18,7 +18,7 @@ class SelectionCoreImpl implements Selection, WithInto {
 
   private Object currentSelection;
 
-  SelectionCoreImpl() {}
+  SelectionCoreImpl() { }
 
   SelectionCoreImpl(final Object[] columns) {
     for (Object column : columns) {

@@ -2,7 +2,7 @@ package org.influxdb.querybuilder.time;
 
 public final class DurationLiteral {
 
-  private DurationLiteral() {}
+  private DurationLiteral() { }
 
   public static final String NANOSECONDS = "NANOSECONDS";
   public static final String MICROSECONDS = "µ";

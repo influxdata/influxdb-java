@@ -33,14 +33,14 @@ public final class BatchOptions implements Cloneable {
   private int bufferLimit = DEFAULT_BUFFER_LIMIT;
   private TimeUnit precision = DEFAULT_PRECISION;
   private boolean dropActionsOnQueueExhaustion = DEFAULT_DROP_ACTIONS_ON_QUEUE_EXHAUSTION;
-  private Consumer<Point> droppedActionHandler = (point) -> {};
+  private Consumer<Point> droppedActionHandler = (point) -> { };
 
   private ThreadFactory threadFactory = Executors.defaultThreadFactory();
-  BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> {};
+  BiConsumer<Iterable<Point>, Throwable> exceptionHandler = (points, throwable) -> { };
 
   private InfluxDB.ConsistencyLevel consistency = InfluxDB.ConsistencyLevel.ONE;
 
-  private BatchOptions() {}
+  private BatchOptions() { }
 
   /**
    * @param actions the number of actions to collect

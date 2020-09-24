@@ -8,7 +8,7 @@ public final class Appender {
 
   private static final Pattern COLUMN_NAME_PATTERN = Pattern.compile("\\w+(?:\\[.+\\])?");
 
-  private Appender() {}
+  private Appender() { }
 
   public static StringBuilder joinAndAppend(
       final StringBuilder stringBuilder, final List<? extends ConjunctionClause> clauses) {

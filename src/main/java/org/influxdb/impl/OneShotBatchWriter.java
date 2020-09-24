@@ -21,5 +21,5 @@ class OneShotBatchWriter implements BatchWriter {
   }
 
   @Override
-  public void close() {}
+  public void close() { }
 }
