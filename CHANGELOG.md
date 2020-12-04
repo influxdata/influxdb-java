@@ -1,6 +1,13 @@
 # Changelog
 
-## 2.21 [unreleased]
+## 2.22 [unreleased]
+
+## 2.21 [2020-12-04]
+
+### Fixes
+
+- Binary compatibility with old version [PR #692](https://github.com/influxdata/influxdb-java/pull/692)
+- Wrong statement in manual [PR #695](https://github.com/influxdata/influxdb-java/pull/695)
 
 ## 2.20 [2020-08-14]
 
