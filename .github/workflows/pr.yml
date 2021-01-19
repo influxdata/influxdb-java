@@ -1,0 +1,29 @@
+name: Build from pull request
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        jdk: [3-jdk-14, 3-jdk-8-slim]
+        influxdb: [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Figure out if running fork PR
+        id: fork
+        run: '["${{ secrets.DOCKER_REGISTRY_TOKEN }}" == ""] && echo "::set-output name=is_fork_pr::true" || echo "::set-output name=is_fork_pr::false"'
+
+      - name: Build project
+        run: ./compile-and-test.sh
+
+      - name: codecov
+        run: bash <(curl -s https://codecov.io/bash)

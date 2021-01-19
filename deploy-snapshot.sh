@@ -2,11 +2,12 @@
 
 set -e
 
-#Parse project version from pom.xml
-export PROJECT_VERSION=`xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml`
+# Parse project version from pom.xml
+PROJECT_VERSION=$(xmllint --xpath "//*[local-name()='project']/*[local-name()='version']/text()" pom.xml)
+export PROJECT_VERSION
 echo "Project version: $PROJECT_VERSION"
 
-#Skip if not *SNAPSHOT
+# Skip if not *SNAPSHOT
 if [[ $PROJECT_VERSION != *SNAPSHOT ]]; then
     echo "$PROJECT_VERSION is not SNAPSHOT - skip deploy.";
     exit;
@@ -17,7 +18,7 @@ DEFAULT_MAVEN_JAVA_VERSION="3-jdk-8-slim"
 MAVEN_JAVA_VERSION="${MAVEN_JAVA_VERSION:-$DEFAULT_MAVEN_JAVA_VERSION}"
 echo "Deploy snapshot with maven:${MAVEN_JAVA_VERSION}"
 
-docker run -it --rm \
+docker run --rm \
        --volume ${PWD}:/usr/src/mymaven \
        --volume ${PWD}/.m2:/root/.m2 \
        --workdir /usr/src/mymaven \

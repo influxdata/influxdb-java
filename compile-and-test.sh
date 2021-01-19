@@ -39,7 +39,7 @@ echo "Running tests"
 PROXY_API_URL=http://nginx:8080/influx-api/
 PROXY_UDP_PORT=8080
 
-docker run -it --rm \
+docker run --rm \
        --volume ${PWD}:/usr/src/mymaven \
        --volume ${PWD}/.m2:/root/.m2 \
        --workdir /usr/src/mymaven \
