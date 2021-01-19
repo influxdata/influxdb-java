@@ -1,6 +1,6 @@
 # influxdb-java
 
-[![Build Status](https://travis-ci.org/influxdata/influxdb-java.svg?branch=master)](https://travis-ci.org/influxdata/influxdb-java)
+[![Build Status](https://github.com/influxdata/influxdb-java/workflows/.github/workflows/master.yml/badge.svg)](https://github.com/influxdata/influxdb-java/actions)
 [![codecov.io](http://codecov.io/github/influxdata/influxdb-java/coverage.svg?branch=master)](http://codecov.io/github/influxdata/influxdb-java?branch=master)
 [![Issue Count](https://codeclimate.com/github/influxdata/influxdb-java/badges/issue_count.svg)](https://codeclimate.com/github/influxdata/influxdb-java)
 
