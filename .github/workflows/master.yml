@@ -28,11 +28,11 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash)
 
 
-  deploy:
-    runs-on: ubuntu-20.04
+  # deploy:
+  #   runs-on: ubuntu-20.04
 
-    steps:
-      - name: deploy snapshot
-        env:
-          secure: dAJK41xM2dN3q3xJMqAOP6uvrOvpjjUzmHr8mYNyepER8Lpms9/GqVUxqJv12wzCBqv1XZk/CXxrv3iBc2XjlxlrzIJGQChTinwDEigv0BMl/Gh0821ja7gwzMEUmg9f79m5tJxIFQ306cWz1gyRDqM3fLzskvM2ayzvynsNc/w=
-        run: ./deploy-snapshot.sh
+  #   steps:
+  #     - name: deploy snapshot
+  #       env:
+  #         secure: dAJK41xM2dN3q3xJMqAOP6uvrOvpjjUzmHr8mYNyepER8Lpms9/GqVUxqJv12wzCBqv1XZk/CXxrv3iBc2XjlxlrzIJGQChTinwDEigv0BMl/Gh0821ja7gwzMEUmg9f79m5tJxIFQ306cWz1gyRDqM3fLzskvM2ayzvynsNc/w=
+  #       run: ./deploy-snapshot.sh
