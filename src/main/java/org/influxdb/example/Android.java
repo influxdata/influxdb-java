@@ -14,7 +14,7 @@ import java.util.List;
  * @version 1
  */
 public class Android {
-	// put the address IP of your database
+        // put the address IP of your database
 	String address = "http://192.168.1.75:8000/";
 	String dbName = "myDatabase";
 	String table = "SERIES";
