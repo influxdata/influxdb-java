@@ -13,7 +13,6 @@ import java.util.List;
  * @author StrakarCe
  * @since 07/05/2021
  * @version 1
- * @category Example
  */
 public class Android {
 
