@@ -301,7 +301,7 @@
     <dependency>
     <groupId>org.msgpack</groupId>
       <artifactId>msgpack-core</artifactId>
-      <version>0.8.22</version>
+      <version>0.8.23</version>
     </dependency>
     <!-- If we use okhttp instead of java urlconnection we achieve server failover
             of the influxdb server address resolves to all influxdb server ips. -->
