@@ -66,7 +66,17 @@ influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName
 influxDB.setRetentionPolicy(retentionPolicyName);
 
 // Enable batch writes to get better performance.
-influxDB.enableBatch(BatchOptions.DEFAULTS);
+influxDB.enableBatch(
+    BatchOptions.DEFAULTS
+      .threadFactory(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setDaemon(true);
+        return thread;
+      })
+);
+
+// Close it if your application is terminating or you are not using it anymore.
+Runtime.getRuntime().addShutdownHook(new Thread(influxDB::close));
 
 // Write points to InfluxDB.
 influxDB.write(Point.measurement("h2o_feet")
@@ -100,9 +110,6 @@ System.out.println(queryResult);
 //         [2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064],
 //         [2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
 //      ]]], error=null]], error=null]
-
-// Close it if your application is terminating or you are not using it anymore.
-influxDB.close();
 ```
 
 ## Contribute
