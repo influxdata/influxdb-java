@@ -6,6 +6,8 @@ import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
@@ -48,8 +50,9 @@ interface InfluxDBService {
       @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
 
   @POST("query")
+  @FormUrlEncoded
   public Call<QueryResult> query(@Query(DB) String db,
-          @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
+          @Query(EPOCH) String epoch, @Field(value = Q, encoded = true) String query,
           @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
@@ -57,18 +60,18 @@ interface InfluxDBService {
       @Query(value = Q, encoded = true) String query);
 
   @POST("query")
+  @FormUrlEncoded
   public Call<QueryResult> postQuery(@Query(DB) String db,
-      @Query(value = Q, encoded = true) String query);
+      @Field(value = Q, encoded = true) String query);
 
   @POST("query")
+  @FormUrlEncoded
   public Call<QueryResult> postQuery(@Query(DB) String db,
-          @Query(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
-
-  @GET("query")
-  public Call<QueryResult> query(@Query(value = Q, encoded = true) String query);
+          @Field(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
 
   @POST("query")
-  public Call<QueryResult> postQuery(@Query(value = Q, encoded = true) String query);
+  @FormUrlEncoded
+  public Call<QueryResult> postQuery(@Field(value = Q, encoded = true) String query);
 
   @Streaming
   @GET("query?chunked=true")
@@ -77,6 +80,7 @@ interface InfluxDBService {
 
   @Streaming
   @POST("query?chunked=true")
-  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
+  @FormUrlEncoded
+  public Call<ResponseBody> query(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
           @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 }

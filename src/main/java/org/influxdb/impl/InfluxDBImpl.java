@@ -642,7 +642,11 @@ public class InfluxDBImpl implements InfluxDB {
       call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize,
           boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
-      call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize);
+      if (query.requiresPost()) {
+        call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize, null);
+      } else {
+        call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize);
+      }
     }
 
     call.enqueue(new Callback<ResponseBody>() {
@@ -711,15 +715,20 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public QueryResult query(final Query query, final TimeUnit timeUnit) {
-    Call<QueryResult> call = null;
+    Call<QueryResult> call;
     if (query instanceof BoundParameterQuery) {
         BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
         call = this.influxDBService.query(getDatabase(query),
                 TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(),
                 boundParameterQuery.getParameterJsonWithUrlEncoded());
     } else {
-        call = this.influxDBService.query(getDatabase(query),
-                TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+        if (query.requiresPost()) {
+          call = this.influxDBService.query(getDatabase(query),
+                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(), null);
+        } else {
+          call = this.influxDBService.query(getDatabase(query),
+                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+        }
     }
     return executeQuery(call);
   }
@@ -747,7 +756,7 @@ public class InfluxDBImpl implements InfluxDB {
    */
   @Override
   public List<String> describeDatabases() {
-    QueryResult result = executeQuery(this.influxDBService.query(SHOW_DATABASE_COMMAND_ENCODED));
+    QueryResult result = executeQuery(this.influxDBService.postQuery(SHOW_DATABASE_COMMAND_ENCODED));
     // {"results":[{"series":[{"name":"databases","columns":["name"],"values":[["mydb"]]}]}]}
     // Series [name=databases, columns=[name], values=[[mydb], [unittest_1433605300968]]]
     List<List<Object>> databaseNames = result.getResults().get(0).getSeries().get(0).getValues();

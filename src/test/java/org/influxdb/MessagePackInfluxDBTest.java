@@ -164,6 +164,18 @@ public class MessagePackInfluxDBTest extends InfluxDBTest {
     value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0).toString());
     Assertions.assertEquals(value, timeP3);
 
+    // WHEN I use the post query
+    queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName, true), TimeUnit.NANOSECONDS);
+
+    // THEN result will be same
+    Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
+    value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0).toString());
+    Assertions.assertEquals(value, timeP1);
+    value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0).toString());
+    Assertions.assertEquals(value, timeP2);
+    value = Double.valueOf(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0).toString());
+    Assertions.assertEquals(value, timeP3);
+
     this.influxDB.query(new Query("DROP DATABASE " + dbName));
   }
 

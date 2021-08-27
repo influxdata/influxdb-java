@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         jdk: [3-openjdk-16-slim, 3-jdk-14, 3-jdk-8-slim]
-        influxdb: [1.1, 1.6, 1.8]
+        influxdb: [1.1, 1.6, 1.8, 2.0]
 
     steps:
       - name: Checkout
@@ -27,3 +27,4 @@ jobs:
 
       - name: codecov
         run: bash <(curl -s https://codecov.io/bash)
+        if: matrix.influxdb != '2.0'
