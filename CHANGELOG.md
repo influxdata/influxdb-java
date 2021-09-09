@@ -4,7 +4,7 @@
 
 ### Improvements
 
-- Streaming query serializes `'q'` parameter into HTTP body [PR #765](https://github.com/influxdata/influxdb-java/pull/765)
+- `POST` query variants serializes `'q'` parameter into HTTP body [PR #765](https://github.com/influxdata/influxdb-java/pull/765)
 
 ## 2.21 [2020-12-04]
 
