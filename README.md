@@ -6,7 +6,7 @@
 
 This is the official (and community-maintained) Java client library for [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) (1.x), the open source time series database that is part of the TICK (Telegraf, InfluxDB, Chronograf, Kapacitor) stack.
 
-_Note: This library is for use with InfluxDB 1.x. For connecting to InfluxDB 2.x instances, please use the [influxdb-client-java](https://github.com/influxdata/influxdb-client-java) client._
+_Note: This library is for use with InfluxDB 1.x and [2.x compatibility API](https://docs.influxdata.com/influxdb/v2.0/reference/api/influxdb-1x/). For full supports of InfluxDB 2.x features, please use the [influxdb-client-java](https://github.com/influxdata/influxdb-client-java) client._
 
 ## Adding the library to your project
 
