@@ -20,8 +20,8 @@ jobs:
 
       - name: Build project
         env:
-          MAVEN_JAVA_VERSION: ${{ matrix.jdk }}
-          INFLUXDB_VERSION: ${{ matrix.influxdb }}
+          MAVEN_JAVA_VERSION: "${{ matrix.jdk }}"
+          INFLUXDB_VERSION: "${{ matrix.influxdb }}"
         run: ./compile-and-test.sh
 
       - name: codecov
