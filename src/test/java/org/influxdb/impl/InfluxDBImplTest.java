@@ -10,9 +10,12 @@ import org.influxdb.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import okhttp3.OkHttpClient;
 
+@RunWith(JUnitPlatform.class)
 public class InfluxDBImplTest {
 
   private InfluxDB influxDB;

@@ -722,6 +722,16 @@ public class InfluxDBTest {
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
 		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
 
+		// WHEN I use the post query
+		queryResult = this.influxDB.query(new Query("SELECT * FROM " + measurement, dbName, true), TimeUnit.NANOSECONDS);
+
+		// THEN result will be same
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().size(), 3);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(0).get(0), timeP1);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(1).get(0), timeP2);
+		Assertions.assertEquals(queryResult.getResults().get(0).getSeries().get(0).getValues().get(2).get(0), timeP3);
+		
 		this.influxDB.query(new Query("DROP DATABASE " + dbName));
 	}
 
@@ -1300,6 +1310,37 @@ public class InfluxDBTest {
     Assertions.assertTrue(countDownLatch.await(2, TimeUnit.SECONDS));
 
   }
+
+	@Test
+    public void testChunkingQueryPost() throws InterruptedException {
+        if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+            // do not test version 0.13 and 1.0
+            return;
+        }
+
+        String dbName = "write_unittest_" + System.currentTimeMillis();
+        this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+        String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+        BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+        Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+        Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+        Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+        batchPoints.point(point1);
+        batchPoints.point(point2);
+        batchPoints.point(point3);
+        this.influxDB.write(batchPoints);
+
+        CountDownLatch countDownLatch = new CountDownLatch(3);
+
+        Thread.sleep(2000);
+        Query query = new Query("SELECT * FROM disk", dbName, true);
+        this.influxDB.query(query, 2, result -> countDownLatch.countDown());
+
+        boolean await = countDownLatch.await(10, TimeUnit.SECONDS);
+        Assertions.assertTrue(await, "The QueryResults did not arrive!");
+
+        this.influxDB.query(new Query("DROP DATABASE " + dbName));
+    }
 
   @Test
     public void testFlushPendingWritesWhenBatchingEnabled() {
