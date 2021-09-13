@@ -241,6 +241,7 @@ public class BatchOptionsTest {
 
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
+      // prepare points before start BatchProcessor
       List<Point> points = prepareSomePoints(0, 19);
       BatchOptions options = BatchOptions.DEFAULTS.flushDuration(100).jitterDuration(500);
       influxDB.query(new Query("CREATE DATABASE " + dbName));
@@ -603,6 +604,7 @@ public class BatchOptionsTest {
 
       verify(spy, times(2)).write(any(BatchPoints.class));
 
+      Thread.sleep(1_500);
       QueryResult result = influxDB.query(new Query("select * from m0", dbName));
       Assertions.assertNotNull(result.getResults().get(0).getSeries());
       Assertions.assertEquals(200, result.getResults().get(0).getSeries().get(0).getValues().size());
