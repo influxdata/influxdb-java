@@ -243,7 +243,7 @@ public class BatchOptionsTest {
     try {
       // prepare points before start BatchProcessor
       List<Point> points = prepareSomePoints(0, 19);
-      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(100).jitterDuration(500);
+      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(100).jitterDuration(1000);
       influxDB.query(new Query("CREATE DATABASE " + dbName));
       influxDB.setDatabase(dbName);
       influxDB.enableBatch(options);
@@ -259,7 +259,7 @@ public class BatchOptionsTest {
       Assertions.assertNull(result.getResults().get(0).getError());
 
       //wait for at least one flush
-      Thread.sleep(1000);
+      Thread.sleep(1500);
       result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
     }
