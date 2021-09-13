@@ -7,13 +7,13 @@ import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.jetbrains.annotations.NotNull;
+import org.influxdb.impl.BatchProcessor;
+import org.influxdb.impl.BatchProcessorTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -27,6 +27,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 
 @RunWith(JUnitPlatform.class)
@@ -234,7 +235,7 @@ public class BatchOptionsTest {
    * @throws InterruptedException
    */
   @Test
-  public void testJitterDuration() throws InterruptedException {
+  public void testJitterDuration() throws Exception {
 
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
@@ -242,6 +243,9 @@ public class BatchOptionsTest {
       influxDB.query(new Query("CREATE DATABASE " + dbName));
       influxDB.setDatabase(dbName);
       influxDB.enableBatch(options);
+      BatchProcessor batchProcessor = BatchProcessorTest.getPrivateField(influxDB, "batchProcessor");
+      // random always return 1.0 to be sure that first query is null
+      BatchProcessorTest.setPrivateField(batchProcessor, "randomSupplier", (Supplier<Double>) () -> 1.0);
       write20Points(influxDB);
 
       Thread.sleep(100);
