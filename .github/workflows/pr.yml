@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         jdk: [3-openjdk-16-slim, 3-jdk-14, 3-jdk-8-slim]
-        influxdb: [1.1, 1.6, 1.8, 2.0]
+        influxdb: ['1.1', '1.6', '1.8', '2.0']
 
     steps:
       - name: Checkout
@@ -23,6 +23,9 @@ jobs:
         run: '["${{ secrets.DOCKER_REGISTRY_TOKEN }}" == ""] && echo "::set-output name=is_fork_pr::true" || echo "::set-output name=is_fork_pr::false"'
 
       - name: Build project
+        env:
+          MAVEN_JAVA_VERSION: "${{ matrix.jdk }}"
+          INFLUXDB_VERSION: "${{ matrix.influxdb }}"
         run: ./compile-and-test.sh
 
       - name: codecov
