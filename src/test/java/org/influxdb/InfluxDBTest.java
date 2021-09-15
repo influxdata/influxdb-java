@@ -1330,7 +1330,7 @@ public class InfluxDBTest {
         batchPoints.point(point3);
         this.influxDB.write(batchPoints);
 
-        CountDownLatch countDownLatch = new CountDownLatch(3);
+        CountDownLatch countDownLatch = new CountDownLatch(2);
 
         Thread.sleep(2000);
         Query query = new Query("SELECT * FROM disk", dbName, true);

@@ -7,13 +7,13 @@ import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
-import org.jetbrains.annotations.NotNull;
+import org.influxdb.impl.BatchProcessor;
+import org.influxdb.impl.BatchProcessorTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -21,12 +21,15 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 
 @RunWith(JUnitPlatform.class)
@@ -234,15 +237,20 @@ public class BatchOptionsTest {
    * @throws InterruptedException
    */
   @Test
-  public void testJitterDuration() throws InterruptedException {
+  public void testJitterDuration() throws Exception {
 
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
-      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(100).jitterDuration(500);
+      // prepare points before start BatchProcessor
+      List<Point> points = prepareSomePoints(0, 19);
+      BatchOptions options = BatchOptions.DEFAULTS.flushDuration(100).jitterDuration(1000);
       influxDB.query(new Query("CREATE DATABASE " + dbName));
       influxDB.setDatabase(dbName);
       influxDB.enableBatch(options);
-      write20Points(influxDB);
+      BatchProcessor batchProcessor = BatchProcessorTest.getPrivateField(influxDB, "batchProcessor");
+      // random always return 1.0 to be sure that first query is null
+      BatchProcessorTest.setPrivateField(batchProcessor, "randomSupplier", (Supplier<Double>) () -> 1.0);
+      points.forEach(influxDB::write);
 
       Thread.sleep(100);
 
@@ -251,7 +259,7 @@ public class BatchOptionsTest {
       Assertions.assertNull(result.getResults().get(0).getError());
 
       //wait for at least one flush
-      Thread.sleep(1000);
+      Thread.sleep(1500);
       result = influxDB.query(new Query("select * from weather", dbName));
       Assertions.assertEquals(20, result.getResults().get(0).getSeries().get(0).getValues().size());
     }
@@ -596,6 +604,7 @@ public class BatchOptionsTest {
 
       verify(spy, times(2)).write(any(BatchPoints.class));
 
+      Thread.sleep(1_500);
       QueryResult result = influxDB.query(new Query("select * from m0", dbName));
       Assertions.assertNotNull(result.getResults().get(0).getSeries());
       Assertions.assertEquals(200, result.getResults().get(0).getSeries().get(0).getValues().size());
@@ -668,14 +677,7 @@ public class BatchOptionsTest {
   }
 
   void writeSomePoints(InfluxDB influxDB, int firstIndex, int lastIndex) {
-    for (int i = firstIndex; i <= lastIndex; i++) {
-      Point point = Point.measurement("weather")
-              .time(i,TimeUnit.HOURS)
-              .addField("temperature", (double) i)
-              .addField("humidity", (double) (i) * 1.1)
-              .addField("uv_index", "moderate").build();
-      influxDB.write(point);
-    }
+    prepareSomePoints(firstIndex, lastIndex).forEach(influxDB::write);
   }
 
   void write20Points(InfluxDB influxDB) {
@@ -684,6 +686,19 @@ public class BatchOptionsTest {
 
   void writeSomePoints(InfluxDB influxDB, int n) {
     writeSomePoints(influxDB, 0, n - 1);
+  }
+
+  List<Point> prepareSomePoints(int firstIndex, int lastIndex) {
+    List<Point> points = new ArrayList<>();
+    for (int i = firstIndex; i <= lastIndex; i++) {
+      Point point = Point.measurement("weather")
+              .time(i, TimeUnit.HOURS)
+              .addField("temperature", (double) i)
+              .addField("humidity", (double) (i) * 1.1)
+              .addField("uv_index", "moderate").build();
+      points.add(point);
+    }
+    return points;
   }
 
   private BatchPoints createBatchPoints(String dbName, String measurement, int n) {
