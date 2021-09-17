@@ -1,6 +1,8 @@
 # Changelog
 
-## 2.22 [unreleased]
+## 2.23 [unreleased]
+
+## 2.22 [2021-09-17]
 
 ### Improvements
 
