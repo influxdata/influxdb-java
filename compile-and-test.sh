@@ -44,7 +44,7 @@ docker run \
 echo "Running tests"
 PROXY_API_URL=http://nginx:8080/influx-api/
 PROXY_UDP_PORT=8080
-if [[ "$INFLUXDB_VERSION" == "2.0" ]]
+if [[ "$INFLUXDB_VERSION" == "2."* ]]
 then
     TEST_EXPRESSION="InfluxDB2Test"
     # Wait to start InfluxDB

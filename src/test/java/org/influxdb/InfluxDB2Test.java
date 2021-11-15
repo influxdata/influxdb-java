@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
  * @author Jakub Bednar (30/08/2021 11:31)
  */
 @RunWith(JUnitPlatform.class)
-@EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "2\\.0")
+@EnabledIfEnvironmentVariable(named = "INFLUXDB_VERSION", matches = "2\\..")
 public class InfluxDB2Test {
 
     private InfluxDB influxDB;
