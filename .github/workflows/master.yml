@@ -26,8 +26,8 @@ jobs:
 
       - name: codecov
         run: |
-          apt-get update
-          apt-get install gpg libdigest-sha-perl -y
+          sudo apt-get update
+          sudo apt-get install gpg libdigest-sha-perl -y
           curl -Os https://uploader.codecov.io/latest/linux/codecov
           curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
           curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
