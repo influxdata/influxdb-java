@@ -41,6 +41,8 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Test the InfluxDB API.
  *
@@ -1460,8 +1462,13 @@ public class InfluxDBTest {
   @Test
   public void testQueryPostWithGZIPCompression() {
     this.influxDB.enableGzip();
-    String command = String.format("CREATE DATABASE db_gzip_%d", System.currentTimeMillis());
-    this.influxDB.query(new Query(command, null, true));
+    String database = "db_gzip_" + System.currentTimeMillis();
+    this.influxDB.query(new Query(String.format("CREATE DATABASE %s", database), null, true));
+    QueryResult query = this.influxDB.query(new Query("SHOW DATABASES", null, true));
+    assertThat(query.getResults()).hasSize(1);
+    assertThat(query.getResults().get(0).getSeries()).hasSize(1);
+    assertThat(query.getResults().get(0).getSeries().get(0).getValues()).contains(Collections.singletonList(database));
+    this.influxDB.query(new Query(String.format("DROP DATABASE %s", database), null, true));
   }
 
   private static final class MyInfluxDBBean {
