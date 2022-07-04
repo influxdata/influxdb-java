@@ -1457,6 +1457,13 @@ public class InfluxDBTest {
     Assertions.assertTrue(MyInfluxDBBean.OKHTTP_BUILDER.interceptors().isEmpty());
   }
 
+  @Test
+  public void testQueryPostWithGZIPCompression() {
+    this.influxDB.enableGzip();
+    String command = String.format("CREATE DATABASE db_gzip_%d", System.currentTimeMillis());
+    this.influxDB.query(new Query(command, null, true));
+  }
+
   private static final class MyInfluxDBBean {
 
     static final OkHttpClient.Builder OKHTTP_BUILDER = new OkHttpClient.Builder();
