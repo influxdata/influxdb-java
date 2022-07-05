@@ -5,6 +5,9 @@
 ### Improvements
 - Add implementation information to `Jar` manifest [PR #847](https://github.com/influxdata/influxdb-java/pull/847)
 
+### Fixes
+- Only the request to /write endpoint should be compressed by GZIP [PR #851](https://github.com/influxdata/influxdb-java/pull/851)
+
 ## 2.22 [2021-09-17]
 
 ### Improvements
