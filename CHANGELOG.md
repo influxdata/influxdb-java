@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.23 [unreleased]
+## 2.23 [2022-07-07]
 
 ### Improvements
 - Add implementation information to `Jar` manifest [PR #847](https://github.com/influxdata/influxdb-java/pull/847)
