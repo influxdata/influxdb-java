@@ -231,10 +231,6 @@ public class InfluxDBResultMapper {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).name();
   }
 
-  String getDatabaseName(final Class<?> clazz) {
-    return ((Measurement) clazz.getAnnotation(Measurement.class)).database();
-  }
-
   String getRetentionPolicy(final Class<?> clazz) {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).retentionPolicy();
   }
