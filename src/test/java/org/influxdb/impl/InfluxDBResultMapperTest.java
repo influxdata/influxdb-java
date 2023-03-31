@@ -48,6 +48,7 @@ import org.junit.runner.RunWith;
 public class InfluxDBResultMapperTest {
 
   InfluxDBResultMapper mapper = new InfluxDBResultMapper();
+	private InfluxDBMapper influxDBMapper;
 
   @Test
   public void testToPOJO_HappyPath() {
@@ -404,7 +405,7 @@ public class InfluxDBResultMapperTest {
 
 		//When...
 		List<MyCustomMeasurement> result =
-				mapper.toPOJO(queryResult, MyCustomMeasurement.class, "MySeriesName");
+				influxDBMapper.toPOJO(queryResult, MyCustomMeasurement.class, "MySeriesName");
 
 		//Then...
 		Assertions.assertTrue(result.size() == 1);
@@ -434,7 +435,7 @@ public class InfluxDBResultMapperTest {
 
     //When...
     List<MySubMeasurement> result =
-        mapper.toPOJO(queryResult, MySubMeasurement.class, "MySeriesName");
+			influxDBMapper.toPOJO(queryResult, MySubMeasurement.class, "MySeriesName");
 
     //Then...
     Assertions.assertTrue(result.size() == 1);
