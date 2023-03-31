@@ -526,7 +526,7 @@ public class Point {
       escapeKey(sb, field.getKey());
       sb.append('=');
       if (value instanceof Number) {
-        if (value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
+        if (isValidInstanceType(value)) {
           sb.append(NUMBER_FORMATTER.get().format(value));
         } else {
           sb.append(value).append('i');
@@ -552,6 +552,10 @@ public class Point {
     }
 
     return fieldCount;
+  }
+
+  private boolean isValidInstanceType(Object value){
+    return value instanceof Double || value instanceof Float || value instanceof BigDecimal;
   }
 
   static void escapeKey(final StringBuilder sb, final String key) {
