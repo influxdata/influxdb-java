@@ -151,7 +151,7 @@ public class InfluxDBResultMapperTest {
 		Double now = Long.valueOf(System.currentTimeMillis()).doubleValue();
 		String uuidAsString = UUID.randomUUID().toString();
 
-		// InfluxDB client returns any number as Double.
+		// InfluxDB client returns any number as Double. (with JSON response format, but not with msgpack)
 		// See https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987
 		// for more information.
 		List<Object> seriesResult = Arrays.asList(now, uuidAsString,
@@ -200,6 +200,62 @@ public class InfluxDBResultMapperTest {
 	Double asDouble(Object obj) {
 		return (Double) obj;
 	}
+
+	@Test
+	public void testParseSeriesAs_testNonNullAndValidValues_msgpack() {
+		// Given...
+		mapper.cacheMeasurementClass(MyCustomMeasurement.class);
+
+		List<String> columnList = Arrays.asList("time", "uuid",
+				"doubleObject", "longObject", "integerObject",
+				"doublePrimitive", "longPrimitive", "integerPrimitive",
+				"booleanObject", "booleanPrimitive");
+
+		// InfluxDB client returns the time representation as Double.
+		Double now = Long.valueOf(System.currentTimeMillis()).doubleValue();
+		String uuidAsString = UUID.randomUUID().toString();
+
+		// InfluxDB client returns any number as Double. (with JSON response format, but not with msgpack)
+		// See https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987
+		// for more information.
+		List<Object> seriesResult = Arrays.asList(now, uuidAsString,
+				new Double("1.01"), Long.valueOf(2), Integer.valueOf(3),
+				new Double("1.01"), Long.valueOf(4), Integer.valueOf(5),
+				Boolean.FALSE, Boolean.TRUE);
+
+		QueryResult.Series series = new QueryResult.Series();
+		series.setColumns(columnList);
+		series.setValues(Arrays.asList(seriesResult));
+
+		//When...
+		List<MyCustomMeasurement> result = new LinkedList<>();
+		mapper.parseSeriesAs(series, MyCustomMeasurement.class, result);
+
+		//Then...
+		MyCustomMeasurement myObject = result.get(0);
+		Assertions.assertEquals(now.longValue(), myObject.time.toEpochMilli(), "field 'time' does not match");
+		Assertions.assertEquals(uuidAsString, myObject.uuid, "field 'uuid' does not match");
+
+		Assertions.assertEquals(asDouble(seriesResult.get(2)), myObject.doubleObject, "field 'doubleObject' does not match");
+		Assertions.assertEquals(Long.valueOf(2), myObject.longObject, "field 'longObject' does not match");
+		Assertions.assertEquals(Integer.valueOf(3), myObject.integerObject, "field 'integerObject' does not match");
+
+		Assertions.assertTrue(
+				Double.compare(asDouble(seriesResult.get(5)).doubleValue(), myObject.doublePrimitive) == 0,
+				"field 'doublePrimitive' does not match");
+
+		Assertions.assertEquals( myObject.longPrimitive, 4, "field 'longPrimitive' does not match");
+		Assertions.assertEquals( myObject.integerPrimitive, 5, "field 'integerPrimitive' does not match");
+
+		Assertions.assertEquals(
+				Boolean.valueOf(String.valueOf(seriesResult.get(8))), myObject.booleanObject,
+				"field 'booleanObject' does not match");
+
+		Assertions.assertEquals(
+				Boolean.valueOf(String.valueOf(seriesResult.get(9))).booleanValue(), myObject.booleanPrimitive,
+				"field 'booleanPrimitive' does not match");
+	}
+
 
 	@Test
 	public void testFieldValueModified_DateAsISO8601() {

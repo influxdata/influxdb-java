@@ -358,11 +358,11 @@ public class InfluxDBResultMapper {
       return true;
     }
     if (long.class.isAssignableFrom(fieldType)) {
-      field.setLong(object, ((Double) value).longValue());
+      field.setLong(object, ((Number) value).longValue());
       return true;
     }
     if (int.class.isAssignableFrom(fieldType)) {
-      field.setInt(object, ((Double) value).intValue());
+      field.setInt(object, ((Number) value).intValue());
       return true;
     }
     if (boolean.class.isAssignableFrom(fieldType)) {
@@ -379,11 +379,11 @@ public class InfluxDBResultMapper {
       return true;
     }
     if (Long.class.isAssignableFrom(fieldType)) {
-      field.set(object, Long.valueOf(((Double) value).longValue()));
+      field.set(object, ((Number) value).longValue());
       return true;
     }
     if (Integer.class.isAssignableFrom(fieldType)) {
-      field.set(object, Integer.valueOf(((Double) value).intValue()));
+      field.set(object, ((Number) value).intValue());
       return true;
     }
     if (Boolean.class.isAssignableFrom(fieldType)) {
