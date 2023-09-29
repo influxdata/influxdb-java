@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.influxdb.BuilderException;
 import org.influxdb.InfluxDB;
 import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Default;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
 import org.influxdb.impl.InfluxDBImpl;
@@ -793,6 +794,50 @@ public class PointTest {
         Assertions.assertEquals(pojo.time, p.getFields().get("time"));
         Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
     }
+    @Test
+    public void testAddFieldsFromPOJOWithDefaultAnnotation() {
+        PojoWithDefaultAnnotation pojo = new PojoWithDefaultAnnotation();
+
+        Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        Assertions.assertTrue(pojo.getISBN().equals(20L));
+        Assertions.assertTrue(pojo.booleanObject.equals(false));
+        Assertions.assertTrue(pojo.integerObject.equals(20));
+        Assertions.assertTrue(pojo.doubleObject.equals(20.0d));
+        Assertions.assertTrue(pojo.floatObject.equals(0.0f));
+        Assertions.assertTrue(pojo.bigDecimal.equals(BigDecimal.ZERO));
+        Assertions.assertTrue(pojo.bigInteger.equals(BigInteger.ZERO));
+    
+        Assertions.assertTrue(p.getFields().get("author").equals(""));
+        Assertions.assertTrue(p.getFields().get("id").equals("2"));
+        Assertions.assertTrue(p.getFields().get("booleanObject").equals(false));
+        Assertions.assertTrue(p.getFields().get("doubleObject").equals(20.0d));
+        Assertions.assertTrue(p.getFields().get("floatObject").equals(0.0f));
+        Assertions.assertTrue(p.getFields().get("bigDecimal").equals(BigDecimal.ZERO));
+        Assertions.assertTrue(p.getFields().get("bigInteger").equals(BigInteger.ZERO));
+    
+        //Soundness check
+        pojo.setId("41");
+        pojo.setAuthor("William Gibson");
+        pojo.setISBN(342134566545L);
+        pojo.setBigDecimal(BigDecimal.valueOf(12435125.435434));
+        pojo.setBooleanObject(true);
+        pojo.setBigInteger(new BigInteger(String.valueOf(54635265426256L)));
+        pojo.setDoubleObject(453.654d);
+        pojo.setFloatObject(5434.787f);
+        pojo.setIntegerObject(5346546);
+        p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        
+        Assertions.assertFalse(p.getFields().get("id").equals("2"));
+        Assertions.assertTrue(p.getFields().get("id").equals("41"));
+        Assertions.assertTrue(p.getFields().get("author").equals("William Gibson"));
+        Assertions.assertFalse(p.getFields().get("author").equals(""));
+        Assertions.assertFalse(p.getFields().get("booleanObject").equals(false));
+        Assertions.assertFalse(p.getFields().get("doubleObject").equals(20.0d));
+        Assertions.assertFalse(p.getFields().get("floatObject").equals(0.0f));
+        Assertions.assertFalse(p.getFields().get("bigDecimal").equals(BigDecimal.ZERO));
+        Assertions.assertFalse(p.getFields().get("bigInteger").equals(BigInteger.ZERO));
+        
+    }
 
     @Test
     public void testInheritMeasurement() {
@@ -820,6 +865,111 @@ public class PointTest {
 
         public void setId(String id) {
             this.id = id;
+        }
+    }
+    @Measurement(name = "mymeasurement")
+    static class PojoWithDefaultAnnotation {
+        
+        @Default("2")
+        @Column(name = "id")
+        private String id;
+        //check alternate order of annotations.  ¯\_(ツ)_/¯
+        @Column(name = "author")
+        @Default
+        private String author;
+    
+        @Default(doubleValue = 20.0d)
+        @Column(name = "doubleObject")
+        private Double doubleObject;
+        
+        @Default(intValue = 20)
+        @Column(name = "integerObject")
+        private Integer integerObject;
+        
+        @Default
+        @Column(name = "booleanObject")
+        private Boolean booleanObject;
+        @Default
+        @Column(name = "floatObject")
+        private Float floatObject;
+        
+        @Default
+        @Column(name = "bigDecimal")
+        private BigDecimal bigDecimal;
+        
+        @Default
+        @Column(name = "bigInteger")
+        private BigInteger bigInteger;
+        
+        @Default(longValue = 20L)
+        @Column(name = "ISBN")
+        private Long ISBN;
+    
+        public Double getDoubleObject() {
+            return doubleObject;
+        }
+    
+        public Integer getIntegerObject() {
+            return integerObject;
+        }
+    
+        public Boolean getBooleanObject() {
+            return booleanObject;
+        }
+    
+        public Float getFloatObject() {
+            return floatObject;
+        }
+    
+        public BigDecimal getBigDecimal() {
+            return bigDecimal;
+        }
+    
+        public BigInteger getBigInteger() {
+            return bigInteger;
+        }
+    
+        public void setDoubleObject(Double doubleObject) {
+            this.doubleObject = doubleObject;
+        }
+    
+        public void setIntegerObject(Integer integerObject) {
+            this.integerObject = integerObject;
+        }
+    
+        public void setBooleanObject(Boolean booleanObject) {
+            this.booleanObject = booleanObject;
+        }
+    
+        public void setFloatObject(Float floatObject) {
+            this.floatObject = floatObject;
+        }
+    
+        public void setBigDecimal(BigDecimal bigDecimal) {
+            this.bigDecimal = bigDecimal;
+        }
+    
+        public void setBigInteger(BigInteger bigInteger) {
+            this.bigInteger = bigInteger;
+        }
+    
+        public String getAuthor() {
+            return author;
+        }
+        public void setAuthor(String name) {
+            this.author = name;
+        }
+        public String getId() {
+            return id;
+        }
+        public void setId(String id) {
+            this.id = id;
+        }
+        public Long getISBN() {
+            return ISBN;
+        }
+        public void setISBN(Long ISBN) {
+            this.ISBN = ISBN;
         }
     }
 

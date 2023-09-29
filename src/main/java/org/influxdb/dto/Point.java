@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Default;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
 import org.influxdb.impl.Preconditions;
@@ -286,7 +287,6 @@ public class Point {
           if (column == null) {
             continue;
           }
-
           field.setAccessible(true);
           String fieldName = column.name();
           addFieldByAttribute(pojo, field, column, fieldName);
@@ -305,6 +305,26 @@ public class Point {
     private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
         final String fieldName) {
       try {
+        if (field.isAnnotationPresent(Default.class) && field.get(pojo) == null) {
+          Default val = field.getAnnotation(Default.class);
+          if (field.getType().equals(String.class)) {
+            field.set(pojo, val.value());
+          } else if (field.getType().equals(Long.class)) {
+            field.set(pojo, val.longValue());
+          } else if (field.getType().equals(Integer.class)) {
+            field.set(pojo, val.intValue());
+          } else if (field.getType().equals(BigDecimal.class)) {
+            field.set(pojo, BigDecimal.valueOf(0L));
+          } else if (field.getType().equals(BigInteger.class)) {
+            field.set(pojo, BigInteger.valueOf(0));
+          } else if (field.getType().equals(Boolean.class)) {
+            field.set(pojo, val.boolValue());
+          } else if (field.getType().equals(Float.class)) {
+            field.set(pojo, val.floatValue());
+          } else if (field.getType().equals(Double.class)) {
+            field.set(pojo, val.doubleValue());
+          }
+        }
         Object fieldValue = field.get(pojo);
 
         TimeColumn tc = field.getAnnotation(TimeColumn.class);
