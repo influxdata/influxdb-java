@@ -323,21 +323,40 @@ public class Cpu {
 }
 ```
 
-2. Add @Measurement,@TimeColumn and @Column annotations:
+2. Add @Measurement,@TimeColumn and @Column annotations (column names default to field names unless otherwise specified):
 
 ```Java
 @Measurement(name = "cpu")
 public class Cpu {
     @TimeColumn
-    @Column(name = "time")
+    @Column
     private Instant time;
     @Column(name = "host", tag = true)
     private String hostname;
-    @Column(name = "region", tag = true)
+    @Column(tag = true)
     private String region;
-    @Column(name = "idle")
+    @Column
     private Double idle;
-    @Column(name = "happydevop")
+    @Column
+    private Boolean happydevop;
+    @Column(name = "uptimesecs")
+    private Long uptimeSecs;
+    // getters (and setters if you need)
+}
+```
+
+Alternatively, you can use:
+
+```Java
+@Measurement(name = "cpu", allFields = true)
+public class Cpu {
+    @TimeColumn
+    private Instant time;
+    @Column(name = "host", tag = true)
+    private String hostname;
+    @Column(tag = true)
+    private String region;
+    private Double idle;
     private Boolean happydevop;
     @Column(name = "uptimesecs")
     private Long uptimeSecs;
