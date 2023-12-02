@@ -331,8 +331,7 @@ public class Point {
                                     .add(BigInteger.valueOf(instant.getNano()))
                                     .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
             } else {
-              this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUnit);
-              this.precision = timeUnit;
+              this.time = timeUnit.convert(instant.toEpochMilli(), TimeUnit.MILLISECONDS);
             }
             this.precision = timeUnit;
           });
