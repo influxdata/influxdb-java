@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
 public @interface Column {
 
   /**
-   * If unset, the annotated field's name will be used as the column name
+   * If unset, the annotated field's name will be used as the column name.
    */
   String name() default "";
 
