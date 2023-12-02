@@ -20,6 +20,17 @@
  */
 package org.influxdb.impl;
 
+import org.influxdb.InfluxDBMapperException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Exclude;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
+import org.influxdb.dto.QueryResult;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -30,16 +41,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import org.influxdb.InfluxDBMapperException;
-import org.influxdb.annotation.Column;
-import org.influxdb.annotation.Measurement;
-import org.influxdb.annotation.TimeColumn;
-import org.influxdb.dto.QueryResult;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 
 /**
  * @author fmachado
@@ -71,6 +72,12 @@ public class InfluxDBResultMapperTest {
 
     // Then...
     Assertions.assertEquals(1, myList.size(), "there must be one entry in the result list");
+
+		//When...
+  	List<MyAllFieldsCustomMeasurement> myList1 = mapper.toPOJO(queryResult, MyAllFieldsCustomMeasurement.class);
+
+  	// Then...
+  	Assertions.assertEquals(1, myList1.size(), "there must be one entry in the result list");
   }
 
 	@Test
@@ -568,6 +575,35 @@ public class InfluxDBResultMapperTest {
 		private String nonColumn1;
 
 		@SuppressWarnings("unused")
+		private Random rnd;
+
+		@Override
+		public String toString() {
+			return "MyCustomMeasurement [time=" + time + ", uuid=" + uuid + ", doubleObject=" + doubleObject + ", longObject=" + longObject
+				+ ", integerObject=" + integerObject + ", doublePrimitive=" + doublePrimitive + ", longPrimitive=" + longPrimitive
+				+ ", integerPrimitive=" + integerPrimitive + ", booleanObject=" + booleanObject + ", booleanPrimitive=" + booleanPrimitive + "]";
+		}
+	}
+
+	@Measurement(name = "CustomMeasurement", allFields = true)
+	static class MyAllFieldsCustomMeasurement {
+		private Instant time;
+		private String uuid;
+		private Double doubleObject;
+		private Long longObject;
+		private Integer integerObject;
+		private double doublePrimitive;
+		private long longPrimitive;
+		private int integerPrimitive;
+		private Boolean booleanObject;
+		private boolean booleanPrimitive;
+
+		@SuppressWarnings("unused")
+		@Exclude
+		private String nonColumn1;
+
+		@SuppressWarnings("unused")
+		@Exclude
 		private Random rnd;
 
 		@Override

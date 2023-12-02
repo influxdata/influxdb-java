@@ -40,4 +40,11 @@ public @interface Measurement {
   String retentionPolicy() default "autogen";
 
   TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
+
+  /**
+   * If {@code true}, then all non-static fields of this measurement will be loaded or saved,
+   * regardless of any {@code @Column} annotations.
+   * @see Exclude
+   */
+  boolean allFields() default false;
 }

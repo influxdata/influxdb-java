@@ -1,7 +1,15 @@
 package org.influxdb.dto;
 
+import org.influxdb.BuilderException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Exclude;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
+import org.influxdb.impl.Preconditions;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -11,14 +19,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import org.influxdb.BuilderException;
-import org.influxdb.annotation.Column;
-import org.influxdb.annotation.Measurement;
-import org.influxdb.annotation.TimeColumn;
-import org.influxdb.impl.Preconditions;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -276,23 +279,34 @@ public class Point {
      */
     public Builder addFieldsFromPOJO(final Object pojo) {
 
-      Class<? extends Object> clazz = pojo.getClass();
+      Class<?> clazz = pojo.getClass();
+      Measurement measurement = clazz.getAnnotation(Measurement.class);
+      boolean allFields = measurement != null && measurement.allFields();
+
       while (clazz != null) {
 
         for (Field field : clazz.getDeclaredFields()) {
 
           Column column = field.getAnnotation(Column.class);
 
-          if (column == null) {
+          if (column == null && !(allFields
+                  && !field.isAnnotationPresent(Exclude.class) && !Modifier.isStatic(field.getModifiers()))) {
             continue;
           }
 
           field.setAccessible(true);
-          String fieldName = column.name();
-          addFieldByAttribute(pojo, field, column, fieldName);
+
+          String fieldName;
+          if (column != null && !column.name().isEmpty()) {
+            fieldName = column.name();
+          } else {
+            fieldName = field.getName();
+          }
+
+          addFieldByAttribute(pojo, field, column != null && column.tag(), fieldName);
         }
-      clazz = clazz.getSuperclass();
-    }
+        clazz = clazz.getSuperclass();
+      }
 
       if (this.fields.isEmpty()) {
         throw new BuilderException("Class " + pojo.getClass().getName()
@@ -302,8 +316,8 @@ public class Point {
       return this;
     }
 
-    private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
-        final String fieldName) {
+    private void addFieldByAttribute(final Object pojo, final Field field, final boolean tag,
+                                     final String fieldName) {
       try {
         Object fieldValue = field.get(pojo);
 
@@ -325,7 +339,7 @@ public class Point {
           return;
         }
 
-        if (column.tag()) {
+        if (tag) {
           if (fieldValue != null) {
             this.tags.put(fieldName, (String) fieldValue);
           }

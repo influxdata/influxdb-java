@@ -26,16 +26,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author fmachado
+ * When a POJO annotated with {@code @Measurement(allFields = true)} is loaded or saved,
+ * this annotation can be used to exclude some of its fields.
+ * @see Measurement#allFields()
+ *
+ * @author Eran Leshem
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Column {
-
-  /**
-   * If unset, the annotated field's name will be used as the column name
-   */
-  String name() default "";
-
-  boolean tag() default false;
+public @interface Exclude {
 }
