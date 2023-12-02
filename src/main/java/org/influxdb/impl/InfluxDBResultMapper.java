@@ -20,7 +20,14 @@
  */
 package org.influxdb.impl;
 
+import org.influxdb.InfluxDBMapperException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Exclude;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.dto.QueryResult;
+
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -32,11 +39,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-
-import org.influxdb.InfluxDBMapperException;
-import org.influxdb.annotation.Column;
-import org.influxdb.annotation.Measurement;
-import org.influxdb.dto.QueryResult;
 
 /**
  * Main class responsible for mapping a QueryResult to a POJO.
@@ -213,18 +215,32 @@ public class InfluxDBResultMapper {
       }
       ConcurrentMap<String, Field> influxColumnAndFieldMap = new ConcurrentHashMap<>();
 
+      Measurement measurement = clazz.getAnnotation(Measurement.class);
+      boolean allFields = measurement != null && measurement.allFields();
+
       Class<?> c = clazz;
       while (c != null) {
         for (Field field : c.getDeclaredFields()) {
           Column colAnnotation = field.getAnnotation(Column.class);
-          if (colAnnotation != null) {
-            influxColumnAndFieldMap.put(colAnnotation.name(), field);
+          if (colAnnotation == null && !(allFields
+                  && !field.isAnnotationPresent(Exclude.class) && !Modifier.isStatic(field.getModifiers()))) {
+            continue;
           }
+
+          influxColumnAndFieldMap.put(getFieldName(field, colAnnotation), field);
         }
         c = c.getSuperclass();
       }
       CLASS_FIELD_CACHE.putIfAbsent(clazz.getName(), influxColumnAndFieldMap);
     }
+  }
+
+  private static String getFieldName(final Field field, final Column colAnnotation) {
+    if (colAnnotation != null && !colAnnotation.name().isEmpty()) {
+      return colAnnotation.name();
+    }
+
+    return field.getName();
   }
 
   String getMeasurementName(final Class<?> clazz) {
@@ -289,17 +305,11 @@ public class InfluxDBResultMapper {
 
   /**
    * InfluxDB client returns any number as Double.
-   * See https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987
+   * See <a href="https://github.com/influxdata/influxdb-java/issues/153#issuecomment-259681987">...</a>
    * for more information.
    *
-   * @param object
-   * @param field
-   * @param value
-   * @param precision
-   * @throws IllegalArgumentException
-   * @throws IllegalAccessException
    */
-  <T> void setFieldValue(final T object, final Field field, final Object value, final TimeUnit precision)
+  private static <T> void setFieldValue(final T object, final Field field, final Object value, final TimeUnit precision)
     throws IllegalArgumentException, IllegalAccessException {
     if (value == null) {
       return;
@@ -325,8 +335,8 @@ public class InfluxDBResultMapper {
     }
   }
 
-  <T> boolean fieldValueModified(final Class<?> fieldType, final Field field, final T object, final Object value,
-                                 final TimeUnit precision)
+  static <T> boolean fieldValueModified(final Class<?> fieldType, final Field field, final T object, final Object value,
+                                        final TimeUnit precision)
     throws IllegalArgumentException, IllegalAccessException {
     if (String.class.isAssignableFrom(fieldType)) {
       field.set(object, String.valueOf(value));
@@ -351,8 +361,9 @@ public class InfluxDBResultMapper {
     return false;
   }
 
-  <T> boolean fieldValueForPrimitivesModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value) throws IllegalArgumentException, IllegalAccessException {
+  static <T> boolean fieldValueForPrimitivesModified(final Class<?> fieldType, final Field field, final T object,
+                                                     final Object value)
+          throws IllegalArgumentException, IllegalAccessException {
     if (double.class.isAssignableFrom(fieldType)) {
       field.setDouble(object, ((Double) value).doubleValue());
       return true;
@@ -372,8 +383,9 @@ public class InfluxDBResultMapper {
     return false;
   }
 
-  <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
-    final Object value) throws IllegalArgumentException, IllegalAccessException {
+  static <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
+                                                            final Object value)
+          throws IllegalArgumentException, IllegalAccessException {
     if (Double.class.isAssignableFrom(fieldType)) {
       field.set(object, value);
       return true;
@@ -393,7 +405,7 @@ public class InfluxDBResultMapper {
     return false;
   }
 
-  private Long toMillis(final long value, final TimeUnit precision) {
+  private static Long toMillis(final long value, final TimeUnit precision) {
 
     return TimeUnit.MILLISECONDS.convert(value, precision);
   }
