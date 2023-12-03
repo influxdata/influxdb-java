@@ -2,6 +2,7 @@ package org.influxdb.dto;
 
 import org.influxdb.BuilderException;
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
 import org.influxdb.annotation.TimeColumn;
@@ -713,6 +714,13 @@ public class PointTest {
     }
 
     @Test
+    public void testAddFieldsFromPOJOWithBadTimeColumn() {
+        BadTimeColumnPojo pojo = new BadTimeColumnPojo();
+        Assertions.assertThrows(InfluxDBMapperException.class,
+                () -> Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build());
+    }
+
+    @Test
     public void testAddFieldsFromPOJOWithTimeColumnNull() throws NoSuchFieldException, IllegalAccessException {
         TimeColumnPojo pojo = new TimeColumnPojo();
         pojo.booleanPrimitive = true;
@@ -937,6 +945,14 @@ public class PointTest {
 
         @TimeColumn(timeUnit = TimeUnit.SECONDS)
         Instant time;
+    }
+
+    @Measurement(name = "tcmeasurement", allFields = true)
+    static class BadTimeColumnPojo {
+        boolean booleanPrimitive;
+
+        @TimeColumn
+        String time;
     }
 
     @Measurement(name = "mymeasurement")
