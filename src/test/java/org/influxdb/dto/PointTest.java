@@ -696,6 +696,23 @@ public class PointTest {
     }
 
     @Test
+    public void testAddFieldsFromPOJOWithTimeColumnSeconds() throws NoSuchFieldException, IllegalAccessException {
+        TimeColumnPojoSec pojo = new TimeColumnPojoSec();
+        pojo.time = Instant.now().plusSeconds(132L).plus(365L * 12000, ChronoUnit.DAYS);
+        pojo.booleanPrimitive = true;
+
+        Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        Field timeField = p.getClass().getDeclaredField("time");
+        Field precisionField = p.getClass().getDeclaredField("precision");
+        timeField.setAccessible(true);
+        precisionField.setAccessible(true);
+
+        Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+        Assertions.assertEquals(TimeUnit.SECONDS, precisionField.get(p));
+        Assertions.assertEquals(pojo.time.getEpochSecond(), timeField.get(p));
+    }
+
+    @Test
     public void testAddFieldsFromPOJOWithTimeColumnNull() throws NoSuchFieldException, IllegalAccessException {
         TimeColumnPojo pojo = new TimeColumnPojo();
         pojo.booleanPrimitive = true;
@@ -912,6 +929,14 @@ public class PointTest {
         @TimeColumn(timeUnit = TimeUnit.NANOSECONDS)
         @Column(name = "time")
         private Instant time;
+    }
+
+    @Measurement(name = "tcmeasurement", allFields = true)
+    static class TimeColumnPojoSec {
+        boolean booleanPrimitive;
+
+        @TimeColumn(timeUnit = TimeUnit.SECONDS)
+        Instant time;
     }
 
     @Measurement(name = "mymeasurement")
