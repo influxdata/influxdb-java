@@ -1,6 +1,7 @@
 package org.influxdb.dto;
 
 import org.influxdb.BuilderException;
+import org.influxdb.InfluxDBMapperException;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Exclude;
 import org.influxdb.annotation.Measurement;
@@ -322,20 +323,25 @@ public class Point {
         Object fieldValue = field.get(pojo);
 
         TimeColumn tc = field.getAnnotation(TimeColumn.class);
-        if (tc != null && Instant.class.isAssignableFrom(field.getType())) {
-          Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
-            TimeUnit timeUnit = tc.timeUnit();
-            if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
-              this.time = BigInteger.valueOf(instant.getEpochSecond())
-                                    .multiply(NANOSECONDS_PER_SECOND)
-                                    .add(BigInteger.valueOf(instant.getNano()))
-                                    .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
-            } else {
-              this.time = timeUnit.convert(instant.toEpochMilli(), TimeUnit.MILLISECONDS);
-            }
-            this.precision = timeUnit;
-          });
-          return;
+        if (tc != null) {
+          if (Instant.class.isAssignableFrom(field.getType())) {
+            Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
+              TimeUnit timeUnit = tc.timeUnit();
+              if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
+                this.time = BigInteger.valueOf(instant.getEpochSecond())
+                        .multiply(NANOSECONDS_PER_SECOND)
+                        .add(BigInteger.valueOf(instant.getNano()))
+                        .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
+              } else {
+                this.time = timeUnit.convert(instant.toEpochMilli(), TimeUnit.MILLISECONDS);
+              }
+              this.precision = timeUnit;
+            });
+            return;
+          }
+
+          throw new InfluxDBMapperException(
+              "Unsupported type " + field.getType() + " for time: should be of Instant type");
         }
 
         if (tag) {
