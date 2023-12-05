@@ -737,7 +737,7 @@ public class PointTest {
     }
 
     @Test
-    public void testAddFieldsFromPOJOWithData() throws NoSuchFieldException, IllegalAccessException {
+    public void testAddFieldsFromPOJOWithData() {
         Pojo pojo = new Pojo();
         pojo.booleanObject = true;
         pojo.booleanPrimitive = false;
@@ -760,7 +760,6 @@ public class PointTest {
         Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
         Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
         Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
-        Assertions.assertEquals(pojo.time, p.getFields().get("time"));
         Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
     }
 
@@ -815,7 +814,6 @@ public class PointTest {
         Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
         Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
         Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
-        Assertions.assertEquals(pojo.time, p.getFields().get("time"));
         Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
     }
 
@@ -962,6 +960,7 @@ public class PointTest {
         private boolean booleanPrimitive;
 
         @Column(name = "time")
+        @TimeColumn
         private Instant time;
 
         @Column(name = "uuid", tag = true)
@@ -1078,6 +1077,7 @@ public class PointTest {
         public boolean booleanPrimitive;
 
         @Column(name = "time")
+        @TimeColumn
         public Instant time;
 
         @Column(name = "uuid", tag = true)

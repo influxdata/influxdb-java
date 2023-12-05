@@ -350,7 +350,7 @@ public class Point {
           }
         } else {
           if (fieldValue != null) {
-            this.fields.put(fieldName, fieldValue);
+            setField(field.getType(), fieldName, fieldValue);
           }
         }
 
@@ -378,6 +378,32 @@ public class Point {
       }
       point.setTags(this.tags);
       return point;
+    }
+
+    private void setField(
+            final Class<?> fieldType,
+            final String columnName,
+            final Object value) {
+      if (boolean.class.isAssignableFrom(fieldType) || Boolean.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (boolean) value);
+      } else if (long.class.isAssignableFrom(fieldType) || Long.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (long) value);
+      } else if (double.class.isAssignableFrom(fieldType) || Double.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (double) value);
+      } else if (float.class.isAssignableFrom(fieldType) || Float.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (float) value);
+      } else if (int.class.isAssignableFrom(fieldType) || Integer.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (int) value);
+      } else if (short.class.isAssignableFrom(fieldType) || Short.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (short) value);
+      } else if (String.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (String) value);
+      } else if (Enum.class.isAssignableFrom(fieldType)) {
+        addField(columnName, ((Enum<?>) value).name());
+      } else {
+        throw new InfluxDBMapperException(
+                "Unsupported type " + fieldType + " for column " + columnName);
+      }
     }
   }
 

@@ -11,6 +11,7 @@ import org.influxdb.InfluxDBMapperException;
 import org.influxdb.TestUtils;
 import org.influxdb.annotation.Column;
 import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
 import org.influxdb.dto.Query;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -129,6 +130,7 @@ public class InfluxDBMapperTest {
 
     /** Check the instant conversions */
     @Column(name = "time")
+    @TimeColumn
     private Instant time;
 
     @Column(name = "name", tag = true)
@@ -322,6 +324,7 @@ public class InfluxDBMapperTest {
   static class NonInstantTime {
 
     @Column(name = "time")
+    @TimeColumn
     private long time;
 
     public long getTime() {
