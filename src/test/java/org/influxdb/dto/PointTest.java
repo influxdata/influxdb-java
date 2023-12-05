@@ -890,6 +890,22 @@ public class PointTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void testGenericInheritMeasurement() {
+        Point expected = Point.measurementByPOJO(MyGenericSubMeasurement.class)
+                .addField("superValue", "super")
+                .addField("subValue", "sub")
+                .build();
+        MyGenericSubMeasurement scm = new MyGenericSubMeasurement();
+        scm.subValue = "sub";
+        scm.superValue = "super";
+
+        Point actual = Point.measurementByPOJO(MyGenericSubMeasurement.class)
+                .addFieldsFromPOJO(scm)
+                .build();
+        Assert.assertEquals(expected, actual);
+    }
+
     static class PojoWithoutAnnotation {
 
         private String id;
@@ -1171,6 +1187,20 @@ public class PointTest {
     static class SubClassMeasurement extends SuperMeasurement {
         @Column(name = "subClassField")
         String subValue;
+    }
+
+    @Measurement(name = "SuperMeasurement")
+    static class MyGenericSuperMeasurement<T> {
+
+      @Column(name = "superValue")
+      protected T superValue;
+    }
+
+    @Measurement(name = "SubMeasurement")
+    static class MyGenericSubMeasurement extends MyGenericSuperMeasurement<String> {
+
+      @Column(name = "subValue")
+      protected String subValue;
     }
 
     @Measurement(name = "PojoNumberPrimitiveTypes")

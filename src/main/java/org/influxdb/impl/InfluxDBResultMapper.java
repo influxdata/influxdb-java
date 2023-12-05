@@ -28,6 +28,8 @@ import org.influxdb.dto.QueryResult;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -50,8 +52,12 @@ public class InfluxDBResultMapper {
   /**
    * Data structure used to cache classes used as measurements.
    */
+  private static class ClassInfo {
+    ConcurrentMap<String, Field> fieldMap;
+    ConcurrentMap<Field, TypeMapper> typeMappers;
+  }
   private static final
-    ConcurrentMap<String, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<>();
+    ConcurrentMap<String, ClassInfo> CLASS_INFO_CACHE = new ConcurrentHashMap<>();
 
   private static final int FRACTION_MIN_WIDTH = 0;
   private static final int FRACTION_MAX_WIDTH = 9;
@@ -204,21 +210,19 @@ public class InfluxDBResultMapper {
     });
   }
 
-  ConcurrentMap<String, Field> getColNameAndFieldMap(final Class<?> clazz) {
-    return CLASS_FIELD_CACHE.get(clazz.getName());
-  }
-
   void cacheMeasurementClass(final Class<?>... classVarAgrs) {
     for (Class<?> clazz : classVarAgrs) {
-      if (CLASS_FIELD_CACHE.containsKey(clazz.getName())) {
+      if (CLASS_INFO_CACHE.containsKey(clazz.getName())) {
         continue;
       }
-      ConcurrentMap<String, Field> influxColumnAndFieldMap = new ConcurrentHashMap<>();
+      ConcurrentMap<String, Field> fieldMap = new ConcurrentHashMap<>();
+      ConcurrentMap<Field, TypeMapper> typeMappers = new ConcurrentHashMap<>();
 
       Measurement measurement = clazz.getAnnotation(Measurement.class);
       boolean allFields = measurement != null && measurement.allFields();
 
       Class<?> c = clazz;
+      TypeMapper typeMapper = TypeMapper.empty();
       while (c != null) {
         for (Field field : c.getDeclaredFields()) {
           Column colAnnotation = field.getAnnotation(Column.class);
@@ -227,11 +231,25 @@ public class InfluxDBResultMapper {
             continue;
           }
 
-          influxColumnAndFieldMap.put(getFieldName(field, colAnnotation), field);
+          fieldMap.put(getFieldName(field, colAnnotation), field);
+          typeMappers.put(field, typeMapper);
         }
-        c = c.getSuperclass();
+
+        Class<?> superclass = c.getSuperclass();
+        Type genericSuperclass = c.getGenericSuperclass();
+        if (genericSuperclass instanceof ParameterizedType) {
+          typeMapper = TypeMapper.of((ParameterizedType) genericSuperclass, superclass);
+        } else {
+          typeMapper = TypeMapper.empty();
+        }
+
+        c = superclass;
       }
-      CLASS_FIELD_CACHE.putIfAbsent(clazz.getName(), influxColumnAndFieldMap);
+
+      ClassInfo classInfo = new ClassInfo();
+      classInfo.fieldMap = fieldMap;
+      classInfo.typeMappers = typeMappers;
+      CLASS_INFO_CACHE.putIfAbsent(clazz.getName(), classInfo);
     }
   }
 
@@ -255,10 +273,6 @@ public class InfluxDBResultMapper {
     return ((Measurement) clazz.getAnnotation(Measurement.class)).retentionPolicy();
   }
 
-  TimeUnit getTimeUnit(final Class<?> clazz) {
-    return ((Measurement) clazz.getAnnotation(Measurement.class)).timeUnit();
-  }
-
   <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result) {
     return parseSeriesAs(series, clazz, result, TimeUnit.MILLISECONDS);
   }
@@ -266,17 +280,19 @@ public class InfluxDBResultMapper {
   <T> List<T> parseSeriesAs(final QueryResult.Series series, final Class<T> clazz, final List<T> result,
                             final TimeUnit precision) {
     int columnSize = series.getColumns().size();
-    ConcurrentMap<String, Field> colNameAndFieldMap = CLASS_FIELD_CACHE.get(clazz.getName());
+
+    ClassInfo classInfo = CLASS_INFO_CACHE.get(clazz.getName());
     try {
       T object = null;
       for (List<Object> row : series.getValues()) {
         for (int i = 0; i < columnSize; i++) {
-          Field correspondingField = colNameAndFieldMap.get(series.getColumns().get(i)/*InfluxDB columnName*/);
+          Field correspondingField = classInfo.fieldMap.get(series.getColumns().get(i)/*InfluxDB columnName*/);
           if (correspondingField != null) {
             if (object == null) {
               object = clazz.newInstance();
             }
-            setFieldValue(object, correspondingField, row.get(i), precision);
+            setFieldValue(object, correspondingField, row.get(i), precision,
+                    classInfo.typeMappers.get(correspondingField));
           }
         }
         // When the "GROUP BY" clause is used, "tags" are returned as Map<String,String> and
@@ -285,10 +301,11 @@ public class InfluxDBResultMapper {
         // "tag" values are always String.
         if (series.getTags() != null && !series.getTags().isEmpty()) {
           for (Entry<String, String> entry : series.getTags().entrySet()) {
-            Field correspondingField = colNameAndFieldMap.get(entry.getKey()/*InfluxDB columnName*/);
+            Field correspondingField = classInfo.fieldMap.get(entry.getKey()/*InfluxDB columnName*/);
             if (correspondingField != null) {
               // I don't think it is possible to reach here without a valid "object"
-              setFieldValue(object, correspondingField, entry.getValue(), precision);
+              setFieldValue(object, correspondingField, entry.getValue(), precision,
+                      classInfo.typeMappers.get(correspondingField));
             }
           }
         }
@@ -309,104 +326,68 @@ public class InfluxDBResultMapper {
    * for more information.
    *
    */
-  private static <T> void setFieldValue(final T object, final Field field, final Object value, final TimeUnit precision)
+  private static <T> void setFieldValue(final T object, final Field field, final Object value, final TimeUnit precision,
+                                        final TypeMapper typeMapper)
     throws IllegalArgumentException, IllegalAccessException {
     if (value == null) {
       return;
     }
-    Class<?> fieldType = field.getType();
+    Type fieldType = typeMapper.resolve(field.getGenericType());
+    if (!field.isAccessible()) {
+      field.setAccessible(true);
+    }
+    field.set(object, adaptValue((Class<?>) fieldType, value, precision, field.getName(), object.getClass().getName()));
+  }
+
+  private static Object adaptValue(final Class<?> fieldType, final Object value, final TimeUnit precision,
+                                   final String fieldName, final String className) {
     try {
-      if (!field.isAccessible()) {
-        field.setAccessible(true);
+      if (String.class.isAssignableFrom(fieldType)) {
+        return String.valueOf(value);
       }
-      if (fieldValueModified(fieldType, field, object, value, precision)
-        || fieldValueForPrimitivesModified(fieldType, field, object, value)
-        || fieldValueForPrimitiveWrappersModified(fieldType, field, object, value)) {
-        return;
+      if (Instant.class.isAssignableFrom(fieldType)) {
+        if (value instanceof String) {
+          return Instant.from(RFC3339_FORMATTER.parse(String.valueOf(value)));
+        }
+        if (value instanceof Long) {
+          return Instant.ofEpochMilli(toMillis((long) value, precision));
+        }
+        if (value instanceof Double) {
+          return Instant.ofEpochMilli(toMillis(((Double) value).longValue(), precision));
+        }
+        if (value instanceof Integer) {
+          return Instant.ofEpochMilli(toMillis(((Integer) value).longValue(), precision));
+        }
+        throw new InfluxDBMapperException("Unsupported type " + fieldType + " for field " + fieldName);
       }
-      String msg = "Class '%s' field '%s' is from an unsupported type '%s'.";
-      throw new InfluxDBMapperException(
-        String.format(msg, object.getClass().getName(), field.getName(), field.getType()));
+      if (Double.class.isAssignableFrom(fieldType) || double.class.isAssignableFrom(fieldType)) {
+        return value;
+      }
+      if (Long.class.isAssignableFrom(fieldType) || long.class.isAssignableFrom(fieldType)) {
+        return ((Double) value).longValue();
+      }
+      if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
+        return ((Double) value).intValue();
+      }
+      if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
+        return Boolean.valueOf(String.valueOf(value));
+      }
+      if (Enum.class.isAssignableFrom(fieldType)) {
+        //noinspection unchecked
+        return Enum.valueOf((Class<Enum>) fieldType, String.valueOf(value));
+      }
     } catch (ClassCastException e) {
       String msg = "Class '%s' field '%s' was defined with a different field type and caused a ClassCastException. "
         + "The correct type is '%s' (current field value: '%s').";
       throw new InfluxDBMapperException(
-        String.format(msg, object.getClass().getName(), field.getName(), value.getClass().getName(), value));
+        String.format(msg, className, fieldName, value.getClass().getName(), value));
     }
+
+    throw new InfluxDBMapperException(
+           String.format("Class '%s' field '%s' is from an unsupported type '%s'.", className, fieldName, fieldType));
   }
 
-  static <T> boolean fieldValueModified(final Class<?> fieldType, final Field field, final T object, final Object value,
-                                        final TimeUnit precision)
-    throws IllegalArgumentException, IllegalAccessException {
-    if (String.class.isAssignableFrom(fieldType)) {
-      field.set(object, String.valueOf(value));
-      return true;
-    }
-    if (Instant.class.isAssignableFrom(fieldType)) {
-      Instant instant;
-      if (value instanceof String) {
-        instant = Instant.from(RFC3339_FORMATTER.parse(String.valueOf(value)));
-      } else if (value instanceof Long) {
-        instant = Instant.ofEpochMilli(toMillis((long) value, precision));
-      } else if (value instanceof Double) {
-        instant = Instant.ofEpochMilli(toMillis(((Double) value).longValue(), precision));
-      } else if (value instanceof Integer) {
-        instant = Instant.ofEpochMilli(toMillis(((Integer) value).longValue(), precision));
-      } else {
-        throw new InfluxDBMapperException("Unsupported type " + field.getClass() + " for field " + field.getName());
-      }
-      field.set(object, instant);
-      return true;
-    }
-    return false;
-  }
-
-  static <T> boolean fieldValueForPrimitivesModified(final Class<?> fieldType, final Field field, final T object,
-                                                     final Object value)
-          throws IllegalArgumentException, IllegalAccessException {
-    if (double.class.isAssignableFrom(fieldType)) {
-      field.setDouble(object, ((Double) value).doubleValue());
-      return true;
-    }
-    if (long.class.isAssignableFrom(fieldType)) {
-      field.setLong(object, ((Double) value).longValue());
-      return true;
-    }
-    if (int.class.isAssignableFrom(fieldType)) {
-      field.setInt(object, ((Double) value).intValue());
-      return true;
-    }
-    if (boolean.class.isAssignableFrom(fieldType)) {
-      field.setBoolean(object, Boolean.valueOf(String.valueOf(value)).booleanValue());
-      return true;
-    }
-    return false;
-  }
-
-  static <T> boolean fieldValueForPrimitiveWrappersModified(final Class<?> fieldType, final Field field, final T object,
-                                                            final Object value)
-          throws IllegalArgumentException, IllegalAccessException {
-    if (Double.class.isAssignableFrom(fieldType)) {
-      field.set(object, value);
-      return true;
-    }
-    if (Long.class.isAssignableFrom(fieldType)) {
-      field.set(object, Long.valueOf(((Double) value).longValue()));
-      return true;
-    }
-    if (Integer.class.isAssignableFrom(fieldType)) {
-      field.set(object, Integer.valueOf(((Double) value).intValue()));
-      return true;
-    }
-    if (Boolean.class.isAssignableFrom(fieldType)) {
-      field.set(object, Boolean.valueOf(String.valueOf(value)));
-      return true;
-    }
-    return false;
-  }
-
-  private static Long toMillis(final long value, final TimeUnit precision) {
-
+  private static long toMillis(final long value, final TimeUnit precision) {
     return TimeUnit.MILLISECONDS.convert(value, precision);
   }
 }
