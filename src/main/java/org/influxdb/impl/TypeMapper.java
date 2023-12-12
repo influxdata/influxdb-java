@@ -49,10 +49,6 @@ public interface TypeMapper {
     return typeMapping::get;
   }
 
-  static TypeMapper of(TypeMapper innerMapper, TypeMapper outerMapper) {
-    return typeVariable -> map(typeVariable, innerMapper, outerMapper);
-  }
-
   static TypeMapper empty() {
     return EMPTY;
   }
@@ -68,15 +64,6 @@ public interface TypeMapper {
     }
 
     return type;
-  }
-
-  static Type map(TypeVariable<?> typeVariable, TypeMapper innerMapper, TypeMapper outerMapper) {
-    Type type = innerMapper.get(typeVariable);
-    if (type != null) {
-      return type;
-    }
-
-    return outerMapper.get(typeVariable);
   }
 
   Type get(TypeVariable<?> typeVariable);
