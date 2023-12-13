@@ -449,6 +449,38 @@ public class InfluxDBResultMapperTest {
     Assertions.assertEquals(subValue, result.get(0).subValue);
   }
 
+	@Test
+ void testToPOJOGenericInheritance() {
+   // Given...
+   mapper.cacheMeasurementClass(MyGenericSubMeasurement.class);
+
+   String superValue = UUID.randomUUID().toString();
+   String subValue = "my sub value";
+   List<String> columnList = Arrays.asList("superValue", "subValue");
+
+   List<Object> firstSeriesResult = Arrays.asList(superValue, subValue);
+
+   QueryResult.Series series = new QueryResult.Series();
+   series.setName("MySeriesName");
+   series.setColumns(columnList);
+   series.setValues(Arrays.asList(firstSeriesResult));
+
+   QueryResult.Result internalResult = new QueryResult.Result();
+   internalResult.setSeries(Arrays.asList(series));
+
+   QueryResult queryResult = new QueryResult();
+   queryResult.setResults(Arrays.asList(internalResult));
+
+   //When...
+   List<MyGenericSubMeasurement> result =
+       mapper.toPOJO(queryResult, MyGenericSubMeasurement.class, "MySeriesName");
+
+   //Then...
+   Assertions.assertTrue(result.size() == 1);
+   Assertions.assertEquals(superValue, result.get(0).superValue);
+   Assertions.assertEquals(subValue, result.get(0).subValue);
+ }
+
   @Test
   public void testToPOJO_HasTimeColumn() {
 	  // Given...
@@ -637,6 +669,30 @@ public class InfluxDBResultMapperTest {
       return "MySubMeasurement [subValue=" + subValue + ", superValue=" + superValue + "]";
     }
   }
+
+	@Measurement(name = "SuperMeasurement")
+ static class MyGenericSuperMeasurement<T> {
+
+   @Column(name = "superValue")
+   protected T superValue;
+
+   @Override
+   public String toString() {
+     return "SuperMeasurement [superValue=" + superValue + "]";
+   }
+ }
+
+ @Measurement(name = "SubMeasurement")
+ static class MyGenericSubMeasurement extends MyGenericSuperMeasurement<String> {
+
+   @Column(name = "subValue")
+   protected String subValue;
+
+   @Override
+   public String toString() {
+     return "MySubMeasurement [subValue=" + subValue + ", superValue=" + superValue + "]";
+   }
+ }
 
   @Measurement(name = "foo")
 	static class MyPojoWithUnsupportedField {

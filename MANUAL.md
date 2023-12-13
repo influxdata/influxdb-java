@@ -402,6 +402,25 @@ influxDB.write(dbName, rpName, point);
 
 An alternative way to create InfluxDB queries is available. By using the [QueryBuilder](QUERY_BUILDER.md) you can create queries using java instead of providing the influxdb queries as strings.
 
+#### Generic POJO super classes
+
+POJO classes can have generic super classes, for cases where multiple measurements have a similar structure, and differ by type(s), as in:
+
+```java
+public class SuperMeasurement<T> {
+    @Column
+    @TimeColumn
+    private Instant time;
+    @Column
+    T value;
+    // Other common columns and tags
+}
+
+public class SubMeasurement extends SuperMeasurement<String> {
+    // Any specific columns and tags
+}
+```
+
 ### InfluxDBMapper
 
 In case you want to save and load data using models you can use the [InfluxDBMapper](INFLUXDB_MAPPER.md).
