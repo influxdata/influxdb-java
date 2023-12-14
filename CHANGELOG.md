@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.24 [2023-12-14]
+
+### Improvements
+- `allFields` mode to Measurement annotation [PR #972](https://github.com/influxdata/influxdb-java/pull/972)
+- Support generic POJO super classes [PR #980](https://github.com/influxdata/influxdb-java/pull/980)
+
 ## 2.23 [2022-07-07]
 
 ### Improvements
