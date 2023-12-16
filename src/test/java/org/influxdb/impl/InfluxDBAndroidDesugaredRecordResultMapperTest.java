@@ -164,7 +164,7 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
             new Double("1.01"), new Double("2"), new Double("3"),
             new Double("1.01"), new Double("4"), new Double("5"),
             "false", "true");
-		series.setValues(Arrays.asList(seriesResult));
+    series.setValues(Arrays.asList(seriesResult));
 
     //When...
     List<MyCustomMeasurementWithPrimitives> result = new LinkedList<>();
@@ -210,7 +210,7 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     // Given...
     InfluxDBResultMapper.cacheRecordClass(MyCustomMeasurement.class);
 
-		List<String> columnList = Arrays.asList("time");
+    List<String> columnList = Arrays.asList("time");
 
     QueryResult.Series series = new QueryResult.Series();
     series.setColumns(columnList);
@@ -230,7 +230,7 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     // Given...
     InfluxDBResultMapper.cacheRecordClass(MyCustomMeasurement.class);
 
-		List<String> columnList = Arrays.asList("time");
+    List<String> columnList = Arrays.asList("time");
 
     QueryResult.Series series = new QueryResult.Series();
     series.setColumns(columnList);
@@ -250,7 +250,7 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     // Given...
     InfluxDBResultMapper.cacheRecordClass(MyRecordWithUnsupportedField.class);
 
-		List<String> columnList = Arrays.asList("bar");
+    List<String> columnList = Arrays.asList("bar");
 
     QueryResult.Series series = new QueryResult.Series();
     series.setColumns(columnList);
@@ -368,13 +368,13 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     List<String> columnList = Arrays.asList("time");
     series.setColumns(columnList);
     List<Object> firstSeriesResult = Arrays.asList(1_500_000L);
-    series.setValues(List.of(firstSeriesResult));
+    series.setValues(Arrays.asList(firstSeriesResult));
 
     QueryResult.Result internalResult = new QueryResult.Result();
-		internalResult.setSeries(Arrays.asList(series));
+    internalResult.setSeries(Arrays.asList(series));
 
     QueryResult queryResult = new QueryResult();
-		queryResult.setResults(Arrays.asList(internalResult));
+    queryResult.setResults(Arrays.asList(internalResult));
 
     // When...
     List<MyCustomMeasurement> result = mapper.toPOJO(queryResult, MyCustomMeasurement.class, TimeUnit.SECONDS);
@@ -398,10 +398,10 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     series.setValues(Arrays.asList(firstSeriesResult));
 
     QueryResult.Result internalResult = new QueryResult.Result();
-		internalResult.setSeries(Arrays.asList(series));
+    internalResult.setSeries(Arrays.asList(series));
 
     QueryResult queryResult = new QueryResult();
-		queryResult.setResults(Arrays.asList(internalResult));
+    queryResult.setResults(Arrays.asList(internalResult));
 
     //When...
     List<MyCustomMeasurement> result =
@@ -421,10 +421,10 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     QueryResult.Series series = new QueryResult.Series();
     series.setColumns(columnList);
     List<List<Object>> valuesList = Arrays.asList(
-            List.of("2015-08-17T19:00:00-05:00"), // Chicago (UTC-5)
-            List.of("2015-08-17T19:00:00.000000001-05:00"), // Chicago (UTC-5)
-            List.of("2000-01-01T00:00:00-00:00"),
-            List.of("2000-01-02T00:00:00+00:00")
+            Arrays.asList("2015-08-17T19:00:00-05:00"), // Chicago (UTC-5)
+            Arrays.asList("2015-08-17T19:00:00.000000001-05:00"), // Chicago (UTC-5)
+            Arrays.asList("2000-01-01T00:00:00-00:00"),
+            Arrays.asList("2000-01-02T00:00:00+00:00")
     );
     series.setValues(valuesList);
 
@@ -453,10 +453,10 @@ public class InfluxDBAndroidDesugaredRecordResultMapperTest {
     QueryResult.Series series = new QueryResult.Series();
     series.setColumns(columnList);
     List<List<Object>> valuesList = Arrays.asList(
-            List.of("2015-08-17T19:00:00-05:00"), // Chicago (UTC-5)
-            List.of("2015-08-17T19:00:00.000000001-05:00"), // Chicago (UTC-5)
-            List.of("2000-01-01T00:00:00-00:00"),
-            List.of("2000-01-02T00:00:00+00:00")
+            Arrays.asList("2015-08-17T19:00:00-05:00"), // Chicago (UTC-5)
+            Arrays.asList("2015-08-17T19:00:00.000000001-05:00"), // Chicago (UTC-5)
+            Arrays.asList("2000-01-01T00:00:00-00:00"),
+            Arrays.asList("2000-01-02T00:00:00+00:00")
     );
     series.setValues(valuesList);
 
