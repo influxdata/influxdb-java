@@ -443,7 +443,7 @@
               <source>17</source>
               <release>17</release>
               <compilerArgs>
-                <!-- Needed for Android desugared record tests -->
+                <!-- Needed for record tests -->
                 <arg>-parameters</arg>
                 <arg>--add-opens=java.base/java.lang=ALL-UNNAMED</arg>
                 <arg>--add-opens=java.base/java.util=ALL-UNNAMED</arg>

@@ -367,7 +367,7 @@ public class Cpu {
 Or (if you're on JDK14+ and/or [Android SDK34+](https://android-developers.googleblog.com/2023/06/records-in-android-studio-flamingo.html)):
 
 ```Java
-@Measurement(name = "cpu")
+@Measurement(name = "cpu", allFields = true)
 public record Cpu(
     @TimeColumn
     Instant time,
