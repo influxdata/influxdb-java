@@ -10,10 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.influxdb.dto.Query;
+import org.influxdb.querybuilder.FunctionFactory;
 import org.influxdb.querybuilder.RawText;
 import org.influxdb.querybuilder.Where;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
+@RunWith(JUnitPlatform.class)
 public class BuiltQueryTest {
 
   private static final String DATABASE = "testdb";
@@ -973,4 +977,12 @@ public class BuiltQueryTest {
     assertEquals(query.getDatabase(), select.getDatabase());
   }
 
+  @Test
+  public void testBoundParameters() {
+    Query query = new Query("SELECT a FROM b WHERE c = $d;", DATABASE);
+    Query select = select().column("a").from(DATABASE, "b")
+                           .where(eq("c", FunctionFactory.placeholder("d")));
+    assertEquals(query.getCommand(), select.getCommand());
+    assertEquals(query.getDatabase(), select.getDatabase());
+  }
 }
