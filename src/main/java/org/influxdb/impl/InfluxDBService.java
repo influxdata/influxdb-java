@@ -47,10 +47,6 @@ interface InfluxDBService {
 
   @GET("query")
   public Call<QueryResult> query(@Query(DB) String db,
-      @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
-
-  @GET("query")
-  public Call<QueryResult> query(@Query(DB) String db,
           @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
           @Query(value = PARAMS, encoded = true) String params);
 

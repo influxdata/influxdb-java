@@ -733,7 +733,7 @@ public class InfluxDBImpl implements InfluxDB {
                   TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
         } else {
           call = this.influxDBService.query(getDatabase(query),
-                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(), null);
         }
     }
     return executeQuery(call);
@@ -799,7 +799,7 @@ public class InfluxDBImpl implements InfluxDB {
         call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded(),
                                               query.getParameterJsonWithUrlEncoded());
       } else {
-        call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(),
+        call = this.influxDBService.query(getDatabase(query), null, query.getCommandWithUrlEncoded(),
                                               query.getParameterJsonWithUrlEncoded());
       }
     } else {
