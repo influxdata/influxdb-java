@@ -979,10 +979,10 @@ public class BuiltQueryTest {
 
   @Test
   public void testBoundParameters() {
-    Query query = new Query("SELECT a FROM b WHERE c = $d;", DATABASE);
-    Query select = select().column("a").from(DATABASE, "b")
-                           .where(eq("c", FunctionFactory.placeholder("d")));
-    assertEquals(query.getCommand(), select.getCommand());
-    assertEquals(query.getDatabase(), select.getDatabase());
+    Query query = select().column("a").from(DATABASE, "b")
+                           .where(eq("c", FunctionFactory.placeholder("d"))).bindParameter("d", 3);
+    assertEquals("SELECT a FROM b WHERE c = $d;", query.getCommand());
+    assertEquals(Query.encode("{\"d\":3}"), query.getParameterJsonWithUrlEncoded());
+    assertEquals(DATABASE, query.getDatabase());
   }
 }
