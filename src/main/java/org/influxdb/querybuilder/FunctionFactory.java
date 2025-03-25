@@ -61,6 +61,10 @@ public final class FunctionFactory {
     return new Column(name);
   }
 
+  public static Object placeholder(final String name) {
+    return new Placeholder(name);
+  }
+
   private static void convertToColumns(final Object... arguments) {
     for (int i = 0; i < arguments.length; i++) {
       arguments[i] = convertToColumn(arguments[i]);

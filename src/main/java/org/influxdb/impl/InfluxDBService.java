@@ -47,12 +47,7 @@ interface InfluxDBService {
 
   @GET("query")
   public Call<QueryResult> query(@Query(DB) String db,
-      @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query);
-
-  @POST("query")
-  @FormUrlEncoded
-  public Call<QueryResult> query(@Query(DB) String db,
-          @Query(EPOCH) String epoch, @Field(value = Q, encoded = true) String query,
+          @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
           @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
@@ -66,8 +61,25 @@ interface InfluxDBService {
 
   @POST("query")
   @FormUrlEncoded
-  public Call<QueryResult> postQuery(@Query(DB) String db,
+  public Call<QueryResult> postQuery(@Query(DB) String db, @Query(EPOCH) String epoch,
+      @Field(value = Q, encoded = true) String query);
+
+  @POST("query")
+  @FormUrlEncoded
+  public Call<QueryResult> postQuery(@Query(DB) String db, @Query(EPOCH) String epoch,
           @Field(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
+
+  @Streaming
+  @POST("query?chunked=true")
+  @FormUrlEncoded
+  public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
+         @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
+  @POST("query?chunked=true")
+  @FormUrlEncoded
+  public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
+         @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 
   @POST("query")
   @FormUrlEncoded
@@ -79,8 +91,7 @@ interface InfluxDBService {
       @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
-  @POST("query?chunked=true")
-  @FormUrlEncoded
-  public Call<ResponseBody> query(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
+  @GET("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
           @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 }
