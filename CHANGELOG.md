@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.25 [2025-03-26]
+
+### Improvements
+- Add support for parameter binding to built queries [PR #1010](https://github.com/influxdata/influxdb-java/pull/1010)
+
 ## 2.24 [2023-12-14]
 
 ### Improvements
