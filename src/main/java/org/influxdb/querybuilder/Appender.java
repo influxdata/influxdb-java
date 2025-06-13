@@ -62,6 +62,8 @@ public final class Appender {
       stringBuilder.append(')');
     } else if (value instanceof Column) {
       appendName(((Column) value).getName(), stringBuilder);
+    } else if (value instanceof Placeholder) {
+      stringBuilder.append('$').append(((Placeholder) value).getName());
     } else if (value instanceof String) {
       stringBuilder.append("'").append(value).append("'");
     } else if (value != null) {

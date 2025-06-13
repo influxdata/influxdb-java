@@ -1,6 +1,36 @@
 # Changelog
 
-## 2.21 [unreleased]
+## 2.25 [2025-03-26]
+
+### Improvements
+- Add support for parameter binding to built queries [PR #1010](https://github.com/influxdata/influxdb-java/pull/1010)
+
+## 2.24 [2023-12-14]
+
+### Improvements
+- `allFields` mode to Measurement annotation [PR #972](https://github.com/influxdata/influxdb-java/pull/972)
+- Support generic POJO super classes [PR #980](https://github.com/influxdata/influxdb-java/pull/980)
+
+## 2.23 [2022-07-07]
+
+### Improvements
+- Add implementation information to `Jar` manifest [PR #847](https://github.com/influxdata/influxdb-java/pull/847)
+
+### Fixes
+- Only the request to /write endpoint should be compressed by GZIP [PR #851](https://github.com/influxdata/influxdb-java/pull/851)
+
+## 2.22 [2021-09-17]
+
+### Improvements
+
+- `POST` query variants serializes `'q'` parameter into HTTP body [PR #765](https://github.com/influxdata/influxdb-java/pull/765)
+
+## 2.21 [2020-12-04]
+
+### Fixes
+
+- Binary compatibility with old version [PR #692](https://github.com/influxdata/influxdb-java/pull/692)
+- Wrong statement in manual [PR #695](https://github.com/influxdata/influxdb-java/pull/695)
 
 ## 2.20 [2020-08-14]
 

@@ -1,12 +1,14 @@
 # influxdb-java
 
-[![Build Status](https://travis-ci.org/influxdata/influxdb-java.svg?branch=master)](https://travis-ci.org/influxdata/influxdb-java)
+[![Build Status](https://github.com/influxdata/influxdb-java/workflows/master/badge.svg)](https://github.com/influxdata/influxdb-java/actions)
 [![codecov.io](http://codecov.io/github/influxdata/influxdb-java/coverage.svg?branch=master)](http://codecov.io/github/influxdata/influxdb-java?branch=master)
 [![Issue Count](https://codeclimate.com/github/influxdata/influxdb-java/badges/issue_count.svg)](https://codeclimate.com/github/influxdata/influxdb-java)
 
 This is the official (and community-maintained) Java client library for [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) (1.x), the open source time series database that is part of the TICK (Telegraf, InfluxDB, Chronograf, Kapacitor) stack.
 
-_Note: This library is for use with InfluxDB 1.x. For connecting to InfluxDB 2.x instances, please use the [influxdb-client-java](https://github.com/influxdata/influxdb-client-java) client._
+For InfluxDB 3.0 users, this library is succeeded by the lightweight [v3 client library](https://github.com/InfluxCommunity/influxdb3-java).
+
+_Note: This library is for use with InfluxDB 1.x and [2.x compatibility API](https://docs.influxdata.com/influxdb/v2.0/reference/api/influxdb-1x/). For full supports of InfluxDB 2.x features, please use the [influxdb-client-java](https://github.com/influxdata/influxdb-client-java) client._
 
 ## Adding the library to your project
 
@@ -66,7 +68,17 @@ influxDB.query(new Query("CREATE RETENTION POLICY " + retentionPolicyName
 influxDB.setRetentionPolicy(retentionPolicyName);
 
 // Enable batch writes to get better performance.
-influxDB.enableBatch(BatchOptions.DEFAULTS);
+influxDB.enableBatch(
+    BatchOptions.DEFAULTS
+      .threadFactory(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setDaemon(true);
+        return thread;
+      })
+);
+
+// Close it if your application is terminating or you are not using it anymore.
+Runtime.getRuntime().addShutdownHook(new Thread(influxDB::close));
 
 // Write points to InfluxDB.
 influxDB.write(Point.measurement("h2o_feet")
@@ -100,9 +112,6 @@ System.out.println(queryResult);
 //         [2020-03-22T20:50:12.929Z, below 3 feet, santa_monica, 2.064],
 //         [2020-03-22T20:50:12.929Z, between 6 and 9 feet, coyote_creek, 8.12]
 //      ]]], error=null]], error=null]
-
-// Close it if your application is terminating or you are not using it anymore.
-influxDB.close();
 ```
 
 ## Contribute

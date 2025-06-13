@@ -20,6 +20,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,6 +47,7 @@ public final class BatchProcessor {
   private final BatchWriter batchWriter;
   private boolean dropActionsOnQueueExhaustion;
   Consumer<Point> droppedActionHandler;
+  Supplier<Double> randomSupplier;
 
   /**
    * The Builder to create a BatchProcessor instance.
@@ -318,20 +320,21 @@ public final class BatchProcessor {
     } else {
         this.queue = new LinkedBlockingQueue<>();
     }
+    this.randomSupplier = Math::random;
 
     Runnable flushRunnable = new Runnable() {
       @Override
       public void run() {
         // write doesn't throw any exceptions
         write();
-        int jitterInterval = (int) (Math.random() * BatchProcessor.this.jitterInterval);
+        int jitterInterval = (int) (randomSupplier.get() * BatchProcessor.this.jitterInterval);
         BatchProcessor.this.scheduler.schedule(this,
                 BatchProcessor.this.flushInterval + jitterInterval, BatchProcessor.this.flushIntervalUnit);
       }
     };
     // Flush at specified Rate
     this.scheduler.schedule(flushRunnable,
-            this.flushInterval + (int) (Math.random() * BatchProcessor.this.jitterInterval),
+            this.flushInterval + (int) (randomSupplier.get() * BatchProcessor.this.jitterInterval),
             this.flushIntervalUnit);
   }
 

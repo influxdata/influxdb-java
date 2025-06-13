@@ -2,6 +2,7 @@ package org.influxdb.impl;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -18,6 +19,8 @@ import okio.Okio;
  * @author fujian1115 [at] gmail.com
  */
 final class GzipRequestInterceptor implements Interceptor {
+
+    private static final Pattern WRITE_PATTERN = Pattern.compile(".*/write", Pattern.CASE_INSENSITIVE);
 
     private AtomicBoolean enabled = new AtomicBoolean(false);
 
@@ -45,6 +48,10 @@ final class GzipRequestInterceptor implements Interceptor {
         Request originalRequest = chain.request();
         RequestBody body = originalRequest.body();
         if (body == null || originalRequest.header("Content-Encoding") != null) {
+            return chain.proceed(originalRequest);
+        }
+
+        if (!WRITE_PATTERN.matcher(originalRequest.url().encodedPath()).matches()) {
             return chain.proceed(originalRequest);
         }
 

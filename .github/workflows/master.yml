@@ -1,0 +1,49 @@
+name: master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        jdk: [3-openjdk-17-slim, 3-jdk-14, 3-jdk-8-slim]
+        influxdb: ['1.1', '1.6', '1.8', '2.3', '2.4', '2.5']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build project
+        env:
+          MAVEN_JAVA_VERSION: "${{ matrix.jdk }}"
+          INFLUXDB_VERSION: "${{ matrix.influxdb }}"
+        run: ./compile-and-test.sh
+
+      - name: codecov
+        run: |
+          sudo apt-get update
+          sudo apt-get install gpg libdigest-sha-perl -y
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+          curl -s https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+          gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+          shasum -a 256 -c codecov.SHA256SUM
+          chmod +x ./codecov
+          ./codecov
+        if: matrix.influxdb != '2.3' && matrix.influxdb != '2.4' && matrix.influxdb != '2.5'
+
+
+  # deploy:
+  #   runs-on: ubuntu-20.04
+
+  #   steps:
+  #     - name: deploy snapshot
+  #       env:
+  #         secure: dAJK41xM2dN3q3xJMqAOP6uvrOvpjjUzmHr8mYNyepER8Lpms9/GqVUxqJv12wzCBqv1XZk/CXxrv3iBc2XjlxlrzIJGQChTinwDEigv0BMl/Gh0821ja7gwzMEUmg9f79m5tJxIFQ306cWz1gyRDqM3fLzskvM2ayzvynsNc/w=
+  #       run: ./deploy-snapshot.sh

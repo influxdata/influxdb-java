@@ -1,7 +1,19 @@
 package org.influxdb.dto;
 
+import org.influxdb.BuilderException;
+import org.influxdb.InfluxDBMapperException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Exclude;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
+import org.influxdb.impl.Preconditions;
+import org.influxdb.impl.TypeMapper;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -11,8 +23,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import org.influxdb.BuilderException;
 import org.influxdb.annotation.Column;
@@ -238,6 +250,18 @@ public class Point {
     }
 
     /**
+     * Add a time to this point as long.
+     * only kept for binary compatibility with previous releases.
+     *
+     * @param timeToSet      the time for this point as long
+     * @param precisionToSet the TimeUnit
+     * @return the Builder instance.
+     */
+    public Builder time(final long timeToSet, final TimeUnit precisionToSet) {
+      return time((Number) timeToSet, precisionToSet);
+    }
+
+    /**
      * Add a time to this point as Long.
      * only kept for binary compatibility with previous releases.
      *
@@ -267,22 +291,45 @@ public class Point {
      */
     public Builder addFieldsFromPOJO(final Object pojo) {
 
-      Class<? extends Object> clazz = pojo.getClass();
+      Class<?> clazz = pojo.getClass();
+      Measurement measurement = clazz.getAnnotation(Measurement.class);
+      boolean allFields = measurement != null && measurement.allFields();
+
       while (clazz != null) {
 
+      TypeMapper typeMapper = TypeMapper.empty();
+      while (clazz != null) {
         for (Field field : clazz.getDeclaredFields()) {
 
           Column column = field.getAnnotation(Column.class);
 
-          if (column == null) {
+          if (column == null && !(allFields
+                  && !field.isAnnotationPresent(Exclude.class) && !Modifier.isStatic(field.getModifiers()))) {
             continue;
           }
 
           field.setAccessible(true);
-          String fieldName = column.name();
-          addFieldByAttribute(pojo, field, column, fieldName);
+
+          String fieldName;
+          if (column != null && !column.name().isEmpty()) {
+            fieldName = column.name();
+          } else {
+            fieldName = field.getName();
+          }
+
+          addFieldByAttribute(pojo, field, column != null && column.tag(), fieldName, typeMapper);
         }
-      clazz = clazz.getSuperclass();
+
+        Class<?> superclass = clazz.getSuperclass();
+        Type genericSuperclass = clazz.getGenericSuperclass();
+        if (genericSuperclass instanceof ParameterizedType) {
+          typeMapper = TypeMapper.of((ParameterizedType) genericSuperclass, superclass);
+        } else {
+          typeMapper = TypeMapper.empty();
+        }
+
+        clazz = superclass;
+      }
     }
 
       if (this.fields.isEmpty()) {
@@ -293,36 +340,41 @@ public class Point {
       return this;
     }
 
-    private void addFieldByAttribute(final Object pojo, final Field field, final Column column,
-        final String fieldName) {
+    private void addFieldByAttribute(final Object pojo, final Field field, final boolean tag,
+                                     final String fieldName, final TypeMapper typeMapper) {
       try {
         Object fieldValue = field.get(pojo);
 
         TimeColumn tc = field.getAnnotation(TimeColumn.class);
-        if (tc != null && Instant.class.isAssignableFrom(field.getType())) {
-          Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
-            TimeUnit timeUnit = tc.timeUnit();
-            if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
-              this.time = BigInteger.valueOf(instant.getEpochSecond())
-                                    .multiply(NANOSECONDS_PER_SECOND)
-                                    .add(BigInteger.valueOf(instant.getNano()))
-                                    .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
-            } else {
-              this.time = TimeUnit.MILLISECONDS.convert(instant.toEpochMilli(), timeUnit);
+        Class<?> fieldType = (Class<?>) typeMapper.resolve(field.getGenericType());
+        if (tc != null) {
+          if (Instant.class.isAssignableFrom(fieldType)) {
+            Optional.ofNullable((Instant) fieldValue).ifPresent(instant -> {
+              TimeUnit timeUnit = tc.timeUnit();
+              if (timeUnit == TimeUnit.NANOSECONDS || timeUnit == TimeUnit.MICROSECONDS) {
+                this.time = BigInteger.valueOf(instant.getEpochSecond())
+                        .multiply(NANOSECONDS_PER_SECOND)
+                        .add(BigInteger.valueOf(instant.getNano()))
+                        .divide(BigInteger.valueOf(TimeUnit.NANOSECONDS.convert(1, timeUnit)));
+              } else {
+                this.time = timeUnit.convert(instant.toEpochMilli(), TimeUnit.MILLISECONDS);
+              }
               this.precision = timeUnit;
-            }
-            this.precision = timeUnit;
-          });
-          return;
+            });
+            return;
+          }
+
+          throw new InfluxDBMapperException(
+              "Unsupported type " + fieldType + " for time: should be of Instant type");
         }
 
-        if (column.tag()) {
+        if (tag) {
           if (fieldValue != null) {
             this.tags.put(fieldName, (String) fieldValue);
           }
         } else {
           if (fieldValue != null) {
-            this.fields.put(fieldName, fieldValue);
+            setField(fieldType, fieldName, fieldValue);
           }
         }
 
@@ -350,6 +402,32 @@ public class Point {
       }
       point.setTags(this.tags);
       return point;
+    }
+
+    private void setField(
+            final Class<?> fieldType,
+            final String columnName,
+            final Object value) {
+      if (boolean.class.isAssignableFrom(fieldType) || Boolean.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (boolean) value);
+      } else if (long.class.isAssignableFrom(fieldType) || Long.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (long) value);
+      } else if (double.class.isAssignableFrom(fieldType) || Double.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (double) value);
+      } else if (float.class.isAssignableFrom(fieldType) || Float.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (float) value);
+      } else if (int.class.isAssignableFrom(fieldType) || Integer.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (int) value);
+      } else if (short.class.isAssignableFrom(fieldType) || Short.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (short) value);
+      } else if (String.class.isAssignableFrom(fieldType)) {
+        addField(columnName, (String) value);
+      } else if (Enum.class.isAssignableFrom(fieldType)) {
+        addField(columnName, ((Enum<?>) value).name());
+      } else {
+        throw new InfluxDBMapperException(
+                "Unsupported type " + fieldType + " for column " + columnName);
+      }
     }
   }
 

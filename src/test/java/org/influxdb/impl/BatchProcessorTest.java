@@ -226,14 +226,27 @@ public class BatchProcessorTest {
       }
     }
 
+    @Test
     @SuppressWarnings("unchecked")
-    static <T> T getPrivateField(final Object obj, final String name) throws Exception {
+    public void randomSupplier() {
+      InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
+      BatchProcessor batchProcessor = BatchProcessor.builder(mockInfluxDB).actions(Integer.MAX_VALUE)
+                .interval(1, TimeUnit.NANOSECONDS).build();
+
+      Double random = batchProcessor.randomSupplier.get();
+      assertTrue(random >= 0);
+      assertTrue(random < 1);
+      Assertions.assertNotEquals(random, batchProcessor.randomSupplier.get());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T getPrivateField(final Object obj, final String name) throws Exception {
       Field field = obj.getClass().getDeclaredField(name);
       field.setAccessible(true);
       return (T) field.get(obj);
     }
 
-    static void setPrivateField(final Object obj, final String name, final Object value) throws Exception {
+    public static void setPrivateField(final Object obj, final String name, final Object value) throws Exception {
       Field field = obj.getClass().getDeclaredField(name);
       field.setAccessible(true);
       field.set(obj, value);

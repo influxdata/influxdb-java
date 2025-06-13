@@ -20,6 +20,17 @@
  */
 package org.influxdb.impl;
 
+import org.influxdb.InfluxDBMapperException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Exclude;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
+import org.influxdb.dto.QueryResult;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
@@ -30,16 +41,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import org.influxdb.InfluxDBMapperException;
-import org.influxdb.annotation.Column;
-import org.influxdb.annotation.Measurement;
-import org.influxdb.annotation.TimeColumn;
-import org.influxdb.dto.QueryResult;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 
 /**
  * @author fmachado
@@ -71,6 +72,12 @@ public class InfluxDBResultMapperTest {
 
     // Then...
     Assertions.assertEquals(1, myList.size(), "there must be one entry in the result list");
+
+		//When...
+  	List<MyAllFieldsCustomMeasurement> myList1 = mapper.toPOJO(queryResult, MyAllFieldsCustomMeasurement.class);
+
+  	// Then...
+  	Assertions.assertEquals(1, myList1.size(), "there must be one entry in the result list");
   }
 
 	@Test
@@ -442,6 +449,38 @@ public class InfluxDBResultMapperTest {
     Assertions.assertEquals(subValue, result.get(0).subValue);
   }
 
+	@Test
+ void testToPOJOGenericInheritance() {
+   // Given...
+   mapper.cacheMeasurementClass(MyGenericSubMeasurement.class);
+
+   String superValue = UUID.randomUUID().toString();
+   String subValue = "my sub value";
+   List<String> columnList = Arrays.asList("superValue", "subValue");
+
+   List<Object> firstSeriesResult = Arrays.asList(superValue, subValue);
+
+   QueryResult.Series series = new QueryResult.Series();
+   series.setName("MySeriesName");
+   series.setColumns(columnList);
+   series.setValues(Arrays.asList(firstSeriesResult));
+
+   QueryResult.Result internalResult = new QueryResult.Result();
+   internalResult.setSeries(Arrays.asList(series));
+
+   QueryResult queryResult = new QueryResult();
+   queryResult.setResults(Arrays.asList(internalResult));
+
+   //When...
+   List<MyGenericSubMeasurement> result =
+       mapper.toPOJO(queryResult, MyGenericSubMeasurement.class, "MySeriesName");
+
+   //Then...
+   Assertions.assertTrue(result.size() == 1);
+   Assertions.assertEquals(superValue, result.get(0).superValue);
+   Assertions.assertEquals(subValue, result.get(0).subValue);
+ }
+
   @Test
   public void testToPOJO_HasTimeColumn() {
 	  // Given...
@@ -578,6 +617,35 @@ public class InfluxDBResultMapperTest {
 		}
 	}
 
+	@Measurement(name = "CustomMeasurement", allFields = true)
+	static class MyAllFieldsCustomMeasurement {
+		private Instant time;
+		private String uuid;
+		private Double doubleObject;
+		private Long longObject;
+		private Integer integerObject;
+		private double doublePrimitive;
+		private long longPrimitive;
+		private int integerPrimitive;
+		private Boolean booleanObject;
+		private boolean booleanPrimitive;
+
+		@SuppressWarnings("unused")
+		@Exclude
+		private String nonColumn1;
+
+		@SuppressWarnings("unused")
+		@Exclude
+		private Random rnd;
+
+		@Override
+		public String toString() {
+			return "MyCustomMeasurement [time=" + time + ", uuid=" + uuid + ", doubleObject=" + doubleObject + ", longObject=" + longObject
+				+ ", integerObject=" + integerObject + ", doublePrimitive=" + doublePrimitive + ", longPrimitive=" + longPrimitive
+				+ ", integerPrimitive=" + integerPrimitive + ", booleanObject=" + booleanObject + ", booleanPrimitive=" + booleanPrimitive + "]";
+		}
+	}
+
   @Measurement(name = "SuperMeasurement")
   static class MySuperMeasurement {
 
@@ -601,6 +669,30 @@ public class InfluxDBResultMapperTest {
       return "MySubMeasurement [subValue=" + subValue + ", superValue=" + superValue + "]";
     }
   }
+
+	@Measurement(name = "SuperMeasurement")
+ static class MyGenericSuperMeasurement<T> {
+
+   @Column(name = "superValue")
+   protected T superValue;
+
+   @Override
+   public String toString() {
+     return "SuperMeasurement [superValue=" + superValue + "]";
+   }
+ }
+
+ @Measurement(name = "SubMeasurement")
+ static class MyGenericSubMeasurement extends MyGenericSuperMeasurement<String> {
+
+   @Column(name = "subValue")
+   protected String subValue;
+
+   @Override
+   public String toString() {
+     return "MySubMeasurement [subValue=" + subValue + ", superValue=" + superValue + "]";
+   }
+ }
 
   @Measurement(name = "foo")
 	static class MyPojoWithUnsupportedField {

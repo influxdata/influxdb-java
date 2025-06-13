@@ -1,0 +1,43 @@
+name: Build from pull request
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        jdk: [3-openjdk-17-slim, 3-jdk-14, 3-jdk-8-slim]
+        influxdb: ['1.1', '1.6', '1.8', '2.3', '2.4', '2.5']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Figure out if running fork PR
+        id: fork
+        run: '["${{ secrets.DOCKER_REGISTRY_TOKEN }}" == ""] && echo "::set-output name=is_fork_pr::true" || echo "::set-output name=is_fork_pr::false"'
+
+      - name: Build project
+        env:
+          MAVEN_JAVA_VERSION: "${{ matrix.jdk }}"
+          INFLUXDB_VERSION: "${{ matrix.influxdb }}"
+        run: ./compile-and-test.sh
+
+      - name: codecov
+        run: |
+          sudo apt-get update
+          sudo apt-get install gpg libdigest-sha-perl -y
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+          curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+          curl -s https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+          gpgv codecov.SHA256SUM.sig codecov.SHA256SUM
+          shasum -a 256 -c codecov.SHA256SUM
+          chmod +x ./codecov
+          ./codecov
+        if: matrix.influxdb != '2.3' && matrix.influxdb != '2.4' && matrix.influxdb != '2.5'

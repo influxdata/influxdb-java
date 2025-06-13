@@ -1,7 +1,18 @@
 package org.influxdb.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import org.influxdb.BuilderException;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBMapperException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
+import org.influxdb.impl.InfluxDBImpl;
+import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -16,18 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.influxdb.BuilderException;
-import org.influxdb.InfluxDB;
-import org.influxdb.annotation.Column;
-import org.influxdb.annotation.Measurement;
-import org.influxdb.annotation.TimeColumn;
-import org.influxdb.impl.InfluxDBImpl;
-import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Test for the Point DTO.
@@ -696,6 +697,30 @@ public class PointTest {
     }
 
     @Test
+    public void testAddFieldsFromPOJOWithTimeColumnSeconds() throws NoSuchFieldException, IllegalAccessException {
+        TimeColumnPojoSec pojo = new TimeColumnPojoSec();
+        pojo.time = Instant.now().plusSeconds(132L).plus(365L * 12000, ChronoUnit.DAYS);
+        pojo.booleanPrimitive = true;
+
+        Point p = Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build();
+        Field timeField = p.getClass().getDeclaredField("time");
+        Field precisionField = p.getClass().getDeclaredField("precision");
+        timeField.setAccessible(true);
+        precisionField.setAccessible(true);
+
+        Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+        Assertions.assertEquals(TimeUnit.SECONDS, precisionField.get(p));
+        Assertions.assertEquals(pojo.time.getEpochSecond(), timeField.get(p));
+    }
+
+    @Test
+    public void testAddFieldsFromPOJOWithBadTimeColumn() {
+        BadTimeColumnPojo pojo = new BadTimeColumnPojo();
+        Assertions.assertThrows(InfluxDBMapperException.class,
+                () -> Point.measurementByPOJO(pojo.getClass()).addFieldsFromPOJO(pojo).build());
+    }
+
+    @Test
     public void testAddFieldsFromPOJOWithTimeColumnNull() throws NoSuchFieldException, IllegalAccessException {
         TimeColumnPojo pojo = new TimeColumnPojo();
         pojo.booleanPrimitive = true;
@@ -712,7 +737,7 @@ public class PointTest {
     }
 
     @Test
-    public void testAddFieldsFromPOJOWithData() throws NoSuchFieldException, IllegalAccessException {
+    public void testAddFieldsFromPOJOWithData() {
         Pojo pojo = new Pojo();
         pojo.booleanObject = true;
         pojo.booleanPrimitive = false;
@@ -735,7 +760,6 @@ public class PointTest {
         Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
         Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
         Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
-        Assertions.assertEquals(pojo.time, p.getFields().get("time"));
         Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
     }
 
@@ -790,7 +814,63 @@ public class PointTest {
         Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
         Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
         Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
-        Assertions.assertEquals(pojo.time, p.getFields().get("time"));
+        Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
+    }
+
+    @Test
+    public void testAddFieldsFromPojoWithAllFieldsAnnotation() {
+
+        PojoWithAllFieldsAnnotation pojo = new PojoWithAllFieldsAnnotation();
+        pojo.booleanObject = true;
+        pojo.booleanPrimitive = false;
+        pojo.doubleObject = 2.0;
+        pojo.doublePrimitive = 3.1;
+        pojo.integerObject = 32;
+        pojo.integerPrimitive = 64;
+        pojo.longObject = 1L;
+        pojo.longPrimitive = 2L;
+        pojo.time = Instant.now();
+        pojo.uuid = "TEST";
+
+        Point p = Point.measurementByPOJO(PojoWithAllFieldsAnnotation.class).addFieldsFromPOJO(pojo).build();
+
+        assertThat(p.lineProtocol()).startsWith("mymeasurement");
+        assertThat(p.getFields()).doesNotContainKey("staticField");
+        Assertions.assertEquals(pojo.booleanObject, p.getFields().get("booleanObject"));
+        Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+        Assertions.assertEquals(pojo.doubleObject, p.getFields().get("doubleObject"));
+        Assertions.assertEquals(pojo.doublePrimitive, p.getFields().get("doublePrimitive"));
+        Assertions.assertEquals(pojo.integerObject, p.getFields().get("integerObject"));
+        Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
+        Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
+        Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
+        Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
+    }
+
+    @Test
+    public void testAddFieldsFromPojoWithBlankColumnAnnotations() {
+        PojoWithBlankColumnAnnotations pojo = new PojoWithBlankColumnAnnotations();
+        pojo.booleanObject = true;
+        pojo.booleanPrimitive = false;
+        pojo.doubleObject = 2.0;
+        pojo.doublePrimitive = 3.1;
+        pojo.integerObject = 32;
+        pojo.integerPrimitive = 64;
+        pojo.longObject = 1L;
+        pojo.longPrimitive = 2L;
+        pojo.time = Instant.now();
+        pojo.uuid = "TEST";
+
+        Point p = Point.measurementByPOJO(PojoWithBlankColumnAnnotations.class).addFieldsFromPOJO(pojo).build();
+
+        Assertions.assertEquals(pojo.booleanObject, p.getFields().get("booleanObject"));
+        Assertions.assertEquals(pojo.booleanPrimitive, p.getFields().get("booleanPrimitive"));
+        Assertions.assertEquals(pojo.doubleObject, p.getFields().get("doubleObject"));
+        Assertions.assertEquals(pojo.doublePrimitive, p.getFields().get("doublePrimitive"));
+        Assertions.assertEquals(pojo.integerObject, p.getFields().get("integerObject"));
+        Assertions.assertEquals(pojo.integerPrimitive, p.getFields().get("integerPrimitive"));
+        Assertions.assertEquals(pojo.longObject, p.getFields().get("longObject"));
+        Assertions.assertEquals(pojo.longPrimitive, p.getFields().get("longPrimitive"));
         Assertions.assertEquals(pojo.uuid, p.getTags().get("uuid"));
     }
 
@@ -805,6 +885,22 @@ public class PointTest {
         scm.superValue = "super";
 
         Point actual = Point.measurementByPOJO(SubClassMeasurement.class)
+                .addFieldsFromPOJO(scm)
+                .build();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGenericInheritMeasurement() {
+        Point expected = Point.measurementByPOJO(MyGenericSubMeasurement.class)
+                .addField("superValue", "super")
+                .addField("subValue", "sub")
+                .build();
+        MyGenericSubMeasurement scm = new MyGenericSubMeasurement();
+        scm.subValue = "sub";
+        scm.superValue = "super";
+
+        Point actual = Point.measurementByPOJO(MyGenericSubMeasurement.class)
                 .addFieldsFromPOJO(scm)
                 .build();
         Assert.assertEquals(expected, actual);
@@ -857,6 +953,22 @@ public class PointTest {
         private Instant time;
     }
 
+    @Measurement(name = "tcmeasurement", allFields = true)
+    static class TimeColumnPojoSec {
+        boolean booleanPrimitive;
+
+        @TimeColumn(timeUnit = TimeUnit.SECONDS)
+        Instant time;
+    }
+
+    @Measurement(name = "tcmeasurement", allFields = true)
+    static class BadTimeColumnPojo {
+        boolean booleanPrimitive;
+
+        @TimeColumn
+        String time;
+    }
+
     @Measurement(name = "mymeasurement")
     static class Pojo {
 
@@ -864,6 +976,7 @@ public class PointTest {
         private boolean booleanPrimitive;
 
         @Column(name = "time")
+        @TimeColumn
         private Instant time;
 
         @Column(name = "uuid", tag = true)
@@ -980,6 +1093,7 @@ public class PointTest {
         public boolean booleanPrimitive;
 
         @Column(name = "time")
+        @TimeColumn
         public Instant time;
 
         @Column(name = "uuid", tag = true)
@@ -1007,6 +1121,62 @@ public class PointTest {
         public Boolean booleanObject;
     }
 
+    @Measurement(name = "mymeasurement", allFields = true)
+    static class PojoWithAllFieldsAnnotation {
+        public static final String staticField = "static";
+
+        public boolean booleanPrimitive;
+
+        @TimeColumn
+        public Instant time;
+
+        @Column(tag = true)
+        public String uuid;
+
+        public Double doubleObject;
+        public Long longObject;
+        public Integer integerObject;
+        public double doublePrimitive;
+        public long longPrimitive;
+        public int integerPrimitive;
+        public Boolean booleanObject;
+    }
+
+    @Measurement(name = "mymeasurement")
+    static class PojoWithBlankColumnAnnotations {
+
+        @Column
+        public boolean booleanPrimitive;
+
+        @Column
+        @TimeColumn
+        public Instant time;
+
+        @Column(tag = true)
+        public String uuid;
+
+        @Column
+        public Double doubleObject;
+
+        @Column
+        public Long longObject;
+
+        @Column
+        public Integer integerObject;
+
+        @Column
+        public double doublePrimitive;
+
+        @Column
+        public long longPrimitive;
+
+        @Column
+        public int integerPrimitive;
+
+        @Column
+        public Boolean booleanObject;
+    }
+
     @Measurement(name = "SuperMeasuremet")
     static class SuperMeasurement {
         @Column(name = "superClassField")
@@ -1017,6 +1187,20 @@ public class PointTest {
     static class SubClassMeasurement extends SuperMeasurement {
         @Column(name = "subClassField")
         String subValue;
+    }
+
+    @Measurement(name = "SuperMeasurement")
+    static class MyGenericSuperMeasurement<T> {
+
+      @Column(name = "superValue")
+      protected T superValue;
+    }
+
+    @Measurement(name = "SubMeasurement")
+    static class MyGenericSubMeasurement extends MyGenericSuperMeasurement<String> {
+
+      @Column(name = "subValue")
+      protected String subValue;
     }
 
     @Measurement(name = "PojoNumberPrimitiveTypes")

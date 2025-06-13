@@ -588,3 +588,19 @@ Query select = select().raw("an expression on select").from(dbName, "cpu").where
 ```sqlite-psql
 SELECT an expression on select FROM h2o_feet WHERE an expression as condition;
 ```
+
+Binding parameters
+
+If your Query is based on user input, it is good practice to use parameter binding to avoid [injection attacks](https://en.wikipedia.org/wiki/SQL_injection).
+You can create queries with parameter binding:
+
+```java
+Query query = select().from(DATABASE,"h2o_feet").where(gt("water_level", FunctionFactory.placeholder("level")))
+                      .bindParameter("level", 8);
+```
+
+```sqlite-psql
+SELECT * FROM h2o_feet WHERE water_level > $level;
+```
+
+The values of bindParameter() calls are bound to the placeholders in the query (`level`).
