@@ -26,6 +26,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import org.influxdb.BuilderException;
+import org.influxdb.annotation.Column;
+import org.influxdb.annotation.Measurement;
+import org.influxdb.annotation.TimeColumn;
+import org.influxdb.dto.utils.CheckTags;
+import org.influxdb.impl.Preconditions;
 
 /**
  * Representation of a InfluxDB database Point.
@@ -123,7 +129,7 @@ public class Point {
     public Builder tag(final String tagName, final String value) {
       Objects.requireNonNull(tagName, "tagName");
       Objects.requireNonNull(value, "value");
-      if (!tagName.isEmpty() && !value.isEmpty()) {
+      if (CheckTags.isLegalFullCheck(tagName, value)) {
         tags.put(tagName, value);
       }
       return this;
@@ -138,7 +144,9 @@ public class Point {
      */
     public Builder tag(final Map<String, String> tagsToAdd) {
       for (Entry<String, String> tag : tagsToAdd.entrySet()) {
-        tag(tag.getKey(), tag.getValue());
+        if (CheckTags.isLegalFullCheck(tag.getKey(), tag.getValue())) {
+          tags.put(tag.getKey(), tag.getValue());
+        }
       }
       return this;
     }
