@@ -1,0 +1,53 @@
+name: Maven Release
+
+on:
+  push:
+    tags:
+      - 'influxdb-java-*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Pour créer la Release GitHub (page Releases)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets['AWS_ACCESS_KEY_ID_ORG'] }}
+          aws-secret-access-key: ${{ secrets['AWS_SECRET_ACCESS_KEY_ORG'] }}
+          aws-region: eu-central-1
+          role-to-assume: ${{ secrets['AWS_ROLE_CI_DEVOPS_EU'] }}
+          role-duration-seconds: 1200
+
+      # Configuration JDK avec authentification Maven
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Stage Artifacts Locally
+        run: |
+          mvn deploy -DskipTests \
+          -DaltDeploymentRepository=local::default::file:./target/staging
+
+      - name: Upload to S3
+        run: |
+          aws s3 sync ./target/staging s3://optimistik.devops.euc1.maven/release --no-progress 
+
+      # Création de la "Release" (La page GitHub avec le tag et le jar téléchargeable)
+      # Cette étape récupère le jar généré par l'étape précédente 'mvn deploy'
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: target/*.jar
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

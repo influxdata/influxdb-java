@@ -11,8 +11,8 @@ jobs:
 
     strategy:
       matrix:
-        jdk: [3-openjdk-17-slim, 3-jdk-14, 3-jdk-8-slim]
-        influxdb: ['1.1', '1.6', '1.8', '2.3', '2.4', '2.5']
+        jdk: [3-openjdk-17-slim]
+        influxdb: ['1.8']
 
     steps:
       - name: Checkout

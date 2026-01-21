@@ -1,0 +1,88 @@
+name: Trigger Maven Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: 'Type de Release'
+        required: true
+        default: 'PATCH'
+        type: choice
+        options:
+          - PATCH
+          - MINOR
+          - MAJOR
+
+jobs:
+  perform-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Important : Il faut récupérer tout l'historique git pour merger
+          fetch-depth: 0 
+          # Utilisez un Personal Access Token (PAT) si vous voulez que ce push 
+          # déclenche l'autre workflow. Le GITHUB_TOKEN par défaut ne déclenche pas d'autres actions.
+          token: ${{ secrets.PAT_TOKEN }} 
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Configure Git User
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+
+      - name: Calculate Versions
+        id: calc
+        run: |
+          # 1. Récupérer la version actuelle du POM (ex: 1.2.3-SNAPSHOT)
+          CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Version actuelle: $CURRENT_VERSION"
+          
+          # Enlever -SNAPSHOT pour avoir la base (ex: 1.2.3)
+          BASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
+          
+          # Séparer Major, Minor, Patch
+          IFS='.' read -r -a parts <<< "$BASE_VERSION"
+          MAJOR=${parts[0]}
+          MINOR=${parts[1]}
+          PATCH=${parts[2]}
+          
+          # Logique d'incrémentation
+          TYPE="${{ inputs.increment }}"
+          
+          if [ "$TYPE" == "MAJOR" ]; then
+            NEW_RELEASE="$((MAJOR + 1)).0.0"
+            NEXT_DEV="$((MAJOR + 1)).0.1-SNAPSHOT"
+          elif [ "$TYPE" == "MINOR" ]; then
+            NEW_RELEASE="$MAJOR.$((MINOR + 1)).0"
+            NEXT_DEV="$MAJOR.$((MINOR + 1)).1-SNAPSHOT"
+          else
+            # PATCH (Défaut : on garde la version actuelle sans snapshot pour la release)
+            # Note: Si vous voulez incrémenter le patch POUR la release, modifiez ici.
+            # Comportement standard Maven : 1.2.3-SNAPSHOT -> Release 1.2.3 -> Dev 1.2.4-SNAPSHOT
+            NEW_RELEASE="$MAJOR.$MINOR.$PATCH"
+            NEXT_DEV="$MAJOR.$MINOR.$((PATCH + 1))-SNAPSHOT"
+          fi
+          
+          echo "Target Release: $NEW_RELEASE"
+          echo "Next Snapshot:  $NEXT_DEV"
+          
+          # On exporte les variables pour l'étape suivante
+          echo "REL_VER=$NEW_RELEASE" >> $GITHUB_ENV
+          echo "DEV_VER=$NEXT_DEV" >> $GITHUB_ENV
+
+      - name: Execute Maven Release
+        run: |
+          mvn -B release:prepare \
+            -DreleaseVersion=${{ env.REL_VER }} \
+            -DdevelopmentVersion=${{ env.DEV_VER }} \
+            -Darguments="-DskipTests"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

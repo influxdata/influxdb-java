@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.influxdb</groupId>
+  <groupId>fr.optimistik</groupId>
   <artifactId>influxdb-java</artifactId>
   <packaging>jar</packaging>
   <version>2.26-SNAPSHOT</version>
@@ -21,10 +21,10 @@
   </properties>
 
   <scm>
-    <connection>scm:git:git@github.com:influxdata/influxdb-java.git</connection>
-    <developerConnection>scm:git:git@github.com:influxdata/influxdb-java.git</developerConnection>
-    <url>git@github.com:influxdata/influxdb-java.git</url>
-    <tag>influxdb-java-2.25</tag>
+    <connection>scm:git:https://github.com/OptimistikSAS/influxdb-java.git</connection>
+    <developerConnection>scm:git:https://github.com/OptimistikSAS/influxdb-java.git</developerConnection>
+    <url>https://github.com/OptimistikSAS/influxdb-java</url>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>
@@ -48,18 +48,6 @@
       </plugin>
     </plugins>
   </reporting>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
 
   <build>
     <resources>
@@ -155,18 +143,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.13</version>
-        <extensions>true</extensions>
-        <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://ossrh-staging-api.central.sonatype.com/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
-          <stagingProgressTimeoutMinutes>15</stagingProgressTimeoutMinutes>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -384,21 +360,6 @@
                   <composeFile>${project.build.directory}/docker-compose.yml</composeFile>
                   <removeVolumes>true</removeVolumes>
                 </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <!-- This is needed at release time only with the keys of a person -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.1.0</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
               </execution>
             </executions>
           </plugin>
