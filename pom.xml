@@ -4,7 +4,7 @@
   <groupId>fr.optimistik</groupId>
   <artifactId>influxdb-java</artifactId>
   <packaging>jar</packaging>
-  <version>2.26.0</version>
+  <version>2.26.1-SNAPSHOT</version>
   <name>influxdb java bindings</name>
   <description>Java API to access the InfluxDB REST API</description>
   <url>http://www.influxdb.org</url>
@@ -24,7 +24,7 @@
     <connection>scm:git:https://github.com/OptimistikSAS/influxdb-java.git</connection>
     <developerConnection>scm:git:https://github.com/OptimistikSAS/influxdb-java.git</developerConnection>
     <url>https://github.com/OptimistikSAS/influxdb-java</url>
-    <tag>influxdb-java-2.26.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>
