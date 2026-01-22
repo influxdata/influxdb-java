@@ -388,7 +388,7 @@ public interface InfluxDB extends AutoCloseable {
    *            the points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
-          final ConsistencyLevel consistency, final TimeUnit precision, final String records);
+                    final ConsistencyLevel consistency, final TimeUnit precision, final String records);
 
   /**
    * Write a set of Points to the influxdb database with the list of string records.
@@ -424,13 +424,13 @@ public interface InfluxDB extends AutoCloseable {
    *          the List of points in the correct lineprotocol.
    */
   public void write(final String database, final String retentionPolicy,
-          final ConsistencyLevel consistency, final TimeUnit precision, final List<String> records);
+                    final ConsistencyLevel consistency, final TimeUnit precision, final List<String> records);
 
   /**
    * Write a set of Points to the influxdb database with the string records through UDP.
    *
    * @param udpPort
-  *           the udpPort where influxdb is listening
+   *           the udpPort where influxdb is listening
    * @param records
    *          the content will be encoded by UTF-8 before sent.
    */
@@ -536,6 +536,25 @@ public interface InfluxDB extends AutoCloseable {
    *            the consumer for error handling
    */
   public void query(Query query, int chunkSize, BiConsumer<Cancellable, QueryResult> onNext, Runnable onComplete,
+                    Consumer<Throwable> onFailure);
+
+  /**
+   * Execute a streaming query against a database.
+   *
+   * @param query
+   *            the query to execute.
+   * @param timeUnit
+   *            the time unit of the results.
+   * @param chunkSize
+   *            the number of QueryResults to process in one chunk.
+   * @param onNext
+   *            the consumer to invoke for each received QueryResult; with capability to discontinue a streaming query
+   * @param onComplete
+   *            the onComplete to invoke for successfully end of stream
+   * @param onFailure
+   *            the consumer for error handling
+   */
+  public void query(Query query, TimeUnit timeUnit, int chunkSize, BiConsumer<Cancellable, QueryResult> onNext, Runnable onComplete,
                     Consumer<Throwable> onFailure);
 
   /**

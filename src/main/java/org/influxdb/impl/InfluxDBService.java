@@ -29,7 +29,7 @@ interface InfluxDBService {
   @GET("ping")
   public Call<ResponseBody> ping();
 
-   /**
+  /**
    * @param username u: optional The username for authentication
    * @param password p: optional The password for authentication
    * @param database db: required The database to write points
@@ -42,44 +42,56 @@ interface InfluxDBService {
    */
   @POST("write")
   public Call<ResponseBody> writePoints(@Query(DB) String database,
-      @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
-      @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
+                                        @Query(RP) String retentionPolicy, @Query(PRECISION) String precision,
+                                        @Query(CONSISTENCY) String consistency, @Body RequestBody batchPoints);
 
   @GET("query")
   public Call<QueryResult> query(@Query(DB) String db,
-          @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
-          @Query(value = PARAMS, encoded = true) String params);
+                                 @Query(EPOCH) String epoch, @Query(value = Q, encoded = true) String query,
+                                 @Query(value = PARAMS, encoded = true) String params);
 
   @GET("query")
   public Call<QueryResult> query(@Query(DB) String db,
-      @Query(value = Q, encoded = true) String query);
+                                 @Query(value = Q, encoded = true) String query);
 
   @POST("query")
   @FormUrlEncoded
   public Call<QueryResult> postQuery(@Query(DB) String db,
-      @Field(value = Q, encoded = true) String query);
+                                     @Field(value = Q, encoded = true) String query);
 
   @POST("query")
   @FormUrlEncoded
   public Call<QueryResult> postQuery(@Query(DB) String db, @Query(EPOCH) String epoch,
-      @Field(value = Q, encoded = true) String query);
+                                     @Field(value = Q, encoded = true) String query);
 
   @POST("query")
   @FormUrlEncoded
   public Call<QueryResult> postQuery(@Query(DB) String db, @Query(EPOCH) String epoch,
-          @Field(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
+                                     @Field(value = Q, encoded = true) String query, @Query(value = PARAMS, encoded = true) String params);
 
   @Streaming
   @POST("query?chunked=true")
   @FormUrlEncoded
   public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
-         @Query(CHUNK_SIZE) int chunkSize);
+                                      @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
+  @POST("query?chunked=true")
+  @FormUrlEncoded
+  public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
+                                      @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
   @POST("query?chunked=true")
   @FormUrlEncoded
   public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
-         @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+                                      @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+
+  @Streaming
+  @POST("query?chunked=true")
+  @FormUrlEncoded
+  public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
+                                      @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 
   @POST("query")
   @FormUrlEncoded
@@ -88,10 +100,20 @@ interface InfluxDBService {
   @Streaming
   @GET("query?chunked=true")
   public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
-      @Query(CHUNK_SIZE) int chunkSize);
+                                  @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
+  @GET("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
+                                  @Query(CHUNK_SIZE) int chunkSize);
 
   @Streaming
   @GET("query?chunked=true")
   public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
-          @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+                                  @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+
+  @Streaming
+  @GET("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
+                                  @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 }
