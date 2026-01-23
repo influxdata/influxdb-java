@@ -16,7 +16,6 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBException;
 import org.influxdb.InfluxDBIOException;
 import org.influxdb.dto.BatchPoints;
-import org.influxdb.dto.BoundParameterQuery;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
@@ -637,13 +636,17 @@ public class InfluxDBImpl implements InfluxDB {
   public void query(final Query query, final int chunkSize, final BiConsumer<Cancellable, QueryResult> onNext,
                     final Runnable onComplete, final Consumer<Throwable> onFailure) {
     Call<ResponseBody> call;
-    if (query instanceof BoundParameterQuery) {
-      BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-      call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize,
-          boundParameterQuery.getParameterJsonWithUrlEncoded());
+    if (query.hasBoundParameters()) {
+      if (query.requiresPost()) {
+        call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize,
+                                          query.getParameterJsonWithUrlEncoded());
+      } else {
+        call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize,
+                                          query.getParameterJsonWithUrlEncoded());
+      }
     } else {
       if (query.requiresPost()) {
-        call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize, null);
+        call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize);
       } else {
         call = this.influxDBService.query(getDatabase(query), query.getCommandWithUrlEncoded(), chunkSize);
       }
@@ -716,18 +719,21 @@ public class InfluxDBImpl implements InfluxDB {
   @Override
   public QueryResult query(final Query query, final TimeUnit timeUnit) {
     Call<QueryResult> call;
-    if (query instanceof BoundParameterQuery) {
-        BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
-        call = this.influxDBService.query(getDatabase(query),
-                TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(),
-                boundParameterQuery.getParameterJsonWithUrlEncoded());
+    if (query.hasBoundParameters()) {
+      if (query.requiresPost()) {
+        call = this.influxDBService.postQuery(getDatabase(query), TimeUtil.toTimePrecision(timeUnit),
+                                          query.getCommandWithUrlEncoded(), query.getParameterJsonWithUrlEncoded());
+      } else {
+        call = this.influxDBService.query(getDatabase(query), TimeUtil.toTimePrecision(timeUnit),
+                                          query.getCommandWithUrlEncoded(), query.getParameterJsonWithUrlEncoded());
+      }
     } else {
         if (query.requiresPost()) {
-          call = this.influxDBService.query(getDatabase(query),
-                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(), null);
+          call = this.influxDBService.postQuery(getDatabase(query),
+                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
         } else {
           call = this.influxDBService.query(getDatabase(query),
-                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded());
+                  TimeUtil.toTimePrecision(timeUnit), query.getCommandWithUrlEncoded(), null);
         }
     }
     return executeQuery(call);
@@ -788,10 +794,14 @@ public class InfluxDBImpl implements InfluxDB {
    */
   private Call<QueryResult> callQuery(final Query query) {
     Call<QueryResult> call;
-    if (query instanceof BoundParameterQuery) {
-        BoundParameterQuery boundParameterQuery = (BoundParameterQuery) query;
+    if (query.hasBoundParameters()) {
+      if (query.requiresPost()) {
         call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded(),
-                boundParameterQuery.getParameterJsonWithUrlEncoded());
+                                              query.getParameterJsonWithUrlEncoded());
+      } else {
+        call = this.influxDBService.query(getDatabase(query), null, query.getCommandWithUrlEncoded(),
+                                              query.getParameterJsonWithUrlEncoded());
+      }
     } else {
         if (query.requiresPost()) {
           call = this.influxDBService.postQuery(getDatabase(query), query.getCommandWithUrlEncoded());
