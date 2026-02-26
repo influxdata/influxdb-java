@@ -50,6 +50,7 @@ public class Point {
           });
 
   private static final int DEFAULT_STRING_BUILDER_SIZE = 1024;
+  private static final int MAX_STRING_BUILDER_SIZE = 64 * 1024;
   private static final ThreadLocal<StringBuilder> CACHED_STRINGBUILDERS =
           ThreadLocal.withInitial(() -> new StringBuilder(DEFAULT_STRING_BUILDER_SIZE));
 
@@ -554,7 +555,12 @@ public class Point {
     // setLength(0) is used for reusing cached StringBuilder instance per thread
     // it reduces GC activity and performs better then new StringBuilder()
     StringBuilder sb = CACHED_STRINGBUILDERS.get();
-    sb.setLength(0);
+    if (sb.capacity() > MAX_STRING_BUILDER_SIZE) {
+        sb = new StringBuilder(DEFAULT_STRING_BUILDER_SIZE);
+        CACHED_STRINGBUILDERS.set(sb);
+    } else {
+        sb.setLength(0);
+    }
 
     escapeKey(sb, measurement);
     concatenatedTags(sb);
