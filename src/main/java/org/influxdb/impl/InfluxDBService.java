@@ -78,7 +78,19 @@ interface InfluxDBService {
   @Streaming
   @POST("query?chunked=true")
   @FormUrlEncoded
+  public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
+         @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
+  @POST("query?chunked=true")
+  @FormUrlEncoded
   public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query,
+         @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+
+  @Streaming
+  @POST("query?chunked=true")
+  @FormUrlEncoded
+  public Call<ResponseBody> postQuery(@Query(DB) String db, @Field(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
          @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 
   @POST("query")
@@ -92,6 +104,16 @@ interface InfluxDBService {
 
   @Streaming
   @GET("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
+      @Query(CHUNK_SIZE) int chunkSize);
+
+  @Streaming
+  @GET("query?chunked=true")
   public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query,
+          @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
+
+  @Streaming
+  @GET("query?chunked=true")
+  public Call<ResponseBody> query(@Query(DB) String db, @Query(value = Q, encoded = true) String query, @Query(EPOCH) String epoch,
           @Query(CHUNK_SIZE) int chunkSize, @Query(value = PARAMS, encoded = true) String params);
 }

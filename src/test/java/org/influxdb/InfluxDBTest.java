@@ -24,11 +24,7 @@ import java.net.ConnectException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -1156,6 +1153,68 @@ public class InfluxDBTest {
 
 		boolean await = countDownLatch.await(10, TimeUnit.SECONDS);
 		Assertions.assertTrue(await, "The onComplete action did not arrive!");
+	}
+
+	/**
+	 * Test chunking with TimeUnit
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void testChunkingWithImeUnit() throws InterruptedException {
+		if (this.influxDB.version().startsWith("0.") || this.influxDB.version().startsWith("1.0")) {
+			// do not test version 0.13 and 1.0
+			return;
+		}
+
+		String dbName = "write_unittest_" + System.currentTimeMillis();
+		this.influxDB.query(new Query("CREATE DATABASE " + dbName));
+		String rp = TestUtils.defaultRetentionPolicy(this.influxDB.version());
+		BatchPoints batchPoints = BatchPoints.database(dbName).retentionPolicy(rp).build();
+		Point point1 = Point.measurement("disk").tag("atag", "a").addField("used", 60L).addField("free", 1L).build();
+		Point point2 = Point.measurement("disk").tag("atag", "b").addField("used", 70L).addField("free", 2L).build();
+		Point point3 = Point.measurement("disk").tag("atag", "c").addField("used", 80L).addField("free", 3L).build();
+		batchPoints.point(point1);
+		batchPoints.point(point2);
+		batchPoints.point(point3);
+		this.influxDB.write(batchPoints);
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		Thread.sleep(2000);
+		Query query = new Query("SELECT * FROM disk", dbName);
+		this.influxDB.query(query, 2, result -> {}, countDownLatch::countDown);
+		List<QueryResult> results = new ArrayList<>();
+		AtomicReference<Throwable> errorFound = new AtomicReference<>();
+
+		// Run and map to points
+		this.influxDB.query(
+			query,
+			TimeUnit.MILLISECONDS,
+			5000,
+			(cancellable, queryResult) -> results.add(queryResult),
+			countDownLatch::countDown,
+			throwable -> {
+				countDownLatch.countDown();
+				errorFound.set(throwable);
+			}
+		);
+
+		Thread.sleep(2000);
+		this.influxDB.query(new Query("DROP DATABASE " + dbName));
+
+		boolean await = countDownLatch.await(10, TimeUnit.SECONDS);
+		Assertions.assertTrue(await, "The onComplete action did not arrive!");
+		Assertions.assertNull(errorFound.get(), "An error occurred : " + errorFound.get());
+
+		long totalPoints = results.stream()
+			.filter(qr -> qr.getResults() != null)
+			.flatMap(qr -> qr.getResults().stream())
+			.filter(r -> r.getSeries() != null)
+			.flatMap(r -> r.getSeries().stream())
+			.filter(s -> s.getValues() != null)
+			.mapToLong(s -> s.getValues().size())
+			.sum();
+		Assertions.assertEquals(3, totalPoints);
 	}
 
 	@Test
