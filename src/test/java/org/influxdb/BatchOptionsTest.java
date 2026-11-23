@@ -1,6 +1,7 @@
 package org.influxdb;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Response;
 import org.influxdb.InfluxDB.ConsistencyLevel;
 import org.influxdb.InfluxDBException.DatabaseNotFoundException;
 import org.influxdb.dto.BatchPoints;
@@ -34,6 +35,8 @@ import java.util.function.Supplier;
 
 @RunWith(JUnitPlatform.class)
 public class BatchOptionsTest {
+
+  private static final int BATCH_WRITE_TIMEOUT_SECONDS = 5;
 
   InfluxDB influxDB;
 
@@ -137,24 +140,30 @@ public class BatchOptionsTest {
    */
   @Test
   public void testDropActionsOnQueueExhaustionSettings() throws InterruptedException, IOException {
-
-    /*
-      To simulate a behavior where the action if exhausted because it is not cleared by the batchProcessor(may be because the latency of writes to influx server went up),
-      will have to artificially inrease latency of http calls to influx db server, for that need to add an interceptor to the http client.
-      Thus locally creating a new influx db server instead of using the global one.
-     */
-
-    CountDownLatch countDownLatch = new CountDownLatch(1);
+    // Block the first HTTP write so the batch processor cannot drain the queue again while it fills.
+    CountDownLatch firstWriteStarted = new CountDownLatch(1);
+    CountDownLatch allowWrites = new CountDownLatch(1);
+    CountDownLatch completedWrites = new CountDownLatch(2);
     try (InfluxDB influxDBLocal = TestUtils.connectToInfluxDB(new OkHttpClient.Builder().addInterceptor(chain -> {
-      try {
-        //blocking the http call for write with countdown latch
-        if (chain.request().url().encodedPath().contains("write"))
-          countDownLatch.await(5, TimeUnit.SECONDS);
+      if (!chain.request().url().encodedPath().endsWith("/write")) {
         return chain.proceed(chain.request());
-      } catch (Exception e) {
-        e.printStackTrace();
       }
-      return chain.proceed(chain.request());
+
+      firstWriteStarted.countDown();
+      try {
+        if (!allowWrites.await(BATCH_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+          throw new IOException("Timed out waiting for the batch queue to fill");
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while waiting for the batch queue to fill", e);
+      }
+
+      Response response = chain.proceed(chain.request());
+      if (response.isSuccessful()) {
+        completedWrites.countDown();
+      }
+      return response;
     }), null, InfluxDB.ResponseFormat.JSON)) {
       String dbName = "write_unittest_" + System.currentTimeMillis();
       try {
@@ -169,20 +178,17 @@ public class BatchOptionsTest {
         influxDBLocal.enableBatch(options);
 
 
-        //write 4 points and the first two will get flushed as well as actions = 2;
         writeSomePoints(influxDBLocal, 1, 2);
-        //wait for the BatchProcessor$write() to flush the queue.
-        Thread.sleep(200);
+        Assertions.assertTrue(firstWriteStarted.await(BATCH_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                "The first batch did not start writing to InfluxDB");
 
         //4 more points, last 2 of these should get dropped
         writeSomePoints(influxDBLocal, 3, 6);
         verify(droppedActionHandler, times(2)).accept(any());
 
-        //releasing the latch
-        countDownLatch.countDown();
-
-        //wait for the point to get written to influx db.
-        Thread.sleep(200);
+        allowWrites.countDown();
+        Assertions.assertTrue(completedWrites.await(BATCH_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                "Timed out waiting for both batches to be written to InfluxDB");
 
         QueryResult result = influxDBLocal.query(new Query("select * from weather", dbName));
         //assert that 2 points were dropped
@@ -193,6 +199,7 @@ public class BatchOptionsTest {
 
       }
       finally {
+        allowWrites.countDown();
         influxDBLocal.query(new Query("DROP DATABASE " + dbName));
       }
 
@@ -345,26 +352,16 @@ public class BatchOptionsTest {
    */
   @Test
   public void testBufferLimitGreaterThanActions() throws InterruptedException {
-    TestAnswer answer = new TestAnswer() {
-
-      int nthCall = 0;
-      InfluxDBException cacheMaxMemorySizeExceededException = InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
-      @Override
-      protected void check(InvocationOnMock invocation) {
-
-        switch (nthCall++) {
-        case 0:
-          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.DATABASE_NOT_FOUND_ERROR));
-        case 1:
-          throw InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR));
-        default:
-          break;
-        }
-      }
-    };
-
+    CountDownLatch retriedWriteCompleted = new CountDownLatch(1);
     InfluxDB spy = spy(influxDB);
-    doAnswer(answer).when(spy).write(any(BatchPoints.class));
+    doThrow(InfluxDBException.buildExceptionForErrorState(createErrorBody(InfluxDBException.DATABASE_NOT_FOUND_ERROR)))
+            .doThrow(InfluxDBException.buildExceptionForErrorState(
+                    createErrorBody(InfluxDBException.CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR)))
+            .doAnswer(invocation -> {
+              invocation.callRealMethod();
+              retriedWriteCompleted.countDown();
+              return null;
+            }).when(spy).write(any(BatchPoints.class));
 
     String dbName = "write_unittest_" + System.currentTimeMillis();
     try {
@@ -376,8 +373,8 @@ public class BatchOptionsTest {
       spy.enableBatch(options);
       writeSomePoints(spy, "measurement1", 0, 5);
 
-      Thread.sleep(300);
-      verify(mockHandler, atLeastOnce()).accept(any(), any());
+      verify(mockHandler, timeout(TimeUnit.SECONDS.toMillis(BATCH_WRITE_TIMEOUT_SECONDS)).atLeastOnce())
+              .accept(any(), isA(DatabaseNotFoundException.class));
 
       QueryResult result = spy.query(new Query("select * from measurement1", dbName));
       //assert 0 point written because of non-retry capable DATABASE_NOT_FOUND_ERROR and RetryCapableBatchWriter did not retry
@@ -386,7 +383,8 @@ public class BatchOptionsTest {
 
       writeSomePoints(spy, "measurement2", 0, 5);
 
-      Thread.sleep(300);
+      Assertions.assertTrue(retriedWriteCompleted.await(BATCH_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+              "The batch did not finish writing to InfluxDB after retrying");
 
       result = spy.query(new Query("select * from measurement2", dbName));
       //assert all 6 point written because of retry capable CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR and RetryCapableBatchWriter did retry
