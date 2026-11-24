@@ -372,30 +372,43 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>com.dkanejs.maven.plugins</groupId>
-            <artifactId>docker-compose-maven-plugin</artifactId>
-            <version>4.0.0</version>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.6.4</version>
+            <configuration>
+              <executable>docker</executable>
+            </configuration>
             <executions>
               <execution>
                 <id>up</id>
                 <phase>process-test-resources</phase>
                 <goals>
-                  <goal>up</goal>
+                  <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <composeFile>${project.build.directory}/docker-compose.yml</composeFile>
-                  <detachedMode>true</detachedMode>
+                  <arguments>
+                    <argument>compose</argument>
+                    <argument>--file</argument>
+                    <argument>${project.build.directory}/docker-compose.yml</argument>
+                    <argument>up</argument>
+                    <argument>--detach</argument>
+                  </arguments>
                 </configuration>
               </execution>
               <execution>
                 <id>down</id>
                 <phase>post-integration-test</phase>
                 <goals>
-                  <goal>down</goal>
+                  <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <composeFile>${project.build.directory}/docker-compose.yml</composeFile>
-                  <removeVolumes>true</removeVolumes>
+                  <arguments>
+                    <argument>compose</argument>
+                    <argument>--file</argument>
+                    <argument>${project.build.directory}/docker-compose.yml</argument>
+                    <argument>down</argument>
+                    <argument>--volumes</argument>
+                  </arguments>
                 </configuration>
               </execution>
             </executions>
