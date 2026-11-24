@@ -48,6 +48,7 @@ public class InfluxDBException extends RuntimeException {
   static final String CACHE_MAX_MEMORY_SIZE_EXCEEDED_ERROR = "cache-max-memory-size exceeded";
   /* For all messages below see https://github.com/influxdata/influxdb/blob/master/services/httpd/handler.go */
   static final String DATABASE_NOT_FOUND_ERROR = "database not found";
+  static final String RETENTION_POLICY_NOT_FOUND_ERROR = "retention policy not found";
   static final String USER_REQUIRED_ERROR = "user is required to write to database";
   static final String USER_NOT_AUTHORIZED_ERROR = "user is not authorized to write to database";
   static final String AUTHORIZATION_FAILED_ERROR = "authorization failed";
@@ -58,6 +59,17 @@ public class InfluxDBException extends RuntimeException {
       super(message);
     }
 
+    public boolean isRetryWorth() {
+      return false;
+    }
+  }
+
+  private static final class RetentionPolicyNotFoundException extends InfluxDBException {
+    private RetentionPolicyNotFoundException(final String message) {
+      super(message);
+    }
+
+    @Override
     public boolean isRetryWorth() {
       return false;
     }
@@ -136,6 +148,9 @@ public class InfluxDBException extends RuntimeException {
   private static InfluxDBException buildExceptionFromErrorMessage(final String errorMessage) {
     if (errorMessage.contains(DATABASE_NOT_FOUND_ERROR)) {
       return new DatabaseNotFoundException(errorMessage);
+    }
+    if (errorMessage.startsWith(RETENTION_POLICY_NOT_FOUND_ERROR)) {
+      return new RetentionPolicyNotFoundException(errorMessage);
     }
     if (errorMessage.contains(POINTS_BEYOND_RETENTION_POLICY_ERROR)) {
       return new PointsBeyondRetentionPolicyException(errorMessage);
