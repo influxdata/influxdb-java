@@ -38,6 +38,27 @@ public class RetryCapableBatchWriterTest {
   }
 
   @Test
+  public void testMissingRetentionPolicyDoesNotBlockLaterBatches() {
+    InfluxDB influxDB = mock(InfluxDB.class);
+    BiConsumer<Iterable<Point>, Throwable> errorHandler = mock(BiConsumer.class);
+    RetryCapableBatchWriter writer = new RetryCapableBatchWriter(influxDB, errorHandler, 150, 100);
+    BatchPoints invalidBatch = BatchPoints.database("db99").retentionPolicy("rp_not_exist")
+        .point(Point.measurement("invalid").addField("value", 1).build()).build();
+    BatchPoints validBatch = BatchPoints.database("db99").retentionPolicy("autogen")
+        .point(Point.measurement("valid").addField("value", 1).build()).build();
+    InfluxDBException failure = InfluxDBException.buildExceptionForErrorState(
+        createErrorBody("retention policy not found: rp_not_exist"));
+    doThrow(failure).when(influxDB).write(invalidBatch);
+
+    writer.write(Collections.singletonList(invalidBatch));
+    writer.write(Collections.singletonList(validBatch));
+
+    verify(influxDB).write(validBatch);
+    verify(influxDB).write(invalidBatch);
+    verify(errorHandler).accept(invalidBatch.getPoints(), failure);
+  }
+
+  @Test
   public void test() {
     InfluxDB mockInfluxDB = mock(InfluxDBImpl.class);
     BiConsumer errorHandler = mock(BiConsumer.class);

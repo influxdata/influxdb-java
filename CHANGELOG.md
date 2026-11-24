@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- Report writes to missing retention policies through the batch exception handler and continue writing later batches. [Issue #1012](https://github.com/influxdata/influxdb-java/issues/1012)
+
 ## 2.25 [2025-03-26]
 
 ### Improvements
